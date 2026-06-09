@@ -7,7 +7,7 @@ Design LLM workflows as explicit contracts. Do not parse accidental model prose.
 Choose the most reliable practical interface:
 
 1. Tool/function-call arguments for actions, side effects, database writes, file operations, or agent steps.
-2. Strict JSON Schema / structured output for extraction, classification, routing, scoring, and machine decisions.
+2. Strict JSON Schema / structured output plus task validation for extraction, classification, routing, scoring, and machine decisions.
 3. Typed protocol grammar when JSON/tool calls are unavailable.
 4. Fixed key or enum when the model selects authored product copy or a closed taxonomy.
 5. Generated prose only for user-visible writing, drafts, summaries, and explanations.
@@ -23,6 +23,8 @@ If prose and machine data are both needed, use a mixed contract with separate fi
 - Use explicit date/time formats.
 - Keep `reason`, `rationale`, or `summary` fields human-facing; code must not parse them for the real decision.
 - Gate side effects behind validated typed fields, not assistant narration.
+
+Schema validity is not task validity. After decoding a structured response, also check semantic constraints, source support, and task success for the consumer. Treat schema names, key names, enum labels, and descriptions as instruction-bearing text that can influence the model.
 
 ## Risk Signals
 

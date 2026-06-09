@@ -13,7 +13,7 @@ workflow.
 | `pixijs` | `pixijs@local` | `pixijs@xopoko-plug-n-skills` | PixiJS v8 application, rendering, scene graph, assets, events, filters, migration, and performance workflows. |
 | `tauri` | `tauri@local` | `tauri@xopoko-plug-n-skills` | Tauri 2 setup, migration, security, IPC, plugins, shell UI, debug/test, and distribution workflows. |
 | `scientific-research` | `scientific-research@local` | `scientific-research@xopoko-plug-n-skills` | Scholarly discovery, deduplication, claim ledgers, source quality, and provenance gates. |
-| `context-density` | `context-density@local` | `context-density@xopoko-plug-n-skills` | Context design, long-context placement, skill compression, prompt contracts, structural handoff, and validation reporting. |
+| `context-density` | `context-density@local` | `context-density@xopoko-plug-n-skills` | Context design, long-context placement, research-backed acceptance gates, skill compression, prompt contracts, structural handoff, and validation reporting. |
 | `capability-workbench` | `capability-workbench@local` | `capability-workbench@xopoko-plug-n-skills` | Capability discovery, synthesis, cross-plugin portfolio architecture, skill trigger metadata, vetting, repair, plugin packaging, imagegen-backed plugin icon workflows, install-scope, and visibility checks. |
 | `codex-cli` | `codex-cli@local` | `codex-cli@xopoko-plug-n-skills` | Codex CLI operations, exec/review automation, doctor/debug/sandbox diagnostics, plugin and MCP lifecycle, log forensics, and local environment actions. |
 | `claude-code` | `claude-code@local` | `claude-code@xopoko-plug-n-skills` | Claude Code CLI operations, print-mode automation, diagnostics, plugin and MCP lifecycle, hooks, settings, agents, sessions, and worktrees. |

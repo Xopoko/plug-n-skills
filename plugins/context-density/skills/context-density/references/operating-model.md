@@ -30,6 +30,8 @@ Do not paste evidence into hot context. Link to it or summarize only the future-
 - Retrieval is evidence before it is state. Promote retrieved, archived, or generated context only after provenance, authority, confidence, conflict status, and validation are explicit.
 - Benchmarks and context-window size are not proof of reliable task behavior. State the validation scope and remaining risk whenever a workflow depends on long-context recall or reasoning.
 
+For material changes, apply the acceptance checks in `research-backed-gates.md` instead of relying on intuition about long context, compression, structured outputs, citations, or prompt caching.
+
 ## Preservation List
 
 Before editing, write or mentally confirm:

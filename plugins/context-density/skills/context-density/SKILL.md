@@ -5,7 +5,7 @@ description: >-
   token-efficient context and prompt/output contracts. Trigger for AGENTS.md,
   prompts, skill packages, marketplace plugins, MCP/tool schemas,
   long-context placement, prompt/context compression, retrieval provenance,
-  codex-token-lens diagnostics, duplicated hot-path prose,
+  runtime context diagnostics, duplicated hot-path prose,
   brittle trigger descriptions, strict JSON/schema/tool-call output, validators,
   retry/repair loops, or behavior-preserving token reduction.
 ---
@@ -24,6 +24,7 @@ Optimize capability density through measured context, explicit contracts, and to
 - Do not let retrieval, memory recall, or archived artifacts become authoritative state without provenance, confidence, and validation.
 - Do not bury action-critical commitments in the middle of large hot/router files; keep anchors, source order, or explicit state pointers.
 - Do not call a compression change successful from input-token reduction alone; include output cost/length, task success, preserved atoms, and validation proof when available.
+- Apply research-backed gates for material changes: long-context placement stress, compression break-even, schema plus task validation, retrieval/citation promotion, and cache-prefix economics.
 - If a skill/plugin portfolio needs split, merge, delete, move, router, cross-plugin overlap review, reference extraction, shared-capability extraction, or script extraction, treat token pressure as a signal.
 - Route structural work to Capability Workbench portfolio architecture when available.
 - Do not treat context-window size as proof of reliable recall, relevance, or reasoning; state validation scope and residual risk.
@@ -34,7 +35,7 @@ Optimize capability density through measured context, explicit contracts, and to
 - Machine decisions must come from strict JSON/schema, tool arguments/results, typed protocols, validators, or closed keys.
 - Invalid structured output must reject, retry, repair under the same schema, fallback, or fail loudly.
 - Do not add regex/substring patches over generated explanations to recover status, IDs, categories, scores, dates, or actions.
-- Do not run Lens enable/disable controls unless the user requested a config-changing action.
+- Do not run host-agent config changes unless the user requested a config-changing action.
 
 ## Operating Model
 
@@ -50,8 +51,9 @@ Every audit or refactor follows the same spine:
 8. Validate commitment preservation before replacing raw context: critical facts, exact instructions, evidence pointers, and recovery paths must survive.
 9. Separate artifact recall from state commitment: retrieved or archived material stays evidence until a typed, validated claim promotes it into current state.
 10. Validate compression economics with total cost and behavior, not input-token reduction alone.
-11. Validate with token measurement, schema checks, contract scans, and skill/plugin validators.
-12. Report adopted changes, rejected changes, token delta, risks, and tradeoffs.
+11. Apply the relevant research-backed acceptance gates before claiming success.
+12. Validate with token measurement, schema checks, contract scans, and skill/plugin validators.
+13. Report adopted changes, rejected changes, token delta, risks, and tradeoffs.
 
 Load paths:
 
@@ -67,10 +69,11 @@ Load paths:
 | Need | Read |
 | --- | --- |
 | Shared terminology, workflow, source-of-truth layout | `references/operating-model.md` |
-| Startup/context/token diagnostics and `codex-token-lens` command choice | `references/token-diagnostics.md` |
+| Startup/context/token diagnostics and host-runtime measurement choices | `references/token-diagnostics.md` |
 | SKILL.md or plugin skill package footprint reduction | `references/skill-refactor.md` |
 | Skill/plugin portfolio split, merge, delete, move, router, cross-plugin overlap, or script-extract decisions | Capability Workbench `capability-portfolio-architect` when available |
 | Prompt, model-output, tool-call, schema, retry, or prose-parsing review | `references/prompt-contracts.md` |
+| Long-context placement, prompt compression, schema/task validity, retrieval citation, or cache-prefix acceptance gates | `references/research-backed-gates.md` |
 | Final audit sections and JSON/Markdown report contracts | `references/report-contracts.md` |
 
 Keep `SKILL.md` lean. Move rare detail to references only when it prevents repeated hot-path loading.
@@ -84,15 +87,24 @@ python3 scripts/token_count.py <files-or-dirs> --json --top 20
 python3 scripts/context_density_audit.py <files-or-dirs> --json --top 20
 ```
 
-Use `codex-token-lens` when installed and the question is about the host agent's runtime context rather than local files:
+Use the bundled runtime reporter when the question is about local Codex or
+Claude Code startup context, installed skills, MCP config, plugin manifests,
+ranked raw context sources, exportable reports, or latest session token usage:
 
 ```bash
-codex-token-lens brief --no-introspect-mcp
-codex-token-lens skills --limit 10
-codex-token-lens skill SKILL_NAME
-codex-token-lens mcp --no-introspect-mcp
-codex-token-lens sources --ndjson --limit 20
+python3 scripts/codex_context_report.py agents --json
+python3 scripts/codex_context_report.py brief --agent codex --project . --usage --json
+python3 scripts/codex_context_report.py skills --agent codex --limit 10 --ndjson
+python3 scripts/codex_context_report.py skill context-density --agent codex --json
+python3 scripts/codex_context_report.py mcp --agent codex --no-introspect-mcp --json
+python3 scripts/codex_context_report.py mcp --agent codex --tools SERVER --json
+python3 scripts/codex_context_report.py sources --agent codex --ndjson --limit 20
+python3 scripts/codex_context_report.py export markdown --agent codex --project .
 ```
+
+The reporter is read-only and exposes a CLI-compatible reporting surface for
+local file diagnostics. It estimates context from files on disk and does not
+introspect live MCP tool schemas or mutate host-agent config.
 
 ## Output
 

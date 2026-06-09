@@ -140,6 +140,13 @@ LEGACY_BRAND_TERMS = [
 LEGACY_BRAND_RE = re.compile(
     r"(?:" + "|".join(re.escape(term) for term in LEGACY_BRAND_TERMS) + r")"
 )
+PRIVATE_TOOL_TERMS = [
+    "codex-" + "token-" + "lens",
+    "Codex" + "Token" + "Lens",
+]
+PRIVATE_TOOL_RE = re.compile(
+    r"(?:" + "|".join(re.escape(term) for term in PRIVATE_TOOL_TERMS) + r")"
+)
 
 
 def repo_root() -> Path:
@@ -286,6 +293,8 @@ def scan_files(root: Path) -> list[str]:
             errors.append(f"{rel}: contains private-organization wording")
         if LEGACY_BRAND_RE.search(text):
             errors.append(f"{rel}: contains legacy repository branding")
+        if PRIVATE_TOOL_RE.search(text):
+            errors.append(f"{rel}: contains a private local tool dependency")
         for pattern in SECRET_PATTERNS:
             if pattern.search(text):
                 errors.append(f"{rel}: matches sensitive pattern {pattern.pattern}")

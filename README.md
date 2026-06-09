@@ -108,7 +108,7 @@ Claude Code reads the root `.claude-plugin/marketplace.json` and each plugin's
 | `capability-workbench` | Capability discovery, synthesis, plugin packaging, trigger metadata, install-scope decisions, vetting, repair, icon workflows, and visibility checks. |
 | `claude-code` | Claude Code CLI operations, print-mode automation, diagnostics, plugin and MCP lifecycle, hooks, settings, agents, sessions, and worktrees. |
 | `codex-cli` | Codex CLI operations, automation, diagnostics, plugin and MCP lifecycle, session log forensics, and local environment actions. |
-| `context-density` | Context design, long-context placement, prompt contracts, skill compression, structural handoff, and validation reporting. |
+| `context-density` | Context design, long-context placement, research-backed acceptance gates, prompt contracts, skill compression, structural handoff, and validation reporting. |
 | `design-intelligence` | Product framing, interface architecture, interaction design, visual hierarchy, accessibility, and design-system governance. |
 | `game-design-intelligence` | Gameplay loops, systems, progression, economies, motivation, retention, onboarding, difficulty, multiplayer, and live-service critique. |
 | `kotlin-multiplatform` | Kotlin Multiplatform architecture, Gradle diagnosis, Compose Multiplatform, iOS interop, testing, security, publishing, and production readiness. |
@@ -138,8 +138,8 @@ instructions.
 | Skill entrypoints | 155 | - | `SKILL.md` files exposed through plugin metadata. |
 | Reference files | 46 | - | Longer ledgers, contracts, scorecards, and source notes. |
 | Helper and validator scripts | 38 | - | Deterministic plugin-local helpers. |
-| Startup metadata | 155 skills | 11,756 | Skill name, description, and file pointer for routing. |
-| On-demand skill bodies | 155 skills | 95,709 | Instruction bodies after frontmatter, loaded only when selected. |
+| Startup metadata | 155 skills | 11,753 | Skill name, description, and file pointer for routing. |
+| On-demand skill bodies | 155 skills | 95,939 | Instruction bodies after frontmatter, loaded only when selected. |
 
 Regenerate the report after skill edits:
 
@@ -160,7 +160,7 @@ Token columns are `startup metadata / on-demand body`.
 | `pixijs` | 26 | 0 | 0 | 1,861 | 7,967 |
 | `tauri` | 6 | 0 | 1 | 481 | 2,986 |
 | `scientific-research` | 1 | 0 | 0 | 94 | 1,499 |
-| `context-density` | 1 | 0 | 1 | 111 | 1,288 |
+| `context-density` | 1 | 0 | 1 | 108 | 1,518 |
 | `capability-workbench` | 9 | 11 | 21 | 768 | 10,534 |
 | `codex-cli` | 6 | 3 | 2 | 501 | 5,183 |
 | `claude-code` | 6 | 2 | 1 | 528 | 4,370 |
@@ -178,7 +178,7 @@ Token columns are `startup metadata / on-demand body`.
 | `pixijs` | PixiJS v8 skill collection for Codex. |
 | `tauri` | A Tauri 2 development plugin with focused Codex skills for project setup, configuration, security, IPC, plugins, debugging, testing, distribution, and mobile workflows. |
 | `scientific-research` | Plan, collect, deduplicate, and synthesize scientific literature from public scholarly sources with provenance and quality gates. |
-| `context-density` | Context design, prompt-contract optimization, and compression validation for Codex skills, plugins, prompts, docs, and agent workflows. |
+| `context-density` | Context design, prompt-contract optimization, research-backed acceptance gates, and compression validation for Codex skills, plugins, prompts, docs, and agent workflows. |
 | `capability-workbench` | A web-first marketplace workbench for broad discovery, creation, synthesis, trigger metadata design, cross-plugin portfolio architecture, vetting, repair, global installation, packaging, and imagegen-backed icon workflows for agent skills and plugins. |
 | `codex-cli` | Codex CLI operations, automation, diagnostics, plugin and MCP lifecycle, session log forensics, and local environment actions. |
 | `claude-code` | Claude Code CLI operations, print-mode automation, diagnostics, plugin and MCP lifecycle, hooks, settings, agents, sessions, and worktrees. |
@@ -308,7 +308,7 @@ Token cells are shown as `startup/body`.
 
 | Skill | Tokens | Description |
 | --- | ---: | --- |
-| `context-density` | 111/1,288 | Use when designing, auditing, refactoring, measuring, or validating token-efficient context and prompt/output contracts. Trigger for AGENTS.md, prompts, skill packages, marketplace plugins, MCP/tool schemas, long-context placement, prompt/context compression, retrieval provenance, codex-token-lens diagnostics, duplicated hot-path prose, brittle trigger descriptions, strict JSON/schema/tool-call output, validators, retry/repair loops, or behavior-preserving token reduction. |
+| `context-density` | 108/1,518 | Use when designing, auditing, refactoring, measuring, or validating token-efficient context and prompt/output contracts. Trigger for AGENTS.md, prompts, skill packages, marketplace plugins, MCP/tool schemas, long-context placement, prompt/context compression, retrieval provenance, runtime context diagnostics, duplicated hot-path prose, brittle trigger descriptions, strict JSON/schema/tool-call output, validators, retry/repair loops, or behavior-preserving token reduction. |
 
 #### `capability-workbench`
 
@@ -411,7 +411,6 @@ Token cells are shown as `startup/body`.
 | `sdd-plan-tasks` | 55/482 | Convert approved SDD specs into technical plans, design artifacts, contracts, quickstart validation, and traceable task lists. |
 | `sdd-spec-kit` | 61/541 | Use GitHub Spec Kit projects and commands inside Codex, including constitution, specify, clarify, plan, tasks, analyze, implement, extensions, and presets. |
 | `sdd-specify` | 56/498 | Create or refine SDD requirements and specifications with explicit assumptions, non-goals, acceptance criteria, success metrics, and retrofit truth markers. |
-
 ## Repository Design
 
 The repository is organized so source, install state, and runtime cache do not

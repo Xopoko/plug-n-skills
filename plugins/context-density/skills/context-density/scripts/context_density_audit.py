@@ -55,6 +55,10 @@ PLACEMENT_OR_VALIDATION_TERMS = re.compile(
     r"\b(position|placement|middle|anchor|source order|validation|validator|task success|benchmark|recall|evidence|source_ref|recovery)\b",
     re.IGNORECASE,
 )
+LONG_CONTEXT_SUCCESS_TERMS = re.compile(
+    r"\b(use|uses|using|pack|packed|packing|place|placed|include|includes|fit|fits|handle|handles|support|supports|optimi[sz]e)\b",
+    re.IGNORECASE,
+)
 HIGH_AUTHORITY_TERMS = re.compile(
     r"\b(must|must not|required|never|do not|don't|preserve|permission|approval|consent|credential|secret|destructive|safety|security|exact|verbatim|authority|source of truth|non-negotiable|hard rule)\b",
     re.IGNORECASE,
@@ -83,6 +87,26 @@ COMMITMENT_TERMS = re.compile(
     r"\b(instruction|constraint|decision|evidence|source|source_ref|reference|recovery|verbatim|authority|provenance|warning|error|path|id|date|risk|commitment|commitments|contract|validation|capability)\b",
     re.IGNORECASE,
 )
+CACHE_TERMS = re.compile(
+    r"\b(prompt cach(?:e|ing)|cached tokens?|cache hits?|cache reads?|cache writes?|cache[-_ ]?control|cached prefix|cache prefix|prompt_cache|cache breakpoint)\b",
+    re.IGNORECASE,
+)
+CACHE_EVIDENCE_TERMS = re.compile(
+    r"\b(cached_tokens|cache_read|cache_creation|usage|metrics?|hit rate|latency|cost|ttl|breakpoint|static|dynamic|prefix|suffix|monitor|measure)\b",
+    re.IGNORECASE,
+)
+SCHEMA_OUTPUT_TERMS = re.compile(
+    r"\b(structured output|json schema|schema-valid|strict json|json mode|constrained decoding|format restriction|typed output)\b",
+    re.IGNORECASE,
+)
+SCHEMA_SUCCESS_TERMS = re.compile(
+    r"\b(success|successful|reliable|valid|validity|ensure[sd]?|guarantee[sd]?|accepted|sufficient|safe|done)\b",
+    re.IGNORECASE,
+)
+TASK_VALIDATION_TERMS = re.compile(
+    r"\b(task success|semantic|semantics|cross-field|source support|consumer|validator|validation|test|fixture|accuracy|quality|schema and task|task validity)\b",
+    re.IGNORECASE,
+)
 
 
 def is_middle_band(line_no: int, total_lines: int) -> bool:
@@ -103,34 +127,70 @@ def classify_load_path(path: Path) -> str:
     return "unknown"
 
 
+def is_test_path(path: Path) -> bool:
+    return any(part.lower() in {"test", "tests"} for part in path.parts)
+
+
 def scan_contract_risks(path: Path, text: str) -> list[dict]:
     risks: list[dict] = []
-    for line_no, line in enumerate(text.splitlines(), start=1):
+    if is_test_path(path):
+        return risks
+    lines = text.splitlines()
+    in_code_block = False
+    for line_no, line in enumerate(lines, start=1):
+        stripped = line.strip()
+        if stripped.startswith("```"):
+            in_code_block = not in_code_block
+            continue
+        if in_code_block:
+            continue
         if not CONTRACT_TERMS.search(line):
-            continue
-        if line.lstrip().startswith(("#", "-", "*")) and "(" not in line and "." not in line:
-            continue
-        for pattern, kind in PROSE_PARSERS:
-            if pattern.search(line):
-                severity = "high" if kind in {"split_over_text", "substring_match", "regex_parse"} else "medium"
-                risks.append(
-                    {
-                        "path": str(path),
-                        "line": line_no,
-                        "kind": "prose_parsing",
-                        "parser": kind,
-                        "severity": severity,
-                        "message": "Possible parsing of generated model prose for machine state.",
-                        "suggested_contract": "Move consumed values into strict JSON/schema, tool arguments, typed protocol fields, or closed enum keys.",
-                        "excerpt": line.strip()[:220],
-                    }
-                )
-                break
+            if not SCHEMA_OUTPUT_TERMS.search(line):
+                continue
+        if CONTRACT_TERMS.search(line):
+            if not (line.lstrip().startswith(("#", "-", "*")) and "(" not in line and "." not in line):
+                for pattern, kind in PROSE_PARSERS:
+                    if pattern.search(line):
+                        severity = "high" if kind in {"split_over_text", "substring_match", "regex_parse"} else "medium"
+                        risks.append(
+                            {
+                                "path": str(path),
+                                "line": line_no,
+                                "kind": "prose_parsing",
+                                "parser": kind,
+                                "severity": severity,
+                                "message": "Possible parsing of generated model prose for machine state.",
+                                "suggested_contract": "Move consumed values into strict JSON/schema, tool arguments, typed protocol fields, or closed enum keys.",
+                                "excerpt": line.strip()[:220],
+                            }
+                        )
+                        break
+        window = "\n".join(lines[max(0, line_no - 4) : min(len(lines), line_no + 4)])
+        if (
+            path.suffix.lower() != ".py"
+            and
+            SCHEMA_OUTPUT_TERMS.search(line)
+            and SCHEMA_SUCCESS_TERMS.search(window)
+            and not TASK_VALIDATION_TERMS.search(window)
+        ):
+            risks.append(
+                {
+                    "path": str(path),
+                    "line": line_no,
+                    "kind": "schema_without_task_validation",
+                    "severity": "medium",
+                    "message": "Structured-output or schema success is mentioned without nearby semantic, source-support, consumer, or task validation checks.",
+                    "suggested_contract": "Treat schema validity as necessary but not sufficient; add semantic constraints, source support, and task-success validation for the consumer.",
+                    "excerpt": line.strip()[:220],
+                }
+            )
     return risks
 
 
 def scan_context_risks(path: Path, text: str, load_path: str) -> list[dict]:
     risks: list[dict] = []
+    if is_test_path(path):
+        return risks
     lines = text.splitlines()
     total_lines = len(lines)
     in_code_block = False
@@ -220,30 +280,51 @@ def scan_context_risks(path: Path, text: str, load_path: str) -> list[dict]:
                         "excerpt": line.strip()[:220],
                     }
                 )
+            if (
+                LONG_CONTEXT_TERMS.search(line)
+                and LONG_CONTEXT_SUCCESS_TERMS.search(line)
+                and not PLACEMENT_OR_VALIDATION_TERMS.search(line)
+            ):
+                risks.append(
+                    {
+                        "path": str(path),
+                        "line": line_no,
+                        "kind": "long_context_without_placement_check",
+                        "severity": "medium",
+                        "message": "Long-context usage is mentioned without nearby placement, middle-position, recall, source-order, or validation checks.",
+                        "suggested_contract": "Add placement stress, anchors, source-order notes, or task validation before relying on long-context packing.",
+                        "excerpt": line.strip()[:220],
+                    }
+                )
     return risks
 
 
 def scan_compression_risks(path: Path, text: str, load_path: str) -> list[dict]:
     risks: list[dict] = []
+    if is_test_path(path):
+        return risks
     if load_path not in {"hot", "router", "reference"}:
         return risks
     lines = text.splitlines()
     in_code_block = False
     in_frontmatter = bool(lines and lines[0].strip() == "---")
+    current_section = ""
     for line_no, line in enumerate(lines, start=1):
         stripped = line.strip()
         if line_no > 1 and stripped == "---" and in_frontmatter:
             in_frontmatter = False
             continue
+        if stripped.startswith("#"):
+            current_section = stripped.lstrip("#").strip().lower()
         if in_frontmatter:
             continue
         if stripped.startswith("```"):
             in_code_block = not in_code_block
             continue
-        if in_code_block or stripped.startswith("#") or stripped.startswith("|"):
+        if in_code_block or stripped.startswith("#") or stripped.startswith("|") or current_section == "source map":
             continue
         if not COMPRESSION_TERMS.search(line):
-            if not RETRIEVAL_TERMS.search(line):
+            if not RETRIEVAL_TERMS.search(line) and not CACHE_TERMS.search(line):
                 continue
         window = "\n".join(lines[max(0, line_no - 5) : min(len(lines), line_no + 5)])
         if COMPRESSION_TERMS.search(line) and not COMMITMENT_TERMS.search(window):
@@ -291,6 +372,18 @@ def scan_compression_risks(path: Path, text: str, load_path: str) -> list[dict]:
                     "severity": "medium",
                     "message": "Recall, retrieval, archive, or memory state is mentioned without nearby provenance, authority, evidence, or validation safeguards.",
                     "suggested_contract": "Keep artifact recall separate from committed state until confidence, trust boundary, and validation are explicit.",
+                    "excerpt": line.strip()[:220],
+                }
+            )
+        if CACHE_TERMS.search(line) and not CACHE_EVIDENCE_TERMS.search(window):
+            risks.append(
+                {
+                    "path": str(path),
+                    "line": line_no,
+                    "kind": "cache_claim_without_metrics",
+                    "severity": "medium",
+                    "message": "Prompt-cache or cached-prefix behavior is mentioned without nearby layout reasoning or cache usage metrics.",
+                    "suggested_contract": "Report static prefix, dynamic suffix, cache breakpoint, cached token/read/write metrics, hit rate, latency, or cost when claiming cache benefits.",
                     "excerpt": line.strip()[:220],
                 }
             )
