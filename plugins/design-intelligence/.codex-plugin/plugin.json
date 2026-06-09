@@ -1,0 +1,49 @@
+{
+  "name": "design-intelligence",
+  "version": "0.1.0+codex.20260608213055",
+  "description": "A source-backed design intelligence system for technology-agnostic UI/UX judgment, product framing, interface architecture, interaction design, usability, accessibility, visual communication, and design-system governance.",
+  "author": {
+    "name": "Xopoko"
+  },
+  "repository": "https://github.com/Xopoko/plug-n-skills/tree/main/plugins/design-intelligence",
+  "license": "MIT",
+  "keywords": [
+    "design",
+    "ui",
+    "ux",
+    "usability",
+    "accessibility",
+    "product",
+    "interface-architecture",
+    "interaction-design",
+    "design-systems"
+  ],
+  "skills": "./skills/",
+  "interface": {
+    "displayName": "Design Intelligence",
+    "shortDescription": "Build better product experiences, not better design files.",
+    "longDescription": "Design Intelligence gives Codex a source-backed product and UI/UX judgment system. It routes work through product framing, interface architecture, interaction design, usability and accessibility review, visual communication, and design-system governance. It recognizes common UI surfaces such as forms, data views, search/browse, onboarding, permissions, empty/error states, settings, notifications, and transactions while deliberately avoiding Figma automation, CSS recipes, framework recipes, and design-tool workflows.",
+    "developerName": "Xopoko",
+    "category": "Productivity",
+    "capabilities": [
+      "Outcome-first product framing",
+      "Technology-agnostic UI pattern review",
+      "Information architecture and hierarchy design",
+      "Interaction model and state design",
+      "Forms, data views, search, empty state, and error recovery reasoning",
+      "Usability heuristic and cognitive walkthrough review",
+      "Accessibility and inclusive-design review",
+      "Visual communication and attention design",
+      "Design-system decision governance"
+    ],
+    "defaultPrompt": [
+      "Use Design Intelligence to frame this product decision before designing screens.",
+      "Use Design Intelligence to audit this flow for usability, accessibility, hierarchy, interaction, and product risks.",
+      "Use Design Intelligence to improve the interface architecture and information hierarchy without focusing on Figma or CSS.",
+      "Use Design Intelligence to review this UI surface as task, content, state, feedback, recovery, accessibility, and trust design."
+    ],
+    "brandColor": "#14532D",
+    "composerIcon": "./assets/icon.png",
+    "logo": "./assets/icon.png"
+  }
+}

@@ -1,0 +1,47 @@
+{
+  "name": "context-density",
+  "version": "0.1.0",
+  "description": "Context design, prompt-contract optimization, and compression validation for Codex skills, plugins, prompts, docs, and agent workflows.",
+  "author": {
+    "name": "Xopoko"
+  },
+  "repository": "https://github.com/Xopoko/plug-n-skills/tree/main/plugins/context-density",
+  "license": "MIT",
+  "keywords": [
+    "codex",
+    "tokens",
+    "context",
+    "long-context",
+    "prompt-compression",
+    "prompt-contracts",
+    "skills",
+    "validation"
+  ],
+  "skills": "./skills/",
+  "interface": {
+    "displayName": "Context Density",
+    "shortDescription": "Measure context cost, validate compression, and enforce explicit LLM output contracts.",
+    "longDescription": "Context Density turns token efficiency, long-context placement, retrieval provenance, and prompt-contract discipline into one Codex workflow: identify the consumer and load path, measure context cost, remove drift and duplication, preserve behavioral invariants, enforce structured output contracts, and validate the result with deterministic audits. When token pressure exposes skill/plugin split, merge, move, delete, router, or cross-plugin overlap decisions, it routes structural work to Capability Workbench portfolio architecture.",
+    "developerName": "Xopoko",
+    "category": "Productivity",
+    "capabilities": [
+      "Token-efficient context design",
+      "Long-context placement and context packing",
+      "Codex context and token diagnostics",
+      "Skill and plugin token refactoring",
+      "Prompt and context compression validation",
+      "Prompt and output contract audits",
+      "Schema-first validation reporting",
+      "Structural handoff to Capability Workbench for skill/plugin portfolio refactors"
+    ],
+    "defaultPrompt": [
+      "Use Context Density to audit this skill, prompt, or AGENTS.md for token cost, duplication, and prompt-contract risk.",
+      "Use Context Density to refactor this Codex skill/plugin for lower hot-path token cost while preserving behavior, and route structural portfolio decisions to Capability Workbench.",
+      "Use Context Density to check long-context placement, retrieval provenance, and compression quality before replacing raw context.",
+      "Use Context Density to review this LLM workflow for explicit JSON/schema/tool-call contracts and brittle prose parsing."
+    ],
+    "brandColor": "#2563EB",
+    "composerIcon": "./assets/icon.png",
+    "logo": "./assets/icon.png"
+  }
+}

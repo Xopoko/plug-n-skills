@@ -1,0 +1,4 @@
+interface:
+  display_name: "Capability Workbench"
+  short_description: "Route agent capability lifecycle work."
+  default_prompt: "Use Capability Workbench to route skill/plugin work, default synthesis to broad external-first discovery, choose the right source surface, and install only when required."

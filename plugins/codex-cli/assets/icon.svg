@@ -1,0 +1,10 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128" role="img" aria-label="Codex CLI icon">
+  <rect width="128" height="128" rx="18" fill="#0B1220"/>
+  <path d="M26 35h76v58H26z" fill="#111827" stroke="#38BDF8" stroke-width="4"/>
+  <path d="M40 52l15 12-15 12" fill="none" stroke="#F8FAFC" stroke-width="7" stroke-linecap="round" stroke-linejoin="round"/>
+  <path d="M64 79h28" stroke="#A3E635" stroke-width="7" stroke-linecap="round"/>
+  <path d="M26 35h76v14H26z" fill="#1E293B"/>
+  <circle cx="37" cy="42" r="3" fill="#F87171"/>
+  <circle cx="49" cy="42" r="3" fill="#FBBF24"/>
+  <circle cx="61" cy="42" r="3" fill="#34D399"/>
+</svg>

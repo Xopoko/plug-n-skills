@@ -1,0 +1,4 @@
+interface:
+  display_name: "Capability Synthesizer"
+  short_description: "Web-first well-vetted synthesis."
+  default_prompt: "Use Capability Synthesizer to run broad external-first discovery, then synthesize the best-supported practical agent skill or plugin onto the selected source surface, installing only when required."

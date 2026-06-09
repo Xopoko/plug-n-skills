@@ -1,0 +1,41 @@
+{
+  "name": "scientific-research",
+  "version": "0.1.5+codex.20260608223000",
+  "description": "Plan, collect, deduplicate, and synthesize scientific literature from public scholarly sources with provenance and quality gates.",
+  "author": {
+    "name": "Xopoko"
+  },
+  "repository": "https://github.com/Xopoko/plug-n-skills/tree/main/plugins/scientific-research",
+  "license": "MIT",
+  "skills": "./skills/",
+  "keywords": [
+    "scientific-research",
+    "scholarly",
+    "arxiv",
+    "openalex",
+    "crossref",
+    "europe-pmc",
+    "semantic-scholar",
+    "literature-review"
+  ],
+  "interface": {
+    "displayName": "Scientific Research",
+    "shortDescription": "Run source-backed scholarly research workflows.",
+    "longDescription": "Scientific Research gives Codex a disciplined workflow for scholarly discovery, source routing, deduplication, open-copy handling, claim ledgers, and evidence quality gates across arXiv, OpenAlex, Crossref, Europe PMC, Semantic Scholar, NCBI, CORE, and OpenCitations.",
+    "developerName": "Xopoko",
+    "category": "Research",
+    "capabilities": [
+      "Research",
+      "Read",
+      "Write"
+    ],
+    "defaultPrompt": [
+      "Research recent papers on this topic.",
+      "Build a deduplicated literature corpus.",
+      "Validate these claims against sources."
+    ],
+    "brandColor": "#2563EB",
+    "composerIcon": "./assets/icon.png",
+    "logo": "./assets/icon.png"
+  }
+}

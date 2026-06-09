@@ -1,0 +1,4 @@
+interface:
+  display_name: "Capability Auditor"
+  short_description: "Audit skill and plugin quality risks."
+  default_prompt: "Use Capability Auditor to inspect a skill or plugin for risks, install scope, token cost, duplicated logic, and validation readiness."

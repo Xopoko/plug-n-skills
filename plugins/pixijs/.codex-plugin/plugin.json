@@ -1,0 +1,41 @@
+{
+  "name": "pixijs",
+  "version": "0.1.0",
+  "description": "PixiJS v8 skill collection for Codex.",
+  "author": {
+    "name": "PixiJS community"
+  },
+  "homepage": "https://pixijs.com/",
+  "repository": "https://github.com/Xopoko/plug-n-skills/tree/main/plugins/pixijs",
+  "license": "MIT",
+  "keywords": [
+    "pixijs",
+    "pixi",
+    "webgl",
+    "webgpu",
+    "canvas",
+    "2d"
+  ],
+  "skills": "./skills/",
+  "interface": {
+    "displayName": "PixiJS",
+    "shortDescription": "Build and debug PixiJS v8 scenes.",
+    "longDescription": "PixiJS packages the upstream PixiJS v8 Codex skills for application setup, scene graph work, assets, events, rendering, filters, performance, migration, and project scaffolding.",
+    "developerName": "PixiJS community",
+    "category": "Coding",
+    "capabilities": [
+      "Coding",
+      "Reference",
+      "Frontend"
+    ],
+    "websiteURL": "https://pixijs.com/",
+    "brandColor": "#17D6D8",
+    "composerIcon": "./assets/icon.png",
+    "logo": "./assets/icon.png",
+    "defaultPrompt": [
+      "Create a PixiJS v8 application.",
+      "Fix this PixiJS scene graph bug.",
+      "Optimize PixiJS rendering performance."
+    ]
+  }
+}

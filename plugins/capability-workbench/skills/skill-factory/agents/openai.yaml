@@ -1,0 +1,4 @@
+interface:
+  display_name: "Skill Factory"
+  short_description: "Create and refactor agent skills."
+  default_prompt: "Use Skill Factory to create or improve an agent skill with concise instructions, resources, validation, and installation only when required."

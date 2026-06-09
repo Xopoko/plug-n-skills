@@ -1,0 +1,10 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128" role="img" aria-label="Claude Code icon">
+  <rect width="128" height="128" rx="18" fill="#15110C"/>
+  <path d="M31 36h66v56H31z" fill="#211A12" stroke="#D4A27F" stroke-width="4"/>
+  <path d="M42 55l13 10-13 10" fill="none" stroke="#FDF7ED" stroke-width="7" stroke-linecap="round" stroke-linejoin="round"/>
+  <path d="M64 77h25" stroke="#F59E0B" stroke-width="7" stroke-linecap="round"/>
+  <path d="M31 36h66v13H31z" fill="#34261A"/>
+  <circle cx="42" cy="43" r="3" fill="#FB7185"/>
+  <circle cx="54" cy="43" r="3" fill="#FBBF24"/>
+  <circle cx="66" cy="43" r="3" fill="#34D399"/>
+</svg>

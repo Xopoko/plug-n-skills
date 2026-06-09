@@ -1,0 +1,4 @@
+interface:
+  display_name: "Plugin Factory"
+  short_description: "Build marketplace-backed agent plugins."
+  default_prompt: "Use Plugin Factory to create or update an agent plugin source, generate a coherent imagegen-backed bitmap plugin icon when needed, validate it, and make it globally visible only when installation is required."

@@ -1,0 +1,77 @@
+{
+  "$schema": "https://raw.githubusercontent.com/anthropics/claude-code/refs/heads/main/marketplace/marketplace.schema.json",
+  "name": "xopoko-plug-n-skills",
+  "owner": {
+    "name": "Xopoko"
+  },
+  "metadata": {
+    "description": "Ready-to-install skills and plugins for Codex and Claude Code."
+  },
+  "plugins": [
+    {
+      "name": "build-swift-apps",
+      "source": "./plugins/build-swift-apps",
+      "description": "Swift app build, debug, profile, package, App Store, TestFlight, simulator, macOS, iOS, and Xcode workflows."
+    },
+    {
+      "name": "pixijs",
+      "source": "./plugins/pixijs",
+      "description": "PixiJS v8 application, scene graph, rendering, migration, asset, event, and performance workflows."
+    },
+    {
+      "name": "tauri",
+      "source": "./plugins/tauri",
+      "description": "Tauri 2 setup, migration, config security, IPC, plugins, debugging, testing, and distribution workflows."
+    },
+    {
+      "name": "scientific-research",
+      "source": "./plugins/scientific-research",
+      "description": "Source-backed scholarly discovery, deduplication, screening, claim ledgers, and evidence quality gates."
+    },
+    {
+      "name": "context-density",
+      "source": "./plugins/context-density",
+      "description": "Context design, long-context placement, prompt-contract audits, skill/plugin compression, and structural handoff."
+    },
+    {
+      "name": "capability-workbench",
+      "source": "./plugins/capability-workbench",
+      "description": "Capability discovery, synthesis, cross-plugin portfolio architecture, skill trigger metadata, vetting, plugin packaging, installation, and marketplace visibility."
+    },
+    {
+      "name": "codex-cli",
+      "source": "./plugins/codex-cli",
+      "description": "Codex CLI operations, automation, diagnostics, plugin and MCP lifecycle, session log forensics, and local environment actions."
+    },
+    {
+      "name": "claude-code",
+      "source": "./plugins/claude-code",
+      "description": "Claude Code CLI operations, print-mode automation, diagnostics, plugin and MCP lifecycle, hooks, settings, agents, sessions, and worktrees."
+    },
+    {
+      "name": "architecture-intelligence",
+      "source": "./plugins/architecture-intelligence",
+      "description": "Source-backed code architecture audits, ownership topology, runtime topology, conformance and drift checks, structure metrics, ADRs, fitness functions, dependency boundaries, and refactoring strategy."
+    },
+    {
+      "name": "design-intelligence",
+      "source": "./plugins/design-intelligence",
+      "description": "Source-backed product, UX, interaction, hierarchy, accessibility, and design-system judgment."
+    },
+    {
+      "name": "game-design-intelligence",
+      "source": "./plugins/game-design-intelligence",
+      "description": "Gameplay loops, progression, economy, motivation, onboarding, difficulty, multiplayer, and live-service critique."
+    },
+    {
+      "name": "kotlin-multiplatform",
+      "source": "./plugins/kotlin-multiplatform",
+      "description": "Kotlin Multiplatform architecture, Gradle diagnosis, Compose Multiplatform, interop, testing, data, governance, performance, security, publishing, and release workflows."
+    },
+    {
+      "name": "spec-driven-development",
+      "source": "./plugins/spec-driven-development",
+      "description": "Spec-Driven Development with Spec Kit, traceability, evidence profiles, and completion proof gates."
+    }
+  ]
+}

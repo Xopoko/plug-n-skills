@@ -1,0 +1,4 @@
+interface:
+  display_name: "Capability Reality Repair"
+  short_description: "Repair stale skill/plugin/MCP contracts"
+  default_prompt: "A skill or plugin helper just contradicted live behavior. Find the false capability contract, repair the source of truth, validate it, and then continue the original task."

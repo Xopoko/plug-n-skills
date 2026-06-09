@@ -1,0 +1,17 @@
+{
+  "name": "kotlin-multiplatform",
+  "version": "0.3.0",
+  "description": "Kotlin Multiplatform development, migration, Gradle diagnosis, Compose Multiplatform, interop, testing, data, governance, performance, security, publishing, and production readiness.",
+  "author": {
+    "name": "Xopoko"
+  },
+  "license": "MIT",
+  "keywords": [
+    "kotlin",
+    "kmp",
+    "compose-multiplatform",
+    "gradle",
+    "android",
+    "ios"
+  ]
+}

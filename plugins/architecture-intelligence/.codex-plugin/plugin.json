@@ -1,0 +1,66 @@
+{
+  "name": "architecture-intelligence",
+  "version": "0.1.6+codex.20260609084750",
+  "description": "Source-backed software architecture intelligence for codebase audits, ownership topology, runtime topology, architecture conformance and drift checks, structure metrics, module boundaries, dependency flow, ADRs, architecture fitness functions, and incremental refactoring strategy.",
+  "author": {
+    "name": "Xopoko"
+  },
+  "repository": "https://github.com/Xopoko/plug-n-skills/tree/main/plugins/architecture-intelligence",
+  "license": "MIT",
+  "keywords": [
+    "software-architecture",
+    "code-architecture",
+    "architecture-review",
+    "adr",
+    "fitness-functions",
+    "bounded-contexts",
+    "dependency-analysis",
+    "architecture-conformance",
+    "architecture-drift",
+    "ownership-topology",
+    "code-ownership",
+    "codeowners",
+    "socio-technical",
+    "runtime-topology",
+    "observability",
+    "resilience",
+    "structure-metrics",
+    "dependency-cycles",
+    "refactoring"
+  ],
+  "skills": "./skills/",
+  "interface": {
+    "displayName": "Architecture Intelligence",
+    "shortDescription": "Audit, check, and evolve code architecture from source evidence.",
+    "longDescription": "Architecture Intelligence gives Codex a source-backed architecture system for audits, ownership/runtime topology, conformance and drift, ADRs, fitness functions, structure metrics, and incremental refactoring. It focuses on boundaries, dependency direction, domain/data seams, CODEOWNERS/OWNERS evidence, cross-owned coordination risk, deployment/runtime signals, quality attributes, documentation drift, policy checks, cycles, fan-in/fan-out, instability, and validation gates rather than style-only review.",
+    "developerName": "Xopoko",
+    "category": "Productivity",
+    "capabilities": [
+      "Source-backed codebase architecture audit",
+      "Ownership topology, CODEOWNERS/OWNERS coverage, and cross-owned coordination risk",
+      "Runtime topology, deployment, observability, and resilience review",
+      "Architecture conformance and drift detection",
+      "Structure metrics for coupling, instability, and dependency cycles",
+      "Module boundary and dependency-flow review",
+      "Bounded-context and domain-seam reasoning",
+      "Architecture decision record creation and review",
+      "Architecture fitness-function design",
+      "Incremental refactoring and migration strategy",
+      "Architecture risk, reversibility, and blast-radius scoring",
+      "Offline repository architecture probe"
+    ],
+    "defaultPrompt": [
+      "Use Architecture Intelligence to audit this codebase architecture from source evidence.",
+      "Use Architecture Intelligence to map ownership topology, CODEOWNERS coverage, ownerless areas, and cross-owned dependency risks.",
+      "Use Architecture Intelligence to map runtime topology, deployment evidence, observability, and resilience risks.",
+      "Use Architecture Intelligence to inspect structure metrics, fan-out, instability, and dependency cycles.",
+      "Use Architecture Intelligence to compare the intended architecture policy to the observed source dependencies.",
+      "Use Architecture Intelligence to review this architecture decision and produce an ADR-ready recommendation.",
+      "Use Architecture Intelligence to define architecture fitness functions and CI gates for these boundaries.",
+      "Use Architecture Intelligence to plan an incremental refactor that improves module boundaries without a risky rewrite."
+    ],
+    "brandColor": "#0F766E",
+    "composerIcon": "./assets/icon.png",
+    "logo": "./assets/icon.png"
+  }
+}

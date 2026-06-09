@@ -1,0 +1,20 @@
+{
+  "name": "claude-code",
+  "version": "0.1.0",
+  "description": "Operate, automate, diagnose, and inspect Claude Code CLI, plugins, MCP servers, hooks, settings, agents, sessions, and worktrees.",
+  "author": {
+    "name": "Xopoko"
+  },
+  "license": "MIT",
+  "keywords": [
+    "claude",
+    "claude-code",
+    "cli",
+    "automation",
+    "mcp",
+    "plugins",
+    "hooks",
+    "agents",
+    "worktrees"
+  ]
+}

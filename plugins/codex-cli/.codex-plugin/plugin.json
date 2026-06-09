@@ -1,0 +1,41 @@
+{
+  "name": "codex-cli",
+  "version": "0.1.0+codex.20260609145100",
+  "description": "Codex CLI operations, automation, diagnostics, plugin and MCP lifecycle, session log forensics, and local environment actions.",
+  "author": {
+    "name": "Xopoko"
+  },
+  "repository": "https://github.com/Xopoko/plug-n-skills/tree/main/plugins/codex-cli",
+  "license": "MIT",
+  "keywords": [
+    "codex",
+    "cli",
+    "automation",
+    "mcp",
+    "plugins",
+    "logs",
+    "environments"
+  ],
+  "skills": "./skills/",
+  "interface": {
+    "displayName": "Codex CLI",
+    "shortDescription": "Operate, automate, debug, and inspect Codex CLI safely.",
+    "longDescription": "A Codex CLI operations pack for local CLI surface inspection, non-interactive exec and review automation, plugin marketplace and MCP server lifecycle work, doctor/debug/sandbox/app-server diagnostics, redacted session log forensics, and Codex app local environment actions.",
+    "developerName": "Xopoko",
+    "category": "Coding",
+    "capabilities": [
+      "Local Codex CLI version, help, command, flag, and safety inspection",
+      "Non-interactive codex exec automation with cwd, sandbox, approval, JSONL, output schema, and last-message handling",
+      "Codex review commands for uncommitted changes, base-branch diffs, and commit review",
+      "Codex plugin marketplace visibility, install, removal, and cache-check workflows",
+      "Codex MCP server list, get, add, remove, login, logout, stdio, HTTP, bearer-token-env, and OAuth workflows",
+      "Codex doctor, debug, feature flag, sandbox denial, app-server, remote-control, and remote connection diagnostics",
+      "Redacted Codex rollout JSONL discovery, summaries, timelines, tool-call views, search, and log health checks",
+      "Codex app local environment.toml actions for Run, Test, Preview, dev server, browser, and simulator workflows"
+    ],
+    "defaultPrompt": "Help me operate, automate, or debug the Codex CLI safely.",
+    "brandColor": "#0EA5E9",
+    "composerIcon": "./assets/icon.png",
+    "logo": "./assets/icon.png"
+  }
+}

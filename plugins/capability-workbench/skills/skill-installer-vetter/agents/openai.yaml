@@ -1,0 +1,4 @@
+interface:
+  display_name: "Skill Installer Vetter"
+  short_description: "Vet and install agent skills safely."
+  default_prompt: "Use Skill Installer Vetter to inspect a curated source, GitHub path, or local folder, then install safe skills only when the request or contract requires it."

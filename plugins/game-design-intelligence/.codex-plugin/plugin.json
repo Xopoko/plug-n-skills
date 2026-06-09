@@ -1,0 +1,49 @@
+{
+  "name": "game-design-intelligence",
+  "version": "0.1.0+codex.20260608121253",
+  "description": "A source-backed game design intelligence system for gameplay loops, systems, progression, motivation, retention, balance, economies, onboarding, difficulty, multiplayer dynamics, live-service content, and ethical player psychology.",
+  "author": {
+    "name": "Xopoko"
+  },
+  "repository": "https://github.com/Xopoko/plug-n-skills/tree/main/plugins/game-design-intelligence",
+  "license": "MIT",
+  "keywords": [
+    "game-design",
+    "gameplay-systems",
+    "core-loops",
+    "progression",
+    "economy",
+    "balancing",
+    "player-motivation",
+    "retention",
+    "onboarding",
+    "difficulty",
+    "multiplayer",
+    "live-service"
+  ],
+  "skills": "./skills/",
+  "interface": {
+    "displayName": "Game Design Intelligence",
+    "shortDescription": "Design engaging, balanced, scalable games before implementation.",
+    "longDescription": "Game Design Intelligence gives Codex a source-backed design judgment system for game loops, mechanics, progression, economies, rewards, onboarding, difficulty curves, player motivation, retention, multiplayer dynamics, content cadence, and live-service patterns. It deliberately avoids game engines, graphics, asset creation, programming, and implementation details.",
+    "developerName": "Xopoko",
+    "category": "Productivity",
+    "capabilities": [
+      "Core gameplay loop and system critique",
+      "Emergence and gameplay dynamics design",
+      "Progression, reward, economy, and balance review",
+      "Player motivation and ethical retention design",
+      "Onboarding, teaching, accessibility of challenge, and difficulty curve review",
+      "Multiplayer, social dynamics, fairness, toxicity, and cooperation design",
+      "Live-service content cadence, seasons, events, and late-game health review"
+    ],
+    "defaultPrompt": [
+      "Use Game Design Intelligence to critique this game's core loop, progression, rewards, difficulty, motivation, retention, multiplayer dynamics, and content cadence.",
+      "Use Game Design Intelligence to design a source-backed gameplay systems brief without engine, graphics, asset, or programming details.",
+      "Use Game Design Intelligence to review this economy, reward, and live-service plan for balance, player agency, fatigue, and commercial scalability."
+    ],
+    "brandColor": "#7C2D12",
+    "composerIcon": "./assets/icon.png",
+    "logo": "./assets/icon.png"
+  }
+}

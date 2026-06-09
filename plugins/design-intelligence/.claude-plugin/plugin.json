@@ -1,0 +1,20 @@
+{
+  "name": "design-intelligence",
+  "version": "0.1.0",
+  "description": "Source-backed, technology-agnostic UI/UX judgment: product framing, information architecture, interaction design, usability/accessibility review, visual communication, and design-system governance. Deliberately avoids Figma automation, framework recipes, and CSS recipes.",
+  "author": {
+    "name": "Xopoko"
+  },
+  "license": "MIT",
+  "keywords": [
+    "design",
+    "ui",
+    "ux",
+    "usability",
+    "accessibility",
+    "product",
+    "interface-architecture",
+    "interaction-design",
+    "design-systems"
+  ]
+}

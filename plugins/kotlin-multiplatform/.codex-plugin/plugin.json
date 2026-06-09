@@ -1,0 +1,46 @@
+{
+  "name": "kotlin-multiplatform",
+  "version": "0.3.0+codex.20260608170251",
+  "description": "Kotlin Multiplatform development, migration, Gradle diagnosis, Compose Multiplatform, interop, testing, data, governance, performance, security, publishing, and production readiness.",
+  "author": {
+    "name": "Xopoko"
+  },
+  "repository": "https://github.com/Xopoko/plug-n-skills/tree/main/plugins/kotlin-multiplatform",
+  "license": "MIT",
+  "keywords": [
+    "kotlin",
+    "kmp",
+    "compose-multiplatform",
+    "gradle",
+    "android",
+    "ios"
+  ],
+  "skills": "./skills/",
+  "interface": {
+    "displayName": "Kotlin Multiplatform",
+    "shortDescription": "Build, migrate, debug, and verify Kotlin Multiplatform projects.",
+    "longDescription": "A source-backed Kotlin Multiplatform capability pack for Gradle and source-set diagnosis, Android-KMP and AGP migration, Compose Multiplatform UI, iOS interoperability, CocoaPods to SwiftPM migration, CI, testing, performance, observability, security, privacy, publishing, and production readiness.",
+    "developerName": "Xopoko",
+    "category": "Coding",
+    "capabilities": [
+      "Kotlin Multiplatform architecture and source-set design",
+      "Gradle, KGP, AGP, Compose Multiplatform configuration diagnosis",
+      "Android-KMP plugin and AGP 9 migration guidance",
+      "Compose Multiplatform UI and resource guardrails",
+      "iOS framework, cinterop, CocoaPods, and SwiftPM migration guidance",
+      "KMP testing, CI, and release verification",
+      "Build governance, convention plugin, version catalog, and module API hygiene",
+      "Swift API readiness, SKIE, NativeCoroutines, KDoctor, Klibs, and ABI validation guidance",
+      "KMP data-layer, offline-first, and source-of-truth review",
+      "Production readiness scorecards across architecture, tests, security, performance, interop, and release",
+      "KMP performance and observability diagnostics for Gradle, Kotlin/Native, Compose, binaries, and runtime logs",
+      "KMP security and privacy review for secure storage, tokens, logs, networking, and platform boundaries",
+      "KMP CI and publishing runbooks for Maven, XCFramework, SwiftPM, KMMBridge, app-store boundaries, and release gates",
+      "KMP ecosystem selection for persistence, networking, DI, navigation, logging, observability, testing, resources, docs, and monetization"
+    ],
+    "brandColor": "#7F52FF",
+    "composerIcon": "./assets/icon.png",
+    "logo": "./assets/icon.png",
+    "defaultPrompt": "Help me build or fix a Kotlin Multiplatform project."
+  }
+}

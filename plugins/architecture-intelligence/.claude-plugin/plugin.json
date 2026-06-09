@@ -1,0 +1,30 @@
+{
+  "name": "architecture-intelligence",
+  "version": "0.1.6",
+  "description": "Source-backed software architecture intelligence for codebase audits, ownership topology, runtime topology, architecture conformance and drift checks, structure metrics, module boundaries, dependency flow, ADRs, architecture fitness functions, and incremental refactoring strategy.",
+  "author": {
+    "name": "Xopoko"
+  },
+  "license": "MIT",
+  "keywords": [
+    "software-architecture",
+    "code-architecture",
+    "architecture-review",
+    "adr",
+    "fitness-functions",
+    "bounded-contexts",
+    "dependency-analysis",
+    "architecture-conformance",
+    "architecture-drift",
+    "ownership-topology",
+    "code-ownership",
+    "codeowners",
+    "socio-technical",
+    "runtime-topology",
+    "observability",
+    "resilience",
+    "structure-metrics",
+    "dependency-cycles",
+    "refactoring"
+  ]
+}

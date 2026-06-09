@@ -1,0 +1,91 @@
+# macOS, editor, and merge leftovers
+.DS_Store
+.AppleDouble
+._*
+*.swp
+*.swo
+*~
+*.bak
+*.orig
+
+# Local IDE and agent runtime state
+.agents/
+.codex/
+.claude/
+.cursor/
+.idea/
+.vscode/
+
+# Python caches, virtualenvs, and test output
+__pycache__/
+*.py[cod]
+*.pyo
+.python-version
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.tox/
+.venv/
+venv/
+.coverage
+.coverage.*
+coverage/
+htmlcov/
+junit*.xml
+
+# JavaScript package managers and build output
+node_modules/
+.npm/
+.pnpm-store/
+.yarn/
+.turbo/
+.parcel-cache/
+npm-debug.log*
+yarn-debug.log*
+pnpm-debug.log*
+
+# Generated build/export artifacts
+dist/
+build/
+out/
+output/
+tmp/
+temp/
+scratch/
+reports/
+*.tmp
+*.log
+
+# Local research, synthesis packages, and workbench drafts
+research/
+skill-synthesis/
+docs/superpowers/
+plugins/*/research/
+plugins/*/synthesis/
+plugins/*/reports/
+plugins/*/scratch/
+plugins/*/output/
+plugins/*/tmp/
+plugins/*/temp/
+
+# Local secrets and machine-specific configuration
+.env
+.env.*
+!.env.example
+*.local
+*.secret
+*.pem
+*.p8
+*.p12
+*.key
+id_rsa
+id_ed25519
+
+# Claude Code manifests are publication artifacts. Track the root marketplace
+# and each plugin manifest, but keep nested/generated marketplace files local.
+.claude-plugin/*
+!.claude-plugin/
+!.claude-plugin/marketplace.json
+plugins/*/.claude-plugin/*
+!plugins/*/.claude-plugin/
+!plugins/*/.claude-plugin/plugin.json

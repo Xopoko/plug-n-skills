@@ -1,0 +1,20 @@
+{
+  "name": "game-design-intelligence",
+  "version": "0.1.0",
+  "description": "Source-backed game design judgment: core loops, gameplay systems, progression/economy/balance, motivation/retention, onboarding/difficulty, and multiplayer/live-service dynamics. Avoids engines, graphics, and implementation code.",
+  "author": {
+    "name": "Xopoko"
+  },
+  "license": "MIT",
+  "keywords": [
+    "game-design",
+    "gameplay-systems",
+    "core-loops",
+    "progression",
+    "economy",
+    "balancing",
+    "retention",
+    "multiplayer",
+    "live-service"
+  ]
+}

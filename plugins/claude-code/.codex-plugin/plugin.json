@@ -1,0 +1,42 @@
+{
+  "name": "claude-code",
+  "version": "0.1.0+codex.20260609151500",
+  "description": "Claude Code CLI operations, print-mode automation, diagnostics, plugin and MCP lifecycle, hooks, settings, agents, sessions, and worktrees.",
+  "author": {
+    "name": "Xopoko"
+  },
+  "repository": "https://github.com/Xopoko/plug-n-skills/tree/main/plugins/claude-code",
+  "license": "MIT",
+  "keywords": [
+    "claude",
+    "claude-code",
+    "cli",
+    "automation",
+    "mcp",
+    "plugins",
+    "hooks",
+    "agents",
+    "worktrees"
+  ],
+  "skills": "./skills/",
+  "interface": {
+    "displayName": "Claude Code",
+    "shortDescription": "Operate, automate, debug, and inspect Claude Code safely.",
+    "longDescription": "A Claude Code operations pack for local CLI surface inspection, print-mode automation, plugin marketplace and MCP lifecycle work, safe-mode and bare-mode diagnostics, hooks and settings governance, background agents, sessions, worktrees, remote control, and cloud ultrareview boundaries.",
+    "developerName": "Xopoko",
+    "category": "Coding",
+    "capabilities": [
+      "Local Claude Code version, help, command, flag, permission-mode, output-format, and safety inspection",
+      "Non-interactive claude --print automation with JSON, stream-json, JSON schema, budget, fallback model, prompt stdin, and no-persistence handling",
+      "Claude Code plugin marketplace lifecycle, install/update/remove/details/validate/tag/prune, token-cost, and session-only plugin loading",
+      "Claude Code MCP server list/get/add/remove/import/serve, project approval, strict config, stdio, HTTP, SSE, headers, env vars, and OAuth workflows",
+      "Claude Code diagnostics for safe mode, bare mode, debug logs, doctor, auto-mode classifier, auth, update, install, IDE, and Chrome integration",
+      "Claude Code hooks, settings, CLAUDE.md/rules loading, custom agents, tool allow/deny permissions, workflows, and setting-source boundaries",
+      "Claude Code background agents, worktrees, tmux panes, resume/continue/from-pr/fork-session, remote control, and ultrareview orchestration"
+    ],
+    "defaultPrompt": "Help me operate, automate, or debug Claude Code safely.",
+    "brandColor": "#D4A27F",
+    "composerIcon": "./assets/icon.png",
+    "logo": "./assets/icon.png"
+  }
+}
