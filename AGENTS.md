@@ -1,8 +1,8 @@
 # Agent Guidance
 
 This repository is the canonical source tree for Xopoko's Plug'n Skills agent
-plugins. Keep it public-safe, portable across machines, and usable from both
-Codex and Claude Code.
+plugins. Keep it public-safe, portable across machines, and usable from Codex,
+Claude Code, and Cursor. The tree must never be locked to a single agent.
 
 AGENTS.md is the working contract for automated contributors. Prefer changing
 this file when repository rules change, not when a one-off task needs local
@@ -21,6 +21,10 @@ context.
 - Prefer focused skills plus references over broad catch-all skill text.
 - Keep deterministic behavior in scripts when a workflow needs repeatable
   checks, parsing, scoring, packaging, or installation.
+- Reference bundled plugin scripts from skills through the `$PLUGIN_ROOT`
+  convention (the host's plugin-root variable when defined, otherwise the
+  skill folder's `../..`); never depend on the agent's current working
+  directory.
 - Do not overstate capability. Describe what the plugin actually provides and
   what validation proves.
 
@@ -102,6 +106,11 @@ Manifests are publication artifacts, not scratch files.
 
 - Keep `.codex-plugin/plugin.json` valid and aligned with the plugin directory.
 - Keep `.claude-plugin/plugin.json` valid and aligned with the Codex manifest.
+- Keep shared manifest fields (name, description, base version, author,
+  license, keywords) identical across both manifests; the plugin validator
+  enforces this parity.
+- Cursor needs no manifest: it consumes `skills/` directly via
+  `scripts/install-cursor-skills.py`.
 - Keep repository URLs pointing at the public source location for this checkout.
 - Keep `.claude-plugin/marketplace.json` in sync with the actual plugin set.
 - Keep `.agents/plugins/marketplace.json` ignored; regenerate it through the
@@ -141,10 +150,12 @@ repository is the active workspace:
 
 1. Write the source change under `plugins/<plugin-name>/`.
 2. Validate from this repository.
-3. If the plugin should be usable on this machine, refresh the global Codex
-   installation from the repository source with
-   `scripts/install-codex-plugins.py --plugin <plugin-name>`.
-4. Verify visibility with the same helper and `--check-only`.
+3. If the plugin should be usable on this machine, refresh the active agent's
+   install state from the repository source: Codex via
+   `scripts/install-codex-plugins.py --plugin <plugin-name>`, Cursor via
+   `scripts/install-cursor-skills.py --plugin <plugin-name>`, Claude Code via
+   its marketplace tooling against this checkout.
+4. Verify visibility with the matching helper and `--check-only`.
 
 For source-only work, stop after validation and state that no global
 install/cache refresh was performed.
@@ -164,6 +175,8 @@ Run these before committing publication-facing changes:
 ```bash
 python3 scripts/validate-repository.py
 python3 scripts/install-codex-plugins.py --dry-run
+python3 scripts/install-cursor-skills.py --dry-run --dest /tmp/cursor-skills-preview
+python3 -m unittest discover -s scripts/tests
 ```
 
 For install-affecting changes, also run a targeted install and visibility check:
@@ -205,5 +218,5 @@ When finishing a change, report:
 
 - what source files changed;
 - which validation commands ran and whether they passed;
-- whether local Codex or Claude install state was refreshed;
+- whether local Codex, Claude, or Cursor install state was refreshed;
 - whether changes were committed or left in the working tree.

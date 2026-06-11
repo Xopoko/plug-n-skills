@@ -306,7 +306,10 @@ def should_skip_scan(root: Path, path: Path) -> bool:
     parts = rel.parts
     if any(part in SKIP_DIR_NAMES for part in parts):
         return True
-    if parts and parts[0] in ROOT_SCRATCH_DIRS:
+    if parts and (
+        parts[0] in ROOT_SCRATCH_DIRS
+        or any(parts[0].startswith(prefix + "-") for prefix in ROOT_SCRATCH_DIRS)
+    ):
         return True
     if len(parts) >= 2 and parts[0] == "docs" and parts[1] == "superpowers":
         return True

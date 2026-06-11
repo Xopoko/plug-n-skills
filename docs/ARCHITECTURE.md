@@ -1,8 +1,8 @@
 # Architecture
 
 This repository separates plugin source from local runtime state. The Git tree
-contains installable source packages; Codex and Claude generated state is
-derived from those packages.
+contains installable source packages; Codex, Claude, and Cursor generated
+state is derived from those packages.
 
 ## Source Of Truth
 
@@ -17,7 +17,9 @@ contains:
 - `assets/` for icons and other media.
 
 The root `.claude-plugin/marketplace.json` is the published Claude Code
-marketplace for the collection.
+marketplace for the collection. Cursor has no plugin marketplace;
+`scripts/install-cursor-skills.py` copies plugin skills into Cursor's global
+skills directory instead.
 
 ## Codex Install Model
 

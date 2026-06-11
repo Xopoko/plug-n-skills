@@ -10,6 +10,9 @@ It checks:
 
 - every required plugin directory exists;
 - every plugin has both Codex and Claude manifests;
+- shared manifest fields stay identical between the two manifests
+  (parity is enforced by the plugin validator); Cursor needs no manifest
+  because it consumes skills directly;
 - each Codex manifest passes the plugin validator;
 - manifest names match directory names;
 - required metadata such as license and repository fields is present;
