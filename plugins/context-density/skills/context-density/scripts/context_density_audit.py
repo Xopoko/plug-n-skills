@@ -248,10 +248,34 @@ COMMITMENT_SCHEMA = "context_density.commitment_ledger.v1"
 # Findings that cannot be silenced by rewording alone; only these may block.
 MEASURED_KINDS = {"oversized_hot_surface", "dense_hot_line"}
 LOAD_PATH_PRECEDENCE = ("hot", "router", "reference", "evidence")
+LEGAL_FILENAME_RE = re.compile(r"(^|/)(licen[cs]e|notice|copying|patents|legal)[^/]*$", re.IGNORECASE)
+# Explicit, auditable suppression for advisory findings: a `cda:allow kind[,kind]`
+# marker on the flagged line or the line above. Measured findings cannot be
+# suppressed this way.
+ALLOW_MARKER_RE = re.compile(r"cda:allow\s+([a-z_,\s]+)")
 
 
 def evidence_class(kind: str) -> str:
     return "measured" if kind in MEASURED_KINDS else "advisory"
+
+
+def apply_allow_annotations(risks: list[dict], lines: list[str]) -> list[dict]:
+    """Drop advisory risks explicitly suppressed by a cda:allow marker."""
+    kept = []
+    for risk in risks:
+        kind = str(risk.get("kind", ""))
+        if evidence_class(kind) == "advisory":
+            line_no = int(risk.get("line", 0))
+            allowed: set[str] = set()
+            for idx in (line_no - 1, line_no - 2):
+                if 0 <= idx < len(lines):
+                    marker = ALLOW_MARKER_RE.search(lines[idx])
+                    if marker:
+                        allowed.update(k.strip() for k in marker.group(1).split(",") if k.strip())
+            if kind in allowed:
+                continue
+        kept.append(risk)
+    return kept
 
 
 def is_middle_band(line_no: int, total_lines: int) -> bool:
@@ -426,12 +450,19 @@ def find_duplication(
         member_tokens = [entries[m]["tokens"] for m in members]
         norms = {entries[m]["norm"] for m in members}
         ordered = sorted(members, key=lambda m: (entries[m]["path"], entries[m]["line"]))
+        match = "exact" if len(norms) == 1 else "near"
+        cautions = []
+        if any(LEGAL_FILENAME_RE.search(entries[m]["path"]) for m in members):
+            cautions.append("legal_text")
+        if match == "near":
+            cautions.append("near_match_diff_before_merge")
         clusters.append(
             {
                 "copies": len(members),
                 "tokens_per_copy": max(member_tokens),
                 "wasted_tokens": sum(member_tokens) - max(member_tokens),
-                "match": "exact" if len(norms) == 1 else "near",
+                "match": match,
+                "caution": cautions,
                 "occurrences": [
                     {"path": entries[m]["path"], "line": entries[m]["line"], "tokens": entries[m]["tokens"]}
                     for m in ordered
@@ -455,10 +486,53 @@ def path_matches_scope(path: str, scopes: Any) -> bool:
     return any(str(path).endswith(str(scope)) or str(scope) in str(path) for scope in values)
 
 
-def atom_present(atom: dict, texts: dict[str, str]) -> tuple[bool, str]:
+# A commitment must survive where it acts. Unscoped atoms validate against the
+# hot/router load paths so a phrase moved into a cold reference fails instead
+# of silently "surviving" the compression it was supposed to guard.
+ATOM_DEFAULT_LOAD_PATHS = ("hot", "router")
+
+
+def atom_required_load_paths(atom: dict) -> set[str] | None:
+    """Allowed load paths for an atom; None means any file."""
+    raw = atom.get("load_path", "")
+    if not raw:
+        if atom.get("paths") or atom.get("path"):
+            return None
+        return set(ATOM_DEFAULT_LOAD_PATHS)
+    values = raw if isinstance(raw, list) else str(raw).split(",")
+    cleaned = {str(v).strip().lower() for v in values if str(v).strip()}
+    if not cleaned or "any" in cleaned:
+        return None
+    return cleaned
+
+
+def text_matches_atom(atom: dict, text: str) -> bool | None:
+    """True/False on match; None when the atom itself is malformed."""
     pattern = str(atom.get("text", ""))
-    if not pattern:
+    match_type = str(atom.get("match", "literal"))
+    case_sensitive = bool(atom.get("case_sensitive", True))
+    if match_type == "literal":
+        needle = pattern if case_sensitive else pattern.lower()
+        haystack = text if case_sensitive else text.lower()
+        return needle in haystack
+    if match_type == "regex":
+        try:
+            compiled = re.compile(pattern, 0 if case_sensitive else re.IGNORECASE)
+        except re.error:
+            return None
+        return bool(compiled.search(text))
+    return None
+
+
+def atom_present(
+    atom: dict,
+    texts: dict[str, str],
+    load_paths_by_file: dict[str, str] | None = None,
+) -> tuple[bool, str]:
+    if not str(atom.get("text", "")):
         return False, "missing_text"
+    if str(atom.get("match", "literal")) not in {"literal", "regex"}:
+        return False, "invalid_match"
     scoped_texts = {
         path: text
         for path, text in texts.items()
@@ -466,41 +540,46 @@ def atom_present(atom: dict, texts: dict[str, str]) -> tuple[bool, str]:
     }
     if not scoped_texts:
         return False, "no_matching_files"
-    match_type = str(atom.get("match", "literal"))
-    flags = 0 if atom.get("case_sensitive", True) else re.IGNORECASE
-    if match_type == "literal":
-        needle = pattern if atom.get("case_sensitive", True) else pattern.lower()
-        for path, text in scoped_texts.items():
-            haystack = text if atom.get("case_sensitive", True) else text.lower()
-            if needle in haystack:
-                return True, path
-        return False, "not_found"
-    if match_type == "regex":
-        try:
-            compiled = re.compile(pattern, flags)
-        except re.error:
-            return False, "invalid_regex"
-        for path, text in scoped_texts.items():
-            if compiled.search(text):
-                return True, path
-        return False, "not_found"
-    return False, "invalid_match"
+    required_load_paths = atom_required_load_paths(atom)
+    classes = load_paths_by_file or {}
+
+    def file_class(path: str) -> str:
+        return classes.get(path) or classify_load_path(Path(path))
+
+    fallback_hit = ""
+    for path, text in scoped_texts.items():
+        matched = text_matches_atom(atom, text)
+        if matched is None:
+            return False, "invalid_regex" if atom.get("match") == "regex" else "invalid_match"
+        if not matched:
+            continue
+        if required_load_paths is None or file_class(path) in required_load_paths:
+            return True, path
+        fallback_hit = path
+    if fallback_hit:
+        return False, f"outside_required_load_path:{fallback_hit}"
+    return False, "not_found"
 
 
-def validate_commitment_atoms(atoms: list[dict], texts: dict[str, str]) -> dict:
+def validate_commitment_atoms(
+    atoms: list[dict],
+    texts: dict[str, str],
+    load_paths_by_file: dict[str, str] | None = None,
+) -> dict:
     results = []
     missing = []
     malformed = []
     for index, atom in enumerate(atoms, start=1):
         atom_id = str(atom.get("atom_id", atom.get("id", f"atom-{index:03d}")))
         required = bool(atom.get("required", True))
-        present, detail = atom_present(atom, texts)
+        present, detail = atom_present(atom, texts, load_paths_by_file)
         result = {
             "atom_id": atom_id,
             "present": present,
             "required": required,
             "severity": atom.get("severity", "high" if required else "medium"),
             "match": atom.get("match", "literal"),
+            "load_path": sorted(atom_required_load_paths(atom) or ["any"]),
             "path": detail if present else "",
             "failure": "" if present else detail,
             "source_ref": atom.get("source_ref", ""),
@@ -511,7 +590,7 @@ def validate_commitment_atoms(atoms: list[dict], texts: dict[str, str]) -> dict:
         elif required and not present:
             missing.append(result)
     return {
-        "schema": "context_density.commitment_validation.v1",
+        "schema": "context_density.commitment_validation.v2",
         "ledger_schema": COMMITMENT_SCHEMA,
         "checked": len(results),
         "passed": not missing and not malformed,
@@ -574,7 +653,7 @@ def scan_contract_risks(path: Path, text: str) -> list[dict]:
                     "excerpt": line.strip()[:220],
                 }
             )
-    return risks
+    return apply_allow_annotations(risks, lines)
 
 
 def research_gate_risks(*risk_groups: list[dict]) -> list[dict]:
@@ -808,7 +887,7 @@ def scan_context_risks(path: Path, text: str, load_path: str) -> list[dict]:
                         "excerpt": line.strip()[:220],
                     }
                 )
-    return risks
+    return apply_allow_annotations(risks, lines)
 
 
 def scan_compression_risks(path: Path, text: str, load_path: str) -> list[dict]:
@@ -919,7 +998,7 @@ def scan_compression_risks(path: Path, text: str, load_path: str) -> list[dict]:
                     "excerpt": line.strip()[:220],
                 }
             )
-    return risks
+    return apply_allow_annotations(risks, lines)
 
 
 def main() -> int:
@@ -975,10 +1054,15 @@ def main() -> int:
         help="Write a fillable evidence checklist for triggered gates to this markdown file.",
     )
     parser.add_argument(
+        "--no-excerpts",
+        action="store_true",
+        help="Blank excerpt fields in the payload. Use when auditing untrusted trees: excerpts quote audited file content and must never be treated as instructions.",
+    )
+    parser.add_argument(
         "--hot-token-budget",
         type=int,
         default=3000,
-        help="Flag hot-path files above this token count (0 disables). Default anchors to documented reasoning degradation near 3K input tokens (arxiv:2402.14848).",
+        help="Flag hot-path files above this token count (0 disables). The default is a heuristic motivated by reasoning degradation documented near 3K input tokens (arxiv:2402.14848); validate against your own packed shape.",
     )
     parser.add_argument("--commitment-ledger", default="", help="JSON or JSONL commitment atom ledger to validate.")
     parser.add_argument(
@@ -1046,7 +1130,7 @@ def main() -> int:
         gate_risks, args.fail_on_severity, include_advisory=args.fail_on_advisory
     )
     commitment_validation = {
-        "schema": "context_density.commitment_validation.v1",
+        "schema": "context_density.commitment_validation.v2",
         "ledger_schema": COMMITMENT_SCHEMA,
         "checked": 0,
         "passed": True,
@@ -1056,7 +1140,10 @@ def main() -> int:
     }
     if args.commitment_ledger:
         atoms = load_commitment_ledger(Path(args.commitment_ledger))
-        commitment_validation = validate_commitment_atoms(atoms, texts_by_path)
+        load_paths_by_file = {
+            path: str(row.get("load_path", "")) for path, row in row_by_path.items()
+        }
+        commitment_validation = validate_commitment_atoms(atoms, texts_by_path, load_paths_by_file)
     commitments_blocked = args.fail_on_missing_commitments and not commitment_validation["passed"]
 
     hotspots = []
@@ -1073,6 +1160,10 @@ def main() -> int:
         )
 
     all_risks = context_risks + compression_risks + contract_risks
+    if args.no_excerpts:
+        for item in all_risks + gate_risks + duplication_clusters:
+            if "excerpt" in item:
+                item["excerpt"] = ""
     gate_summary = research_gate_summary(gate_risks)
     payload = {
         "schema": "context_density.audit.v2",

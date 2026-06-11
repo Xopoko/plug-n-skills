@@ -114,7 +114,8 @@ Input-token savings alone are not enough to claim a successful compression.
 
 ## Refactor Moves
 
-- Run the duplication report first: `duplication_clusters` ranks token-weighted duplicate blocks, so merge order follows measured wasted tokens instead of intuition.
+- Run the duplication report first: `duplication_clusters` ranks token-weighted duplicate blocks. Measurement ranks candidates; judgment authorizes each merge.
+- Never mechanically merge: license/legal text, safety and consent wording, deliberately repeated router pointers, or runnable examples whose self-containedness is the point. Diff `near` clusters before merging — their differences may be the content.
 - Replace duplicate sections with one rule plus reference links.
 - Move rare troubleshooting and long examples to references.
 - Convert broad prose into decision tables or checklists.

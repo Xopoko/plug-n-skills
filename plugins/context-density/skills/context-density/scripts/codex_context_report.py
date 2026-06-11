@@ -229,9 +229,29 @@ def abbreviate_home(path: Path | str) -> str:
         return str(path)
 
 
+def scrub_url(url: str) -> str:
+    """Strip credentials from a URL: drop userinfo, redact query values, drop fragment."""
+    from urllib.parse import parse_qsl, urlsplit, urlunsplit
+
+    try:
+        parts = urlsplit(url)
+    except ValueError:
+        return "<redacted-url>"
+    netloc = parts.hostname or ""
+    if parts.port:
+        netloc = f"{netloc}:{parts.port}"
+    query = ""
+    if parts.query:
+        names = [name for name, _ in parse_qsl(parts.query, keep_blank_values=True)]
+        query = "&".join(f"{name}=<redacted>" for name in names)
+    return urlunsplit((parts.scheme, netloc, parts.path, query, ""))
+
+
 def display_command(value: str | None, env_home: Path) -> str | None:
     if not value:
         return value
+    if SENSITIVE_KEY_RE.search(value):
+        return "<redacted-command>"
     home = str(Path.home())
     agent_home = str(env_home.expanduser())
     if value == agent_home:
@@ -717,7 +737,7 @@ def parse_codex_mcp_config(path: Path, env: AgentEnvironment, project: Path | No
                 error="config-only; live MCP schema introspection is not implemented",
                 tools=tools,
                 command=values["command"],
-                url=values["url"],
+                url=scrub_url(values["url"]) if values["url"] else None,
                 lines=int(values["lines"]),
             )
         )
@@ -771,7 +791,7 @@ def parse_claude_mcp_json(path: Path, env: AgentEnvironment, project: Path | Non
                 error="config-only; live MCP schema introspection is not implemented",
                 tools=tools,
                 command=display_command(str(value["command"]), env.home) if value.get("command") else None,
-                url=str(value["url"]) if value.get("url") else None,
+                url=scrub_url(str(value["url"])) if value.get("url") else None,
                 lines=count_lines(text),
             )
         )
@@ -908,6 +928,10 @@ def usage_from_dict(data: dict[str, Any], *, claude: bool = False) -> TokenUsage
 
 
 def latest_session(env: AgentEnvironment, project: Path | None) -> SessionSummary | None:
+    # PRIVACY INVARIANT: this reads conversation transcript files, but only
+    # token-usage counters and session IDs may ever leave the parsers below.
+    # Never extract or emit message content, tool calls, or file paths quoted
+    # inside the transcript.
     if env.id == "claude":
         root = env.home / "projects"
         if not root.is_dir():

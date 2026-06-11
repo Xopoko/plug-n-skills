@@ -4,6 +4,8 @@ Acceptance checks for context-density decisions involving long context, compress
 
 Findings come in two evidence classes. `measured` findings (token budgets, duplication mass, line length, commitment atoms) cannot be silenced by rewording and may block CI. `advisory` findings come from wording patterns, can be silenced by vocabulary changes, and exist to direct attention — never to gate a merge unless `--fail-on-advisory` is explicit.
 
+Evidence vintage: corpus assembled 2026-06. Quoted effect sizes (76 points, 11 of 13 models, >30%) are snapshots of specific models and benchmarks; the directions have replicated across independent sources, the numbers will drift. Re-verify a number before citing it onward as current.
+
 ## Gate 1: Long-Context Placement
 
 Trigger: a workflow relies on a large context window, long prompt, long memory, or packed context.
@@ -102,7 +104,7 @@ Sources: MAST failure taxonomy `arxiv:2503.13657`; context-engineering taxonomy 
 Flags:
 
 - `--fail-on-research-gates` exits `2` for measured gate risks at or above `--fail-on-severity` (`medium` default). Advisory findings block only with `--fail-on-advisory`.
-- `--hot-token-budget N` (default 3000, 0 off) flags hot files above budget; `low` below 2x budget, `medium` at or above. The default anchors to documented degradation near 3K tokens (`arxiv:2402.14848`).
+- `--hot-token-budget N` (default 3000, 0 off) flags hot files above budget; `low` below 2x budget, `medium` at or above. The default is a heuristic motivated by degradation documented near 3K input tokens (`arxiv:2402.14848`) — that study measured total task input, not single files, so tune the budget to your packed shape.
 - `--max-duplication-tokens N` exits `4` when wasted duplicate tokens exceed the budget.
 - `--emit-gate-checklist FILE` writes a fillable evidence form for triggered gates — use it as the change-report skeleton.
 

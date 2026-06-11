@@ -223,12 +223,69 @@ class ContextDensityAuditResearchGateTests(unittest.TestCase):
             )
         self.assertEqual(result.returncode, 2)
 
-    def test_commitment_ledger_passes_when_atom_is_present(self):
+    def test_commitment_ledger_passes_when_atom_is_present_in_hot_path(self):
         path = self.write_file("# Skill\nDo not parse generated prose for machine state.\n")
         atoms = [{"atom_id": "no-prose-parse", "text": "Do not parse generated prose", "required": True}]
-        validation = audit.validate_commitment_atoms(atoms, {str(path): path.read_text(encoding="utf-8")})
+        validation = audit.validate_commitment_atoms(
+            atoms, {str(path): path.read_text(encoding="utf-8")}, {str(path): "hot"}
+        )
         self.assertTrue(validation["passed"])
         self.assertEqual(validation["checked"], 1)
+
+    def test_commitment_ledger_fails_when_atom_survives_only_in_cold_path(self):
+        path = self.write_file("# Reference\nDo not parse generated prose for machine state.\n")
+        atoms = [{"atom_id": "no-prose-parse", "text": "Do not parse generated prose", "required": True}]
+        validation = audit.validate_commitment_atoms(
+            atoms, {str(path): path.read_text(encoding="utf-8")}, {str(path): "reference"}
+        )
+        self.assertFalse(validation["passed"])
+        failure = validation["missing_required"][0]["failure"]
+        self.assertTrue(failure.startswith("outside_required_load_path:"), failure)
+
+    def test_commitment_ledger_load_path_any_restores_corpus_wide_match(self):
+        path = self.write_file("# Reference\nDo not parse generated prose for machine state.\n")
+        atoms = [{"atom_id": "no-prose-parse", "text": "Do not parse generated prose", "load_path": "any"}]
+        validation = audit.validate_commitment_atoms(
+            atoms, {str(path): path.read_text(encoding="utf-8")}, {str(path): "reference"}
+        )
+        self.assertTrue(validation["passed"])
+
+    def test_commitment_ledger_explicit_reference_load_path(self):
+        path = self.write_file("# Reference\nRecovery command: rerun the audit.\n")
+        atoms = [{"atom_id": "recovery", "text": "Recovery command", "load_path": "reference"}]
+        validation = audit.validate_commitment_atoms(
+            atoms, {str(path): path.read_text(encoding="utf-8")}, {str(path): "reference"}
+        )
+        self.assertTrue(validation["passed"])
+
+    def test_compression_moving_commitment_to_reference_exits_three(self):
+        with tempfile.TemporaryDirectory() as tmpdir:
+            root = Path(tmpdir)
+            (root / "references").mkdir()
+            (root / "SKILL.md").write_text("# Skill\nCompact rules only.\n", encoding="utf-8")
+            (root / "references" / "old.md").write_text(
+                "# Archive\nNever push without explicit approval.\n", encoding="utf-8"
+            )
+            ledger = root / "atoms.json"
+            ledger.write_text(
+                json.dumps({"atoms": [{"atom_id": "approval", "text": "Never push without explicit approval"}]}),
+                encoding="utf-8",
+            )
+            result = subprocess.run(
+                [
+                    sys.executable,
+                    str(SCRIPT_DIR / "context_density_audit.py"),
+                    str(root),
+                    "--commitment-ledger",
+                    str(ledger),
+                    "--fail-on-missing-commitments",
+                ],
+                check=False,
+                capture_output=True,
+                text=True,
+            )
+        self.assertEqual(result.returncode, 3)
+        self.assertIn("outside_required_load_path", result.stdout)
 
     def test_commitment_ledger_failure_exits_three(self):
         with tempfile.TemporaryDirectory() as tmpdir:
@@ -294,6 +351,12 @@ def write_seeded_corpus(root: Path) -> None:
         "# Clean\n\nA single distinct explanation paragraph that shares nothing substantial with the other fixture files in this corpus.\n",
         encoding="utf-8",
     )
+    legal = (
+        "THE SOFTWARE IS PROVIDED AS IS, WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, "
+        "INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE."
+    )
+    (root / "LICENSE").write_text(legal + "\n", encoding="utf-8")
+    (root / "NOTICE").write_text(legal + "\n", encoding="utf-8")
 
 
 class DuplicationTests(unittest.TestCase):
@@ -333,6 +396,16 @@ class DuplicationTests(unittest.TestCase):
             if occ["path"].endswith("clean.md")
         ]
         self.assertEqual(clean_hits, [], "clean control file must not appear in duplicate clusters")
+        legal_clusters = [
+            c
+            for c in payload["duplication_clusters"]
+            if any(occ["path"].endswith(("LICENSE", "NOTICE")) for occ in c["occurrences"])
+        ]
+        self.assertTrue(legal_clusters, "expected LICENSE/NOTICE duplicate cluster")
+        self.assertIn("legal_text", legal_clusters[0]["caution"])
+        near_clusters = [c for c in payload["duplication_clusters"] if c["match"] == "near"]
+        self.assertTrue(near_clusters)
+        self.assertIn("near_match_diff_before_merge", near_clusters[0]["caution"])
 
     def test_duplication_budget_blocks_with_exit_four(self):
         with tempfile.TemporaryDirectory() as tmpdir:
@@ -349,6 +422,50 @@ class DuplicationTests(unittest.TestCase):
             payload, code = self.run_audit(root, "--duplication-min-tokens", "0")
         self.assertEqual(code, 0)
         self.assertEqual(payload["duplication_summary"]["clusters"], 0)
+
+
+class SuppressionAndExcerptTests(unittest.TestCase):
+    def write_file(self, text: str) -> Path:
+        tmp = tempfile.NamedTemporaryFile("w", suffix=".md", delete=False, encoding="utf-8")
+        with tmp:
+            tmp.write(text)
+        return Path(tmp.name)
+
+    def test_cda_allow_suppresses_advisory_on_same_line(self):
+        path = self.write_file(
+            "# Readme\nPrompt caching makes repeated prompts cheaper. <!-- cda:allow cache_claim_without_metrics -->\n"
+        )
+        risks = audit.scan_compression_risks(path, path.read_text(encoding="utf-8"), "router")
+        self.assertNotIn("cache_claim_without_metrics", {r["kind"] for r in risks})
+
+    def test_cda_allow_on_previous_line_suppresses(self):
+        path = self.write_file(
+            "# Readme\n<!-- cda:allow cache_claim_without_metrics -->\nPrompt caching makes repeated prompts cheaper.\n"
+        )
+        risks = audit.scan_compression_risks(path, path.read_text(encoding="utf-8"), "router")
+        self.assertNotIn("cache_claim_without_metrics", {r["kind"] for r in risks})
+
+    def test_cda_allow_other_kind_does_not_suppress(self):
+        path = self.write_file(
+            "# Readme\nPrompt caching makes repeated prompts cheaper. <!-- cda:allow token_only_metric -->\n"
+        )
+        risks = audit.scan_compression_risks(path, path.read_text(encoding="utf-8"), "router")
+        self.assertIn("cache_claim_without_metrics", {r["kind"] for r in risks})
+
+    def test_no_excerpts_blanks_quoted_content(self):
+        with tempfile.TemporaryDirectory() as tmpdir:
+            path = Path(tmpdir) / "README.md"
+            path.write_text("# Readme\nPrompt caching makes repeated prompts cheaper.\n", encoding="utf-8")
+            result = subprocess.run(
+                [sys.executable, str(SCRIPT_DIR / "context_density_audit.py"), str(path), "--no-excerpts"],
+                check=False,
+                capture_output=True,
+                text=True,
+            )
+        payload = json.loads(result.stdout)
+        risks = payload["compression_risks"] + payload["research_gate_risks"]
+        self.assertTrue(risks)
+        self.assertTrue(all(r.get("excerpt", "") == "" for r in risks))
 
 
 class LoadPathMapTests(unittest.TestCase):

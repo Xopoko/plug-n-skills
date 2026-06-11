@@ -8,6 +8,22 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[3]
 SCRIPT = ROOT / "plugins" / "context-density" / "skills" / "context-density" / "scripts" / "codex_context_report.py"
+sys.path.insert(0, str(SCRIPT.parent))
+
+import codex_context_report as report  # noqa: E402
+
+
+class ScrubTests(unittest.TestCase):
+    def test_scrub_url_drops_userinfo_query_values_and_fragment(self):
+        out = report.scrub_url("https://alice:hunter2@mcp.example.com:8443/sse?api_key=abc123&mode=fast#frag")
+        self.assertEqual(out, "https://mcp.example.com:8443/sse?api_key=<redacted>&mode=<redacted>")
+
+    def test_scrub_url_keeps_plain_urls_identifiable(self):
+        self.assertEqual(report.scrub_url("https://mcp.example.com/sse"), "https://mcp.example.com/sse")
+
+    def test_display_command_redacts_sensitive_strings(self):
+        out = report.display_command("npx server --api-key=XYZ", Path("/tmp"))
+        self.assertEqual(out, "<redacted-command>")
 
 
 class CodexContextReportTests(unittest.TestCase):

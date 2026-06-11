@@ -33,8 +33,12 @@ Code with `--agent codex|claude`.
 The reporter reads local files only: project `AGENTS.md`, installed
 `SKILL.md` files, plugin manifests, Codex config, and MCP config sections. It
 also reads Claude Code settings and skills when `--agent claude` is selected.
-It does not introspect live MCP tool schemas and does not mutate host-agent
-configuration.
+With `--usage` it additionally reads local session transcript files
+(`~/.codex/sessions/**/*.jsonl`, `~/.claude/projects/**/*.jsonl`) but extracts
+only token-usage counters and session IDs, never message content. Config and
+MCP `env` values are token-counted, not printed; emitted MCP URLs are scrubbed
+of userinfo and query values. It does not introspect live MCP tool schemas and
+does not mutate host-agent configuration.
 
 If another public host diagnostic command is available, it may be used for
 runtime-only information the bundled reporter cannot see. When any host

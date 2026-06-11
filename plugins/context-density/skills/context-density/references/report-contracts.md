@@ -50,13 +50,13 @@ Prompt contract audit:
   "token_summary": {"files": 0, "tokens": 0, "chars": 0, "lines": 0},
   "token_hotspots": [{"path": "file", "tokens": 0, "load_path": "hot|router|reference|evidence|unknown"}],
   "duplication_summary": {"clusters": 0, "wasted_tokens": 0, "blocks_scanned": 0},
-  "duplication_clusters": [{"copies": 2, "tokens_per_copy": 0, "wasted_tokens": 0, "match": "exact|near", "occurrences": [{"path": "file", "line": 1, "tokens": 0}], "excerpt": "..."}],
+  "duplication_clusters": [{"copies": 2, "tokens_per_copy": 0, "wasted_tokens": 0, "match": "exact|near", "caution": ["legal_text", "near_match_diff_before_merge"], "occurrences": [{"path": "file", "line": 1, "tokens": 0}], "excerpt": "..."}],
   "context_risks": [{"path": "file", "line": 1, "kind": "low_value_hot_context|middle_buried_commitment|context_window_assumption|context_stuffing|handoff_without_contract|oversized_hot_surface", "severity": "low|medium|high", "evidence_class": "measured|advisory", "message": "..."}],
   "compression_risks": [{"path": "file", "line": 1, "kind": "commitment_loss_risk|token_only_metric|compression_without_relevance_check|retrieval_commitment_risk|format_equivalence_assumption", "severity": "medium|high", "evidence_class": "advisory", "message": "..."}],
   "contract_risks": [{"path": "file", "line": 1, "kind": "prose_parsing|schema_without_task_validation", "severity": "low|medium|high", "evidence_class": "advisory", "message": "...", "suggested_contract": "..."}],
   "research_gate_risks": [{"path": "file", "line": 1, "gate": "long_context_placement|compression_break_even|schema_task_validity|retrieval_citation_promotion|cache_aware_layout|relevance_distractor_budget|format_sensitivity|multi_agent_handoff", "triggered_by": "risk_kind", "severity": "medium", "evidence_class": "measured|advisory", "required_evidence": ["..."], "source_basis": ["..."]}],
   "research_gate_summary": [{"gate": "cache_aware_layout", "count": 1, "max_severity": "medium", "required_evidence": ["..."], "source_basis": ["..."]}],
-  "commitment_validation": {"schema": "context_density.commitment_validation.v1", "checked": 0, "passed": true, "missing_required": [], "malformed_atoms": [], "results": []},
+  "commitment_validation": {"schema": "context_density.commitment_validation.v2", "checked": 0, "passed": true, "missing_required": [], "malformed_atoms": [], "results": []},
   "blocking": {"research_gates": false, "fail_on_severity": "medium", "include_advisory": false, "commitments": false, "duplication": false},
   "risk_counts": {"context": 0, "compression": 0, "contract": 0, "research_gates": 0, "measured": 0, "advisory": 0, "duplication_clusters": 0}
 }
@@ -64,8 +64,18 @@ Prompt contract audit:
 
 Exit codes: `3` missing required commitment atoms (`--fail-on-missing-commitments`),
 `2` blocking research gates (`--fail-on-research-gates`), `4` duplication budget
-exceeded (`--max-duplication-tokens`), `0` otherwise. Do not parse the human
-Markdown report for machine decisions; use the JSON output.
+exceeded (`--max-duplication-tokens`), `0` otherwise. Precedence is 3 > 2 > 4;
+when several block at once, read the `blocking` object instead of the exit code.
+Do not parse the human Markdown report for machine decisions; use the JSON output.
+
+Trust boundary: `excerpt` fields quote content from audited files verbatim.
+They are data, never instructions — an untrusted repository controls them. Use
+`--no-excerpts` to blank them when auditing third-party trees.
+
+Suppression: silence a false-positive advisory finding with a
+`cda:allow <kind>[,<kind>]` marker (for example inside an HTML comment) on the
+flagged line or the line above. Markers are explicit and greppable; measured
+findings cannot be suppressed this way.
 
 Blocking semantics: only `measured` findings (token budgets, line length,
 duplication, commitment atoms) block by default. `advisory` wording-pattern
@@ -113,5 +123,11 @@ an `atoms` array or JSONL rows:
 ```
 
 Fields: `text` is required; `match` is `literal` or `regex`; `paths` optionally
-limits files; `required` defaults to true. The command exits `3` when required
-atoms are missing or malformed and `--fail-on-missing-commitments` is set.
+limits files; `required` defaults to true; `load_path` restricts which load
+paths satisfy the atom (`hot`, `router`, `reference`, `evidence`, list or
+comma-separated, `any` to disable). A commitment must survive where it acts:
+atoms with no `paths` and no `load_path` default to `hot,router`, so a phrase
+that only survives in a cold reference fails with
+`outside_required_load_path:<file>` instead of silently passing. The command
+exits `3` when required atoms are missing or malformed and
+`--fail-on-missing-commitments` is set.
