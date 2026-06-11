@@ -43,3 +43,28 @@ scholarly research workflow and helper scripts, while leaving multi-hour corpus
 execution as an explicit, approved escalation. The live search helper uses
 Python standard-library HTTP so errors can retain response bodies and
 rate-limit headers.
+
+## Tested Guarantees And Limits
+
+Guarantees locked by `tests/test_scholarly_research.py`:
+
+- Merge, never destroy: repeated searches into one out-dir merge into the
+  existing index; prior records survive dedupe and the `total_records` cap;
+  the previous index is backed up before any change; over-cap drops are
+  logged, never silent.
+- Idempotent re-runs: an unchanged search leaves the index byte-identical,
+  reports `index_changed: false`, and writes no new backup.
+- Idempotent normalization: `normalize_record(normalize_record(x))` equals
+  `normalize_record(x)`, so merged indexes do not drift across runs.
+- Fail loudly on corruption: a damaged line in records/claims/decisions/plan
+  JSON exits with a named `invalid_json`/`invalid_jsonl` error including the
+  line number, and leaves the damaged file untouched for repair.
+- Gates cannot pass vacuously: zero claims or zero screening decisions fail.
+
+Known limits:
+
+- No file locking: two concurrent searches into the same out-dir can race;
+  run searches into one corpus sequentially.
+- A passing quality gate proves traceability, not truth.
+- Query sanitization is OpenAlex-specific; other sources receive queries
+  verbatim.

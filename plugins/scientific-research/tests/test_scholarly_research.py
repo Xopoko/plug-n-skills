@@ -445,3 +445,89 @@ def test_http_400_classified_as_query_error_without_cooldown() -> None:
 def test_xml_unescape_handles_numeric_entities() -> None:
     mod = load_module()
     assert mod.xml_unescape("It&#39;s &#x41; test &amp; more") == "It's A test & more"
+
+
+def test_search_rerun_is_idempotent() -> None:
+    mod = load_module()
+    tmp_path = fresh_dir("idempotent-search")
+    plan = _plan_file(mod, tmp_path, ["crossref"], total_records=10)
+    out_dir = tmp_path / "corpus"
+    fake = _fake_crossref([{"source": "crossref", "doi": "10.1/a", "title": "Paper A", "query": "q"}])
+    original = mod.FETCHERS.copy()
+    try:
+        mod.FETCHERS["crossref"] = fake
+        assert mod.main(["search", "--plan", str(plan), "--out-dir", str(out_dir), "--sleep-seconds", "0"]) == 0
+        first_index = (out_dir / "01_index" / "records.jsonl").read_text(encoding="utf-8")
+        assert mod.main(["search", "--plan", str(plan), "--out-dir", str(out_dir), "--sleep-seconds", "0"]) == 0
+        second_index = (out_dir / "01_index" / "records.jsonl").read_text(encoding="utf-8")
+    finally:
+        mod.FETCHERS.clear()
+        mod.FETCHERS.update(original)
+    assert first_index == second_index, "re-running the same search must not change the index"
+    summary = json.loads((out_dir / "03_runs" / "search-summary.json").read_text(encoding="utf-8"))
+    assert summary["index_changed"] is False
+    assert summary["index_backup_path"] == ""
+    assert list((out_dir / "03_runs").glob("records-pre-search-*.jsonl")) == [], "unchanged index must not accumulate backups"
+
+
+def test_normalize_record_is_idempotent() -> None:
+    mod = load_module()
+    raw = {
+        "source": "crossref",
+        "doi": "https://doi.org/10.1000/ABC",
+        "title": "  Some   Paper  ",
+        "summary": "x" * 9000,
+        "query": "q",
+    }
+    once = mod.normalize_record(raw)
+    twice = mod.normalize_record(json.loads(json.dumps(once)))
+    assert json.dumps(once, sort_keys=True) == json.dumps(twice, sort_keys=True)
+    assert len(once["summary"]) <= mod.MAX_SUMMARY_CHARS
+
+
+def test_corrupt_index_fails_cleanly_named() -> None:
+    mod = load_module()
+    tmp_path = fresh_dir("corrupt-index")
+    plan = _plan_file(mod, tmp_path, ["crossref"], total_records=10)
+    out_dir = tmp_path / "corpus"
+    (out_dir / "01_index").mkdir(parents=True, exist_ok=True)
+    (out_dir / "01_index" / "records.jsonl").write_text('{"key": "ok"}\n{broken json\n', encoding="utf-8")
+    original = mod.FETCHERS.copy()
+    try:
+        mod.FETCHERS["crossref"] = _fake_crossref([])
+        try:
+            mod.main(["search", "--plan", str(plan), "--out-dir", str(out_dir), "--sleep-seconds", "0"])
+            raise AssertionError("expected SystemExit for corrupt index")
+        except SystemExit as exc:
+            assert "invalid_jsonl" in str(exc) and "line_2" in str(exc)
+    finally:
+        mod.FETCHERS.clear()
+        mod.FETCHERS.update(original)
+    assert (out_dir / "01_index" / "records.jsonl").read_text(encoding="utf-8").startswith('{"key": "ok"}'), "corrupt index must be left untouched for repair"
+
+
+def test_corrupt_claims_fail_cleanly_named() -> None:
+    mod = load_module()
+    tmp_path = fresh_dir("corrupt-claims")
+    records = tmp_path / "records.jsonl"
+    records.write_text(json.dumps({"key": "doi-10-1-x", "source": "crossref"}) + "\n", encoding="utf-8")
+    claims = tmp_path / "claims.jsonl"
+    claims.write_text("{not json}\n", encoding="utf-8")
+    out = tmp_path / "gate.json"
+    try:
+        mod.main(["quality-gate", "--records", str(records), "--claims", str(claims), "--out", str(out)])
+        raise AssertionError("expected SystemExit for corrupt claims")
+    except SystemExit as exc:
+        assert "invalid_jsonl" in str(exc)
+
+
+def test_malformed_plan_fails_cleanly_named() -> None:
+    mod = load_module()
+    tmp_path = fresh_dir("corrupt-plan")
+    plan = tmp_path / "plan.json"
+    plan.write_text("{broken", encoding="utf-8")
+    try:
+        mod.main(["validate-plan", str(plan)])
+        raise AssertionError("expected SystemExit for corrupt plan")
+    except SystemExit as exc:
+        assert "invalid_json" in str(exc)

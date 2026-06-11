@@ -79,7 +79,12 @@ def utc_now() -> str:
 
 
 def read_json(path: Path) -> dict[str, Any]:
-    return json.loads(path.read_text(encoding="utf-8"))
+    try:
+        return json.loads(path.read_text(encoding="utf-8"))
+    except OSError as exc:
+        raise SystemExit(f"unreadable_json:{path}:{exc}")
+    except json.JSONDecodeError as exc:
+        raise SystemExit(f"invalid_json:{path}:line_{exc.lineno}:{exc.msg}")
 
 
 def write_json(path: Path, payload: dict[str, Any]) -> None:
@@ -96,11 +101,20 @@ def append_jsonl(path: Path, rows: list[dict[str, Any]]) -> None:
 
 def load_jsonl(path: Path) -> list[dict[str, Any]]:
     rows: list[dict[str, Any]] = []
-    for line in path.read_text(encoding="utf-8").splitlines():
-        if line.strip():
+    try:
+        text = path.read_text(encoding="utf-8")
+    except OSError as exc:
+        raise SystemExit(f"unreadable_jsonl:{path}:{exc}")
+    for line_no, line in enumerate(text.splitlines(), start=1):
+        if not line.strip():
+            continue
+        try:
             value = json.loads(line)
-            if isinstance(value, dict):
-                rows.append(value)
+        except json.JSONDecodeError as exc:
+            # Fail loudly: silently skipping a provenance line would hide data loss.
+            raise SystemExit(f"invalid_jsonl:{path}:line_{line_no}:{exc.msg}")
+        if isinstance(value, dict):
+            rows.append(value)
     return rows
 
 
@@ -883,11 +897,6 @@ def command_search(args: argparse.Namespace) -> int:
     # The index is provenance: merge into it, never rewrite it from one run.
     index_path = out_dir / "01_index" / "records.jsonl"
     existing = load_jsonl(index_path) if index_path.exists() else []
-    index_backup = ""
-    if existing:
-        backup_path = out_dir / "03_runs" / f"records-pre-search-{utc_now().replace(':', '').replace('-', '')}.jsonl"
-        backup_path.write_text(index_path.read_text(encoding="utf-8"), encoding="utf-8")
-        index_backup = str(backup_path.resolve())
     # Existing records come first so prior provenance survives both dedupe
     # and the total-records cap.
     accepted, duplicates = dedupe_records(existing + records)
@@ -909,8 +918,17 @@ def command_search(args: argparse.Namespace) -> int:
                 for item in dropped
             ],
         )
-    write_records(out_dir, accepted)
-    write_download_status(out_dir, accepted)
+    new_index_text = "".join(json.dumps(row, ensure_ascii=False, sort_keys=True) + "\n" for row in accepted)
+    old_index_text = index_path.read_text(encoding="utf-8") if index_path.exists() else ""
+    index_changed = new_index_text != old_index_text
+    index_backup = ""
+    if existing and index_changed:
+        backup_path = out_dir / "03_runs" / f"records-pre-search-{utc_now().replace(':', '').replace('-', '')}.jsonl"
+        backup_path.write_text(old_index_text, encoding="utf-8")
+        index_backup = str(backup_path.resolve())
+    if index_changed:
+        write_records(out_dir, accepted)
+        write_download_status(out_dir, accepted)
     append_jsonl(out_dir / "01_index" / "query_log.jsonl", query_logs)
     write_source_status(out_dir, source_status)
     summary = {
@@ -924,6 +942,7 @@ def command_search(args: argparse.Namespace) -> int:
         "records_accepted": len(accepted),
         "records_dropped_over_limit": len(dropped),
         "dropped_records_path": str((out_dir / "03_runs" / "dropped-over-limit.jsonl").resolve()) if dropped else "",
+        "index_changed": index_changed,
         "index_backup_path": index_backup,
         "duplicates": duplicates,
         "sources": sorted({record["source"] for record in accepted}),
