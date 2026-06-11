@@ -5,9 +5,11 @@ description: >-
   token-efficient context and prompt/output contracts. Trigger for AGENTS.md,
   prompts, skill packages, marketplace plugins, MCP/tool schemas,
   long-context placement, prompt/context compression, retrieval provenance,
-  runtime context diagnostics, duplicated hot-path prose,
-  brittle trigger descriptions, strict JSON/schema/tool-call output, validators,
-  retry/repair loops, or behavior-preserving token reduction.
+  runtime context diagnostics, duplicated or overlapping prose, competing
+  skill descriptions, irrelevant-context pruning, prompt reformatting,
+  agent/subagent context handoffs, brittle trigger descriptions, strict
+  JSON/schema/tool-call output, validators, retry/repair loops, or
+  behavior-preserving token reduction.
 ---
 
 # Context Density
@@ -30,6 +32,8 @@ Optimize capability density through measured context, explicit contracts, and to
 - Do not call a compression change successful from input-token reduction alone; include output cost/length, task success, preserved atoms, and validation proof when available.
 - Apply research-backed gates for material changes: placement stress, compression break-even, schema plus task validation, retrieval/citation promotion, cache economics, distractor budget, format sensitivity, and handoff contracts.
 - For machine decisions, read `research_gate_risks` from audit JSON instead of reconstructing gate status from prose.
+- Trust evidence classes: only `measured` findings (token budgets, duplication mass, commitment atoms) may block; `advisory` wording-pattern findings direct attention and require human or LLM judgment.
+- Measure duplication before merging prose by intuition: `duplication_clusters` ranks token-weighted duplicate blocks, which is the compressible mass.
 - If a skill/plugin portfolio needs split, merge, delete, move, router, cross-plugin overlap review, reference extraction, shared-capability extraction, or script extraction, treat token pressure as a signal.
 - Route structural work to Capability Workbench portfolio architecture when available.
 - Do not treat context-window size as proof of reliable recall, relevance, or reasoning; effective task length is usually well below the advertised maximum, so state validation scope and residual risk.
@@ -91,9 +95,17 @@ Run from this skill directory or pass absolute paths:
 python3 scripts/token_count.py <files-or-dirs> --json --top 20
 python3 scripts/context_density_audit.py <files-or-dirs> --json --top 20
 python3 scripts/context_density_audit.py <files-or-dirs> --fail-on-research-gates
-python3 scripts/context_density_audit.py <files-or-dirs> --hot-token-budget 3000
+python3 scripts/context_density_audit.py <files-or-dirs> --hot-token-budget 3000 --max-duplication-tokens 500
+python3 scripts/context_density_audit.py <files-or-dirs> --emit-gate-checklist gate-evidence.md
+python3 scripts/context_density_audit.py <files-or-dirs> --load-path-map loadpaths.json
 python3 scripts/context_density_audit.py <files-or-dirs> --commitment-ledger atoms.json --fail-on-missing-commitments
+python3 scripts/description_overlap.py <dirs> --min-jaccard 0.25 --top 20
 ```
+
+The audit separates `measured` findings (blocking-eligible) from `advisory`
+wording patterns (judgment input; blocking only with `--fail-on-advisory`).
+`duplication_clusters` ranks token-weighted duplicate blocks across files;
+`description_overlap.py` ranks skill-description pairs competing for routing.
 
 Use the bundled runtime reporter when the question is about local Codex or
 Claude Code startup context, installed skills, MCP config, plugin manifests,

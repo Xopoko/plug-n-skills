@@ -44,31 +44,58 @@ Prompt contract audit:
 
 ```json
 {
-  "schema": "context_density.audit.v1",
+  "schema": "context_density.audit.v2",
   "generated_at_utc": "ISO-8601",
   "mode": "exact|approx",
   "token_summary": {"files": 0, "tokens": 0, "chars": 0, "lines": 0},
   "token_hotspots": [{"path": "file", "tokens": 0, "load_path": "hot|router|reference|evidence|unknown"}],
-  "context_risks": [{"path": "file", "line": 1, "kind": "low_value_hot_context|middle_buried_commitment|context_window_assumption|context_stuffing|handoff_without_contract|oversized_hot_surface", "severity": "low|medium|high", "message": "..."}],
-  "compression_risks": [{"path": "file", "line": 1, "kind": "commitment_loss_risk|token_only_metric|compression_without_relevance_check|retrieval_commitment_risk|format_equivalence_assumption", "severity": "medium|high", "message": "..."}],
-  "contract_risks": [{"path": "file", "line": 1, "kind": "prose_parsing|schema_without_task_validation", "severity": "low|medium|high", "message": "...", "suggested_contract": "..."}],
-  "research_gate_risks": [{"path": "file", "line": 1, "gate": "long_context_placement|compression_break_even|schema_task_validity|retrieval_citation_promotion|cache_aware_layout|relevance_distractor_budget|format_sensitivity|multi_agent_handoff", "triggered_by": "risk_kind", "severity": "medium", "required_evidence": ["..."], "source_basis": ["..."]}],
+  "duplication_summary": {"clusters": 0, "wasted_tokens": 0, "blocks_scanned": 0},
+  "duplication_clusters": [{"copies": 2, "tokens_per_copy": 0, "wasted_tokens": 0, "match": "exact|near", "occurrences": [{"path": "file", "line": 1, "tokens": 0}], "excerpt": "..."}],
+  "context_risks": [{"path": "file", "line": 1, "kind": "low_value_hot_context|middle_buried_commitment|context_window_assumption|context_stuffing|handoff_without_contract|oversized_hot_surface", "severity": "low|medium|high", "evidence_class": "measured|advisory", "message": "..."}],
+  "compression_risks": [{"path": "file", "line": 1, "kind": "commitment_loss_risk|token_only_metric|compression_without_relevance_check|retrieval_commitment_risk|format_equivalence_assumption", "severity": "medium|high", "evidence_class": "advisory", "message": "..."}],
+  "contract_risks": [{"path": "file", "line": 1, "kind": "prose_parsing|schema_without_task_validation", "severity": "low|medium|high", "evidence_class": "advisory", "message": "...", "suggested_contract": "..."}],
+  "research_gate_risks": [{"path": "file", "line": 1, "gate": "long_context_placement|compression_break_even|schema_task_validity|retrieval_citation_promotion|cache_aware_layout|relevance_distractor_budget|format_sensitivity|multi_agent_handoff", "triggered_by": "risk_kind", "severity": "medium", "evidence_class": "measured|advisory", "required_evidence": ["..."], "source_basis": ["..."]}],
   "research_gate_summary": [{"gate": "cache_aware_layout", "count": 1, "max_severity": "medium", "required_evidence": ["..."], "source_basis": ["..."]}],
   "commitment_validation": {"schema": "context_density.commitment_validation.v1", "checked": 0, "passed": true, "missing_required": [], "malformed_atoms": [], "results": []},
-  "blocking": {"research_gates": false, "fail_on_severity": "medium", "commitments": false},
-  "risk_counts": {"context": 0, "compression": 0, "contract": 0, "research_gates": 0}
+  "blocking": {"research_gates": false, "fail_on_severity": "medium", "include_advisory": false, "commitments": false, "duplication": false},
+  "risk_counts": {"context": 0, "compression": 0, "contract": 0, "research_gates": 0, "measured": 0, "advisory": 0, "duplication_clusters": 0}
 }
 ```
 
-For CI-style enforcement, run `context_density_audit.py --fail-on-research-gates`.
-It still prints JSON and exits `2` when a research gate risk at or above
-`--fail-on-severity` is present. Do not parse the human Markdown report for
-machine decisions; use the JSON output.
+Exit codes: `3` missing required commitment atoms (`--fail-on-missing-commitments`),
+`2` blocking research gates (`--fail-on-research-gates`), `4` duplication budget
+exceeded (`--max-duplication-tokens`), `0` otherwise. Do not parse the human
+Markdown report for machine decisions; use the JSON output.
 
-`--hot-token-budget N` (default 3000, 0 disables) emits `oversized_hot_surface`
-for hot-path files above the budget: `low` severity below twice the budget,
-`medium` at or above it. The default anchors to documented reasoning
-degradation near 3K input tokens.
+Blocking semantics: only `measured` findings (token budgets, line length,
+duplication, commitment atoms) block by default. `advisory` wording-pattern
+findings block only with `--fail-on-advisory`, because they can be silenced by
+rewording without changing anything real.
+
+Flags:
+
+- `--hot-token-budget N` (default 3000, 0 off): `oversized_hot_surface` for hot
+  files above budget; `low` below 2x, `medium` at or above.
+- `--duplication-min-tokens N` (default 20, 0 off) and `--duplication-top N`:
+  paragraph-level exact and near-duplicate clusters, token-weighted.
+- `--max-duplication-tokens N`: wasted-token budget for exit 4.
+- `--load-path-map FILE`: JSON globs per load path (`{"hot": ["SKILL.md", "prompts/*.md"], ...}`),
+  overriding the filename heuristic; precedence hot > router > reference > evidence.
+- `--emit-gate-checklist FILE`: fillable markdown evidence form for triggered gates.
+
+`description_overlap.py --json` emits:
+
+```json
+{
+  "schema": "context_density.description_overlap.v1",
+  "skills_scanned": 0,
+  "min_jaccard": 0.25,
+  "pairs": [{"jaccard": 0.0, "shared_term_count": 0, "a": {"name": "", "plugin": "", "path": ""}, "b": {}, "same_plugin": false, "shared_terms": ["..."]}]
+}
+```
+
+Pairs are skill descriptions competing for routing, sorted by content-word
+Jaccard similarity.
 
 ## Commitment Ledger
 

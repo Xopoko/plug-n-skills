@@ -5,8 +5,8 @@ Context Density is a Codex marketplace plugin for capability density through mea
 It consolidates token-efficient context design, runtime context diagnostics, skill footprint optimization, and prompt-contract discipline into one workflow:
 
 1. Identify the consumer and load path.
-2. Measure token/context cost where applicable.
-3. Detect duplication, drift, brittle prose parsing, low-value context, context stuffing, untyped agent handoffs, oversized hot surfaces, and middle-buried commitments.
+2. Measure token/context cost, token-weighted duplication clusters, and skill-description routing overlap where applicable.
+3. Detect drift, brittle prose parsing, low-value context, context stuffing, untyped agent handoffs, oversized hot surfaces, and middle-buried commitments, separating measured findings from advisory wording patterns.
 4. Preserve behavioral invariants.
 5. Refactor toward compact source-of-truth structure.
 6. Treat retrieved or archived context as evidence until provenance and validation promote it into state.

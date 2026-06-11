@@ -165,7 +165,7 @@ class ContextDensityAuditResearchGateTests(unittest.TestCase):
         self.assertEqual(summary[0]["count"], 2)
         self.assertEqual(summary[0]["max_severity"], "high")
 
-    def test_fail_on_research_gates_exits_nonzero(self):
+    def test_advisory_findings_do_not_block_by_default(self):
         with tempfile.TemporaryDirectory() as tmpdir:
             path = Path(tmpdir) / "README.md"
             path.write_text("# Readme\nPrompt caching makes repeated prompts cheaper.\n", encoding="utf-8")
@@ -180,8 +180,48 @@ class ContextDensityAuditResearchGateTests(unittest.TestCase):
                 capture_output=True,
                 text=True,
             )
+        self.assertEqual(result.returncode, 0)
+        payload = json.loads(result.stdout)
+        self.assertIn("cache_aware_layout", {r["gate"] for r in payload["research_gate_risks"]})
+        self.assertEqual(payload["research_gate_risks"][0]["evidence_class"], "advisory")
+
+    def test_fail_on_advisory_blocks_wording_findings(self):
+        with tempfile.TemporaryDirectory() as tmpdir:
+            path = Path(tmpdir) / "README.md"
+            path.write_text("# Readme\nPrompt caching makes repeated prompts cheaper.\n", encoding="utf-8")
+            result = subprocess.run(
+                [
+                    sys.executable,
+                    str(SCRIPT_DIR / "context_density_audit.py"),
+                    str(path),
+                    "--fail-on-research-gates",
+                    "--fail-on-advisory",
+                ],
+                check=False,
+                capture_output=True,
+                text=True,
+            )
         self.assertEqual(result.returncode, 2)
         self.assertIn('"research_gates": true', result.stdout)
+
+    def test_measured_findings_block_without_advisory_flag(self):
+        with tempfile.TemporaryDirectory() as tmpdir:
+            path = Path(tmpdir) / "SKILL.md"
+            path.write_text("word " * 600, encoding="utf-8")
+            result = subprocess.run(
+                [
+                    sys.executable,
+                    str(SCRIPT_DIR / "context_density_audit.py"),
+                    str(path),
+                    "--fail-on-research-gates",
+                    "--hot-token-budget",
+                    "100",
+                ],
+                check=False,
+                capture_output=True,
+                text=True,
+            )
+        self.assertEqual(result.returncode, 2)
 
     def test_commitment_ledger_passes_when_atom_is_present(self):
         path = self.write_file("# Skill\nDo not parse generated prose for machine state.\n")
@@ -222,6 +262,128 @@ class ContextDensityAuditResearchGateTests(unittest.TestCase):
         validation = audit.validate_commitment_atoms(atoms, {str(path): path.read_text(encoding="utf-8")})
         self.assertFalse(validation["passed"])
         self.assertEqual(validation["malformed_atoms"][0]["failure"], "invalid_regex")
+
+
+DUP_BLOCK = (
+    "Always preserve trigger semantics, output contracts, exact commands, safety boundaries, "
+    "and validation proof before compressing any wording in a hot skill surface or router file."
+)
+NEAR_BLOCK_A = (
+    "Measure the token cost of every hot surface before editing, record the before and after "
+    "numbers, and report the delta with the validation commands used to confirm behavior."
+)
+NEAR_BLOCK_B = (
+    "Measure the token cost of every hot surface before editing, record the before and after "
+    "numbers, and publish the delta with the validation commands used to confirm behavior."
+)
+
+
+def write_seeded_corpus(root: Path) -> None:
+    """Seeded-defect corpus: duplication across files, oversized hot file, clean control."""
+    (root / "references").mkdir(parents=True, exist_ok=True)
+    (root / "SKILL.md").write_text("directive " * 400, encoding="utf-8")
+    (root / "references" / "dup_a.md").write_text(
+        f"# A\n\n{DUP_BLOCK}\n\n{NEAR_BLOCK_A}\n\nUnique closing paragraph for file a with enough words to pass the minimum token threshold easily today.\n",
+        encoding="utf-8",
+    )
+    (root / "references" / "dup_b.md").write_text(
+        f"# B\n\n{DUP_BLOCK}\n\n{NEAR_BLOCK_B}\n\nCompletely different trailing content here so the files only overlap in the seeded paragraphs above.\n",
+        encoding="utf-8",
+    )
+    (root / "references" / "clean.md").write_text(
+        "# Clean\n\nA single distinct explanation paragraph that shares nothing substantial with the other fixture files in this corpus.\n",
+        encoding="utf-8",
+    )
+
+
+class DuplicationTests(unittest.TestCase):
+    def run_audit(self, root: Path, *extra: str) -> tuple[dict, int]:
+        result = subprocess.run(
+            [sys.executable, str(SCRIPT_DIR / "context_density_audit.py"), str(root), *extra],
+            check=False,
+            capture_output=True,
+            text=True,
+        )
+        return json.loads(result.stdout), result.returncode
+
+    def test_seeded_corpus_golden_findings(self):
+        with tempfile.TemporaryDirectory() as tmpdir:
+            root = Path(tmpdir)
+            write_seeded_corpus(root)
+            payload, code = self.run_audit(root, "--hot-token-budget", "100")
+        self.assertEqual(code, 0)
+        summary = payload["duplication_summary"]
+        self.assertGreaterEqual(summary["clusters"], 2)
+        self.assertGreater(summary["wasted_tokens"], 0)
+        matches = {c["match"] for c in payload["duplication_clusters"]}
+        self.assertIn("exact", matches)
+        self.assertIn("near", matches)
+        spanning = [
+            c
+            for c in payload["duplication_clusters"]
+            if len({occ["path"] for occ in c["occurrences"]}) > 1
+        ]
+        self.assertTrue(spanning, "expected at least one cross-file duplicate cluster")
+        kinds = {r["kind"]: r["evidence_class"] for r in payload["context_risks"]}
+        self.assertEqual(kinds.get("oversized_hot_surface"), "measured")
+        clean_hits = [
+            occ
+            for c in payload["duplication_clusters"]
+            for occ in c["occurrences"]
+            if occ["path"].endswith("clean.md")
+        ]
+        self.assertEqual(clean_hits, [], "clean control file must not appear in duplicate clusters")
+
+    def test_duplication_budget_blocks_with_exit_four(self):
+        with tempfile.TemporaryDirectory() as tmpdir:
+            root = Path(tmpdir)
+            write_seeded_corpus(root)
+            payload, code = self.run_audit(root, "--max-duplication-tokens", "1")
+        self.assertEqual(code, 4)
+        self.assertTrue(payload["blocking"]["duplication"])
+
+    def test_duplication_disabled_with_zero_min_tokens(self):
+        with tempfile.TemporaryDirectory() as tmpdir:
+            root = Path(tmpdir)
+            write_seeded_corpus(root)
+            payload, code = self.run_audit(root, "--duplication-min-tokens", "0")
+        self.assertEqual(code, 0)
+        self.assertEqual(payload["duplication_summary"]["clusters"], 0)
+
+
+class LoadPathMapTests(unittest.TestCase):
+    def test_map_overrides_heuristic(self):
+        load_map = {"hot": ["custom/*.md"], "router": [], "reference": [], "evidence": []}
+        self.assertEqual(audit.classify_load_path(Path("repo/custom/rules.md"), load_map), "hot")
+        self.assertEqual(audit.classify_load_path(Path("repo/other/notes.md"), load_map), "unknown")
+
+    def test_map_precedence_hot_wins(self):
+        load_map = {"hot": ["*.md"], "router": ["*.md"], "reference": [], "evidence": []}
+        self.assertEqual(audit.classify_load_path(Path("anything.md"), load_map), "hot")
+
+
+class GateChecklistTests(unittest.TestCase):
+    def test_emit_gate_checklist_writes_fillable_form(self):
+        with tempfile.TemporaryDirectory() as tmpdir:
+            source = Path(tmpdir) / "README.md"
+            source.write_text("# Readme\nPrompt caching makes repeated prompts cheaper.\n", encoding="utf-8")
+            checklist = Path(tmpdir) / "checklist.md"
+            subprocess.run(
+                [
+                    sys.executable,
+                    str(SCRIPT_DIR / "context_density_audit.py"),
+                    str(source),
+                    "--emit-gate-checklist",
+                    str(checklist),
+                ],
+                check=False,
+                capture_output=True,
+                text=True,
+            )
+            content = checklist.read_text(encoding="utf-8")
+        self.assertIn("cache_aware_layout", content)
+        self.assertIn("- [ ]", content)
+        self.assertIn("evidence:", content)
 
 
 if __name__ == "__main__":

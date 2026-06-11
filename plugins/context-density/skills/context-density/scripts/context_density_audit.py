@@ -4,13 +4,14 @@
 from __future__ import annotations
 
 import argparse
+import fnmatch
 import json
 import re
 from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
 
-from token_count import count_paths, iter_files, read_text
+from token_count import count_paths, count_text, iter_files, load_encoder, read_text
 
 CONTRACT_TERMS = re.compile(
     r"(assistant|completion|llm|model|model_output|message|response|answer|reason|summary)",
@@ -244,13 +245,39 @@ RESEARCH_GATE_RULES = {
 }
 SEVERITY_RANK = {"low": 1, "medium": 2, "high": 3}
 COMMITMENT_SCHEMA = "context_density.commitment_ledger.v1"
+# Findings that cannot be silenced by rewording alone; only these may block.
+MEASURED_KINDS = {"oversized_hot_surface", "dense_hot_line"}
+LOAD_PATH_PRECEDENCE = ("hot", "router", "reference", "evidence")
+
+
+def evidence_class(kind: str) -> str:
+    return "measured" if kind in MEASURED_KINDS else "advisory"
 
 
 def is_middle_band(line_no: int, total_lines: int) -> bool:
     return total_lines >= 80 and (total_lines * 0.30) <= line_no <= (total_lines * 0.70)
 
 
-def classify_load_path(path: Path) -> str:
+def load_load_path_map(path: Path) -> dict[str, list[str]]:
+    data = json.loads(path.read_text(encoding="utf-8"))
+    if not isinstance(data, dict):
+        raise SystemExit("load_path_map_must_be_object")
+    cleaned: dict[str, list[str]] = {}
+    for category in LOAD_PATH_PRECEDENCE:
+        patterns = data.get(category, [])
+        if not isinstance(patterns, list) or not all(isinstance(p, str) for p in patterns):
+            raise SystemExit(f"load_path_map_{category}_must_be_string_list")
+        cleaned[category] = patterns
+    return cleaned
+
+
+def classify_load_path(path: Path, load_path_map: dict[str, list[str]] | None = None) -> str:
+    if load_path_map:
+        posix = path.as_posix()
+        for category in LOAD_PATH_PRECEDENCE:
+            for pattern in load_path_map.get(category, []):
+                if fnmatch.fnmatch(posix, pattern) or fnmatch.fnmatch(posix, f"*/{pattern}"):
+                    return category
     name = path.name.lower()
     parts = {part.lower() for part in path.parts}
     if name in {"agents.md", "skill.md"} or "prompts" in parts:
@@ -282,13 +309,143 @@ def load_commitment_ledger(path: Path) -> list[dict]:
     return atoms
 
 
-def collect_texts(paths: list[str]) -> dict[str, str]:
-    texts: dict[str, str] = {}
-    for path in iter_files(paths):
-        text = read_text(path)
-        if text is not None:
-            texts[str(path)] = text
-    return texts
+def split_paragraphs(text: str) -> list[tuple[int, str]]:
+    """Split text into (start_line, block) paragraphs separated by blank lines."""
+    blocks: list[tuple[int, str]] = []
+    current: list[str] = []
+    start = 1
+    for line_no, line in enumerate(text.splitlines(), start=1):
+        if line.strip():
+            if not current:
+                start = line_no
+            current.append(line)
+        elif current:
+            blocks.append((start, "\n".join(current)))
+            current = []
+    if current:
+        blocks.append((start, "\n".join(current)))
+    return blocks
+
+
+def normalize_block(block: str) -> str:
+    return re.sub(r"\s+", " ", block).strip().lower()
+
+
+def block_shingles(norm: str, width: int = 4) -> set[str]:
+    words = norm.split()
+    if not words:
+        return set()
+    if len(words) < width:
+        return {" ".join(words)}
+    return {" ".join(words[i : i + width]) for i in range(len(words) - width + 1)}
+
+
+def find_duplication(
+    texts: dict[str, str],
+    encoder,
+    min_tokens: int = 20,
+    jaccard_threshold: float = 0.6,
+    top: int = 20,
+) -> tuple[list[dict], dict]:
+    """Token-weighted duplicate paragraph clusters across (and within) files.
+
+    Exact matches group by normalized text; near matches group by shingle
+    Jaccard. Wasted tokens = total copies minus one canonical copy.
+    """
+    entries: list[dict] = []
+    for path, text in texts.items():
+        if is_test_path(Path(path)):
+            continue
+        for start_line, block in split_paragraphs(text):
+            norm = normalize_block(block)
+            if len(norm) < 40:
+                continue
+            tokens = count_text(block, encoder)
+            if tokens < min_tokens:
+                continue
+            entries.append(
+                {
+                    "path": path,
+                    "line": start_line,
+                    "norm": norm,
+                    "tokens": tokens,
+                    "excerpt": block.strip()[:160],
+                }
+            )
+
+    parent = list(range(len(entries)))
+
+    def find(i: int) -> int:
+        while parent[i] != i:
+            parent[i] = parent[parent[i]]
+            i = parent[i]
+        return i
+
+    def union(a: int, b: int) -> None:
+        ra, rb = find(a), find(b)
+        if ra != rb:
+            parent[rb] = ra
+
+    by_norm: dict[str, list[int]] = {}
+    for idx, entry in enumerate(entries):
+        by_norm.setdefault(entry["norm"], []).append(idx)
+    for idxs in by_norm.values():
+        for other in idxs[1:]:
+            union(idxs[0], other)
+
+    reps = [idxs[0] for idxs in by_norm.values()]
+    rep_shingles: dict[int, set[str]] = {}
+    shingle_index: dict[str, list[int]] = {}
+    for idx in reps:
+        sh = block_shingles(entries[idx]["norm"])
+        rep_shingles[idx] = sh
+        for s in sh:
+            shingle_index.setdefault(s, []).append(idx)
+    candidate_counts: dict[tuple[int, int], int] = {}
+    for idxs in shingle_index.values():
+        if len(idxs) < 2 or len(idxs) > 50:
+            continue
+        for i, a in enumerate(idxs):
+            for b in idxs[i + 1 :]:
+                pair = (a, b) if a < b else (b, a)
+                candidate_counts[pair] = candidate_counts.get(pair, 0) + 1
+    for (a, b), shared in candidate_counts.items():
+        if shared < 3:
+            continue
+        union_size = len(rep_shingles[a] | rep_shingles[b])
+        if union_size and shared / union_size >= jaccard_threshold:
+            union(a, b)
+
+    groups: dict[int, list[int]] = {}
+    for idx in range(len(entries)):
+        groups.setdefault(find(idx), []).append(idx)
+    clusters: list[dict] = []
+    for members in groups.values():
+        if len(members) < 2:
+            continue
+        member_tokens = [entries[m]["tokens"] for m in members]
+        norms = {entries[m]["norm"] for m in members}
+        ordered = sorted(members, key=lambda m: (entries[m]["path"], entries[m]["line"]))
+        clusters.append(
+            {
+                "copies": len(members),
+                "tokens_per_copy": max(member_tokens),
+                "wasted_tokens": sum(member_tokens) - max(member_tokens),
+                "match": "exact" if len(norms) == 1 else "near",
+                "occurrences": [
+                    {"path": entries[m]["path"], "line": entries[m]["line"], "tokens": entries[m]["tokens"]}
+                    for m in ordered
+                ],
+                "excerpt": entries[ordered[0]]["excerpt"],
+            }
+        )
+    clusters.sort(key=lambda c: (-c["wasted_tokens"], c["occurrences"][0]["path"]))
+    summary = {
+        "clusters": len(clusters),
+        "wasted_tokens": sum(c["wasted_tokens"] for c in clusters),
+        "blocks_scanned": len(entries),
+    }
+    return clusters[:top], summary
 
 
 def path_matches_scope(path: str, scopes: Any) -> bool:
@@ -435,6 +592,7 @@ def research_gate_risks(*risk_groups: list[dict]) -> list[dict]:
                         "gate": gate_id,
                         "triggered_by": kind,
                         "severity": risk.get("severity", "medium"),
+                        "evidence_class": risk.get("evidence_class", evidence_class(kind)),
                         "message": risk.get("message", ""),
                         "required_evidence": rule["required_evidence"],
                         "source_basis": rule["source_basis"],
@@ -467,9 +625,49 @@ def research_gate_summary(gate_risks: list[dict]) -> list[dict]:
     return [summary[gate] for gate in sorted(summary)]
 
 
-def has_blocking_research_gate(gate_risks: list[dict], min_severity: str) -> bool:
+def has_blocking_research_gate(gate_risks: list[dict], min_severity: str, include_advisory: bool = False) -> bool:
+    """Advisory (wording-pattern) findings never block unless explicitly included.
+
+    Wording heuristics can be silenced by rewording alone, so only measured
+    findings are eligible to fail CI by default.
+    """
     threshold = SEVERITY_RANK[min_severity]
-    return any(SEVERITY_RANK.get(str(risk.get("severity", "medium")), 0) >= threshold for risk in gate_risks)
+    for risk in gate_risks:
+        if not include_advisory and risk.get("evidence_class", "advisory") != "measured":
+            continue
+        if SEVERITY_RANK.get(str(risk.get("severity", "medium")), 0) >= threshold:
+            return True
+    return False
+
+
+def render_gate_checklist(gate_risks: list[dict], summary: list[dict]) -> str:
+    """Fillable evidence form for triggered gates, for inclusion in a change report."""
+    lines = ["# Research Gate Evidence Checklist", ""]
+    if not summary:
+        lines.append("No research gates triggered.")
+        return "\n".join(lines) + "\n"
+    by_gate: dict[str, list[dict]] = {}
+    for risk in gate_risks:
+        by_gate.setdefault(str(risk.get("gate", "unknown")), []).append(risk)
+    for entry in summary:
+        gate = str(entry.get("gate", "unknown"))
+        lines.append(f"## {gate} ({entry.get('count', 0)} finding(s), max severity {entry.get('max_severity', '')})")
+        lines.append("")
+        lines.append("Findings:")
+        for risk in by_gate.get(gate, [])[:10]:
+            location = f"{risk.get('path', '')}:{risk.get('line', 0)}"
+            lines.append(f"- [{risk.get('evidence_class', 'advisory')}] {location} ({risk.get('triggered_by', '')})")
+        if len(by_gate.get(gate, [])) > 10:
+            lines.append(f"- ... and {len(by_gate[gate]) - 10} more")
+        lines.append("")
+        lines.append("Required evidence:")
+        for item in entry.get("required_evidence", []):
+            lines.append(f"- [ ] {item}")
+            lines.append("      evidence: ")
+        lines.append("")
+        lines.append("Source basis: " + ", ".join(entry.get("source_basis", [])))
+        lines.append("")
+    return "\n".join(lines) + "\n"
 
 
 def scan_context_risks(path: Path, text: str, load_path: str) -> list[dict]:
@@ -735,13 +933,46 @@ def main() -> int:
     parser.add_argument(
         "--fail-on-research-gates",
         action="store_true",
-        help="Exit 2 when research gate risks meet --fail-on-severity.",
+        help="Exit 2 when measured research gate risks meet --fail-on-severity.",
     )
     parser.add_argument(
         "--fail-on-severity",
         choices=sorted(SEVERITY_RANK, key=SEVERITY_RANK.get),
         default="medium",
         help="Minimum research gate severity that should fail when --fail-on-research-gates is set.",
+    )
+    parser.add_argument(
+        "--fail-on-advisory",
+        action="store_true",
+        help="Let advisory (wording-pattern) findings block too. Off by default because they can be silenced by rewording alone.",
+    )
+    parser.add_argument(
+        "--duplication-min-tokens",
+        type=int,
+        default=20,
+        help="Minimum paragraph token count considered for duplicate clustering (0 disables duplication analysis).",
+    )
+    parser.add_argument(
+        "--duplication-top",
+        type=int,
+        default=20,
+        help="Duplicate clusters to include in the payload.",
+    )
+    parser.add_argument(
+        "--max-duplication-tokens",
+        type=int,
+        default=0,
+        help="Exit 4 when total wasted duplicate tokens exceed this budget (0 disables).",
+    )
+    parser.add_argument(
+        "--load-path-map",
+        default="",
+        help="JSON file mapping load paths to glob lists: {\"hot\": [...], \"router\": [...], \"reference\": [...], \"evidence\": [...]}. Overrides the filename heuristic.",
+    )
+    parser.add_argument(
+        "--emit-gate-checklist",
+        default="",
+        help="Write a fillable evidence checklist for triggered gates to this markdown file.",
     )
     parser.add_argument(
         "--hot-token-budget",
@@ -759,15 +990,18 @@ def main() -> int:
 
     total, rows = count_paths(args.paths, args.encoding)
     row_by_path = {row["path"]: row for row in rows}
+    load_path_map = load_load_path_map(Path(args.load_path_map)) if args.load_path_map else None
     context_risks: list[dict] = []
     compression_risks: list[dict] = []
     contract_risks: list[dict] = []
+    texts_by_path: dict[str, str] = {}
 
     for path in iter_files(args.paths):
         text = read_text(path)
         if text is None:
             continue
-        load_path = classify_load_path(path)
+        texts_by_path[str(path)] = text
+        load_path = classify_load_path(path, load_path_map)
         row_by_path.setdefault(str(path), {})["load_path"] = load_path
         context_risks.extend(scan_context_risks(path, text, load_path))
         compression_risks.extend(scan_compression_risks(path, text, load_path))
@@ -789,8 +1023,28 @@ def main() -> int:
                         "excerpt": "",
                     }
                 )
+    for risk in context_risks + compression_risks + contract_risks:
+        risk.setdefault("evidence_class", evidence_class(str(risk.get("kind", ""))))
+
+    duplication_clusters: list[dict] = []
+    duplication_summary = {"clusters": 0, "wasted_tokens": 0, "blocks_scanned": 0}
+    if args.duplication_min_tokens > 0:
+        encoder, _ = load_encoder(args.encoding)
+        duplication_clusters, duplication_summary = find_duplication(
+            texts_by_path,
+            encoder,
+            min_tokens=args.duplication_min_tokens,
+            top=args.duplication_top,
+        )
+    duplication_blocked = (
+        args.max_duplication_tokens > 0
+        and duplication_summary["wasted_tokens"] > args.max_duplication_tokens
+    )
+
     gate_risks = research_gate_risks(context_risks, compression_risks, contract_risks)
-    gate_blocked = args.fail_on_research_gates and has_blocking_research_gate(gate_risks, args.fail_on_severity)
+    gate_blocked = args.fail_on_research_gates and has_blocking_research_gate(
+        gate_risks, args.fail_on_severity, include_advisory=args.fail_on_advisory
+    )
     commitment_validation = {
         "schema": "context_density.commitment_validation.v1",
         "ledger_schema": COMMITMENT_SCHEMA,
@@ -802,7 +1056,7 @@ def main() -> int:
     }
     if args.commitment_ledger:
         atoms = load_commitment_ledger(Path(args.commitment_ledger))
-        commitment_validation = validate_commitment_atoms(atoms, collect_texts(args.paths))
+        commitment_validation = validate_commitment_atoms(atoms, texts_by_path)
     commitments_blocked = args.fail_on_missing_commitments and not commitment_validation["passed"]
 
     hotspots = []
@@ -818,8 +1072,10 @@ def main() -> int:
             }
         )
 
+    all_risks = context_risks + compression_risks + contract_risks
+    gate_summary = research_gate_summary(gate_risks)
     payload = {
-        "schema": "context_density.audit.v1",
+        "schema": "context_density.audit.v2",
         "generated_at_utc": datetime.now(timezone.utc).replace(microsecond=0).isoformat().replace("+00:00", "Z"),
         "mode": total["mode"],
         "encoding": total["encoding"],
@@ -830,28 +1086,41 @@ def main() -> int:
             "lines": total["lines"],
         },
         "token_hotspots": hotspots,
+        "duplication_summary": duplication_summary,
+        "duplication_clusters": duplication_clusters,
         "context_risks": context_risks,
         "compression_risks": compression_risks,
         "contract_risks": contract_risks,
         "research_gate_risks": gate_risks,
-        "research_gate_summary": research_gate_summary(gate_risks),
+        "research_gate_summary": gate_summary,
         "commitment_validation": commitment_validation,
         "blocking": {
             "research_gates": gate_blocked,
             "fail_on_severity": args.fail_on_severity if args.fail_on_research_gates else "",
+            "include_advisory": args.fail_on_advisory,
             "commitments": commitments_blocked,
+            "duplication": duplication_blocked,
         },
         "risk_counts": {
             "context": len(context_risks),
             "compression": len(compression_risks),
             "contract": len(contract_risks),
             "research_gates": len(gate_risks),
+            "measured": sum(1 for r in all_risks if r.get("evidence_class") == "measured"),
+            "advisory": sum(1 for r in all_risks if r.get("evidence_class") == "advisory"),
+            "duplication_clusters": duplication_summary["clusters"],
         },
     }
+    if args.emit_gate_checklist:
+        Path(args.emit_gate_checklist).write_text(
+            render_gate_checklist(gate_risks, gate_summary), encoding="utf-8"
+        )
     print(json.dumps(payload, indent=2, ensure_ascii=False))
     if commitments_blocked:
         return 3
-    return 2 if gate_blocked else 0
+    if gate_blocked:
+        return 2
+    return 4 if duplication_blocked else 0
 
 
 if __name__ == "__main__":
