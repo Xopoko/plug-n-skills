@@ -1,6 +1,6 @@
 {
   "name": "kotlin-multiplatform",
-  "version": "0.3.0+codex.20260608170251",
+  "version": "0.3.1+codex.20260611185123",
   "description": "Kotlin Multiplatform development, migration, Gradle diagnosis, Compose Multiplatform, interop, testing, data, governance, performance, security, publishing, and production readiness.",
   "author": {
     "name": "Xopoko"

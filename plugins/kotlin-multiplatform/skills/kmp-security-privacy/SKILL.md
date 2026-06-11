@@ -5,13 +5,13 @@ description: Review Kotlin Multiplatform security and privacy across secure stor
 
 # KMP Security And Privacy
 
-Use this skill for secrets, tokens, authentication, secure storage, logging redaction, networking security, privacy-sensitive data, runtime app protection, and platform security boundaries in KMP projects.
+Use for KMP secrets, tokens, authentication, secure storage, logging redaction, network security, privacy-sensitive data, runtime app protection, and platform security boundaries.
 
 ## Review Flow
 
-1. Search for secret-like names and literals in shared code, tests, configs, and logs.
-2. Identify where tokens, refresh tokens, device identifiers, PII, and encryption keys live.
-3. Verify common code exposes interfaces and policies, while platform source sets own storage implementation.
+1. Search shared code, tests, configs, and logs for secret-like names and literals.
+2. Find where tokens, refresh tokens, device identifiers, PII, and encryption keys live.
+3. Confirm common code exposes interfaces and policies while platform source sets own storage implementation.
 4. Review Ktor auth, refresh-token loops, retries, TLS/certificate pinning, and redaction.
 5. Check CI/release examples do not contain signing, keystore, App Store, Maven Central, or token material.
 

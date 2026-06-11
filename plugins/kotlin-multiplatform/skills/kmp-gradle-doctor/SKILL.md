@@ -5,15 +5,15 @@ description: Diagnose and fix Kotlin Multiplatform Gradle, source-set, dependenc
 
 # KMP Gradle Doctor
 
-Bundled commands use `$PLUGIN_ROOT` for the plugin root. Set it once: use the host's plugin-root variable when defined (Claude Code: `PLUGIN_ROOT="$CLAUDE_PLUGIN_ROOT"`), otherwise the absolute path of this plugin's root directory. Works under any host agent, including Codex, Claude, and Cursor.
+Set `$PLUGIN_ROOT` once: host plugin-root variable when defined (Claude Code: `PLUGIN_ROOT="$CLAUDE_PLUGIN_ROOT"`), else this plugin root's absolute path. Bundled commands use it. Works under any host agent, including Codex, Claude, and Cursor.
 
-Use this skill for KMP build failures, Gradle DSL changes, plugin version alignment, target declarations, source-set hierarchy, Android-KMP plugin migration, dependency placement, KSP/KAPT, detekt/ktlint, Compose compiler, CI, or test task selection.
+Use for KMP build failures; Gradle DSL changes; plugin version alignment; target declarations; source-set hierarchy; Android-KMP plugin migration; dependency placement; KSP/KAPT; detekt/ktlint; Compose compiler; CI; test task selection.
 
 ## Diagnosis Flow
 
-1. Read the build surface:
+1. Read:
    - `settings.gradle(.kts)`
-   - root and module `build.gradle(.kts)`
+   - root/module `build.gradle(.kts)`
    - `gradle/libs.versions.toml`
    - `gradle.properties`
    - `gradle/wrapper/gradle-wrapper.properties`
@@ -21,20 +21,20 @@ Use this skill for KMP build failures, Gradle DSL changes, plugin version alignm
    ```bash
    python3 "$PLUGIN_ROOT/scripts/kmp_inspector.py" --root <project-root>
    ```
-3. Classify each module:
+3. Classify modules:
    - KMP library
    - Android app shell
    - pure Android library
    - iOS Xcode app
    - desktop/web/server app
    - convention plugin or build logic
-4. Identify the smallest failing task. Avoid `clean` unless cache state is the suspected issue.
-5. Verify current DSL or version-sensitive guidance from official docs before editing.
-6. If the failure looks host-specific on macOS/iOS, separate project diagnosis from environment diagnosis. Use `kdoctor` only when installed or explicitly approved to install; its scope is host/toolchain readiness.
+4. Find smallest failing task. Avoid `clean` unless cache state is suspected.
+5. Check official docs for current DSL/version-sensitive guidance before edits.
+6. For host-specific macOS/iOS failures, split project/environment diagnosis. Use `kdoctor` only if installed or explicitly approved to install; scope: host/toolchain readiness.
 
 ## Environment Triage
 
-Use project static inspection first. Then consider host diagnostics when symptoms include Xcode selection, CocoaPods/Ruby, Android Studio plugin, JDK/JAVA_HOME, simulator, or iOS Gradle task failures unrelated to source changes.
+Static project inspection first. Host diagnostics only for Xcode selection, CocoaPods/Ruby, Android Studio plugin, JDK/JAVA_HOME, simulator, or iOS Gradle failures unrelated to source changes.
 
 Useful checks:
 
@@ -46,48 +46,48 @@ java -version
 kdoctor -v
 ```
 
-Do not install or update KDoctor, CocoaPods, Ruby, Xcode, Android Studio, JDKs, or SDK tools unless the user explicitly asked for environment setup.
+Do not install/update KDoctor, CocoaPods, Ruby, Xcode, Android Studio, JDKs, or SDK tools unless the user explicitly asked for environment setup.
 
 ## Build Governance
 
-For medium or large KMP projects, inspect whether repeated configuration is centralized:
+Medium/large KMP projects: inspect whether repeated configuration is centralized.
 
-- Prefer `build-logic/` as an included build or `buildSrc/` for convention plugins when many modules repeat setup.
-- Prefer version catalogs for plugin and dependency coordinates.
-- Prefer centralized `pluginManagement` and `dependencyResolutionManagement` in settings.
+- Prefer included-build `build-logic/` or `buildSrc/` convention plugins when many modules repeat setup.
+- Prefer version catalogs for plugin/dependency coordinates.
+- Prefer central `pluginManagement` and `dependencyResolutionManagement` in settings.
 - Avoid ad hoc repositories in module build files.
-- Keep stack-specific choices, such as DI, database, obfuscation, codegen, and publishing, opt-in by module role.
+- Keep stack-specific choices (DI, database, obfuscation, codegen, publishing) opt-in by module role.
 
 ## Source-Set Rules
 
-- Prefer the default hierarchy template when the target combination is covered.
-- Manual `dependsOn()` edges can disable the default hierarchy template; if the repo has manual edges, keep them only when they model a real non-default sharing need.
-- Declare targets before referencing their source sets.
-- Dependencies belong in the narrowest valid source set:
-  - shared and target-published libraries: `commonMain`
+- Prefer default hierarchy template when the target combination is covered.
+- Manual `dependsOn()` edges can disable the default hierarchy template; keep them only for real non-default sharing needs.
+- Declare targets before source-set references.
+- Place dependencies in narrowest valid source sets:
+  - shared/target-published libraries: `commonMain`
   - Android-only artifacts: `androidMain`
-  - iOS-only bindings: `iosMain` or the exact native source set
-  - JVM/Desktop-only artifacts: `jvmMain` or a named desktop source set
-- Before moving anything to `commonMain`, verify all configured targets publish the artifact.
+  - iOS-only bindings: `iosMain` or exact native source set
+  - JVM/Desktop-only artifacts: `jvmMain` or named desktop source set
+- Before moving to `commonMain`, verify every configured target publishes the artifact.
 
 ## Android-KMP Rules
 
-For KMP library modules targeting Android on modern AGP:
+Android-targeting KMP library modules on modern AGP:
 
 - Prefer `com.android.kotlin.multiplatform.library`.
-- Keep Android configuration under `kotlin { android { ... } }`.
-- Do not use a top-level `android {}` block in a module that has moved to the Android-KMP library plugin.
-- Remember the Android-KMP library plugin is single-variant: no `buildTypes` or `productFlavors` in that module.
-- Enable only what is used:
+- Keep Android config in `kotlin { android { ... } }`.
+- Do not use a top-level `android {}` block after Android-KMP library plugin migration.
+- Android-KMP library plugin is single-variant: no `buildTypes` or `productFlavors` in that module.
+- Enable only used features:
   - `androidResources { enable = true }` if Android resources or Compose resources need Android resource processing.
-  - `withJava()` if Java source files exist.
-  - host/device test builders if Android tests exist.
-  - `localDependencySelection` when consuming variant-rich Android libraries.
-- For Compose preview tooling on Android-KMP library modules, verify the current workaround before using debug-only configurations.
+  - `withJava()` for Java sources.
+  - host/device test builders for Android tests.
+  - `localDependencySelection` for variant-rich Android library consumption.
+- For Compose preview tooling in Android-KMP library modules, verify current workaround before using debug-only configurations.
 
 ## Build And Test Commands
 
-Prefer the narrowest proof:
+Use narrowest proof:
 
 ```bash
 ./gradlew :shared:compileKotlinMetadata
@@ -98,20 +98,20 @@ Prefer the narrowest proof:
 ./gradlew :desktopApp:run
 ```
 
-Task names vary by module and target. Use `./gradlew :module:tasks --all` when uncertain.
+Task names vary by module/target; use `./gradlew :module:tasks --all` when uncertain.
 
 ## Static Analysis
 
-- detekt needs explicit inputs/config for KMP source sets in many setups; do not assume root `detekt` checks all `commonMain`, `iosMain`, and `androidMain` code.
-- Type-resolution analysis can explode runtime in large KMP monorepos. Prefer scoped tasks and avoid enabling all Android variants unless required.
-- KSP must match Kotlin versions. Verify compatibility before bumping KGP or KSP.
-- KAPT is a migration risk in modern Android/KMP projects; prefer KSP or isolate legacy processors.
-- If a KMP library is published, check whether Kotlin ABI validation is configured or intentionally skipped.
-- If a module exposes many `api(...)` dependencies, review whether the public surface is broader than needed.
+- detekt often needs explicit KMP source-set inputs/config; do not assume root `detekt` checks all `commonMain`, `iosMain`, and `androidMain` code.
+- Type-resolution can explode runtime in large KMP monorepos; prefer scoped tasks; avoid all Android variants unless required.
+- KSP must match Kotlin versions; verify compatibility before bumping KGP or KSP.
+- KAPT is modern Android/KMP migration risk; prefer KSP or isolate legacy processors.
+- For published KMP libraries, check whether Kotlin ABI validation is configured or intentionally skipped.
+- If a module exposes many `api(...)` dependencies, review whether public surface is too broad.
 
 ## CI Pattern
 
-- Split jobs by cost and platform: common/JVM tests first on Linux; Android builds on Linux; iOS simulator and Apple framework checks on macOS.
-- Use the official Gradle setup action and one shared Java/Gradle setup path.
-- Upload test reports and platform artifacts.
+- Split jobs by cost/platform: common/JVM tests first on Linux; Android builds on Linux; iOS simulator/Apple framework checks on macOS.
+- Use official Gradle setup action and one shared Java/Gradle setup path.
+- Upload test reports/platform artifacts.
 - Keep signing, notarization, and store publishing separate from ordinary PR validation.

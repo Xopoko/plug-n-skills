@@ -5,29 +5,29 @@ description: Select Kotlin Multiplatform ecosystem libraries, services, and tool
 
 # KMP Ecosystem Selection
 
-Use this skill when choosing KMP libraries, services, tools, or starter kits.
+Use when choosing KMP libraries, services, tools, or starter kits.
 
 ## Decision Flow
 
-1. Identify the configured targets and product constraints.
-2. Check the repo's existing stack and do not replace a coherent local choice without a reason.
+1. Identify configured targets and product constraints.
+2. Check the repo stack; keep coherent local choices unless there is a reason.
 3. Verify current official docs or primary repository support for every configured target.
 4. Compare runtime, build-time, API, licensing, operational, and team-maintenance costs.
 5. Prefer the smallest dependency that solves the actual problem.
 
 ## Common Categories
 
-- Persistence: Room KMP, SQLDelight, DataStore, Multiplatform Settings.
-- Networking: Ktor Client or an existing generated/client stack.
+- Persistence: Room KMP, SQLDelight, or DataStore.
+- Networking: Ktor Client or existing generated/client stack.
 - DI: Koin or local/manual DI when simpler.
-- Navigation: Decompose, Voyager, Appyx, platform-native navigation, or existing local routing.
-- Logging and crash reporting: Kermit, Napier, Crashlytics, Bugsnag, Sentry, CrashKiOS, NSExceptionKt.
-- RUM and performance monitoring: Datadog RUM or an existing observability platform.
-- Testing and quality: `kotlin.test`, Kotest, Turbine, Kover, Detekt, dependency guards.
-- Resources and media: Compose resources, Moko Resources, Coil, local platform resources.
-- Publishing/docs: Dokka, Maven publish plugins, KMMBridge, Fastlane, existing CI.
+- Navigation: Decompose, platform-native navigation, or existing local routing.
+- Logging and crash reporting: Kermit, Sentry, or CrashKiOS.
+- RUM and performance monitoring: Datadog RUM or existing observability platform.
+- Testing and quality: `kotlin.test`, Turbine, Kover, Detekt, or dependency guards.
+- Resources and media: Compose resources, Coil, or platform resources.
+- Publishing/docs: Dokka, Maven publishing, KMMBridge, Fastlane, or existing CI.
 - Monetization: RevenueCat or platform-native store flows.
-- Reference templates: KaMPKit, official samples, KMPShip-like starters as references, not copy sources.
+- Reference templates: official samples or KMPShip-like starters as references, not copy sources.
 
 ## Rules
 

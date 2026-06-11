@@ -5,53 +5,53 @@ description: Plan and execute Kotlin Multiplatform migrations and release gates,
 
 # KMP Migration And Release
 
-Use this skill for AGP 9+ migration, Android-KMP plugin adoption, splitting monolithic KMP modules, CocoaPods to SwiftPM, cinterop and iOS framework integration, CI, publishing, signing boundaries, and release readiness.
+Use for AGP 9+ migration, Android-KMP plugin adoption, monolithic KMP module splits, CocoaPods to SwiftPM, cinterop and iOS framework integration, CI, publishing, signing boundaries, and release readiness.
 
 ## Migration Discipline
 
-1. Diagnose before editing.
-2. Classify modules and pick the smallest reversible path.
-3. Keep version upgrades separate from structural migrations unless the migration requires them.
+1. Diagnose before edits.
+2. Classify modules; choose the smallest reversible path.
+3. Separate version upgrades from structural migrations unless the migration requires them.
 4. Preserve existing behavior and package names unless the migration explicitly requires a move.
 5. Validate after each phase.
-6. Record commands, changed modules, and residual risks.
+6. Record commands, changed modules, residual risks.
 
 ## AGP 9 Android-KMP Paths
 
 Classify every module:
 
-- Path A: `kotlin.multiplatform` plus `com.android.library`.
-  - Migrate to `com.android.kotlin.multiplatform.library` when targeting AGP 9+.
+- Path A: `kotlin.multiplatform` + `com.android.library`.
+  - For AGP 9+, migrate to `com.android.kotlin.multiplatform.library`.
   - Move Android config into `kotlin { android { ... } }`.
   - Move dependencies to source-set blocks.
-  - Enable resources, Java, and Android tests explicitly only when used.
-- Path B: `kotlin.multiplatform` plus `com.android.application`.
-  - Split is mandatory for AGP 9+.
-  - Create a pure `androidApp` module.
-  - Convert the original module into a KMP library module.
-  - Move `MainActivity`, app manifest, launcher resources, app ID, versioning, and Android app concerns to `androidApp`.
+  - Explicitly enable resources, Java, and Android tests only when used.
+- Path B: `kotlin.multiplatform` + `com.android.application`.
+  - AGP 9+ requires split.
+  - Create pure `androidApp` module.
+  - Convert the original module to a KMP library module.
+  - Move `MainActivity`, app manifest, launcher resources, app ID, versioning, Android app concerns to `androidApp`.
 - Path C: monolithic `composeApp` with multiple platform entry points.
-  - Recommended full restructure: shared library plus per-platform app modules.
+  - Recommended full restructure: shared library + per-platform app modules.
   - Use only when it pays for itself or when AGP compatibility requires it.
 
 ## CocoaPods To SwiftPM
 
 Use phase gates:
 
-1. Confirm the current Kotlin/iOS build state when possible.
+1. Confirm current Kotlin/iOS build state when possible.
 2. Inventory `cocoapods {}` blocks, `Podfile`, `import cocoapods.*`, framework names, deployment target, and Xcode build phases.
 3. Add SwiftPM configuration alongside CocoaPods first.
 4. Preserve dependency versions unless the user requested upgrades.
-5. Transform imports only after confirming the generated namespace and bundled third-party klibs.
+5. Transform imports only after confirming generated namespace and bundled third-party klibs.
 6. Reconfigure Xcode and embed/sign integration.
 7. Remove CocoaPods only after Gradle and Xcode builds pass.
 8. Produce a migration report.
 
-Do not mix the same library suite across CocoaPods and SwiftPM during a migration; duplicate symbols and runtime linkage failures are common.
+Do not mix the same library suite across CocoaPods and SwiftPM during migration; duplicate symbols and runtime linkage failures are common.
 
 ## iOS Framework And Interop
 
-- Prefer static frameworks unless the project has a clear reason for dynamic frameworks.
+- Prefer static frameworks unless clear project reason exists for dynamic frameworks.
 - Keep exported Swift API small and stable.
 - Verify `baseName`, package/group, deployment target, and architecture targets.
 - For cinterop, check `.def` files, headers, linker options, transitive native dependencies, and simulator/device architecture.
@@ -65,8 +65,10 @@ Suggested layers:
 - Android: assemble/test debug app or library artifact on Linux.
 - iOS: simulator compile/link or `xcodebuild` on macOS.
 - Desktop/Web: build entry-point artifacts if those platforms are in scope.
-- Publishing/store steps: separate workflow with explicit secrets and signing material.
+- Publishing/store: separate workflow with explicit secrets and signing material.
 
-Never print or commit signing credentials. Use environment variables, platform keychains, CI secret stores, or existing repo mechanisms.
+- Never print or commit signing credentials.
+- Use environment variables, platform keychains, CI secret stores, or existing repo mechanisms.
 
-For KMP publishing details, route to `kmp-publishing-ci`. For broad release readiness, route to `kmp-production-readiness`.
+- Route KMP publishing details to `kmp-publishing-ci`.
+- Route broad release readiness to `kmp-production-readiness`.
