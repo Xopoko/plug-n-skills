@@ -1,7 +1,5 @@
 # pixijs-scene-particle-container Details
 
-Use this reference for detailed PixiJS API patterns after the matching skill entrypoint has routed the task.
-
 `ParticleContainer` is a specialized container for rendering hundreds to tens of thousands of lightweight sprites in a single draw call. Use it for particle effects, bullet patterns, or any case where you need a large number of similar-looking objects with minimal per-object overhead. Particles share a single base texture and have a restricted transform set; they are not full `Container` children.
 
 Assumes familiarity with `pixijs-scene-core-concepts`. `ParticleContainer` is a special leaf in a different sense: it contains `Particle` instances in its own `particleChildren` array and rejects normal PixiJS children. Use `addParticle`, not `addChild`, and wrap the whole `ParticleContainer` in a `Container` if you need to group it with other scene objects.
@@ -42,7 +40,7 @@ app.stage.addChild(container);
 
 ### ParticleContainerOptions
 
-All `Container` options (`position`, `scale`, `tint`, `label`, `filters`, `zIndex`, etc.) are also valid here -- see `skills/pixijs-scene-core-concepts/references/constructor-options.md`. Note that `children` is omitted: use `particles` instead.
+All `Container` options are also valid here -- see `skills/pixijs-scene-core-concepts/references/constructor-options.md`. Note that `children` is omitted: use `particles` instead.
 
 | Option              | Type                 | Default                                                                        | Description                                                                                                                                                                     |
 | ------------------- | -------------------- | ------------------------------------------------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |

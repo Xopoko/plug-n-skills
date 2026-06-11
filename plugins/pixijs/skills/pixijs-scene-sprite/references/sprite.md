@@ -52,7 +52,7 @@ const withOptions = new Sprite({
 | `anchor`      | `PointData \| number` | `0`             | Normalized draw origin in `[0, 1]`; falls back to `texture.defaultAnchor` when unset. |
 | `roundPixels` | `boolean`             | `false`         | Snap rendering coordinates to integers for crisp pixel art.                           |
 
-All `Container` options (`position`, `scale`, `tint`, `label`, `filters`, `zIndex`, etc.) are also valid here — see `skills/pixijs-scene-core-concepts/references/constructor-options.md`.
+All `Container` options are also valid here — see `skills/pixijs-scene-core-concepts/references/constructor-options.md`.
 
 `Sprite.from(source, skipCache?)` accepts a `Texture` or a `TextureSourceLike` (canvas, video, URL). With a cached alias it only reads the cache and returns `Texture.EMPTY` if the texture was not loaded first; always `await Assets.load(...)` for images. The optional second `skipCache` argument forwards to `Texture.from` to avoid storing ephemeral textures in the global cache.
 

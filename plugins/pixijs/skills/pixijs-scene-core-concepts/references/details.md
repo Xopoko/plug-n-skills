@@ -1,7 +1,5 @@
 # pixijs-scene-core-concepts Details
 
-Use this reference for detailed PixiJS API patterns after the matching skill entrypoint has routed the task.
-
 This skill is the shared mental model referenced by all `pixijs-scene-*` leaves. It explains what the scene graph is in PixiJS v8, how a `Container` differs from a leaf, and where each concept lives. It does not go deep on any single API; it frames the pieces and points to the skill or reference file that does.
 
 ## Quick Start

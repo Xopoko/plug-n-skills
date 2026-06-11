@@ -1,7 +1,5 @@
 # pixijs-scene-sprite Details
 
-Use this reference for detailed PixiJS API patterns after the matching skill entrypoint has routed the task.
-
 PixiJS has three sprite classes for different drawing tasks. `Sprite` is the default image-drawing leaf; `NineSliceSprite` is a resizable UI-panel variant that preserves corner art; `TilingSprite` repeats a texture across an area. The `AnimatedSprite` subclass of `Sprite` cycles through texture frames for frame-based animation.
 
 Assumes familiarity with `pixijs-scene-core-concepts`. All sprite classes are leaf nodes; they cannot have children. Wrap multiple sprites in a `Container` to group them.

@@ -1,7 +1,5 @@
 # pixijs-accessibility Details
 
-Use this reference for detailed PixiJS API patterns after the matching skill entrypoint has routed the task.
-
 Enable screen reader and keyboard navigation via PixiJS's AccessibilitySystem. The system creates an invisible shadow DOM overlay positioned over accessible containers so assistive technology can discover and activate them.
 
 ## Quick Start

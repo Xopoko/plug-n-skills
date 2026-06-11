@@ -62,7 +62,7 @@ const full = new SplitText({
 | `wordAnchor` | `number \| PointData`                    | `0`     | Same as `lineAnchor` but for each word container.                                                                      |
 | `charAnchor` | `number \| PointData`                    | `0`     | Same as `lineAnchor` but for each character container.                                                                 |
 
-All `Container` options (`position`, `scale`, `tint`, `label`, `filters`, `zIndex`, etc.) are also valid here — see `skills/pixijs-scene-core-concepts/references/constructor-options.md`.
+All `Container` options are also valid here — see `skills/pixijs-scene-core-concepts/references/constructor-options.md`.
 
 > `SplitText.defaultOptions` overrides the defaults globally for every new `SplitText` instance. The built-in defaults are the values above.
 

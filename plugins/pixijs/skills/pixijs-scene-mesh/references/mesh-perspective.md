@@ -48,7 +48,7 @@ The four corner coordinates define a quadrilateral in local space; the mesh warp
 
 Corners must be listed clockwise from the top-left. Defaults form a 100x100 square with `Texture.WHITE`; `PerspectiveMesh.defaultOptions` overrides them globally. The constructor omits `geometry` (it builds its own `PerspectivePlaneGeometry`). Other `MeshOptions` fields (`shader`, `state`, `roundPixels`) are inherited from `mesh.md`.
 
-All `Container` options (`position`, `scale`, `tint`, `label`, `filters`, `zIndex`, etc.) are also valid here — see `skills/pixijs-scene-core-concepts/references/constructor-options.md`.
+All `Container` options are also valid here — see `skills/pixijs-scene-core-concepts/references/constructor-options.md`.
 
 Call `mesh.setCorners(x0, y0, x1, y1, x2, y2, x3, y3)` at runtime to animate the warp.
 

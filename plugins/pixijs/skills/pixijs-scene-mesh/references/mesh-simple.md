@@ -33,7 +33,7 @@ app.stage.addChild(triangle);
 
 `MeshSimple` builds its own `MeshGeometry`, so `geometry` is omitted from the options type. Note the option is named `vertices` here (converted to `positions` internally), matching the `mesh.vertices` getter. Other `MeshOptions` fields (`shader`, `state`, `roundPixels`) are inherited from `mesh.md` and behave identically.
 
-All `Container` options (`position`, `scale`, `tint`, `label`, `filters`, `zIndex`, etc.) are also valid here — see `skills/pixijs-scene-core-concepts/references/constructor-options.md`.
+All `Container` options are also valid here — see `skills/pixijs-scene-core-concepts/references/constructor-options.md`.
 
 `autoUpdate` is a runtime property (defaults to `true`), not a constructor option. Set `mesh.autoUpdate = false` after construction to suppress the per-frame position-buffer upload.
 

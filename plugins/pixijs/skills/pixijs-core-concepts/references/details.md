@@ -1,7 +1,5 @@
 # pixijs-core-concepts Details
 
-Use this reference for detailed PixiJS API patterns after the matching skill entrypoint has routed the task.
-
 Foundational model for how PixiJS v8 gets pixels on the screen: the renderer decides which GPU backend to use, the render loop drives per-frame work, and the environment layer adapts the library to browser, Web Worker, or SSR contexts. For the scene graph itself (Containers, transforms, destroy), see `pixijs-scene-core-concepts`.
 
 ## Quick Start

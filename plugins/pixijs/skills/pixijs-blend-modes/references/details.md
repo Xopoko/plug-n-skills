@@ -1,7 +1,5 @@
 # pixijs-blend-modes Details
 
-Use this reference for detailed PixiJS API patterns after the matching skill entrypoint has routed the task.
-
 Set `container.blendMode` to composite display objects with GPU blend equations (standard modes) or filter-based advanced modes. Blend-mode transitions break render batches, so group like-mode siblings together.
 
 ## Quick Start

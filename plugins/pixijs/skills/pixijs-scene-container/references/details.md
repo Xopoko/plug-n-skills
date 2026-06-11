@@ -1,7 +1,5 @@
 # pixijs-scene-container Details
 
-Use this reference for detailed PixiJS API patterns after the matching skill entrypoint has routed the task.
-
 `Container` is the general-purpose node of the PixiJS v8 scene graph. It holds children and applies transforms, alpha, tint, and blend mode to its whole subtree. Every display object you make will either be a `Container` you're building a branch on, or a leaf (`Sprite`, `Graphics`, `Text`, `Mesh`) that you nest inside one.
 
 Assumes familiarity with `pixijs-scene-core-concepts`.
@@ -52,7 +50,7 @@ const container = new Container({
 });
 ```
 
-All `Container` options (`position`, `scale`, `tint`, `label`, `filters`, `zIndex`, etc.) are also valid here -- see `skills/pixijs-scene-core-concepts/references/constructor-options.md`.
+All `Container` options are also valid here -- see `skills/pixijs-scene-core-concepts/references/constructor-options.md`.
 
 The `Container` constructor uses `assignWithIgnore` to bulk-copy every field in the options object onto the instance except `children`, `parent`, and `effects`. Any public property of `Container` is a valid constructor option: `cullable`, `cullArea`, `mask`, `filterArea`, `eventMode`, `hitArea`, and so on. The options block above groups the most common ones; see the shared reference above for the full list.
 

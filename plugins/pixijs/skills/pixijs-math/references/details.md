@@ -1,7 +1,5 @@
 # pixijs-math Details
 
-Use this reference for detailed PixiJS API patterns after the matching skill entrypoint has routed the task.
-
 PixiJS exposes lightweight math primitives (Point, Matrix, shape classes) used throughout the library for transforms, hit testing, and coordinate conversion. Import `pixi.js/math-extras` to add vector operations (add, dot, magnitude, reflect) and Rectangle intersection/union helpers.
 
 ## Quick Start

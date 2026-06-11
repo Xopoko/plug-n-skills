@@ -36,7 +36,7 @@ app.stage.addChild(mesh);
 | `texture`     | `Texture`                       | `Texture.WHITE` | Texture sampled by the default shader. Ignored if a custom `shader` provides its own texture.           |
 | `roundPixels` | `boolean`                       | `false`         | Snap `x`/`y` to integer pixels at render time.                                                          |
 
-All `Container` options (`position`, `scale`, `tint`, `label`, `filters`, `zIndex`, etc.) are also valid here — see `skills/pixijs-scene-core-concepts/references/constructor-options.md`.
+All `Container` options are also valid here — see `skills/pixijs-scene-core-concepts/references/constructor-options.md`.
 
 The constructor assigns `texture` from `shader.texture` when a custom shader is passed without an explicit `texture` option. Passing `null`/`undefined` to the `texture` setter at runtime coerces it to `Texture.EMPTY`.
 

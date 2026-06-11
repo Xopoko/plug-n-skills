@@ -51,7 +51,7 @@ const panel = new NineSliceSprite({
 | `anchor`       | `PointData \| number` | `0`                           | Normalized draw origin in `[0, 1]`.                                |
 | `roundPixels`  | `boolean`             | `false`                       | Snap rendering coordinates to integers for crisp pixel art.        |
 
-All `Container` options (`position`, `scale`, `tint`, `label`, `filters`, `zIndex`, etc.) are also valid here — see `skills/pixijs-scene-core-concepts/references/constructor-options.md`.
+All `Container` options are also valid here — see `skills/pixijs-scene-core-concepts/references/constructor-options.md`.
 
 Border values fall back to `texture.defaultBorders` if set on the texture; see the Texture-defined borders section below.
 

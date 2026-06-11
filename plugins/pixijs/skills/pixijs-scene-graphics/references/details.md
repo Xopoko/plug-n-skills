@@ -1,7 +1,5 @@
 # pixijs-scene-graphics Details
 
-Use this reference for detailed PixiJS API patterns after the matching skill entrypoint has routed the task.
-
 `Graphics` is the vector-drawing leaf of the PixiJS v8 scene graph. The v8 API follows a shape-then-style pattern: draw a shape or path with `rect`, `circle`, `moveTo`, etc., then apply `fill` and/or `stroke`. Every method returns `this` for chaining, and the drawing instructions live on a `GraphicsContext` that can be shared between instances.
 
 Assumes familiarity with `pixijs-scene-core-concepts`. `Graphics` is a leaf: do not nest children inside it. Wrap multiple `Graphics` objects in a `Container` to group them.
@@ -30,7 +28,7 @@ app.stage.addChild(g);
 
 ## Constructor options
 
-All `Container` options (`position`, `scale`, `tint`, `label`, `filters`, `zIndex`, etc.) are also valid here -- see `skills/pixijs-scene-core-concepts/references/constructor-options.md`.
+All `Container` options are also valid here -- see `skills/pixijs-scene-core-concepts/references/constructor-options.md`.
 
 Leaf-specific options added by `GraphicsOptions`:
 

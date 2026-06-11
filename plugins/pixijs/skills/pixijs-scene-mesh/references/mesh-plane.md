@@ -30,7 +30,7 @@ app.stage.addChild(plane);
 
 `MeshPlane` builds its own `PlaneGeometry`, so you cannot pass `geometry` — it is omitted from the options type. Other `MeshOptions` fields (`shader`, `state`, `roundPixels`) are inherited from `mesh.md` and behave identically.
 
-All `Container` options (`position`, `scale`, `tint`, `label`, `filters`, `zIndex`, etc.) are also valid here — see `skills/pixijs-scene-core-concepts/references/constructor-options.md`.
+All `Container` options are also valid here — see `skills/pixijs-scene-core-concepts/references/constructor-options.md`.
 
 `autoResize` is a runtime property set to `true` by the constructor, not a constructor option. Toggle it after construction to control whether texture changes rebuild the plane geometry.
 

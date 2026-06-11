@@ -1,7 +1,5 @@
 # pixijs-environments Details
 
-Use this reference for detailed PixiJS API patterns after the matching skill entrypoint has routed the task.
-
 `DOMAdapter` abstracts every piece of DOM access PixiJS does (canvas creation, Image loading, fetch, XML parsing) so the library can run in non-browser contexts. Call `DOMAdapter.set(...)` before `app.init()` to swap in a different adapter.
 
 ## Quick Start

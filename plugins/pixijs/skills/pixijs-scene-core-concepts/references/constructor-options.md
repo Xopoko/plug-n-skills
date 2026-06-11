@@ -2,6 +2,8 @@
 
 Prefer `new X({ ... })` over line-by-line property assignment when constructing Container-derived scene nodes.
 
+Every Container-derived constructor also accepts the shared `Container` options: `position` (or `x`/`y`), `scale`, `tint`, `label`, `filters`, `zIndex`, and the rest of the `ContainerOptions` interface.
+
 ## Before / after
 
 Line-by-line:

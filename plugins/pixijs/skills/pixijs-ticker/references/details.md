@@ -1,7 +1,5 @@
 # pixijs-ticker Details
 
-Use this reference for detailed PixiJS API patterns after the matching skill entrypoint has routed the task.
-
 `app.ticker` runs registered callbacks every frame and drives `app.render()` at `UPDATE_PRIORITY.LOW`. Each callback receives the Ticker instance; read `deltaTime` as a frame-rate-independent multiplier (~ 1.0 at 60fps) or `deltaMS` for real-time calculations.
 
 ## Quick Start

@@ -1,7 +1,5 @@
 # pixijs-scene-mesh Details
 
-Use this reference for detailed PixiJS API patterns after the matching skill entrypoint has routed the task.
-
 Meshes render arbitrary 2D (or perspective-projected) geometry with a texture or custom shader. PixiJS ships the base `Mesh` class plus four specialized subclasses for common shapes: `MeshSimple`, `MeshPlane`, `MeshRope`, and `PerspectiveMesh`. Pick the subclass that matches your shape; drop to the base `Mesh` when you need full vertex-level control or a custom shader.
 
 Assumes familiarity with `pixijs-scene-core-concepts`. Meshes are leaf nodes; they cannot have children. Wrap multiple meshes in a `Container` to group them.

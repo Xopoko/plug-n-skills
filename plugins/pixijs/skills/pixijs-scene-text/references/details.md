@@ -1,7 +1,5 @@
 # pixijs-scene-text Details
 
-Use this reference for detailed PixiJS API patterns after the matching skill entrypoint has routed the task.
-
 PixiJS has five text-rendering classes that cover different trade-offs between styling, performance, and animation. `Text` renders to a canvas for full CSS-style fidelity. `BitmapText` reads from a pre-generated atlas for cheap updates. `HTMLText` renders an HTML fragment via SVG `<foreignObject>` for rich markup. `SplitText` and `SplitBitmapText` wrap the first two classes and expose per-character, per-word, and per-line containers for animation.
 
 Assumes familiarity with `pixijs-scene-core-concepts`. All text classes are leaf nodes; they cannot have children. Wrap multiple text instances in a `Container` to group them.

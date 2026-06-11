@@ -1,7 +1,5 @@
 # pixijs-scene-dom-container Details
 
-Use this reference for detailed PixiJS API patterns after the matching skill entrypoint has routed the task.
-
 `DOMContainer` positions an HTML element over the PixiJS canvas and drives its CSS transform from the scene graph. Use it for native inputs, iframes, videos, or rich HTML that needs to follow a display object's position. The default `pixi.js` browser bundle registers the `DOMPipe` automatically; custom builds add a side-effect `import 'pixi.js/dom'`.
 
 > `DOMContainer` is marked EXPERIMENTAL in PixiJS v8. The API may change between minor releases.
@@ -30,7 +28,7 @@ app.stage.addChild(dom);
 
 ## Constructor options
 
-All `Container` options (`position`, `scale`, `tint`, `label`, `filters`, `zIndex`, etc.) are also valid here -- see `skills/pixijs-scene-core-concepts/references/constructor-options.md`.
+All `Container` options are also valid here -- see `skills/pixijs-scene-core-concepts/references/constructor-options.md`.
 
 Leaf-specific options added by `DOMContainerOptions`:
 

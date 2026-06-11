@@ -1,7 +1,5 @@
 # pixijs-color Details
 
-Use this reference for detailed PixiJS API patterns after the matching skill entrypoint has routed the task.
-
 The `Color` class creates and converts colors for tints, fills, strokes, and anywhere PixiJS accepts a `ColorSource`. Most APIs accept raw hex/strings directly, so explicit `new Color(...)` is only needed when converting formats or manipulating values.
 
 ## Quick Start

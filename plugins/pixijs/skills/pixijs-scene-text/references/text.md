@@ -64,7 +64,7 @@ These are the options accepted by `new Text({ ... })`. The concrete `Text` const
 | `textureStyle`        | `TextureStyle \| TextureStyleOptions`                       | `undefined`                                        | Override the generated texture's scale mode, wrap, etc. (@advanced)                                                                                                       |
 | `autoGenerateMipmaps` | `boolean`                                                   | `TextureSource.defaultOptions.autoGenerateMipmaps` | Generate mipmaps for the text texture; improves quality when scaled down.                                                                                                 |
 
-All `Container` options (`position`, `scale`, `tint`, `label`, `filters`, `zIndex`, etc.) are also valid here — see `skills/pixijs-scene-core-concepts/references/constructor-options.md`.
+All `Container` options are also valid here — see `skills/pixijs-scene-core-concepts/references/constructor-options.md`.
 
 The `style` field is a rich nested type; the rest of this document covers its key properties.
 

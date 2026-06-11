@@ -1,7 +1,5 @@
 # pixijs-create Details
 
-Use this reference for detailed PixiJS API patterns after the matching skill entrypoint has routed the task.
-
 `create pixi.js` is the official CLI for scaffolding a new PixiJS v8 project. Run it with any package manager (`npm`, `yarn`, `pnpm`, `bun`) and pick a template from the interactive menu, or pass `--template` to skip prompts. It writes a self-contained project folder; you then `cd` in, install dependencies, and run the dev script.
 
 ## Quick Start

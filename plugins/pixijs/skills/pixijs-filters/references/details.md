@@ -1,7 +1,5 @@
 # pixijs-filters Details
 
-Use this reference for detailed PixiJS API patterns after the matching skill entrypoint has routed the task.
-
 Attach visual effects by assigning one filter (or an array for chaining) to `container.filters`. Built-in filters cover blur, color matrix, displacement, alpha, and noise; custom filters wrap a GLSL/WGSL fragment shader via `Filter.from(...)`.
 
 ## Quick Start

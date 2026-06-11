@@ -43,7 +43,7 @@ The rope uses the y-axis of the texture as its thickness and stretches the x-axi
 
 `MeshRope` builds its own `RopeGeometry`, so `geometry` is omitted from the options type. Other `MeshOptions` fields (`shader`, `state`, `roundPixels`) are inherited from `mesh.md` and behave identically.
 
-All `Container` options (`position`, `scale`, `tint`, `label`, `filters`, `zIndex`, etc.) are also valid here — see `skills/pixijs-scene-core-concepts/references/constructor-options.md`.
+All `Container` options are also valid here — see `skills/pixijs-scene-core-concepts/references/constructor-options.md`.
 
 `autoUpdate` is a runtime property (defaults to `true`), not a constructor option. Set `rope.autoUpdate = false` after construction to control when the geometry recomputes from the points. `MeshRope.defaultOptions` overrides the `textureScale` default globally.
 

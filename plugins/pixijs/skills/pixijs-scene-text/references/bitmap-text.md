@@ -48,7 +48,7 @@ const styled = new BitmapText({
 | `resolution`  | `number \| null`                | `null`                                   | Accepted but ignored at runtime — set resolution on the `BitmapFont` via `BitmapFont.install({ resolution })` instead. Passing a non-null value logs a warning.                                                                                  |
 | `roundPixels` | `boolean`                       | `false`                                  | Same as `Text`.                                                                                                                                                                                                                                  |
 
-All `Container` options (`position`, `scale`, `tint`, `label`, `filters`, `zIndex`, etc.) are also valid here — see `skills/pixijs-scene-core-concepts/references/constructor-options.md`.
+All `Container` options are also valid here — see `skills/pixijs-scene-core-concepts/references/constructor-options.md`.
 
 > `BitmapText` does NOT accept `textureStyle` or `autoGenerateMipmaps`; those are specific to canvas `Text` and `HTMLText`. The atlas texture style is controlled when installing the font via `BitmapFont.install({ textureStyle })`.
 

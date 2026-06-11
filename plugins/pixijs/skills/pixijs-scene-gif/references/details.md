@@ -1,7 +1,5 @@
 # pixijs-scene-gif Details
 
-Use this reference for detailed PixiJS API patterns after the matching skill entrypoint has routed the task.
-
 `GifSprite` plays an animated GIF as a display object. `Assets.load('animation.gif')` returns a `GifSource` (not a `Texture`), and you wrap that in a `GifSprite`. Requires a side-effect `import 'pixi.js/gif'` to register the loader extension.
 
 Assumes familiarity with `pixijs-scene-core-concepts`. `GifSprite` extends `Sprite`, so it is a leaf: do not nest children inside it. Wrap multiple `GifSprite` instances in a `Container` to group them.
@@ -35,7 +33,7 @@ app.stage.addChild(gif);
 
 ## Constructor options
 
-`GifSpriteOptions` extends `Omit<SpriteOptions, 'texture'>`; `texture` is managed internally (set from `source.textures[0]` and swapped per frame). All other `Sprite` options (`anchor`, `scale`, `tint`, `roundPixels`, etc.) are valid, and all `Container` options (`position`, `scale`, `tint`, `label`, `filters`, `zIndex`, etc.) are also valid here -- see `skills/pixijs-scene-core-concepts/references/constructor-options.md`.
+`GifSpriteOptions` extends `Omit<SpriteOptions, 'texture'>`; `texture` is managed internally (set from `source.textures[0]` and swapped per frame). All other `Sprite` options (`anchor`, `scale`, `tint`, `roundPixels`, etc.) are valid, and all `Container` options are also valid here -- see `skills/pixijs-scene-core-concepts/references/constructor-options.md`.
 
 Leaf-specific options added by `GifSpriteOptions`:
 

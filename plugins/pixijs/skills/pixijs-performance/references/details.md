@@ -1,7 +1,5 @@
 # pixijs-performance Details
 
-Use this reference for detailed PixiJS API patterns after the matching skill entrypoint has routed the task.
-
 Profile before optimizing. PixiJS handles a lot of content well out of the box; browser DevTools Performance + GPU profiling should be your first move. Once you've found the bottleneck, apply the targeted pattern below (destroy, pool, batch, cache, or cull).
 
 ## Quick Start

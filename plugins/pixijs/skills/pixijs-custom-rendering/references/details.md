@@ -1,7 +1,5 @@
 # pixijs-custom-rendering Details
 
-Use this reference for detailed PixiJS API patterns after the matching skill entrypoint has routed the task.
-
 Custom shaders bind GLSL and WGSL programs to scene objects via `Shader.from({ gl, gpu, resources })`. Uniforms live in typed `UniformGroup`s, textures are passed as separate resources, and the same shader can target both WebGL and WebGPU.
 
 ## Quick Start

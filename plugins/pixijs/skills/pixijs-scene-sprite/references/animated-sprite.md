@@ -58,7 +58,7 @@ const walk = new AnimatedSprite({
 | `onLoop`         | `() => void`                     | `null`  | Fires when a looping animation wraps back to the start.                                                           |
 | `updateAnchor`   | `boolean`                        | `false` | Copy `texture.defaultAnchor` onto the sprite's anchor on every frame change. Overrides any previously set anchor. |
 
-Also inherits `SpriteOptions` minus `texture` (use `textures` for frames) — see `sprite.md`. All `Container` options (`position`, `scale`, `tint`, `label`, `filters`, `zIndex`, etc.) are also valid here — see `skills/pixijs-scene-core-concepts/references/constructor-options.md`.
+Also inherits `SpriteOptions` minus `texture` (use `textures` for frames) — see `sprite.md`. All `Container` options are also valid here — see `skills/pixijs-scene-core-concepts/references/constructor-options.md`.
 
 ### Playback control
 

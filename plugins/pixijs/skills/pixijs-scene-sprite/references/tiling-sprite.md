@@ -55,7 +55,7 @@ const fromCache = TilingSprite.from("pattern.png", { width: 800, height: 600 });
 | `applyAnchorToTexture` | `boolean`             | `false`          | Shift the texture origin by the anchor instead of locking `(0,0)` to the top-left. |
 | `roundPixels`          | `boolean`             | `false`          | Snap the sprite's position (not the tile pattern) to integer coordinates.          |
 
-All `Container` options (`position`, `scale`, `tint`, `label`, `filters`, `zIndex`, etc.) are also valid here — see `skills/pixijs-scene-core-concepts/references/constructor-options.md`.
+All `Container` options are also valid here — see `skills/pixijs-scene-core-concepts/references/constructor-options.md`.
 
 ## Core Patterns
 

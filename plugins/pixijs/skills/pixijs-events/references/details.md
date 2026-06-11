@@ -1,7 +1,5 @@
 # pixijs-events Details
 
-Use this reference for detailed PixiJS API patterns after the matching skill entrypoint has routed the task.
-
 PixiJS's federated event system mirrors DOM events on the scene graph. Set `container.eventMode = 'static'` to opt an object in, then listen with `.on()`, `addEventListener()`, or `onEventName` property handlers. Move events fire only over the listening object; use `globalpointermove` for drag.
 
 ## Quick Start

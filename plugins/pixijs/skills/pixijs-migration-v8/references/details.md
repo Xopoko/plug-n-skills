@@ -1,7 +1,5 @@
 # pixijs-migration-v8 Details
 
-Use this reference for detailed PixiJS API patterns after the matching skill entrypoint has routed the task.
-
 This skill is a breaking-change checklist for bringing a v7 codebase up to v8. Work top-down through the categories; the list maps each v7 pattern to its v8 replacement.
 
 ## Quick Start

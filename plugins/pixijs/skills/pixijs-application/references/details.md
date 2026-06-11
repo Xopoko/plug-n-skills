@@ -1,7 +1,5 @@
 # pixijs-application Details
 
-Use this reference for detailed PixiJS API patterns after the matching skill entrypoint has routed the task.
-
 `Application` is the convenience wrapper that owns a renderer, a root `stage` Container, a canvas, and the Ticker/Resize plugins. In v8 the constructor takes no arguments; all configuration is passed to the async `app.init()` call which instantiates the renderer via `autoDetectRenderer`.
 
 ## Quick Start

@@ -1,7 +1,5 @@
 # pixijs-html-source Details
 
-Use this reference for detailed PixiJS API patterns after the matching skill entrypoint has routed the task.
-
 `HTMLSource` and `ElementImageSource` turn a DOM element into a `TextureSource` you can use anywhere a normal texture works: on a `Sprite`, as a `Texture` frame, or mapped onto a `Mesh`. `HTMLSource` mirrors a live element's pixels into the GPU (the element stays editable and clickable in the browser); `ElementImageSource` wraps an immutable snapshot that never repaints. Both require a side-effect `import 'pixi.js/html-source'` to register their extensions.
 
 > These sources rely on the experimental HTML-in-Canvas browser proposal and are marked EXPERIMENTAL in PixiJS v8. The browser API must be enabled or the texture uploader throws on first render; feature-detect with `canvas.requestPaint` before relying on it. The API may change between minor releases.

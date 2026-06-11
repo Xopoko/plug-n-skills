@@ -63,7 +63,7 @@ const full = new SplitBitmapText({
 | `wordAnchor` | `number \| PointData`                    | `0`     | Normalized transform origin for each word container.                                                                                                                                           |
 | `charAnchor` | `number \| PointData`                    | `0`     | Normalized transform origin for each character container.                                                                                                                                      |
 
-All `Container` options (`position`, `scale`, `tint`, `label`, `filters`, `zIndex`, etc.) are also valid here — see `skills/pixijs-scene-core-concepts/references/constructor-options.md`.
+All `Container` options are also valid here — see `skills/pixijs-scene-core-concepts/references/constructor-options.md`.
 
 > `SplitBitmapText.defaultOptions` overrides the defaults globally for every new `SplitBitmapText` instance. `SplitBitmapText.from(existingBitmapText, options?)` builds an instance by cloning the source's text and style — `tagStyles` on the source are discarded (bitmap text does not support them) and a warning is logged.
 

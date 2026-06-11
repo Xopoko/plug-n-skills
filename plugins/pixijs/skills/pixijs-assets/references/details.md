@@ -1,7 +1,5 @@
 # pixijs-assets Details
 
-Use this reference for detailed PixiJS API patterns after the matching skill entrypoint has routed the task.
-
 The `Assets` API is PixiJS's asset loader, resolver, and cache in one singleton. Use it to load textures, video, spritesheets, fonts, JSON, and other resources with format detection, resolution switching, bundle grouping, progress tracking, and GPU cleanup.
 
 ## Quick Start
