@@ -139,7 +139,7 @@ instructions.
 | Reference files | 46 | - | Longer ledgers, contracts, scorecards, and source notes. |
 | Helper and validator scripts | 38 | - | Deterministic plugin-local helpers. |
 | Startup metadata | 155 skills | 11,773 | Skill name, description, and file pointer for routing. |
-| On-demand skill bodies | 155 skills | 96,561 | Instruction bodies after frontmatter, loaded only when selected. |
+| On-demand skill bodies | 155 skills | 96,813 | Instruction bodies after frontmatter, loaded only when selected. |
 
 Regenerate the report after skill edits:
 
@@ -159,7 +159,7 @@ Token columns are `startup metadata / on-demand body`.
 | `build-swift-apps` | 59 | 0 | 5 | 4,449 | 36,450 |
 | `pixijs` | 26 | 0 | 0 | 1,861 | 7,967 |
 | `tauri` | 6 | 0 | 1 | 481 | 2,986 |
-| `scientific-research` | 1 | 0 | 0 | 94 | 1,499 |
+| `scientific-research` | 1 | 0 | 0 | 94 | 1,751 |
 | `context-density` | 1 | 0 | 1 | 128 | 2,140 |
 | `capability-workbench` | 9 | 11 | 21 | 768 | 10,534 |
 | `codex-cli` | 6 | 3 | 2 | 501 | 5,183 |
@@ -302,7 +302,7 @@ Token cells are shown as `startup/body`.
 
 | Skill | Tokens | Description |
 | --- | ---: | --- |
-| `scientific-research` | 94/1,499 | Use when the user asks the agent to conduct scientific or scholarly research, literature reviews, paper discovery, arXiv/OpenAlex/Crossref/Europe PMC/Semantic Scholar/PubMed queries, corpus building, DOI deduplication, source-backed claim extraction, evidence synthesis, or research quality validation. |
+| `scientific-research` | 94/1,751 | Use when the user asks the agent to conduct scientific or scholarly research, literature reviews, paper discovery, arXiv/OpenAlex/Crossref/Europe PMC/Semantic Scholar/PubMed queries, corpus building, DOI deduplication, source-backed claim extraction, evidence synthesis, or research quality validation. |
 
 #### `context-density`
 

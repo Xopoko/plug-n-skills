@@ -268,3 +268,180 @@ if __name__ == "__main__":
     test_source_policies_only_reference_allowed_fallbacks()
     test_openalex_409_is_auth_required()
     print("direct_tests=passed")
+
+
+def _plan_file(mod, tmp_path: Path, sources: list[str], total_records: int = 10, **gates) -> Path:
+    plan = tmp_path / "plan.json"
+    payload = {
+        "schema": mod.SCHEMA_PLAN,
+        "created_at_utc": mod.utc_now(),
+        "topic": "merge test",
+        "questions": ["merge test"],
+        "sources": sources,
+        "limits": {"per_source": 5, "total_records": total_records, "download_limit": 0},
+        "contact_email": "",
+        "policy": {"open_copy_only": True, "no_paywall_bypass": True},
+    }
+    if gates:
+        payload["quality_gates"] = gates
+    plan.write_text(json.dumps(payload), encoding="utf-8")
+    return plan
+
+
+def _fake_crossref(records: list[dict]):
+    def fetch(query: str, limit: int, timeout: float, contact_email: str = ""):
+        return (list(records), {"endpoint": "https://api.crossref.org/works", "count": len(records)})
+
+    return fetch
+
+
+def test_search_merges_existing_index_and_backs_it_up() -> None:
+    mod = load_module()
+    tmp_path = fresh_dir("merge-search")
+    plan = _plan_file(mod, tmp_path, ["crossref"], total_records=10)
+    out_dir = tmp_path / "corpus"
+    original = mod.FETCHERS.copy()
+    try:
+        mod.FETCHERS["crossref"] = _fake_crossref(
+            [{"source": "crossref", "doi": "10.1/a", "title": "Paper A", "query": "q"}]
+        )
+        assert mod.main(["search", "--plan", str(plan), "--out-dir", str(out_dir), "--sleep-seconds", "0"]) == 0
+        mod.FETCHERS["crossref"] = _fake_crossref(
+            [{"source": "crossref", "doi": "10.1/b", "title": "Paper B", "query": "q"}]
+        )
+        assert mod.main(["search", "--plan", str(plan), "--out-dir", str(out_dir), "--sleep-seconds", "0"]) == 0
+    finally:
+        mod.FETCHERS.clear()
+        mod.FETCHERS.update(original)
+    records = [json.loads(line) for line in (out_dir / "01_index" / "records.jsonl").read_text(encoding="utf-8").splitlines()]
+    dois = {record["doi"] for record in records}
+    assert dois == {"10.1/a", "10.1/b"}, "second search must merge, not replace"
+    backups = list((out_dir / "03_runs").glob("records-pre-search-*.jsonl"))
+    assert backups, "prior index must be backed up before rewriting"
+    summary = json.loads((out_dir / "03_runs" / "search-summary.json").read_text(encoding="utf-8"))
+    assert summary["records_existing"] == 1
+    assert summary["records_accepted"] == 2
+
+
+def test_search_logs_records_dropped_over_limit() -> None:
+    mod = load_module()
+    tmp_path = fresh_dir("cap-drop")
+    plan = _plan_file(mod, tmp_path, ["crossref"], total_records=1)
+    out_dir = tmp_path / "corpus"
+    original = mod.FETCHERS.copy()
+    try:
+        mod.FETCHERS["crossref"] = _fake_crossref(
+            [
+                {"source": "crossref", "doi": "10.1/a", "title": "Paper A", "query": "q"},
+                {"source": "crossref", "doi": "10.1/b", "title": "Paper B", "query": "q"},
+            ]
+        )
+        assert mod.main(["search", "--plan", str(plan), "--out-dir", str(out_dir), "--sleep-seconds", "0"]) == 0
+    finally:
+        mod.FETCHERS.clear()
+        mod.FETCHERS.update(original)
+    summary = json.loads((out_dir / "03_runs" / "search-summary.json").read_text(encoding="utf-8"))
+    assert summary["records_dropped_over_limit"] == 1
+    dropped = [json.loads(line) for line in (out_dir / "03_runs" / "dropped-over-limit.jsonl").read_text(encoding="utf-8").splitlines()]
+    assert dropped and dropped[0]["key"]
+
+
+def test_quality_gate_fails_with_zero_claims() -> None:
+    mod = load_module()
+    tmp_path = fresh_dir("vacuous-gate")
+    records = tmp_path / "records.jsonl"
+    records.write_text(json.dumps({"key": "doi-10-1-x", "source": "crossref"}) + "\n", encoding="utf-8")
+    out = tmp_path / "gate.json"
+    rc = mod.main(["quality-gate", "--records", str(records), "--out", str(out)])
+    assert rc == 1
+    gate = json.loads(out.read_text(encoding="utf-8"))
+    assert "no_claims_provided" in gate["failures"]
+    rc = mod.main(["quality-gate", "--records", str(records), "--out", str(out), "--allow-empty-claims"])
+    assert rc == 0
+
+
+def test_quality_gate_requires_claim_text() -> None:
+    mod = load_module()
+    tmp_path = fresh_dir("claim-text")
+    records = tmp_path / "records.jsonl"
+    records.write_text(json.dumps({"key": "doi-10-1-x", "source": "crossref"}) + "\n", encoding="utf-8")
+    claims = tmp_path / "claims.jsonl"
+    claims.write_text(
+        json.dumps({"claim_id": "c1", "evidence_keys": ["doi-10-1-x"], "confidence": "medium", "limitations": "fixture"}) + "\n",
+        encoding="utf-8",
+    )
+    out = tmp_path / "gate.json"
+    rc = mod.main(["quality-gate", "--records", str(records), "--claims", str(claims), "--out", str(out)])
+    assert rc == 1
+    gate = json.loads(out.read_text(encoding="utf-8"))
+    assert any("missing_claim_text" in item for item in gate["unsupported_claims"])
+
+
+def test_quality_gate_flags_claims_citing_excluded_records() -> None:
+    mod = load_module()
+    tmp_path = fresh_dir("excluded-cite")
+    records = tmp_path / "records.jsonl"
+    records.write_text(json.dumps({"key": "doi-10-1-x", "source": "crossref"}) + "\n", encoding="utf-8")
+    decisions = tmp_path / "decisions.jsonl"
+    decisions.write_text(json.dumps({"record_key": "doi-10-1-x", "decision": "exclude", "reason": "off-topic"}) + "\n", encoding="utf-8")
+    claims = tmp_path / "claims.jsonl"
+    claims.write_text(
+        json.dumps({"claim_id": "c1", "claim": "Cites excluded.", "evidence_keys": ["doi-10-1-x"], "confidence": "medium", "limitations": "fixture"}) + "\n",
+        encoding="utf-8",
+    )
+    out = tmp_path / "gate.json"
+    rc = mod.main(["quality-gate", "--records", str(records), "--claims", str(claims), "--decisions", str(decisions), "--out", str(out)])
+    assert rc == 1
+    gate = json.loads(out.read_text(encoding="utf-8"))
+    assert any("cites_excluded_record" in item for item in gate["unsupported_claims"])
+
+
+def test_quality_gate_enforces_plan_thresholds() -> None:
+    mod = load_module()
+    tmp_path = fresh_dir("plan-thresholds")
+    plan = _plan_file(mod, tmp_path, ["crossref"], min_records=5, min_sources=2, claims_require_evidence=True)
+    records = tmp_path / "records.jsonl"
+    records.write_text(json.dumps({"key": "doi-10-1-x", "source": "crossref"}) + "\n", encoding="utf-8")
+    claims = tmp_path / "claims.jsonl"
+    claims.write_text(
+        json.dumps({"claim_id": "c1", "claim": "ok", "evidence_keys": ["doi-10-1-x"], "confidence": "medium", "limitations": "fixture"}) + "\n",
+        encoding="utf-8",
+    )
+    out = tmp_path / "gate.json"
+    rc = mod.main(["quality-gate", "--records", str(records), "--claims", str(claims), "--plan", str(plan), "--out", str(out)])
+    assert rc == 1
+    gate = json.loads(out.read_text(encoding="utf-8"))
+    assert any(item.startswith("record_count_below_min") for item in gate["failures"])
+    assert any(item.startswith("source_count_below_min") for item in gate["failures"])
+
+
+def test_screening_summary_fails_with_zero_decisions() -> None:
+    mod = load_module()
+    tmp_path = fresh_dir("zero-screening")
+    records = tmp_path / "records.jsonl"
+    records.write_text(json.dumps({"key": "doi-10-1-x", "source": "crossref"}) + "\n", encoding="utf-8")
+    out = tmp_path / "summary.json"
+    rc = mod.main(["screening-summary", "--records", str(records), "--out", str(out)])
+    assert rc == 1
+    summary = json.loads(out.read_text(encoding="utf-8"))
+    assert "no_screening_decisions" in summary["failures"]
+
+
+def test_openalex_query_sanitizer_strips_wildcards() -> None:
+    mod = load_module()
+    assert mod.sanitize_openalex_query("Which methods are source-grounded?") == "Which methods are source-grounded"
+    assert mod.sanitize_openalex_query("retrieval * evaluation ?") == "retrieval evaluation"
+
+
+def test_http_400_classified_as_query_error_without_cooldown() -> None:
+    mod = load_module()
+    exc = mod.ScholarlyHttpError("https://api.openalex.org/works", 400, {"Retry-After": "50000"}, "Invalid query parameters error.")
+    state, code, retry_after = mod.classify_fetch_error("openalex", exc)
+    assert state == "query_error"
+    assert code == 400
+    assert retry_after == 0
+
+
+def test_xml_unescape_handles_numeric_entities() -> None:
+    mod = load_module()
+    assert mod.xml_unescape("It&#39;s &#x41; test &amp; more") == "It's A test & more"

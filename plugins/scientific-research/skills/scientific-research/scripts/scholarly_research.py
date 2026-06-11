@@ -20,7 +20,9 @@ SCHEMA_QUERY_LOG = "scientific_research.query_log.v1"
 SCHEMA_SOURCE_STATUS = "scientific_research.source_status.v1"
 SCHEMA_SCREENING = "scientific_research.screening_summary.v1"
 SCHEMA_QUALITY = "scientific_research.quality_gate.v1"
-USER_AGENT = "CodexScientificResearchPlugin/0.1 (+https://developers.openalex.org/)"
+USER_AGENT = "PlugNSkillsScientificResearch/0.2 (+https://github.com/Xopoko/plug-n-skills)"
+MAX_RESPONSE_BYTES = 32 * 1024 * 1024
+MAX_SUMMARY_CHARS = 4000
 
 DEFAULT_SOURCES = ["openalex", "arxiv", "crossref", "europepmc", "semantic-scholar"]
 ALLOWED_SOURCES = {
@@ -233,6 +235,9 @@ def classify_fetch_error(source: str, exc: BaseException) -> tuple[str, int, int
         code = int(code_match.group(1)) if code_match else 0
     retry_after = exc.retry_after_seconds if isinstance(exc, ScholarlyHttpError) else 0
     lowered = text.lower()
+    if code == 400:
+        # Malformed query, not a capacity problem: no cooldown, fix the query.
+        return "query_error", code, 0
     if source == "openalex" and code in {403, 429}:
         return "cooldown", code, retry_after
     if source == "openalex" and code == 409:
@@ -393,7 +398,7 @@ def normalize_record(record: dict[str, Any]) -> dict[str, Any]:
         "arxiv_id": clean_text(record.get("arxiv_id", "")),
         "landing_url": normalize_url(first_text(record.get("landing_url"), record.get("url"), record.get("URL"))),
         "open_copy_url": normalize_url(first_text(record.get("open_copy_url"), record.get("pdf_url"), record.get("url_for_pdf"))),
-        "summary": clean_text(first_text(record.get("summary"), record.get("abstract"), record.get("abstract_text"), record.get("description"))),
+        "summary": clean_text(first_text(record.get("summary"), record.get("abstract"), record.get("abstract_text"), record.get("description")))[:MAX_SUMMARY_CHARS],
         "query": clean_text(record.get("query", "")),
         "raw_metadata": record.get("raw_metadata", record),
     }
@@ -429,7 +434,10 @@ def http_text(url: str, *, headers: dict[str, str] | None = None, timeout: float
     try:
         with urlopen(request, timeout=timeout) as response:
             content_type = response.headers.get_content_charset() or "utf-8"
-            return response.read().decode(content_type, errors="replace")
+            data = response.read(MAX_RESPONSE_BYTES + 1)
+            if len(data) > MAX_RESPONSE_BYTES:
+                raise RuntimeError(f"response_too_large:>{MAX_RESPONSE_BYTES}_bytes:{url}")
+            return data.decode(content_type, errors="replace")
     except HTTPError as exc:
         content_type = exc.headers.get_content_charset() or "utf-8"
         body = exc.read().decode(content_type, errors="replace")
@@ -463,9 +471,14 @@ def abstract_from_inverted_index(index: Any) -> str:
     return " ".join(word for _, word in sorted(positions))
 
 
+def sanitize_openalex_query(query: str) -> str:
+    """OpenAlex stemmed search rejects wildcard characters (? and *) with HTTP 400."""
+    return re.sub(r"\s+", " ", query.replace("?", " ").replace("*", " ")).strip()
+
+
 def fetch_openalex(query: str, limit: int, timeout: float, contact_email: str = "") -> tuple[list[dict[str, Any]], dict[str, Any]]:
     params = {
-        "search": query,
+        "search": sanitize_openalex_query(query),
         "per_page": str(min(limit, int(SOURCE_POLICIES["openalex"]["max_per_page"]))),
         "select": "id,doi,title,display_name,publication_year,authorships,primary_location,open_access,abstract_inverted_index,type,cited_by_count,ids",
     }
@@ -548,6 +561,8 @@ def fetch_arxiv(query: str, limit: int, timeout: float, contact_email: str = "")
 
 
 def xml_unescape(value: str) -> str:
+    value = re.sub(r"&#x([0-9a-fA-F]+);", lambda m: chr(int(m.group(1), 16)), value)
+    value = re.sub(r"&#(\d+);", lambda m: chr(int(m.group(1))), value)
     return (
         value.replace("&lt;", "<")
         .replace("&gt;", ">")
@@ -865,20 +880,51 @@ def command_search(args: argparse.Namespace) -> int:
             sleep_seconds = max(args.sleep_seconds, float(SOURCE_POLICIES.get(source, {}).get("min_interval_seconds", 0.0)))
             if sleep_seconds > 0:
                 time.sleep(sleep_seconds)
-    accepted, duplicates = dedupe_records(records)
+    # The index is provenance: merge into it, never rewrite it from one run.
+    index_path = out_dir / "01_index" / "records.jsonl"
+    existing = load_jsonl(index_path) if index_path.exists() else []
+    index_backup = ""
+    if existing:
+        backup_path = out_dir / "03_runs" / f"records-pre-search-{utc_now().replace(':', '').replace('-', '')}.jsonl"
+        backup_path.write_text(index_path.read_text(encoding="utf-8"), encoding="utf-8")
+        index_backup = str(backup_path.resolve())
+    # Existing records come first so prior provenance survives both dedupe
+    # and the total-records cap.
+    accepted, duplicates = dedupe_records(existing + records)
     total_limit = int(plan["limits"]["total_records"])
-    accepted = accepted[:total_limit]
+    dropped: list[dict[str, Any]] = []
+    if len(accepted) > total_limit:
+        dropped = accepted[total_limit:]
+        accepted = accepted[:total_limit]
+        append_jsonl(
+            out_dir / "03_runs" / "dropped-over-limit.jsonl",
+            [
+                {
+                    "key": item.get("key", ""),
+                    "title": item.get("title", ""),
+                    "source": item.get("source", ""),
+                    "query": item.get("query", ""),
+                    "dropped_at_utc": utc_now(),
+                }
+                for item in dropped
+            ],
+        )
     write_records(out_dir, accepted)
     write_download_status(out_dir, accepted)
     append_jsonl(out_dir / "01_index" / "query_log.jsonl", query_logs)
     write_source_status(out_dir, source_status)
     summary = {
-        "schema": "scientific_research.search_summary.v1",
+        "schema": "scientific_research.search_summary.v2",
         "generated_at_utc": utc_now(),
         "plan": str(Path(args.plan).resolve()),
         "out_dir": str(out_dir.resolve()),
+        "records_existing": len(existing),
+        "records_fetched": len(records),
         "records_seen": len(records),
         "records_accepted": len(accepted),
+        "records_dropped_over_limit": len(dropped),
+        "dropped_records_path": str((out_dir / "03_runs" / "dropped-over-limit.jsonl").resolve()) if dropped else "",
+        "index_backup_path": index_backup,
         "duplicates": duplicates,
         "sources": sorted({record["source"] for record in accepted}),
         "query_statuses": query_logs,
@@ -897,7 +943,6 @@ def log_row(source: str, query: str, status: str, count: int, endpoint: str, err
         "query": query,
         "status": status,
         "records_returned": count,
-        "accepted_after_dedupe": "",
         "endpoint": endpoint,
         "error": error,
     }
@@ -1014,6 +1059,8 @@ def command_screening_summary(args: argparse.Namespace) -> int:
 
     if unknown_keys:
         failures.append("unknown_record_keys:" + ",".join(sorted(unknown_keys)))
+    if not decisions:
+        failures.append("no_screening_decisions")
 
     payload = {
         "schema": SCHEMA_SCREENING,
@@ -1039,11 +1086,30 @@ def command_quality_gate(args: argparse.Namespace) -> int:
     claims = load_jsonl(Path(args.claims)) if args.claims else []
     record_keys = {clean_text(record.get("key", "")) for record in records}
     sources = {clean_text(record.get("source", "")) for record in records if record.get("source")}
+    min_records = args.min_records
+    min_sources = args.min_sources
+    if args.plan:
+        plan = read_json(Path(args.plan))
+        gates = plan.get("quality_gates", {}) if isinstance(plan.get("quality_gates"), dict) else {}
+        if isinstance(gates.get("min_records"), int):
+            min_records = max(min_records, gates["min_records"])
+        if isinstance(gates.get("min_sources"), int):
+            min_sources = max(min_sources, gates["min_sources"])
+    excluded_keys: set[str] = set()
+    if args.decisions:
+        for row in load_jsonl(Path(args.decisions)):
+            if clean_text(row.get("decision", "")).lower() == "exclude":
+                key = clean_text(row.get("record_key", row.get("key", "")))
+                if key:
+                    excluded_keys.add(key)
     failures: list[str] = []
-    if len(records) < args.min_records:
-        failures.append(f"record_count_below_min:{len(records)}<{args.min_records}")
-    if len(sources) < args.min_sources:
-        failures.append(f"source_count_below_min:{len(sources)}<{args.min_sources}")
+    if len(records) < min_records:
+        failures.append(f"record_count_below_min:{len(records)}<{min_records}")
+    if len(sources) < min_sources:
+        failures.append(f"source_count_below_min:{len(sources)}<{min_sources}")
+    # A gate that passes with nothing to check is an illusion of rigor.
+    if not claims and not args.allow_empty_claims:
+        failures.append("no_claims_provided")
     unsupported_claims: list[str] = []
     for index, claim in enumerate(claims):
         claim_id = clean_text(claim.get("claim_id", f"claim-{index+1:03d}"))
@@ -1054,11 +1120,16 @@ def command_quality_gate(args: argparse.Namespace) -> int:
         if not isinstance(source_refs, list):
             source_refs = []
         evidence_key_set = {clean_text(key) for key in evidence_keys if clean_text(key)}
+        if not clean_text(claim.get("claim", "")):
+            unsupported_claims.append(claim_id + ":missing_claim_text")
         if not evidence_key_set and not any(clean_text(ref) for ref in source_refs):
             unsupported_claims.append(claim_id + ":missing_evidence")
         missing_keys = sorted(evidence_key_set - record_keys)
         if missing_keys:
             unsupported_claims.append(claim_id + ":missing_record_keys:" + ",".join(missing_keys))
+        excluded_cited = sorted(evidence_key_set & excluded_keys)
+        if excluded_cited:
+            unsupported_claims.append(claim_id + ":cites_excluded_record:" + ",".join(excluded_cited))
         if clean_text(claim.get("confidence", "")) not in CONFIDENCE:
             unsupported_claims.append(claim_id + ":invalid_confidence")
         if not clean_text(claim.get("limitations", "")):
@@ -1073,6 +1144,9 @@ def command_quality_gate(args: argparse.Namespace) -> int:
         "records": len(records),
         "sources": sorted(sources),
         "claims": len(claims),
+        "min_records": min_records,
+        "min_sources": min_sources,
+        "excluded_records_checked": len(excluded_keys),
         "unsupported_claims": unsupported_claims,
     }
     write_json(Path(args.out), payload)
@@ -1128,9 +1202,16 @@ def build_parser() -> argparse.ArgumentParser:
     quality = sub.add_parser("quality-gate", help="Validate record and claim evidence support.")
     quality.add_argument("--records", required=True)
     quality.add_argument("--claims", default="")
+    quality.add_argument("--decisions", default="", help="Screening decisions JSONL; claims citing excluded records fail.")
+    quality.add_argument("--plan", default="", help="Research plan JSON; enforces the plan's own quality_gates thresholds.")
     quality.add_argument("--out", required=True)
     quality.add_argument("--min-records", type=int, default=1)
     quality.add_argument("--min-sources", type=int, default=1)
+    quality.add_argument(
+        "--allow-empty-claims",
+        action="store_true",
+        help="Permit a passing gate with zero claims (off by default: an empty gate proves nothing).",
+    )
     quality.set_defaults(func=command_quality_gate)
     return parser
 

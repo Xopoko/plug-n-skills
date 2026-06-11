@@ -18,8 +18,9 @@ Use this file before turning papers into decisions, recommendations, product rul
 - Source bias: note when only preprints, only biomedical indexes, or only publisher metadata were searched.
 - Source routing: inspect `source-status` before querying and name any sources in cooldown, auth failure, or wrapper failure.
 - Open-copy policy: only download files that provider metadata exposes as open or user explicitly supplied as public.
-- Screening trace: for systematic, scoping, or literature-review outputs, keep inclusion/exclusion decisions in JSONL and produce `screening_summary.json`.
-- Claim support: every non-trivial conclusion points to record keys, DOI/PMID/PMCID/arXiv id, or stable URLs.
+- Screening trace: for systematic, scoping, or literature-review outputs, keep inclusion/exclusion decisions in JSONL and produce `screening_summary.json`. A summary with zero decisions fails — unscreened is not screened.
+- Claim support: every non-trivial conclusion points to record keys, DOI/PMID/PMCID/arXiv id, or stable URLs. The gate fails on zero claims, missing claim text, and claims citing records you excluded during screening (pass `--decisions`); pass `--plan` so the plan's own `quality_gates` thresholds are enforced.
+- Gate scope honesty: a passing gate proves traceability (every claim resolves to records you kept), not truth. Spot-check load-bearing claims against source text before promoting them.
 - Negative evidence: record disconfirming or limiting sources when they affect the answer.
 - AI assistance disclosure: name where AI was used in search, screening, extraction, synthesis, or drafting; state input data, output format, human checks, and limitations.
 
