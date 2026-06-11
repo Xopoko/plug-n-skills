@@ -6,12 +6,15 @@ It consolidates token-efficient context design, runtime context diagnostics, ski
 
 1. Identify the consumer and load path.
 2. Measure token/context cost where applicable.
-3. Detect duplication, drift, brittle prose parsing, low-value context, and middle-buried commitments.
+3. Detect duplication, drift, brittle prose parsing, low-value context, context stuffing, untyped agent handoffs, oversized hot surfaces, and middle-buried commitments.
 4. Preserve behavioral invariants.
 5. Refactor toward compact source-of-truth structure.
 6. Treat retrieved or archived context as evidence until provenance and validation promote it into state.
 7. Enforce explicit prompt/output contracts.
-8. Validate compression with total cost, output cost, placement, behavior, schema/task checks, cache metrics when applicable, and skill/plugin validation.
-9. Report adopted changes, rejected changes, token delta, contract risks, and remaining tradeoffs.
+8. Validate compression with total cost, output cost, placement, behavior, format sensitivity, schema/task checks, cache metrics when applicable, and skill/plugin validation.
+9. Emit machine-readable `research_gate_risks` and `research_gate_summary` for triggered acceptance gates and required evidence.
+10. Validate preserved exact commitments with `--commitment-ledger`.
+11. Enforce research gates in CI-style workflows with `--fail-on-research-gates`.
+12. Report adopted changes, rejected changes, token delta, contract risks, and remaining tradeoffs.
 
 The plugin exposes one public skill, `context-density`, with conditional references and deterministic scripts under `skills/context-density/`.

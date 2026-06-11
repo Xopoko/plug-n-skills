@@ -49,10 +49,42 @@ Prompt contract audit:
   "mode": "exact|approx",
   "token_summary": {"files": 0, "tokens": 0, "chars": 0, "lines": 0},
   "token_hotspots": [{"path": "file", "tokens": 0, "load_path": "hot|router|reference|evidence|unknown"}],
-  "context_risks": [{"path": "file", "line": 1, "kind": "low_value_hot_context|middle_buried_commitment|context_window_assumption", "severity": "low|medium|high", "message": "..."}],
-  "compression_risks": [{"path": "file", "line": 1, "kind": "commitment_loss_risk|token_only_metric|compression_without_relevance_check|retrieval_commitment_risk", "severity": "medium|high", "message": "..."}],
-  "contract_risks": [{"path": "file", "line": 1, "kind": "prose_parsing|schema_without_task_validation", "severity": "low|medium|high", "message": "...", "suggested_contract": "..."}]
+  "context_risks": [{"path": "file", "line": 1, "kind": "low_value_hot_context|middle_buried_commitment|context_window_assumption|context_stuffing|handoff_without_contract|oversized_hot_surface", "severity": "low|medium|high", "message": "..."}],
+  "compression_risks": [{"path": "file", "line": 1, "kind": "commitment_loss_risk|token_only_metric|compression_without_relevance_check|retrieval_commitment_risk|format_equivalence_assumption", "severity": "medium|high", "message": "..."}],
+  "contract_risks": [{"path": "file", "line": 1, "kind": "prose_parsing|schema_without_task_validation", "severity": "low|medium|high", "message": "...", "suggested_contract": "..."}],
+  "research_gate_risks": [{"path": "file", "line": 1, "gate": "long_context_placement|compression_break_even|schema_task_validity|retrieval_citation_promotion|cache_aware_layout|relevance_distractor_budget|format_sensitivity|multi_agent_handoff", "triggered_by": "risk_kind", "severity": "medium", "required_evidence": ["..."], "source_basis": ["..."]}],
+  "research_gate_summary": [{"gate": "cache_aware_layout", "count": 1, "max_severity": "medium", "required_evidence": ["..."], "source_basis": ["..."]}],
+  "commitment_validation": {"schema": "context_density.commitment_validation.v1", "checked": 0, "passed": true, "missing_required": [], "malformed_atoms": [], "results": []},
+  "blocking": {"research_gates": false, "fail_on_severity": "medium", "commitments": false},
+  "risk_counts": {"context": 0, "compression": 0, "contract": 0, "research_gates": 0}
 }
 ```
 
-Do not parse the human Markdown report for machine decisions; use the JSON output.
+For CI-style enforcement, run `context_density_audit.py --fail-on-research-gates`.
+It still prints JSON and exits `2` when a research gate risk at or above
+`--fail-on-severity` is present. Do not parse the human Markdown report for
+machine decisions; use the JSON output.
+
+`--hot-token-budget N` (default 3000, 0 disables) emits `oversized_hot_surface`
+for hot-path files above the budget: `low` severity below twice the budget,
+`medium` at or above it. The default anchors to documented reasoning
+degradation near 3K input tokens.
+
+## Commitment Ledger
+
+Use `--commitment-ledger atoms.json --fail-on-missing-commitments` when a
+compression or refactor must preserve exact atoms. The ledger may be JSON with
+an `atoms` array or JSONL rows:
+
+```json
+{
+  "schema": "context_density.commitment_ledger.v1",
+  "atoms": [
+    {"atom_id": "no-prose-parse", "text": "Do not parse generated prose", "required": true, "match": "literal", "source_ref": "SKILL.md"}
+  ]
+}
+```
+
+Fields: `text` is required; `match` is `literal` or `regex`; `paths` optionally
+limits files; `required` defaults to true. The command exits `3` when required
+atoms are missing or malformed and `--fail-on-missing-commitments` is set.

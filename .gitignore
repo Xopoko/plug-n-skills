@@ -58,6 +58,11 @@ reports/
 
 # Local research, synthesis packages, and workbench drafts
 research/
+research-corpus*/
+research-plan*.json
+claims.jsonl
+screening-decisions.jsonl
+quality_gate.json
 skill-synthesis/
 docs/superpowers/
 plugins/*/research/

@@ -26,11 +26,16 @@ Do not paste evidence into hot context. Link to it or summarize only the future-
 ## Context Placement Constraints
 
 - Long context is not uniform attention. Keep action-critical rules, safety boundaries, and recovery pointers in compact explicit state instead of burying them in the middle of large hot or router files.
+- Effective length is shorter than advertised length. Degradation is documented well below context maximums, so size hot surfaces to a token budget and run validation at the actual packed length.
+- Irrelevant context is harmful, not neutral. Related-but-non-answering material is the most damaging distractor class, and distractor harm grows with context length; every packed block needs a relevance criterion.
+- Order is behavior. Sequence context to match the consumer's reasoning or execution order; permuting logically order-independent material alone measurably drops accuracy.
+- Format is behavior. Template, separator, and structure changes shift task accuracy even when meaning is preserved, so reformatting requires task-level validation, and strict output formats tax reasoning.
 - Compression is useful only when relevance survives. Evaluate preserved atoms, downstream task behavior, output cost, and total cost instead of token reduction alone.
 - Retrieval is evidence before it is state. Promote retrieved, archived, or generated context only after provenance, authority, confidence, conflict status, and validation are explicit.
+- Handoffs lose information by default. Pass context between agents or sessions through typed state shapes with source refs and receiver-side verification.
 - Benchmarks and context-window size are not proof of reliable task behavior. State the validation scope and remaining risk whenever a workflow depends on long-context recall or reasoning.
 
-For material changes, apply the acceptance checks in `research-backed-gates.md` instead of relying on intuition about long context, compression, structured outputs, citations, or prompt caching.
+For material changes, apply the acceptance checks in `research-backed-gates.md` (placement, compression economics, schema/task validity, retrieval promotion, cache layout and usage metrics, distractor budget, format sensitivity, handoff contracts) instead of relying on intuition.
 
 ## Preservation List
 

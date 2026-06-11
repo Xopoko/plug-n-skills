@@ -8,6 +8,7 @@ import json
 import re
 from datetime import datetime, timezone
 from pathlib import Path
+from typing import Any
 
 from token_count import count_paths, iter_files, read_text
 
@@ -107,6 +108,142 @@ TASK_VALIDATION_TERMS = re.compile(
     r"\b(task success|semantic|semantics|cross-field|source support|consumer|validator|validation|test|fixture|accuracy|quality|schema and task|task validity)\b",
     re.IGNORECASE,
 )
+PACK_VERB_TERMS = re.compile(
+    r"\b(includ\w*|add\w*|load\w*|pack\w*|paste\w*|dump\w*|inline[sd]?|append\w*|attach\w*|inject\w*|cop(?:y|ies|ied|ying)|put[s]?|keep\w*)\b",
+    re.IGNORECASE,
+)
+PACK_ALL_TERMS = re.compile(
+    r"\b(all|every|entire|whole|full|everything|complete)\b[^.\n]{0,30}"
+    r"\b(files?|history|contexts?|logs?|transcripts?|docs?|documents?|notes?|sources?|outputs?|conversations?|code|codebase|repo|reports?)\b"
+    r"|\bjust in case\b",
+    re.IGNORECASE,
+)
+RELEVANCE_FILTER_TERMS = re.compile(
+    r"\b(relevan\w*|filter\w*|select\w*|prune[sd]?|pruning|rank\w*|curat\w*|top[- ]?\d+|budget\w*|only (?:what|the|when)|needed|necessary|criterion|criteria|distractor\w*)\b",
+    re.IGNORECASE,
+)
+FORMAT_CHANGE_TERMS = re.compile(
+    r"\b(reformat\w*|reword\w*|rephras\w*|restructur\w*|rewrit\w*|rewrote|re-?templat\w*|convert\w*[^.\n]{0,25}\b(?:to|into)\b[^.\n]{0,20}\b(?:json|yaml|markdown|xml|table|prose)\b)",
+    re.IGNORECASE,
+)
+EQUIVALENCE_TERMS = re.compile(
+    r"\b(same|equivalent|identical|unchanged|preserv\w*|lossless|behavio[u]?r[- ]neutral|no behavio[u]?r change|semantically|meaning[- ]preserving)\b",
+    re.IGNORECASE,
+)
+FORMAT_VALIDATION_TERMS = re.compile(
+    r"\b(valid\w*|test\w*|eval\w*|spot[- ]?check\w*|a/b|benchmark\w*|measur\w*|task success|commitment ledger|atoms|fixture\w*)\b",
+    re.IGNORECASE,
+)
+HANDOFF_TERMS = re.compile(
+    r"\b(hand[- ]?offs?|hand(?:s|ed|ing)? off|delegat\w*|sub-?agents?|spawn\w*[^.\n]{0,12}agents?|"
+    r"pass\w*[^.\n]{0,12}(?:context|state|findings)|transfer\w*[^.\n]{0,12}(?:context|state)|compact\w*[^.\n]{0,16}(?:context|conversation|history))\b",
+    re.IGNORECASE,
+)
+HANDOFF_CONTRACT_TERMS = re.compile(
+    r"\b(contracts?|schemas?|typed|structured state|state shape|checklists?|atoms|source refs?|evidence refs?|verif\w*|validat\w*|explicit state|STATE v\d|recovery pointers?|provenance)\b",
+    re.IGNORECASE,
+)
+RESEARCH_GATE_RULES = {
+    "long_context_placement": {
+        "risk_kinds": {
+            "context_window_assumption",
+            "long_context_without_placement_check",
+            "middle_buried_commitment",
+            "oversized_hot_surface",
+        },
+        "source_basis": [
+            "arxiv:2307.03172",
+            "arxiv:2406.16008",
+            "arxiv:2402.14848",
+            "arxiv:2404.06654",
+            "arxiv:2502.05167",
+        ],
+        "required_evidence": [
+            "action-critical anchors or compact state pointers",
+            "middle-position or source-order placement check",
+            "task validation on the actual packed context shape",
+        ],
+    },
+    "compression_break_even": {
+        "risk_kinds": {
+            "commitment_loss_risk",
+            "token_only_metric",
+            "compression_without_relevance_check",
+        },
+        "source_basis": ["doi:10.18653/v1/2024.acl-long.91", "arxiv:2403.17411"],
+        "required_evidence": [
+            "input and hot-path token delta",
+            "output token, latency, or total-cost effect",
+            "task success plus preserved commitments and provenance",
+            "compressor preprocessing overhead when applicable",
+        ],
+    },
+    "schema_task_validity": {
+        "risk_kinds": {"prose_parsing", "schema_without_task_validation"},
+        "source_basis": ["OpenAI Structured Outputs", "doi:10.31234/osf.io/jqx7n_v1"],
+        "required_evidence": [
+            "strict schema, tool arguments, typed protocol, or closed keys",
+            "unknown-field and invalid-output policy",
+            "semantic constraints and consumer task-success validation",
+        ],
+    },
+    "retrieval_citation_promotion": {
+        "risk_kinds": {"retrieval_commitment_risk"},
+        "source_basis": ["doi:10.48550/arxiv.2403.03187", "doi:10.3390/bdcc9120320"],
+        "required_evidence": [
+            "stable source key, URL, DOI, file path, or recovery pointer",
+            "authority, confidence, and conflict status",
+            "spot-check or validation before promotion into committed state",
+        ],
+    },
+    "cache_aware_layout": {
+        "risk_kinds": {"cache_claim_without_metrics"},
+        "source_basis": ["OpenAI Prompt Caching", "Anthropic Prompt Caching", "arxiv:2312.07104"],
+        "required_evidence": [
+            "static prefix and dynamic suffix layout",
+            "cache read, write, hit-rate, cached-token, latency, or cost metrics",
+            "task-quality result reported separately from cache savings",
+        ],
+    },
+    "relevance_distractor_budget": {
+        "risk_kinds": {"context_stuffing"},
+        "source_basis": [
+            "arxiv:2302.00093",
+            "arxiv:2404.03302",
+            "arxiv:2401.14887",
+            "arxiv:2402.08939",
+        ],
+        "required_evidence": [
+            "per-block relevance criterion or consumer decision it changes",
+            "distractor audit for related-but-non-answering material",
+            "ordering aligned to consumer reasoning or execution order",
+            "validation on the packed shape",
+        ],
+    },
+    "format_sensitivity": {
+        "risk_kinds": {"format_equivalence_assumption"},
+        "source_basis": [
+            "arxiv:2310.11324",
+            "arxiv:2411.10541",
+            "doi:10.18653/v1/2024.emnlp-industry.91",
+        ],
+        "required_evidence": [
+            "task-level spot check, eval, or A/B on the actual consumer",
+            "verbatim preservation or commitment ledger for behavior-critical wording",
+        ],
+    },
+    "multi_agent_handoff": {
+        "risk_kinds": {"handoff_without_contract"},
+        "source_basis": ["arxiv:2503.13657", "arxiv:2507.13334"],
+        "required_evidence": [
+            "typed handoff contract or explicit state shape",
+            "source refs and authority on transferred claims",
+            "receiver-side verification before acting on handed-off state",
+        ],
+    },
+}
+SEVERITY_RANK = {"low": 1, "medium": 2, "high": 3}
+COMMITMENT_SCHEMA = "context_density.commitment_ledger.v1"
 
 
 def is_middle_band(line_no: int, total_lines: int) -> bool:
@@ -129,6 +266,102 @@ def classify_load_path(path: Path) -> str:
 
 def is_test_path(path: Path) -> bool:
     return any(part.lower() in {"test", "tests"} for part in path.parts)
+
+
+def load_commitment_ledger(path: Path) -> list[dict]:
+    text = path.read_text(encoding="utf-8")
+    if path.suffix.lower() == ".jsonl":
+        atoms = [json.loads(line) for line in text.splitlines() if line.strip()]
+    else:
+        data = json.loads(text)
+        atoms = data.get("atoms", data) if isinstance(data, dict) else data
+    if not isinstance(atoms, list):
+        raise SystemExit("commitment_ledger_atoms_must_be_list")
+    if not all(isinstance(atom, dict) for atom in atoms):
+        raise SystemExit("commitment_ledger_atoms_must_be_objects")
+    return atoms
+
+
+def collect_texts(paths: list[str]) -> dict[str, str]:
+    texts: dict[str, str] = {}
+    for path in iter_files(paths):
+        text = read_text(path)
+        if text is not None:
+            texts[str(path)] = text
+    return texts
+
+
+def path_matches_scope(path: str, scopes: Any) -> bool:
+    if not scopes:
+        return True
+    values = scopes if isinstance(scopes, list) else [scopes]
+    return any(str(path).endswith(str(scope)) or str(scope) in str(path) for scope in values)
+
+
+def atom_present(atom: dict, texts: dict[str, str]) -> tuple[bool, str]:
+    pattern = str(atom.get("text", ""))
+    if not pattern:
+        return False, "missing_text"
+    scoped_texts = {
+        path: text
+        for path, text in texts.items()
+        if path_matches_scope(path, atom.get("paths", atom.get("path", "")))
+    }
+    if not scoped_texts:
+        return False, "no_matching_files"
+    match_type = str(atom.get("match", "literal"))
+    flags = 0 if atom.get("case_sensitive", True) else re.IGNORECASE
+    if match_type == "literal":
+        needle = pattern if atom.get("case_sensitive", True) else pattern.lower()
+        for path, text in scoped_texts.items():
+            haystack = text if atom.get("case_sensitive", True) else text.lower()
+            if needle in haystack:
+                return True, path
+        return False, "not_found"
+    if match_type == "regex":
+        try:
+            compiled = re.compile(pattern, flags)
+        except re.error:
+            return False, "invalid_regex"
+        for path, text in scoped_texts.items():
+            if compiled.search(text):
+                return True, path
+        return False, "not_found"
+    return False, "invalid_match"
+
+
+def validate_commitment_atoms(atoms: list[dict], texts: dict[str, str]) -> dict:
+    results = []
+    missing = []
+    malformed = []
+    for index, atom in enumerate(atoms, start=1):
+        atom_id = str(atom.get("atom_id", atom.get("id", f"atom-{index:03d}")))
+        required = bool(atom.get("required", True))
+        present, detail = atom_present(atom, texts)
+        result = {
+            "atom_id": atom_id,
+            "present": present,
+            "required": required,
+            "severity": atom.get("severity", "high" if required else "medium"),
+            "match": atom.get("match", "literal"),
+            "path": detail if present else "",
+            "failure": "" if present else detail,
+            "source_ref": atom.get("source_ref", ""),
+        }
+        results.append(result)
+        if not present and detail in {"missing_text", "invalid_regex", "invalid_match"}:
+            malformed.append(result)
+        elif required and not present:
+            missing.append(result)
+    return {
+        "schema": "context_density.commitment_validation.v1",
+        "ledger_schema": COMMITMENT_SCHEMA,
+        "checked": len(results),
+        "passed": not missing and not malformed,
+        "missing_required": missing,
+        "malformed_atoms": malformed,
+        "results": results,
+    }
 
 
 def scan_contract_risks(path: Path, text: str) -> list[dict]:
@@ -185,6 +418,58 @@ def scan_contract_risks(path: Path, text: str) -> list[dict]:
                 }
             )
     return risks
+
+
+def research_gate_risks(*risk_groups: list[dict]) -> list[dict]:
+    gate_risks: list[dict] = []
+    for risks in risk_groups:
+        for risk in risks:
+            kind = str(risk.get("kind", ""))
+            for gate_id, rule in RESEARCH_GATE_RULES.items():
+                if kind not in rule["risk_kinds"]:
+                    continue
+                gate_risks.append(
+                    {
+                        "path": risk.get("path", ""),
+                        "line": risk.get("line", 0),
+                        "gate": gate_id,
+                        "triggered_by": kind,
+                        "severity": risk.get("severity", "medium"),
+                        "message": risk.get("message", ""),
+                        "required_evidence": rule["required_evidence"],
+                        "source_basis": rule["source_basis"],
+                        "suggested_contract": risk.get("suggested_contract", ""),
+                        "excerpt": risk.get("excerpt", ""),
+                    }
+                )
+                break
+    return gate_risks
+
+
+def research_gate_summary(gate_risks: list[dict]) -> list[dict]:
+    summary: dict[str, dict] = {}
+    for risk in gate_risks:
+        gate = str(risk.get("gate", "unknown")) or "unknown"
+        severity = str(risk.get("severity", "medium")) or "medium"
+        current = summary.setdefault(
+            gate,
+            {
+                "gate": gate,
+                "count": 0,
+                "max_severity": severity,
+                "required_evidence": risk.get("required_evidence", []),
+                "source_basis": risk.get("source_basis", []),
+            },
+        )
+        current["count"] += 1
+        if SEVERITY_RANK.get(severity, 0) > SEVERITY_RANK.get(str(current["max_severity"]), 0):
+            current["max_severity"] = severity
+    return [summary[gate] for gate in sorted(summary)]
+
+
+def has_blocking_research_gate(gate_risks: list[dict], min_severity: str) -> bool:
+    threshold = SEVERITY_RANK[min_severity]
+    return any(SEVERITY_RANK.get(str(risk.get("severity", "medium")), 0) >= threshold for risk in gate_risks)
 
 
 def scan_context_risks(path: Path, text: str, load_path: str) -> list[dict]:
@@ -296,6 +581,35 @@ def scan_context_risks(path: Path, text: str, load_path: str) -> list[dict]:
                         "excerpt": line.strip()[:220],
                     }
                 )
+            window = "\n".join(lines[max(0, line_no - 4) : min(len(lines), line_no + 4)])
+            if (
+                PACK_VERB_TERMS.search(line)
+                and PACK_ALL_TERMS.search(line)
+                and not RELEVANCE_FILTER_TERMS.search(window)
+            ):
+                risks.append(
+                    {
+                        "path": str(path),
+                        "line": line_no,
+                        "kind": "context_stuffing",
+                        "severity": "medium",
+                        "message": "Pack-everything wording appears without nearby relevance, filtering, selection, or budget criteria; irrelevant and related-but-wrong context measurably degrades task accuracy.",
+                        "suggested_contract": "State a relevance criterion per added block, audit related-but-non-answering distractors, order material to match consumer reasoning, and validate the packed shape.",
+                        "excerpt": line.strip()[:220],
+                    }
+                )
+            if HANDOFF_TERMS.search(line) and not HANDOFF_CONTRACT_TERMS.search(window):
+                risks.append(
+                    {
+                        "path": str(path),
+                        "line": line_no,
+                        "kind": "handoff_without_contract",
+                        "severity": "medium",
+                        "message": "Agent/session handoff, delegation, or compaction is mentioned without a nearby typed contract, state shape, source refs, or verification step.",
+                        "suggested_contract": "Use a typed handoff contract (goal, constraints, decisions, evidence refs, open risks, next action) and verify handed-off state before acting on it.",
+                        "excerpt": line.strip()[:220],
+                    }
+                )
     return risks
 
 
@@ -324,9 +638,29 @@ def scan_compression_risks(path: Path, text: str, load_path: str) -> list[dict]:
         if in_code_block or stripped.startswith("#") or stripped.startswith("|") or current_section == "source map":
             continue
         if not COMPRESSION_TERMS.search(line):
-            if not RETRIEVAL_TERMS.search(line) and not CACHE_TERMS.search(line):
+            if (
+                not RETRIEVAL_TERMS.search(line)
+                and not CACHE_TERMS.search(line)
+                and not FORMAT_CHANGE_TERMS.search(line)
+            ):
                 continue
         window = "\n".join(lines[max(0, line_no - 5) : min(len(lines), line_no + 5)])
+        if (
+            FORMAT_CHANGE_TERMS.search(line)
+            and EQUIVALENCE_TERMS.search(window)
+            and not FORMAT_VALIDATION_TERMS.search(window)
+        ):
+            risks.append(
+                {
+                    "path": str(path),
+                    "line": line_no,
+                    "kind": "format_equivalence_assumption",
+                    "severity": "medium",
+                    "message": "Reformatting or rewriting is described as behavior-preserving without nearby task-level validation; formatting choices alone shift measured task accuracy.",
+                    "suggested_contract": "Validate reformatted prompts/context with a task-level spot check, eval, or A/B on the actual consumer, and preserve behavior-critical wording verbatim or in a commitment ledger.",
+                    "excerpt": line.strip()[:220],
+                }
+            )
         if COMPRESSION_TERMS.search(line) and not COMMITMENT_TERMS.search(window):
             risks.append(
                 {
@@ -398,6 +732,29 @@ def main() -> int:
     parser.add_argument("--encoding", default="o200k_base", help="tiktoken encoding name.")
     parser.add_argument("--top", type=int, default=20, help="Token hotspots to include.")
     parser.add_argument("--json", action="store_true", help="Emit JSON. This is the default.")
+    parser.add_argument(
+        "--fail-on-research-gates",
+        action="store_true",
+        help="Exit 2 when research gate risks meet --fail-on-severity.",
+    )
+    parser.add_argument(
+        "--fail-on-severity",
+        choices=sorted(SEVERITY_RANK, key=SEVERITY_RANK.get),
+        default="medium",
+        help="Minimum research gate severity that should fail when --fail-on-research-gates is set.",
+    )
+    parser.add_argument(
+        "--hot-token-budget",
+        type=int,
+        default=3000,
+        help="Flag hot-path files above this token count (0 disables). Default anchors to documented reasoning degradation near 3K input tokens (arxiv:2402.14848).",
+    )
+    parser.add_argument("--commitment-ledger", default="", help="JSON or JSONL commitment atom ledger to validate.")
+    parser.add_argument(
+        "--fail-on-missing-commitments",
+        action="store_true",
+        help="Exit 3 when required commitment atoms are missing or malformed.",
+    )
     args = parser.parse_args()
 
     total, rows = count_paths(args.paths, args.encoding)
@@ -415,6 +772,38 @@ def main() -> int:
         context_risks.extend(scan_context_risks(path, text, load_path))
         compression_risks.extend(scan_compression_risks(path, text, load_path))
         contract_risks.extend(scan_contract_risks(path, text))
+        if args.hot_token_budget > 0 and load_path == "hot" and not is_test_path(path):
+            tokens = row_by_path.get(str(path), {}).get("tokens", 0)
+            if tokens > args.hot_token_budget:
+                context_risks.append(
+                    {
+                        "path": str(path),
+                        "line": 0,
+                        "kind": "oversized_hot_surface",
+                        "severity": "medium" if tokens >= 2 * args.hot_token_budget else "low",
+                        "message": (
+                            f"Hot-path file measures {tokens} tokens against a {args.hot_token_budget}-token budget; "
+                            "reasoning degradation is documented well below advertised context maximums."
+                        ),
+                        "suggested_contract": "Move conditional detail to references, keep directives and anchors hot, and validate behavior on the packed shape if the surface must stay large.",
+                        "excerpt": "",
+                    }
+                )
+    gate_risks = research_gate_risks(context_risks, compression_risks, contract_risks)
+    gate_blocked = args.fail_on_research_gates and has_blocking_research_gate(gate_risks, args.fail_on_severity)
+    commitment_validation = {
+        "schema": "context_density.commitment_validation.v1",
+        "ledger_schema": COMMITMENT_SCHEMA,
+        "checked": 0,
+        "passed": True,
+        "missing_required": [],
+        "malformed_atoms": [],
+        "results": [],
+    }
+    if args.commitment_ledger:
+        atoms = load_commitment_ledger(Path(args.commitment_ledger))
+        commitment_validation = validate_commitment_atoms(atoms, collect_texts(args.paths))
+    commitments_blocked = args.fail_on_missing_commitments and not commitment_validation["passed"]
 
     hotspots = []
     for row in rows[: args.top]:
@@ -444,14 +833,25 @@ def main() -> int:
         "context_risks": context_risks,
         "compression_risks": compression_risks,
         "contract_risks": contract_risks,
+        "research_gate_risks": gate_risks,
+        "research_gate_summary": research_gate_summary(gate_risks),
+        "commitment_validation": commitment_validation,
+        "blocking": {
+            "research_gates": gate_blocked,
+            "fail_on_severity": args.fail_on_severity if args.fail_on_research_gates else "",
+            "commitments": commitments_blocked,
+        },
         "risk_counts": {
             "context": len(context_risks),
             "compression": len(compression_risks),
             "contract": len(contract_risks),
+            "research_gates": len(gate_risks),
         },
     }
     print(json.dumps(payload, indent=2, ensure_ascii=False))
-    return 0
+    if commitments_blocked:
+        return 3
+    return 2 if gate_blocked else 0
 
 
 if __name__ == "__main__":

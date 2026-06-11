@@ -23,11 +23,16 @@ Optimize capability density through measured context, explicit contracts, and to
 - Treat raw logs, transcripts, reports, and source packs as evidence archives. Do not hot-load them; keep compact claims plus source refs.
 - Do not let retrieval, memory recall, or archived artifacts become authoritative state without provenance, confidence, and validation.
 - Do not bury action-critical commitments in the middle of large hot/router files; keep anchors, source order, or explicit state pointers.
+- Pack only context with a stated relevance criterion; related-but-non-answering material is the most harmful distractor class, and padding is a cost, not neutral filler.
+- Order context to match the consumer's reasoning or execution order; order changes alone measurably change accuracy.
+- Treat reformatting as a behavior-relevant edit: validate rewritten prompts and context on the consumer task; meaning-preserving is not behavior-preserving.
+- Hand off context between agents, sessions, or compaction boundaries through typed contracts with source refs and receiver-side verification, not free prose.
 - Do not call a compression change successful from input-token reduction alone; include output cost/length, task success, preserved atoms, and validation proof when available.
-- Apply research-backed gates for material changes: long-context placement stress, compression break-even, schema plus task validation, retrieval/citation promotion, and cache-prefix economics.
+- Apply research-backed gates for material changes: placement stress, compression break-even, schema plus task validation, retrieval/citation promotion, cache economics, distractor budget, format sensitivity, and handoff contracts.
+- For machine decisions, read `research_gate_risks` from audit JSON instead of reconstructing gate status from prose.
 - If a skill/plugin portfolio needs split, merge, delete, move, router, cross-plugin overlap review, reference extraction, shared-capability extraction, or script extraction, treat token pressure as a signal.
 - Route structural work to Capability Workbench portfolio architecture when available.
-- Do not treat context-window size as proof of reliable recall, relevance, or reasoning; state validation scope and residual risk.
+- Do not treat context-window size as proof of reliable recall, relevance, or reasoning; effective task length is usually well below the advertised maximum, so state validation scope and residual risk.
 - Do not summarize high-authority instructions, unresolved conflicts, or prompt-injection boundaries into vague prose.
 - Merge overlapping prose instead of appending a second version.
 - Keep exact commands only when operationally necessary.
@@ -73,7 +78,7 @@ Load paths:
 | SKILL.md or plugin skill package footprint reduction | `references/skill-refactor.md` |
 | Skill/plugin portfolio split, merge, delete, move, router, cross-plugin overlap, or script-extract decisions | Capability Workbench `capability-portfolio-architect` when available |
 | Prompt, model-output, tool-call, schema, retry, or prose-parsing review | `references/prompt-contracts.md` |
-| Long-context placement, prompt compression, schema/task validity, retrieval citation, or cache-prefix acceptance gates | `references/research-backed-gates.md` |
+| Long-context placement, compression, schema/task validity, retrieval citation, cache-prefix, distractor-budget, format-sensitivity, or handoff acceptance gates | `references/research-backed-gates.md` |
 | Final audit sections and JSON/Markdown report contracts | `references/report-contracts.md` |
 
 Keep `SKILL.md` lean. Move rare detail to references only when it prevents repeated hot-path loading.
@@ -85,6 +90,9 @@ Run from this skill directory or pass absolute paths:
 ```bash
 python3 scripts/token_count.py <files-or-dirs> --json --top 20
 python3 scripts/context_density_audit.py <files-or-dirs> --json --top 20
+python3 scripts/context_density_audit.py <files-or-dirs> --fail-on-research-gates
+python3 scripts/context_density_audit.py <files-or-dirs> --hot-token-budget 3000
+python3 scripts/context_density_audit.py <files-or-dirs> --commitment-ledger atoms.json --fail-on-missing-commitments
 ```
 
 Use the bundled runtime reporter when the question is about local Codex or

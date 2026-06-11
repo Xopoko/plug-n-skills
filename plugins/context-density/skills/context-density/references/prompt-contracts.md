@@ -26,6 +26,8 @@ If prose and machine data are both needed, use a mixed contract with separate fi
 
 Schema validity is not task validity. After decoding a structured response, also check semantic constraints, source support, and task success for the consumer. Treat schema names, key names, enum labels, and descriptions as instruction-bearing text that can influence the model.
 
+Format strictness is a measured cost, not a free guarantee: enforcing structured formats degrades reasoning performance versus free-form answers, and stricter constraints degrade it more. For reasoning-heavy tasks, prefer a two-step contract — reason in free form, then format the conclusion under the schema — or validate that single-step constrained output preserves task quality. Constrained-decoding engines also differ in coverage and output quality, so the engine choice is part of the contract (see `research-backed-gates.md`, Gate 3 and Gate 7).
+
 ## Risk Signals
 
 Investigate code or prompts that:

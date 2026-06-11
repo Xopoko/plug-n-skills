@@ -12,8 +12,9 @@ This reference optimizes context placement inside an existing skill shape. When 
 4. Preserve triggers, defaults, commands, safety, output contract, validation, and non-obvious local invariants.
 5. Identify high-authority commitments that are buried in long middle sections.
 6. If the audit finds overlapping skills, cross-plugin responsibility overlap, overloaded responsibilities, missing routers, obsolete skills, or repeated deterministic procedures in prose, stop and run a portfolio-architecture decision pass.
-7. Edit `SKILL.md` first; create references only for conditionally loaded detail.
-8. Re-measure, validate frontmatter, and check preserved phrases.
+7. For behavior-preserving compression, write critical atoms into a commitment ledger before editing.
+8. Edit `SKILL.md` first; create references only for conditionally loaded detail.
+9. Re-measure, validate frontmatter, and check preserved phrases or the commitment ledger.
 
 ## Cut
 
@@ -41,6 +42,7 @@ This reference optimizes context placement inside an existing skill shape. When 
 
 ```bash
 python3 scripts/token_count.py <skill-dir>/SKILL.md --json
+python3 scripts/context_density_audit.py <skill-dir> --commitment-ledger atoms.json --fail-on-missing-commitments
 python3 ${CODEX_HOME:-$HOME/.codex}/skills/.system/skill-creator/scripts/quick_validate.py <skill-dir>
 rg -n --fixed-strings '<critical preserved phrase>' <skill-dir>/SKILL.md
 ```
