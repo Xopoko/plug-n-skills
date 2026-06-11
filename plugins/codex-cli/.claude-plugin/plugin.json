@@ -1,18 +1,18 @@
 {
   "name": "codex-cli",
-  "version": "0.1.0",
-  "description": "Operate, automate, diagnose, and inspect Codex CLI, plugins, MCP servers, logs, and local environment actions.",
+  "version": "0.1.1",
+  "description": "Codex CLI operations, automation, diagnostics, plugin and MCP lifecycle, session log forensics, and local environment actions.",
   "author": {
     "name": "Xopoko"
   },
   "license": "MIT",
   "keywords": [
-    "codex",
-    "cli",
     "automation",
-    "mcp",
-    "plugins",
+    "cli",
+    "codex",
+    "environments",
     "logs",
-    "environments"
+    "mcp",
+    "plugins"
   ]
 }

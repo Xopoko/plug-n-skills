@@ -1,19 +1,19 @@
 {
   "name": "spec-driven-development",
-  "version": "0.2.1",
+  "version": "0.2.2",
   "description": "Spec-Driven Development: route intent into specs, plans, tasks, traceability, implementation, and proof.",
   "author": {
     "name": "Xopoko"
   },
   "license": "MIT",
   "keywords": [
+    "agentic-development",
+    "design",
+    "requirements",
     "sdd",
     "spec-driven-development",
     "spec-kit",
-    "requirements",
-    "design",
     "tasks",
-    "traceability",
-    "agentic-development"
+    "traceability"
   ]
 }

@@ -1,6 +1,6 @@
 {
   "name": "pixijs",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "PixiJS v8 skill collection: application setup, scene graph, assets, events, filters, rendering, performance, v7->v8 migration, and project scaffolding.",
   "author": {
     "name": "PixiJS community"
@@ -8,11 +8,11 @@
   "homepage": "https://pixijs.com/",
   "license": "MIT",
   "keywords": [
-    "pixijs",
-    "pixi",
-    "webgl",
-    "webgpu",
+    "2d",
     "canvas",
-    "2d"
+    "pixi",
+    "pixijs",
+    "webgl",
+    "webgpu"
   ]
 }

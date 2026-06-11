@@ -1,17 +1,17 @@
 {
   "name": "tauri",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "Tauri 2 development: project setup/migration, tauri.conf & capabilities/security, Rust IPC & plugins, shell UI, debug/test, and distribution/mobile release.",
   "author": {
     "name": "Xopoko"
   },
   "license": "MIT",
   "keywords": [
+    "desktop-apps",
+    "mobile",
+    "rust",
     "tauri",
     "tauri-2",
-    "rust",
-    "desktop-apps",
-    "webview",
-    "mobile"
+    "webview"
   ]
 }

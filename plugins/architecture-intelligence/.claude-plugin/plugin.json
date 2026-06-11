@@ -1,6 +1,6 @@
 {
   "name": "architecture-intelligence",
-  "version": "0.1.6",
+  "version": "0.1.7",
   "description": "Source-backed software architecture intelligence for codebase audits, ownership topology, runtime topology, architecture conformance and drift checks, structure metrics, module boundaries, dependency flow, ADRs, architecture fitness functions, and incremental refactoring strategy.",
   "author": {
     "name": "Xopoko"

@@ -1,25 +1,25 @@
 {
   "name": "tauri",
-  "version": "0.1.0+codex.20260608115432",
-  "description": "A Tauri 2 development plugin with focused Codex skills for project setup, configuration, security, IPC, plugins, debugging, testing, distribution, and mobile workflows.",
+  "version": "0.1.1",
+  "description": "Tauri 2 development: project setup/migration, tauri.conf & capabilities/security, Rust IPC & plugins, shell UI, debug/test, and distribution/mobile release.",
   "author": {
     "name": "Xopoko"
   },
   "repository": "https://github.com/Xopoko/plug-n-skills/tree/main/plugins/tauri",
   "license": "MIT",
   "keywords": [
+    "desktop-apps",
+    "mobile",
+    "rust",
     "tauri",
     "tauri-2",
-    "rust",
-    "desktop-apps",
-    "webview",
-    "mobile"
+    "webview"
   ],
   "skills": "./skills/",
   "interface": {
     "displayName": "Tauri",
     "shortDescription": "Build, secure, test, and package Tauri 2 apps.",
-    "longDescription": "A focused local marketplace plugin for Tauri 2 development in Codex. It provides separate skills for scaffolding and migration, tauri.conf and capabilities, Rust IPC and plugins, shell UI features, debug/test workflows, and distribution/mobile release readiness.",
+    "longDescription": "A focused marketplace plugin for Tauri 2 development with agent skills. It provides separate skills for scaffolding and migration, tauri.conf and capabilities, Rust IPC and plugins, shell UI features, debug/test workflows, and distribution/mobile release readiness.",
     "developerName": "Xopoko",
     "category": "Coding",
     "capabilities": [

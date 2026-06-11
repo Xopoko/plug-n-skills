@@ -1,28 +1,28 @@
 {
   "name": "design-intelligence",
-  "version": "0.1.0+codex.20260608213055",
-  "description": "A source-backed design intelligence system for technology-agnostic UI/UX judgment, product framing, interface architecture, interaction design, usability, accessibility, visual communication, and design-system governance.",
+  "version": "0.1.1",
+  "description": "Source-backed, technology-agnostic UI/UX judgment: product framing, information architecture, interaction design, usability/accessibility review, visual communication, and design-system governance. Deliberately avoids Figma automation, framework recipes, and CSS recipes.",
   "author": {
     "name": "Xopoko"
   },
   "repository": "https://github.com/Xopoko/plug-n-skills/tree/main/plugins/design-intelligence",
   "license": "MIT",
   "keywords": [
-    "design",
-    "ui",
-    "ux",
-    "usability",
     "accessibility",
-    "product",
-    "interface-architecture",
+    "design",
+    "design-systems",
     "interaction-design",
-    "design-systems"
+    "interface-architecture",
+    "product",
+    "ui",
+    "usability",
+    "ux"
   ],
   "skills": "./skills/",
   "interface": {
     "displayName": "Design Intelligence",
     "shortDescription": "Build better product experiences, not better design files.",
-    "longDescription": "Design Intelligence gives Codex a source-backed product and UI/UX judgment system. It routes work through product framing, interface architecture, interaction design, usability and accessibility review, visual communication, and design-system governance. It recognizes common UI surfaces such as forms, data views, search/browse, onboarding, permissions, empty/error states, settings, notifications, and transactions while deliberately avoiding Figma automation, CSS recipes, framework recipes, and design-tool workflows.",
+    "longDescription": "Design Intelligence gives the host agent a source-backed product and UI/UX judgment system. It routes work through product framing, interface architecture, interaction design, usability and accessibility review, visual communication, and design-system governance. It recognizes common UI surfaces such as forms, data views, search/browse, onboarding, permissions, empty/error states, settings, notifications, and transactions while deliberately avoiding Figma automation, CSS recipes, framework recipes, and design-tool workflows.",
     "developerName": "Xopoko",
     "category": "Productivity",
     "capabilities": [

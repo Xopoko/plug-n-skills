@@ -1,27 +1,27 @@
 {
   "name": "spec-driven-development",
-  "version": "0.2.1",
-  "description": "Spec-Driven Development for Codex: route intent into specs, plans, tasks, traceability, implementation, and proof.",
+  "version": "0.2.2",
+  "description": "Spec-Driven Development: route intent into specs, plans, tasks, traceability, implementation, and proof.",
   "author": {
     "name": "Xopoko"
   },
   "repository": "https://github.com/Xopoko/plug-n-skills/tree/main/plugins/spec-driven-development",
   "license": "MIT",
   "keywords": [
+    "agentic-development",
+    "design",
+    "requirements",
     "sdd",
     "spec-driven-development",
     "spec-kit",
-    "requirements",
-    "design",
     "tasks",
-    "traceability",
-    "agentic-development"
+    "traceability"
   ],
   "skills": "./skills/",
   "interface": {
     "displayName": "Spec-Driven Development",
     "shortDescription": "Turn intent into specs, plans, tasks, implementation, and proof.",
-    "longDescription": "Practical SDD operating model for Codex. Routes work across tiny, Spec Kit, Kiro-style, OpenSpec-style, brownfield, bugfix, proposal, and orchestration lanes; separates requirements, design, tasks, code, and proof; and requires traceability plus fresh external evidence before completion claims.",
+    "longDescription": "Practical SDD operating model for any host agent. Routes work across tiny, Spec Kit, Kiro-style, OpenSpec-style, brownfield, bugfix, proposal, and orchestration lanes; separates requirements, design, tasks, code, and proof; and requires traceability plus fresh external evidence before completion claims.",
     "developerName": "Xopoko",
     "category": "Coding",
     "capabilities": [

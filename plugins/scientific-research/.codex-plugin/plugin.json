@@ -1,7 +1,7 @@
 {
   "name": "scientific-research",
-  "version": "0.3.0",
-  "description": "Plan, collect, deduplicate, and synthesize scientific literature from public scholarly sources with provenance and quality gates.",
+  "version": "0.3.1",
+  "description": "Disciplined scholarly research workflow: discovery, source routing, DOI dedup, claim ledgers, and evidence quality gates across arXiv/OpenAlex/Crossref/Europe PMC/Semantic Scholar/NCBI/CORE/OpenCitations.",
   "author": {
     "name": "Xopoko"
   },
@@ -9,19 +9,19 @@
   "license": "MIT",
   "skills": "./skills/",
   "keywords": [
-    "scientific-research",
-    "scholarly",
     "arxiv",
-    "openalex",
     "crossref",
     "europe-pmc",
-    "semantic-scholar",
-    "literature-review"
+    "literature-review",
+    "openalex",
+    "scholarly",
+    "scientific-research",
+    "semantic-scholar"
   ],
   "interface": {
     "displayName": "Scientific Research",
     "shortDescription": "Run source-backed scholarly research workflows.",
-    "longDescription": "Scientific Research gives Codex a disciplined workflow for scholarly discovery, source routing, deduplication, open-copy handling, claim ledgers, and evidence quality gates across arXiv, OpenAlex, Crossref, Europe PMC, Semantic Scholar, NCBI, CORE, and OpenCitations.",
+    "longDescription": "Scientific Research gives the host agent a disciplined workflow for scholarly discovery, source routing, deduplication, open-copy handling, claim ledgers, and evidence quality gates across arXiv, OpenAlex, Crossref, Europe PMC, Semantic Scholar, NCBI, CORE, and OpenCitations.",
     "developerName": "Xopoko",
     "category": "Research",
     "capabilities": [

@@ -1,7 +1,7 @@
 {
   "name": "pixijs",
-  "version": "0.1.0",
-  "description": "PixiJS v8 skill collection for Codex.",
+  "version": "0.1.1",
+  "description": "PixiJS v8 skill collection: application setup, scene graph, assets, events, filters, rendering, performance, v7->v8 migration, and project scaffolding.",
   "author": {
     "name": "PixiJS community"
   },
@@ -9,18 +9,18 @@
   "repository": "https://github.com/Xopoko/plug-n-skills/tree/main/plugins/pixijs",
   "license": "MIT",
   "keywords": [
-    "pixijs",
-    "pixi",
-    "webgl",
-    "webgpu",
+    "2d",
     "canvas",
-    "2d"
+    "pixi",
+    "pixijs",
+    "webgl",
+    "webgpu"
   ],
   "skills": "./skills/",
   "interface": {
     "displayName": "PixiJS",
     "shortDescription": "Build and debug PixiJS v8 scenes.",
-    "longDescription": "PixiJS packages the upstream PixiJS v8 Codex skills for application setup, scene graph work, assets, events, rendering, filters, performance, migration, and project scaffolding.",
+    "longDescription": "PixiJS packages the upstream PixiJS v8 agent skills for application setup, scene graph work, assets, events, rendering, filters, performance, migration, and project scaffolding.",
     "developerName": "PixiJS community",
     "category": "Coding",
     "capabilities": [

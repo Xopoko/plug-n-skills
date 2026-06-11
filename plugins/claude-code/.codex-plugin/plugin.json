@@ -1,6 +1,6 @@
 {
   "name": "claude-code",
-  "version": "0.1.0+codex.20260609151500",
+  "version": "0.1.1",
   "description": "Claude Code CLI operations, print-mode automation, diagnostics, plugin and MCP lifecycle, hooks, settings, agents, sessions, and worktrees.",
   "author": {
     "name": "Xopoko"
@@ -8,14 +8,14 @@
   "repository": "https://github.com/Xopoko/plug-n-skills/tree/main/plugins/claude-code",
   "license": "MIT",
   "keywords": [
+    "agents",
+    "automation",
     "claude",
     "claude-code",
     "cli",
-    "automation",
+    "hooks",
     "mcp",
     "plugins",
-    "hooks",
-    "agents",
     "worktrees"
   ],
   "skills": "./skills/",

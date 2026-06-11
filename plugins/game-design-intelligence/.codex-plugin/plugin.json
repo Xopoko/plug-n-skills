@@ -1,31 +1,31 @@
 {
   "name": "game-design-intelligence",
-  "version": "0.1.0+codex.20260608121253",
-  "description": "A source-backed game design intelligence system for gameplay loops, systems, progression, motivation, retention, balance, economies, onboarding, difficulty, multiplayer dynamics, live-service content, and ethical player psychology.",
+  "version": "0.1.1",
+  "description": "Source-backed game design judgment: core loops, gameplay systems, progression/economy/balance, motivation/retention, onboarding/difficulty, and multiplayer/live-service dynamics. Avoids engines, graphics, and implementation code.",
   "author": {
     "name": "Xopoko"
   },
   "repository": "https://github.com/Xopoko/plug-n-skills/tree/main/plugins/game-design-intelligence",
   "license": "MIT",
   "keywords": [
+    "balancing",
+    "core-loops",
+    "difficulty",
+    "economy",
     "game-design",
     "gameplay-systems",
-    "core-loops",
-    "progression",
-    "economy",
-    "balancing",
-    "player-motivation",
-    "retention",
-    "onboarding",
-    "difficulty",
+    "live-service",
     "multiplayer",
-    "live-service"
+    "onboarding",
+    "player-motivation",
+    "progression",
+    "retention"
   ],
   "skills": "./skills/",
   "interface": {
     "displayName": "Game Design Intelligence",
     "shortDescription": "Design engaging, balanced, scalable games before implementation.",
-    "longDescription": "Game Design Intelligence gives Codex a source-backed design judgment system for game loops, mechanics, progression, economies, rewards, onboarding, difficulty curves, player motivation, retention, multiplayer dynamics, content cadence, and live-service patterns. It deliberately avoids game engines, graphics, asset creation, programming, and implementation details.",
+    "longDescription": "Game Design Intelligence gives the host agent a source-backed design judgment system for game loops, mechanics, progression, economies, rewards, onboarding, difficulty curves, player motivation, retention, multiplayer dynamics, content cadence, and live-service patterns. It deliberately avoids game engines, graphics, asset creation, programming, and implementation details.",
     "developerName": "Xopoko",
     "category": "Productivity",
     "capabilities": [

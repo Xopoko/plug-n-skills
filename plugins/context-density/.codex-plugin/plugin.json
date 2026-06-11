@@ -1,20 +1,20 @@
 {
   "name": "context-density",
-  "version": "0.1.0",
-  "description": "Context design, prompt-contract optimization, research-backed acceptance gates, and compression validation for agent skills, plugins, prompts, docs, and workflows.",
+  "version": "0.1.1",
+  "description": "Context design, prompt-contract optimization, research-backed acceptance gates, compression validation, and structural handoff for agent skills, plugins, prompts, docs, and workflows.",
   "author": {
     "name": "Xopoko"
   },
   "repository": "https://github.com/Xopoko/plug-n-skills/tree/main/plugins/context-density",
   "license": "MIT",
   "keywords": [
-    "codex",
-    "tokens",
+    "agents",
     "context",
     "long-context",
     "prompt-compression",
     "prompt-contracts",
     "skills",
+    "tokens",
     "validation"
   ],
   "skills": "./skills/",
