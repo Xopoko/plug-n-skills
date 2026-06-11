@@ -14,3 +14,8 @@ Bundled helpers:
   for Codex and Claude Code: installed skills, plugin manifests, project
   instructions, MCP config sections, ranked sources, exports, and latest session
   token usage when available.
+- `description_overlap.py`: rank skill-description pairs competing for routing
+  by token overlap.
+- `compression_invariants.py`: deterministic original-vs-compressed invariant
+  check (frontmatter, fenced blocks, code spans, placeholder inventories) for
+  the compression pipeline.

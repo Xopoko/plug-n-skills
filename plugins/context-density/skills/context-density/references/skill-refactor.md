@@ -4,7 +4,8 @@
 
 Refactor skill packages for lower hot-path token cost without losing behavior.
 
-This reference optimizes context placement inside an existing skill shape. When the right answer may be to split, merge, delete, move skills across plugins, add a router, extract shared mechanics, move logic into scripts, or redesign plugin boundaries, use Capability Workbench portfolio architecture instead of treating token reduction as the final objective.
+<!-- cda:allow token_only_metric,compression_without_relevance_check -->
+This reference optimizes context placement inside an existing skill shape. For compressing a batch of files with subagents under verification, use `references/compression-pipeline.md`. When the right answer may be to split, merge, delete, move skills across plugins, add a router, extract shared mechanics, move logic into scripts, or redesign plugin boundaries, use Capability Workbench portfolio architecture instead of treating token reduction as the final objective.
 
 ## Workflow
 
