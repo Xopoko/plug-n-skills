@@ -1,5 +1,7 @@
 # Synthesis Contract
 
+`$PLUGIN_ROOT` is the plugin root (see the calling skill's plugin-root preamble).
+
 Use this reference for capability synthesis, plugin-pack synthesis, and retrospective improvement of generated skills/plugins.
 
 ## Mode Decision
@@ -34,7 +36,7 @@ For `new-skill`, `augment-existing`, and `plugin-pack` requests that use words l
 
 External discovery is the primary corpus. Local skills are supplementary evidence, regression baselines, implementation candidates, and installation targets, not the default search boundary.
 
-Before editing the target, create `<output-dir>/external-discovery-ledger.json` and validate it with `../../scripts/synthesis/external_discovery_gate.py`. This ledger is the machine-readable source for breadth, source families, search waves, candidates, blockers, and stop condition. Markdown reports are summaries, not the gate.
+Before editing the target, create `<output-dir>/external-discovery-ledger.json` and validate it with `$PLUGIN_ROOT/scripts/synthesis/external_discovery_gate.py`. This ledger is the machine-readable source for breadth, source families, search waves, candidates, blockers, and stop condition. Markdown reports are summaries, not the gate.
 
 ## Install Scope Gate
 
@@ -42,22 +44,26 @@ Record one installation scope before implementation:
 
 | Scope | Default? | Criteria |
 | --- | --- | --- |
-| `global-codex` | no | Requested skills, plugins, MCP capabilities, or plugin packs should be installed for global agent use, or no repo source surface is selected for a personal marketplace artifact. |
+| `global-agent` | no | Requested skills, plugins, MCP capabilities, or plugin packs should be installed for global agent use (Codex, Claude, Cursor, or another supported agent), or no repo source surface is selected for a personal marketplace artifact. |
 | `repo-local` | no | Current or named repository is the source surface according to user wording, repo instructions, or workspace profile. |
 | `workspace-snapshot` | no | Only for partial synthesis, reference drafts, or explicit no-install output. |
 | `reference-only` | no | Use when sources are unsafe/thin/uninspectable or the user only wants analysis. |
 
-Before editing the target, create `<output-dir>/install-scope.json` and validate it with `../../scripts/synthesis/install_scope_gate.py`. Before claiming a complete result, validate the same file with `--final`.
+Before editing the target, create `<output-dir>/install-scope.json` and validate it with `$PLUGIN_ROOT/scripts/synthesis/install_scope_gate.py`. Before claiming a complete result, validate the same file with `--final`.
 
 For `repo-local`, include `local_request_evidence` from the latest user message, repo instructions, or workspace profile. Dirty worktree state, plugin mentions, or target-specific context are not valid local-scope evidence by themselves.
 
 Global agent destinations:
 
-- skill: agent's global skills dir — Codex: `${CODEX_HOME:-$HOME/.codex}/skills/<skill-name>`, Claude: `${CLAUDE_HOME:-$HOME/.claude}/skills/<skill-name>`. Detect the active agent with `scripts/agent_target.py` and use its dir.
-- plugin: `$HOME/plugins/<plugin-name>` plus `$HOME/.agents/plugins/marketplace.json`; cache-backed as `<plugin-name>@local` only when installation is required;
+- skill: agent's global skills dir — Codex: `${CODEX_HOME:-$HOME/.codex}/skills/<skill-name>`, Claude: `${CLAUDE_HOME:-$HOME/.claude}/skills/<skill-name>`, Cursor: `${CURSOR_HOME:-$HOME/.cursor}/skills/<skill-name>`. Detect the active agent with `$PLUGIN_ROOT/scripts/agent_target.py` and use its dir; other agents follow the same `<agent-home>/skills` convention.
+- plugin: `$HOME/plugins/<plugin-name>` plus `$HOME/.agents/plugins/marketplace.json`; cache-backed as `<plugin-name>@local` only when installation is required. The marketplace/cache flow is Codex-specific; Claude installs plugins through its own marketplace tooling, and Cursor consumes skills directly without a plugin marketplace;
 - MCP capability: global agent plugin/configuration, not repo-local `.mcp.json` unless explicitly requested.
 
 The output directory may hold reports, ledgers, candidate audits, and temporary snapshots. It is not the final destination unless the install-scope contract selects it.
+
+## Lightweight Lane
+
+For edits confined to one existing skill's text or metadata — no new scripts, no new capability claims, no installation — the JSON ledgers are not required. Run `python3 "$PLUGIN_ROOT/scripts/skill/quick_validate.py" <skill-dir>` and record a one-line scope note in the final report. Any new script, new skill, new trigger surface, installation, or synthesis claim leaves the lightweight lane and requires the full gates.
 
 ## External-Broad Stop Condition
 

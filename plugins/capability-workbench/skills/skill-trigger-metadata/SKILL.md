@@ -9,6 +9,8 @@ description: >-
 
 # Skill Trigger Metadata
 
+Bundled commands use `$PLUGIN_ROOT` for the plugin root. Set it once: use the host's plugin-root variable when defined (Claude Code: `PLUGIN_ROOT="$CLAUDE_PLUGIN_ROOT"`), otherwise the absolute path of this skill folder's `../..`. Works under any host agent, including Codex, Claude, and Cursor.
+
 Design `name` and `description` as the retrieval contract that makes an agent read the right `SKILL.md`. Use this before finalizing skill frontmatter or plugin skill metadata.
 
 If the task also changes skill instructions, resources, scripts, packaging, or installation, use this skill for metadata first, then use `skill-factory` or `plugin-factory` for the broader lifecycle.
@@ -91,4 +93,4 @@ When changing metadata, report:
 - metadata decision and boundary probes used;
 - validators run, usually `quick_validate.py` and any repository/plugin checks.
 
-Use [../../references/trigger-metadata.md](../../references/trigger-metadata.md) for name rules, description wording patterns, and detailed failure repair.
+Use `$PLUGIN_ROOT/references/trigger-metadata.md` for name rules, description wording patterns, and detailed failure repair.

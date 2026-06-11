@@ -5,6 +5,8 @@ description: Perform broad external-first discovery, vetting, scoring, distillat
 
 # Capability Synthesizer
 
+Bundled commands use `$PLUGIN_ROOT` for the plugin root. Set it once: use the host's plugin-root variable when defined (Claude Code: `PLUGIN_ROOT="$CLAUDE_PLUGIN_ROOT"`), otherwise the absolute path of this skill folder's `../..`. Works under any host agent, including Codex, Claude, and Cursor.
+
 Build one cohesive result from a broad capability corpus. The internet and public repositories are the primary corpus; local skills are supplementary evidence and candidate implementations. Candidates are evidence, not merge targets.
 
 ## Target Contract
@@ -19,7 +21,7 @@ Before discovery, write a compact contract:
   "cwd_role": "workspace | source-reference | target",
   "mode": "new-skill | augment-existing | plugin-pack | source-import | reference-only",
   "artifact_type": "skill | plugin | mcp | mixed | report",
-  "install_scope": "global-codex | repo-local | workspace-snapshot | reference-only",
+  "install_scope": "global-agent | repo-local | workspace-snapshot | reference-only",
   "install_required": false,
   "destination_path": "chosen source or install path",
   "marketplace_path": "only when global marketplace activation is required",
@@ -36,8 +38,8 @@ Before discovery, write a compact contract:
 }
 ```
 
-Use `../../references/synthesis-contract.md` for the scoring rubric and coverage ledger. Use `../../references/external-discovery.md` for broad public-source search waves and diminishing-return criteria.
-Use `../../references/install-scope.md` to choose the source/edit surface and whether installation is required.
+Use `$PLUGIN_ROOT/references/synthesis-contract.md` for the scoring rubric and coverage ledger. Use `$PLUGIN_ROOT/references/external-discovery.md` for broad public-source search waves and diminishing-return criteria.
+Use `$PLUGIN_ROOT/references/install-scope.md` to choose the source/edit surface and whether installation is required.
 
 For target binding, a named skill/plugin is the primary target by default. A current plugin/skill source repository may be the edit target when the request, repo instructions, or workspace profile indicate that capability artifacts should be authored there.
 
@@ -46,32 +48,32 @@ For target binding, a named skill/plugin is the primary target by default. A cur
 For `new-skill`, `augment-existing`, and `plugin-pack` synthesis, create installation-scope and external-discovery ledgers before editing the target skill/plugin:
 
 ```bash
-python3 ../../scripts/synthesis/install_scope_gate.py --template > <output-dir>/install-scope.json
-python3 ../../scripts/synthesis/install_scope_gate.py <output-dir>/install-scope.json
+python3 "$PLUGIN_ROOT/scripts/synthesis/install_scope_gate.py" --template > <output-dir>/install-scope.json
+python3 "$PLUGIN_ROOT/scripts/synthesis/install_scope_gate.py" <output-dir>/install-scope.json
 ```
 
 ```bash
-python3 ../../scripts/synthesis/external_discovery_gate.py --template > <output-dir>/external-discovery-ledger.json
-python3 ../../scripts/synthesis/external_discovery_gate.py <output-dir>/external-discovery-ledger.json
+python3 "$PLUGIN_ROOT/scripts/synthesis/external_discovery_gate.py" --template > <output-dir>/external-discovery-ledger.json
+python3 "$PLUGIN_ROOT/scripts/synthesis/external_discovery_gate.py" <output-dir>/external-discovery-ledger.json
 ```
 
 Do not call the result complete unless the gate validates `status=complete`, `breadth=external-broad`, and `stop_condition=diminishing_returns`. If the gate is partial or skipped, the final answer and reports must say `external_discovery_partial` or `local_only`, and must not claim broad validation.
 
-Do not call an output complete until `install-scope.json` validates the selected delivery surface and `install_scope_gate.py --final` passes. Use `repo-local` for source artifacts in a selected repository and `install_required=false` unless the user asked for activation. Use `global-codex` when the requested result is an installed personal/global capability or no repository source surface is selected.
+Do not call an output complete until `install-scope.json` validates the selected delivery surface and `install_scope_gate.py --final` passes. Use `repo-local` for source artifacts in a selected repository and `install_required=false` unless the user asked for activation. Use `global-agent` when the requested result is an installed personal/global capability or no repository source surface is selected; detect the active agent (Codex, Claude, or Cursor) with `$PLUGIN_ROOT/scripts/agent_target.py`.
 
 Official docs lookup, Context7 docs, or one search query is not enough. It can be one source family, but ready-made public skills/plugins/MCP servers/community implementations still need discovery unless blocked.
 
 ## Discovery
 
-Choose discovery breadth explicitly from `../../references/synthesis-contract.md`. For `new-skill`, `augment-existing`, `plugin-pack`, "well-vetted", "synthesize", "distill", "strengthen", or marketplace capability requests, default to `external-broad`.
+Choose discovery breadth explicitly from `$PLUGIN_ROOT/references/synthesis-contract.md`. For `new-skill`, `augment-existing`, `plugin-pack`, "well-vetted", "synthesize", "distill", "strengthen", or marketplace capability requests, default to `external-broad`.
 
-Use `../../references/external-discovery.md` for source families, search waves, query patterns, triage, and diminishing-return rules. The hot path is:
+Use `$PLUGIN_ROOT/references/external-discovery.md` for source families, search waves, query patterns, triage, and diminishing-return rules. The hot path is:
 
 1. Search public web/repositories, skill/plugin marketplaces, implementation ecosystems, research/expert sources when relevant, user-provided sources, then local skills as supplementary evidence.
 2. Record source families, skipped sources, recurring mechanisms, best-supported readable candidates, and stop condition in the external-discovery ledger.
 3. Search local skills only as regression baselines or implementation candidates:
    ```bash
-   python3 ../../scripts/capability_inventory.py --query "<topic>" --json
+   python3 "$PLUGIN_ROOT/scripts/capability_inventory.py" --query "<topic>" --json
    ```
 4. Mark `external_discovery_partial` when time, network, access, or safety blocks the required breadth.
 
@@ -91,7 +93,7 @@ Skip sources that require login, paid access, opaque install, API keys, or telem
 Run the static helper for readable local candidates:
 
 ```bash
-python3 ../../scripts/synthesis/audit_skill_candidate.py <candidate-a> <candidate-b> --output candidate-audits.json
+python3 "$PLUGIN_ROOT/scripts/synthesis/audit_skill_candidate.py" <candidate-a> <candidate-b> --output candidate-audits.json
 ```
 
 Then manually review the files that matter. For each candidate, record:
@@ -138,7 +140,7 @@ If no output directory is provided, write reports and ledgers to `./skill-synthe
 - final skill/plugin/MCP capability path on the selected delivery surface, plus installed/cached proof only when `install_required=true`
 - `synthesis-changelog.md`
 
-Use `../../references/synthesis-contract.md` and `../../references/safety-vetting.md` for required sections.
+Use `$PLUGIN_ROOT/references/synthesis-contract.md` and `$PLUGIN_ROOT/references/safety-vetting.md` for required sections.
 
 ## Convergence Gate
 
@@ -153,6 +155,6 @@ Before finalizing:
 7. Search final artifacts for TODOs, duplicated logic, unsafe examples, and stale mode statements.
 8. Confirm external discovery reached diminishing returns or mark the output partial.
 9. Confirm the final artifact is delivered to the validated surface and installed only when `install_required=true`.
-10. Run `python3 ../../scripts/synthesis/install_scope_gate.py <output-dir>/install-scope.json --final`.
+10. Run `python3 "$PLUGIN_ROOT/scripts/synthesis/install_scope_gate.py" <output-dir>/install-scope.json --final`.
 11. Run skill validators and resource tests.
 12. For plugin-pack mode, run plugin manifest validation and install/visibility checks with `plugin-factory`.

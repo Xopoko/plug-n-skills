@@ -26,7 +26,9 @@ HEX_COLOR_RE = re.compile(r"^#[0-9A-F]{6}$", re.IGNORECASE)
 
 
 def parse_args() -> argparse.Namespace:
-    parser = argparse.ArgumentParser(description="Validate a local Codex plugin.")
+    parser = argparse.ArgumentParser(
+        description="Validate a local plugin manifest and skills (codex + claude manifests)."
+    )
     parser.add_argument("plugin_path", help="Path to the plugin root directory")
     return parser.parse_args()
 
@@ -52,7 +54,59 @@ def validate_plugin(plugin_root: Path) -> list[str]:
 
     reject_todo_markers(manifest, "$", errors)
     validate_manifest_shape(plugin_root, manifest, errors)
+    validate_manifest_consistency(plugin_root, manifest, errors)
     return errors
+
+
+def validate_manifest_consistency(
+    plugin_root: Path,
+    codex_manifest: dict[str, Any],
+    errors: list[str],
+) -> None:
+    """When both .codex-plugin and .claude-plugin manifests exist, shared fields must match."""
+    claude_path = plugin_root / ".claude-plugin" / "plugin.json"
+    if not claude_path.is_file():
+        return
+    try:
+        claude_manifest = json.loads(claude_path.read_text(encoding="utf-8"))
+    except (OSError, json.JSONDecodeError):
+        errors.append("`.claude-plugin/plugin.json` must be valid JSON")
+        return
+    if not isinstance(claude_manifest, dict):
+        errors.append("`.claude-plugin/plugin.json` must contain a JSON object")
+        return
+
+    for field in ("name", "description", "license"):
+        codex_value = codex_manifest.get(field)
+        claude_value = claude_manifest.get(field)
+        if codex_value != claude_value:
+            errors.append(
+                f"manifest field `{field}` differs between `.codex-plugin` and `.claude-plugin`"
+            )
+
+    codex_version = str(codex_manifest.get("version", "")).split("+", 1)[0]
+    claude_version = str(claude_manifest.get("version", "")).split("+", 1)[0]
+    if codex_version != claude_version:
+        errors.append(
+            "manifest base `version` differs between `.codex-plugin` and `.claude-plugin`"
+        )
+
+    codex_author = codex_manifest.get("author")
+    claude_author = claude_manifest.get("author")
+    codex_author_name = codex_author.get("name") if isinstance(codex_author, dict) else codex_author
+    claude_author_name = claude_author.get("name") if isinstance(claude_author, dict) else claude_author
+    if codex_author_name != claude_author_name:
+        errors.append(
+            "manifest `author` name differs between `.codex-plugin` and `.claude-plugin`"
+        )
+
+    codex_keywords = codex_manifest.get("keywords")
+    claude_keywords = claude_manifest.get("keywords")
+    if isinstance(codex_keywords, list) and isinstance(claude_keywords, list):
+        if set(codex_keywords) != set(claude_keywords):
+            errors.append(
+                "manifest `keywords` differ between `.codex-plugin` and `.claude-plugin`"
+            )
 
 
 def load_json_object(path: Path, errors: list[str]) -> dict[str, Any] | None:

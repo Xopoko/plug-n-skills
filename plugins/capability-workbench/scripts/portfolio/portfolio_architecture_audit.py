@@ -307,7 +307,7 @@ def skill_rows(plugin_dir: Path, encoder) -> list[dict[str, Any]]:
         )
         rows.append(
             {
-                "plugin": plugin_dir.name,
+                "plugin": plugin_dir.resolve().name,
                 "name": frontmatter.get("name", skill_dir.name),
                 "path": str(skill_md),
                 "description_chars": len(description),
@@ -356,7 +356,7 @@ def recommendations(
 ) -> list[dict[str, Any]]:
     recs: list[dict[str, Any]] = []
     skill_count = len(rows)
-    plugin_name = plugin_dir.name
+    plugin_name = plugin_dir.resolve().name
     has_router = any(row["name"] == plugin_name for row in rows)
     families = name_families(rows, plugin_name)
 
@@ -518,7 +518,7 @@ def audit_plugin(plugin_dir: Path, args: argparse.Namespace, encoder, mode: str)
         for row in sorted(rows, key=lambda item: item["tokens"], reverse=True)
     ]
     return {
-        "plugin": plugin_dir.name,
+        "plugin": plugin_dir.resolve().name,
         "path": str(plugin_dir),
         "token_mode": mode,
         "skills": len(rows),
@@ -583,7 +583,7 @@ def main() -> int:
         limit=args.top_cross_overlaps,
     )
     result = {
-        "schema": "codex.capability_portfolio_architecture_audit.v1",
+        "schema": "capability.portfolio_architecture_audit.v1",
         "portfolio": {
             "plugin_count": len(audits),
             "skill_count": sum(audit["skills"] for audit in audits),

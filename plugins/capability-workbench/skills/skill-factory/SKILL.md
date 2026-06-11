@@ -5,6 +5,8 @@ description: Create, refactor, split, compress, validate, or package agent skill
 
 # Skill Factory
 
+Bundled commands use `$PLUGIN_ROOT` for the plugin root. Set it once: use the host's plugin-root variable when defined (Claude Code: `PLUGIN_ROOT="$CLAUDE_PLUGIN_ROOT"`), otherwise the absolute path of this skill folder's `../..`. Works under any host agent, including Codex, Claude, and Cursor.
+
 Create skills that any host agent can actually use: clear trigger metadata, compact hot-path instructions, conditional resources, and executable validation.
 
 For material `name` or `description` work, use `skill-trigger-metadata` first. For portfolio-level split, merge, delete, router, reference-extract, or script-extract decisions across multiple skills, use `capability-portfolio-architect` first. This skill owns concrete skill structure, resources, scripts, packaging, and validation after the boundary decision is made.
@@ -14,12 +16,12 @@ For material `name` or `description` work, use `skill-trigger-metadata` first. F
 Use the bundled initializer unless you are editing an existing skill. Choose the destination from the selected delivery surface: plugin-contained skills go under the plugin source tree; repo-local skills go under the current or named repository; installed personal skills go in the active agent's global skills dir. Example for an installed Codex skill:
 
 ```bash
-python3 ../../scripts/skill/init_skill.py <skill-name> --path "${CODEX_HOME:-$HOME/.codex}/skills" --resources scripts,references
+python3 "$PLUGIN_ROOT/scripts/skill/init_skill.py" <skill-name> --path "${CODEX_HOME:-$HOME/.codex}/skills" --resources scripts,references
 ```
 
 Choose the destination deliberately:
 
-- installed personal skill: agent's global skills dir — Codex: `${CODEX_HOME:-$HOME/.codex}/skills/<skill-name>`, Claude: `${CLAUDE_HOME:-$HOME/.claude}/skills/<skill-name>`
+- installed personal skill: agent's global skills dir — Codex: `${CODEX_HOME:-$HOME/.codex}/skills/<skill-name>`, Claude: `${CLAUDE_HOME:-$HOME/.claude}/skills/<skill-name>`, Cursor: `${CURSOR_HOME:-$HOME/.cursor}/skills/<skill-name>`; detect the active agent with `$PLUGIN_ROOT/scripts/agent_target.py`
 - plugin-contained skill: `<plugin-root>/skills/<skill-name>` when the user requested a plugin/plugin pack or the current repository is a plugin source tree
 - repo-local skill: when the user, repo instructions, or workspace profile selects the current/named repository as the source surface; record the evidence in `install-scope.json`
 - synthesis snapshot: `<output-dir>/synthesized-skill` only for reference-only drafts, failed/partial synthesis, or an explicit no-install request
@@ -54,8 +56,8 @@ Body guidelines:
 For material skill work, measure and audit:
 
 ```bash
-python3 ../../scripts/context/token_count.py <skill-dir>/SKILL.md --json
-python3 ../../scripts/context/context_density_audit.py <skill-dir> --json --top 20
+python3 "$PLUGIN_ROOT/scripts/context/token_count.py" <skill-dir>/SKILL.md --json
+python3 "$PLUGIN_ROOT/scripts/context/context_density_audit.py" <skill-dir> --json --top 20
 ```
 
 Use the audit to remove duplicate hot-path prose, stale history, brittle request-phrase trigger design, and brittle parsing of generated model text. Do not shrink away trigger precision, safety rules, or required commands.
@@ -65,13 +67,13 @@ Use the audit to remove duplicate hot-path prose, stale history, brittle request
 Run:
 
 ```bash
-python3 ../../scripts/skill/quick_validate.py <skill-dir>
+python3 "$PLUGIN_ROOT/scripts/skill/quick_validate.py" <skill-dir>
 ```
 
 When `agents/openai.yaml` is present or desired, regenerate it after final SKILL.md edits:
 
 ```bash
-python3 ../../scripts/skill/generate_openai_yaml.py <skill-dir> \
+python3 "$PLUGIN_ROOT/scripts/skill/generate_openai_yaml.py" <skill-dir> \
   --interface display_name="<Display Name>" \
   --interface short_description="<25-64 chars>" \
   --interface default_prompt="<representative task prompt>"
@@ -82,8 +84,10 @@ Test any added scripts with representative inputs. For complex skills, forward-t
 For complete installed skills, validate the install-scope contract:
 
 ```bash
-python3 ../../scripts/synthesis/install_scope_gate.py <output-dir>/install-scope.json --final
+python3 "$PLUGIN_ROOT/scripts/synthesis/install_scope_gate.py" <output-dir>/install-scope.json --final
 ```
+
+For lightweight edits confined to one existing skill's text or metadata — no new scripts, no installation, no new capability claims — `quick_validate.py` plus a one-line scope note in the report replaces the ledgers.
 
 ## Report
 

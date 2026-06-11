@@ -4,11 +4,15 @@ description: >-
   Audit agent skill/plugin portfolio architecture. Use for cross-plugin
   capability overlap, weak routing, duplicated or missing skills,
   split/merge/delete/move decisions, shared capability extraction,
-  reference/script extraction, and plugin boundary redesign.
+  reference/script extraction, and plugin boundary redesign. For safety,
+  coverage, or validation review of a single artifact without boundary
+  changes, use capability-auditor instead.
 license: MIT
 ---
 
 # Capability Portfolio Architect
+
+Bundled commands use `$PLUGIN_ROOT` for the plugin root. Set it once: use the host's plugin-root variable when defined (Claude Code: `PLUGIN_ROOT="$CLAUDE_PLUGIN_ROOT"`), otherwise the absolute path of this skill folder's `../..`. Works under any host agent, including Codex, Claude, and Cursor.
 
 Use this when a capability set may have the wrong shape.
 
@@ -31,9 +35,9 @@ Decisions include keep, split, merge, remove, rename, route, move skills between
 1. Bind the portfolio scope: one skill, one plugin, multiple plugins, the whole repository, or a marketplace package.
 2. Measure hot path and structure:
    ```bash
-   python3 ../../scripts/portfolio/portfolio_architecture_audit.py <plugin-dir> --json
-   python3 ../../scripts/portfolio/portfolio_architecture_audit.py plugins --json
-   python3 ../../scripts/context/context_density_audit.py <plugin-dir> --json --top 20
+   python3 "$PLUGIN_ROOT/scripts/portfolio/portfolio_architecture_audit.py" <plugin-dir> --json
+   python3 "$PLUGIN_ROOT/scripts/portfolio/portfolio_architecture_audit.py" plugins --json
+   python3 "$PLUGIN_ROOT/scripts/context/context_density_audit.py" <plugin-dir> --json --top 20
    ```
 3. Inventory current responsibilities:
    skill names, descriptions, router rows, references, scripts, validation commands, install surface, adjacent plugins, and cross-plugin overlap candidates.
@@ -60,7 +64,7 @@ Decisions include keep, split, merge, remove, rename, route, move skills between
 - Prefer routers and narrow skills when workflows trigger independently.
 - Prefer references when workflows share a trigger and differ only by detail depth.
 - Prefer shared scripts or references when domain plugins repeat lifecycle mechanics but remain separate products.
-- Use [../../references/portfolio-architecture.md](../../references/portfolio-architecture.md) for full action proof rules.
+- Use `$PLUGIN_ROOT/references/portfolio-architecture.md` for full action proof rules.
 
 ## Outputs
 
@@ -82,4 +86,4 @@ Portfolio architecture audit:
 - Residual risks:
 ```
 
-Use [../../references/portfolio-architecture.md](../../references/portfolio-architecture.md) for the JSON ledger schema and action matrix.
+Use `$PLUGIN_ROOT/references/portfolio-architecture.md` for the JSON ledger schema and action matrix.

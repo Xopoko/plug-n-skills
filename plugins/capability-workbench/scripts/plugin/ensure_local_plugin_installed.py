@@ -1,5 +1,11 @@
 #!/usr/bin/env python3
-"""Ensure a local marketplace plugin is visible to Codex as an installed plugin."""
+"""Ensure a local marketplace plugin is visible to Codex as an installed plugin.
+
+Codex-specific by design: Codex is the only supported marketplace/cache/config
+surface, so this script always targets Codex paths regardless of the host agent
+running it. For Claude or Cursor hosts, plugin activation goes through the
+host's own mechanism; report source path plus validation instead of this gate.
+"""
 
 from __future__ import annotations
 

@@ -1,5 +1,7 @@
 # External Discovery
 
+`$PLUGIN_ROOT` is the plugin root (see the calling skill's plugin-root preamble).
+
 Use this reference for broad capability discovery before synthesis. Use `install-scope.md` separately to choose the delivery surface and whether installation is required.
 
 ## Objective
@@ -11,8 +13,8 @@ Seek the best-supported practically achievable implementation, not the best loca
 For synthesis/augmentation, maintain `<output-dir>/external-discovery-ledger.json` and validate it:
 
 ```bash
-python3 ../../scripts/synthesis/external_discovery_gate.py --template > <output-dir>/external-discovery-ledger.json
-python3 ../../scripts/synthesis/external_discovery_gate.py <output-dir>/external-discovery-ledger.json --json
+python3 "$PLUGIN_ROOT/scripts/synthesis/external_discovery_gate.py" --template > <output-dir>/external-discovery-ledger.json
+python3 "$PLUGIN_ROOT/scripts/synthesis/external_discovery_gate.py" <output-dir>/external-discovery-ledger.json --json
 ```
 
 The ledger is the machine-readable source of truth for discovery breadth, source families, search waves, candidate coverage, blockers, and stop condition. Markdown reports may summarize it but must not replace it.

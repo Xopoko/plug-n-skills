@@ -5,6 +5,8 @@ description: Create, update, validate, optionally install/cache-refresh, and han
 
 # Plugin Factory
 
+Bundled commands use `$PLUGIN_ROOT` for the plugin root. Set it once: use the host's plugin-root variable when defined (Claude Code: `PLUGIN_ROOT="$CLAUDE_PLUGIN_ROOT"`), otherwise the absolute path of this skill folder's `../..`. Works under any host agent, including Codex, Claude, and Cursor.
+
 Build marketplace-ready plugin source first. Install or cache-refresh only when the user asked for an installed/global plugin or the validated contract has `install_required=true`.
 
 ## Scaffold
@@ -18,7 +20,7 @@ For a new requested plugin, choose the source destination deliberately:
 For the user's local marketplace source, scaffold with:
 
 ```bash
-python3 ../../scripts/plugin/create_basic_plugin.py <plugin-name> --with-skills --with-scripts --with-assets --with-marketplace
+python3 "$PLUGIN_ROOT/scripts/plugin/create_basic_plugin.py" <plugin-name> --with-skills --with-scripts --with-assets --with-marketplace
 ```
 
 Defaults:
@@ -35,15 +37,20 @@ repository and skip marketplace/cache mutation unless `install_required=true`.
 
 For new marketplace-facing plugins, generate the icon through the system
 `$imagegen` skill, not through hand-authored SVG templates. Use
-`../../references/plugin-icon-system.md`:
+`$PLUGIN_ROOT/references/plugin-icon-system.md`:
 
 1. Scaffold with `--with-assets`.
-2. Run `../../scripts/plugin/prepare_plugin_icon_prompt.py` to produce the
+2. Run `$PLUGIN_ROOT/scripts/plugin/prepare_plugin_icon_prompt.py` to produce the
    prompt contract.
 3. Call built-in image generation with that prompt.
 4. Save the selected bitmap to `assets/icon.png`.
-5. Run `../../scripts/plugin/wire_plugin_icon.py` to set
+5. Run `$PLUGIN_ROOT/scripts/plugin/wire_plugin_icon.py` to set
    `interface.composerIcon`, `interface.logo`, and `interface.brandColor`.
+
+When the host has no imagegen skill (for example Claude Code), use a
+user-supplied asset or host-native image generation when available; otherwise
+skip generation, record the gap in the report, and keep delivering the plugin.
+Never block plugin delivery on icon generation.
 
 For MCP-backed capability requests, prefer packaging the MCP server inside the selected plugin source. Write global agent MCP configuration only for explicit installed/global activation work.
 
@@ -59,11 +66,11 @@ Keep `.codex-plugin/plugin.json` validation-ready:
 - For new marketplace-facing plugins, generate or preserve an icon under
   `assets/` and wire `interface.composerIcon`, `interface.logo`, and
   `interface.brandColor` when the target agent supports them. Use the system
-  `$imagegen` skill plus `../../references/plugin-icon-system.md`; avoid
+  `$imagegen` skill plus `$PLUGIN_ROOT/references/plugin-icon-system.md`; avoid
   text-heavy, tiny, screenshot-based, photographic, API-key-only, or
   private/project-specific icons.
 
-Use `../../references/marketplace-validation.md` for the expected manifest and marketplace entry shapes.
+Use `$PLUGIN_ROOT/references/marketplace-validation.md` for the expected manifest and marketplace entry shapes.
 
 ## Plugin-Pack Shape
 
@@ -84,28 +91,28 @@ covers the workflow better.
 For every marketplace-backed plugin:
 
 ```bash
-python3 ../../scripts/plugin/validate_plugin.py <plugin-dir>
+python3 "$PLUGIN_ROOT/scripts/plugin/validate_plugin.py" <plugin-dir>
 ```
 
 When `install_required=true`:
 
 ```bash
-python3 ../../scripts/plugin/ensure_local_plugin_installed.py <plugin-dir>
-python3 ../../scripts/plugin/ensure_local_plugin_installed.py <plugin-dir> --check-only
+python3 "$PLUGIN_ROOT/scripts/plugin/ensure_local_plugin_installed.py" <plugin-dir>
+python3 "$PLUGIN_ROOT/scripts/plugin/ensure_local_plugin_installed.py" <plugin-dir> --check-only
 ```
 
 For installed updates to an existing marketplace-backed plugin:
 
 ```bash
-python3 ../../scripts/plugin/update_plugin_cachebuster.py <plugin-dir>
-python3 ../../scripts/plugin/ensure_local_plugin_installed.py <plugin-dir>
-python3 ../../scripts/plugin/ensure_local_plugin_installed.py <plugin-dir> --check-only
+python3 "$PLUGIN_ROOT/scripts/plugin/update_plugin_cachebuster.py" <plugin-dir>
+python3 "$PLUGIN_ROOT/scripts/plugin/ensure_local_plugin_installed.py" <plugin-dir>
+python3 "$PLUGIN_ROOT/scripts/plugin/ensure_local_plugin_installed.py" <plugin-dir> --check-only
 ```
 
 Installed work is incomplete if the plugin is only present in `marketplace.json`; it must be enabled and cache-backed. Source-only repository work is complete when the plugin validates and the install-scope contract records `install_required=false`. If this plugin was produced by the synthesizer, also run the final install-scope gate:
 
 ```bash
-python3 ../../scripts/synthesis/install_scope_gate.py <output-dir>/install-scope.json --final
+python3 "$PLUGIN_ROOT/scripts/synthesis/install_scope_gate.py" <output-dir>/install-scope.json --final
 ```
 
 ## Handoff

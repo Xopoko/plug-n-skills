@@ -10,13 +10,15 @@ from pathlib import Path
 from typing import Any
 
 
+SCHEMA = "capability.external_discovery.v1"
+DEPRECATED_SCHEMAS = {"codex.external_discovery.v1"}
 VALID_BREADTH = {"external-broad", "external-light", "local-only"}
 VALID_STATUS = {"complete", "partial", "skipped"}
 VALID_STOP = {"diminishing_returns", "budget_limit", "blocked", "skipped"}
 
 
 TEMPLATE = {
-    "schema": "codex.external_discovery.v1",
+    "schema": SCHEMA,
     "target": "",
     "breadth": "external-broad",
     "status": "partial",
@@ -57,8 +59,11 @@ def validate(data: dict[str, Any]) -> tuple[list[str], list[str]]:
     errors: list[str] = []
     warnings: list[str] = []
 
-    if data.get("schema") != "codex.external_discovery.v1":
-        errors.append("schema_must_be_codex.external_discovery.v1")
+    schema = data.get("schema")
+    if schema in DEPRECATED_SCHEMAS:
+        warnings.append(f"schema_{schema}_is_deprecated_use_{SCHEMA}")
+    elif schema != SCHEMA:
+        errors.append(f"schema_must_be_{SCHEMA}")
 
     breadth = data.get("breadth")
     status = data.get("status")
@@ -134,7 +139,7 @@ def main() -> int:
     data = load_json(path)
     errors, warnings = validate(data)
     result = {
-        "schema": "codex.external_discovery_gate.result.v1",
+        "schema": "capability.external_discovery_gate.result.v1",
         "path": str(path),
         "valid": not errors,
         "errors": errors,

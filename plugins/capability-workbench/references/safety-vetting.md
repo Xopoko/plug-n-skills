@@ -1,5 +1,7 @@
 # Safety Vetting
 
+`$PLUGIN_ROOT` is the plugin root (see the calling skill's plugin-root preamble).
+
 Use this reference when inspecting candidate skills, plugins, scripts, installers, and marketplace packages.
 
 ## Risk Classes
@@ -48,8 +50,8 @@ Candidate:
 Run first-pass scans, then verify important findings manually:
 
 ```bash
-python3 ../../scripts/synthesis/audit_skill_candidate.py <skill-dir> --output candidate-audit.json
-python3 ../../scripts/context/context_density_audit.py <paths> --json --top 20
+python3 "$PLUGIN_ROOT/scripts/synthesis/audit_skill_candidate.py" <skill-dir> --output candidate-audit.json
+python3 "$PLUGIN_ROOT/scripts/context/context_density_audit.py" <paths> --json --top 20
 ```
 
 The helpers are triage, not final judgment.

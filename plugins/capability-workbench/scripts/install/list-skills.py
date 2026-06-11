@@ -5,11 +5,21 @@ from __future__ import annotations
 
 import argparse
 import json
-import os
 import sys
 import urllib.error
+from pathlib import Path
 
 from github_utils import github_api_contents_url, github_request
+
+_SCRIPT_PATH = Path(__file__).resolve()
+for _agent_target in (
+    _SCRIPT_PATH.parents[1] / "agent_target.py",
+    _SCRIPT_PATH.parents[4] / "scripts" / "agent_target.py",
+):
+    if _agent_target.is_file():
+        sys.path.insert(0, str(_agent_target.parent))
+        break
+from agent_target import iter_agents  # noqa: E402
 
 DEFAULT_REPO = "openai/skills"
 DEFAULT_PATH = "skills/.curated"
@@ -28,22 +38,19 @@ class Args(argparse.Namespace):
 
 
 def _request(url: str) -> bytes:
-    return github_request(url, "codex-skill-list")
-
-
-def _codex_home() -> str:
-    return os.environ.get("CODEX_HOME", os.path.expanduser("~/.codex"))
+    return github_request(url, "capability-workbench-skill-list")
 
 
 def _installed_skills() -> set[str]:
-    root = os.path.join(_codex_home(), "skills")
-    if not os.path.isdir(root):
-        return set()
-    entries = set()
-    for name in os.listdir(root):
-        path = os.path.join(root, name)
-        if os.path.isdir(path):
-            entries.add(name)
+    """Skill names installed in any known agent's global skills dir."""
+    entries: set[str] = set()
+    for target in iter_agents():
+        root = target.skills_dir
+        if not root.is_dir():
+            continue
+        for child in root.iterdir():
+            if child.is_dir():
+                entries.add(child.name)
     return entries
 
 

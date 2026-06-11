@@ -1,9 +1,11 @@
 ---
 name: capability-auditor
-description: Audit agent skills and plugins for safety, capability coverage, duplicated logic, token/context cost, prompt-contract risk, validation readiness, marketplace visibility, dependencies, network behavior, and install/update risks.
+description: Audit agent skills and plugins for safety, capability coverage, duplicated logic, token/context cost, prompt-contract risk, validation readiness, marketplace visibility, dependencies, network behavior, and install/update risks. For structural split/merge/move/delete/router decisions across skills or plugins, use capability-portfolio-architect instead.
 ---
 
 # Capability Auditor
+
+Bundled commands use `$PLUGIN_ROOT` for the plugin root. Set it once: use the host's plugin-root variable when defined (Claude Code: `PLUGIN_ROOT="$CLAUDE_PLUGIN_ROOT"`), otherwise the absolute path of this skill folder's `../..`. Works under any host agent, including Codex, Claude, and Cursor.
 
 Use this for independent review before adopting, installing, publishing, or relying on a skill or plugin.
 
@@ -23,33 +25,33 @@ Use this for independent review before adopting, installing, publishing, or rely
 Skill candidate audit:
 
 ```bash
-python3 ../../scripts/synthesis/audit_skill_candidate.py <skill-dir> --output candidate-audit.json
+python3 "$PLUGIN_ROOT/scripts/synthesis/audit_skill_candidate.py" <skill-dir> --output candidate-audit.json
 ```
 
 Context and prompt-contract audit:
 
 ```bash
-python3 ../../scripts/context/token_count.py <paths> --json --top 20
-python3 ../../scripts/context/context_density_audit.py <paths> --json --top 20
+python3 "$PLUGIN_ROOT/scripts/context/token_count.py" <paths> --json --top 20
+python3 "$PLUGIN_ROOT/scripts/context/context_density_audit.py" <paths> --json --top 20
 ```
 
 Skill validation:
 
 ```bash
-python3 ../../scripts/skill/quick_validate.py <skill-dir>
+python3 "$PLUGIN_ROOT/scripts/skill/quick_validate.py" <skill-dir>
 ```
 
 Plugin validation and visibility:
 
 ```bash
-python3 ../../scripts/plugin/validate_plugin.py <plugin-dir>
-python3 ../../scripts/plugin/ensure_local_plugin_installed.py <plugin-dir> --check-only
+python3 "$PLUGIN_ROOT/scripts/plugin/validate_plugin.py" <plugin-dir>
+python3 "$PLUGIN_ROOT/scripts/plugin/ensure_local_plugin_installed.py" <plugin-dir> --check-only
 ```
 
 Install-scope validation:
 
 ```bash
-python3 ../../scripts/synthesis/install_scope_gate.py <output-dir>/install-scope.json --final
+python3 "$PLUGIN_ROOT/scripts/synthesis/install_scope_gate.py" <output-dir>/install-scope.json --final
 ```
 
 ## Risk Review

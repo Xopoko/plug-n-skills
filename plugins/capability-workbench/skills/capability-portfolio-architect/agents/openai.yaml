@@ -1,0 +1,4 @@
+interface:
+  display_name: "Capability Portfolio Architect"
+  short_description: "Audit and reshape skill/plugin portfolio architecture."
+  default_prompt: "Use Capability Portfolio Architect to audit skill and plugin boundaries and decide keep, split, merge, move, delete, route, or extract actions."

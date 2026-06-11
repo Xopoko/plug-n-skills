@@ -1,7 +1,7 @@
 {
   "name": "capability-workbench",
-  "version": "0.2.0+codex.20260608170012",
-  "description": "A web-first marketplace workbench for broad discovery, creation, synthesis, trigger metadata design, cross-plugin portfolio architecture, vetting, repair, global installation, packaging, and imagegen-backed icon workflows for agent skills and plugins.",
+  "version": "0.3.0",
+  "description": "Agent-agnostic capability workbench: discover, synthesize, architect cross-plugin portfolios, design trigger metadata, vet, repair, install, package, and run imagegen-backed icon workflows for agent skills and plugins.",
   "author": {
     "name": "Xopoko"
   },
@@ -13,14 +13,16 @@
     "plugins",
     "marketplace",
     "synthesis",
+    "icons",
     "context-density",
-    "validation"
+    "validation",
+    "repair"
   ],
   "skills": "./skills/",
   "interface": {
     "displayName": "Capability Workbench",
     "shortDescription": "Discover, synthesize, architect, vet, install, and package agent capabilities.",
-    "longDescription": "Capability Workbench combines web-first external discovery, skill synthesis, cross-plugin capability portfolio architecture, skill authoring, urgent repair of stale or false capability contracts, global agent skill installation, plugin packaging, imagegen-backed plugin icon workflows, marketplace visibility, safety vetting, and context-density tooling into one capability-acquisition plugin. It can audit whole plugin portfolios for overlap, weak routing, split/merge/delete/move decisions, shared capability extraction, reference extraction, and script extraction. It treats public repositories, marketplaces, research sources, and community implementations as the primary corpus, with local skills as supplementary evidence, and installs requested capabilities into the global agent installation by default unless the user explicitly asks for repo-local output.",
+    "longDescription": "Capability Workbench combines web-first external discovery, skill synthesis, cross-plugin capability portfolio architecture, skill authoring, urgent repair of stale or false capability contracts, global agent skill installation, plugin packaging, imagegen-backed plugin icon workflows, marketplace visibility, safety vetting, and context-density tooling into one capability-acquisition plugin. It can audit whole plugin portfolios for overlap, weak routing, split/merge/delete/move decisions, shared capability extraction, reference extraction, and script extraction. It treats public repositories, marketplaces, research sources, and community implementations as the primary corpus, with local skills as supplementary evidence. It writes artifacts to the validated source surface and installs into the global agent installation only when the user asks for installed/global use.",
     "developerName": "Xopoko",
     "category": "Productivity",
     "capabilities": [

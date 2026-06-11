@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Inventory local Codex skills, plugins, and marketplace entries."""
+"""Inventory local agent (Codex and Claude) skills, plugins, and marketplace entries."""
 
 from __future__ import annotations
 
@@ -13,22 +13,35 @@ from typing import Any
 DEFAULT_SKILL_ROOTS = [
     "${CODEX_HOME:-$HOME/.codex}/skills",
     "$HOME/.codex/skills/.system",
+    "${CLAUDE_HOME:-$HOME/.claude}/skills",
+    "$HOME/.claude/skills/.system",
+    "${CURSOR_HOME:-$HOME/.cursor}/skills",
 ]
 DEFAULT_PLUGIN_ROOTS = [
     "$HOME/plugins",
     "$HOME/.codex/plugins/cache/local",
     "$HOME/.codex/plugins/cache/openai-curated",
     "$HOME/.codex/plugins/cache/openai-curated-remote",
+    "${CLAUDE_HOME:-$HOME/.claude}/plugins",
 ]
 DEFAULT_MARKETPLACES = [
     "$HOME/.agents/plugins/marketplace.json",
+    "${CLAUDE_HOME:-$HOME/.claude}/plugins/marketplace.json",
 ]
+PLUGIN_MANIFEST_NAMES = (".codex-plugin", ".claude-plugin")
 
 
 def expand_template(raw: str) -> Path:
-    if raw.startswith("${CODEX_HOME:-$HOME/.codex}"):
-        base = os.environ.get("CODEX_HOME") or str(Path.home() / ".codex")
-        raw = raw.replace("${CODEX_HOME:-$HOME/.codex}", base, 1)
+    for var, default in (
+        ("CODEX_HOME", ".codex"),
+        ("CLAUDE_HOME", ".claude"),
+        ("CURSOR_HOME", ".cursor"),
+    ):
+        template = "${%s:-$HOME/%s}" % (var, default)
+        if raw.startswith(template):
+            base = os.environ.get(var) or str(Path.home() / default)
+            raw = raw.replace(template, base, 1)
+            break
     return Path(os.path.expandvars(os.path.expanduser(raw)))
 
 
@@ -91,13 +104,20 @@ def inventory_skills(roots: list[Path], query: str | None) -> list[dict[str, Any
 def inventory_plugins(roots: list[Path], query: str | None) -> list[dict[str, Any]]:
     rows: list[dict[str, Any]] = []
     seen: set[Path] = set()
+    seen_plugins: set[Path] = set()
     for root in roots:
         if not root.exists():
             continue
-        for manifest in sorted(root.rglob(".codex-plugin/plugin.json")):
-            if manifest in seen:
+        manifests = [
+            manifest
+            for manifest_dir in PLUGIN_MANIFEST_NAMES
+            for manifest in root.rglob(f"{manifest_dir}/plugin.json")
+        ]
+        for manifest in sorted(manifests):
+            if manifest in seen or manifest.parent.parent in seen_plugins:
                 continue
             seen.add(manifest)
+            seen_plugins.add(manifest.parent.parent)
             data = read_json(manifest) or {}
             interface = data.get("interface") if isinstance(data.get("interface"), dict) else {}
             row = {
@@ -146,7 +166,7 @@ def inventory_marketplaces(paths: list[Path], query: str | None) -> list[dict[st
 
 
 def main() -> int:
-    parser = argparse.ArgumentParser(description="Inventory local Codex skill and plugin capability surfaces.")
+    parser = argparse.ArgumentParser(description="Inventory local agent skill and plugin capability surfaces (Codex and Claude).")
     parser.add_argument("--query", help="Substring filter across names, descriptions, and paths.")
     parser.add_argument("--skill-root", action="append", default=[], help="Additional skill root to scan.")
     parser.add_argument("--plugin-root", action="append", default=[], help="Additional plugin root to scan.")
@@ -159,7 +179,7 @@ def main() -> int:
     marketplace_paths = [expand_template(p) for p in DEFAULT_MARKETPLACES + args.marketplace]
 
     payload = {
-        "schema": "codex.capability_inventory.v1",
+        "schema": "capability.inventory.v1",
         "query": args.query,
         "skill_roots": [str(p) for p in skill_roots],
         "plugin_roots": [str(p) for p in plugin_roots],

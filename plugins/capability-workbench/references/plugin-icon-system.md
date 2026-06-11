@@ -7,6 +7,14 @@ Workbench helpers prepare the prompt and wire the final file into the manifest.
 The goal is a coherent portfolio of minimal, stylish, long-range readable icons
 while still allowing each plugin to own a distinct background color.
 
+## Host Fallback
+
+The `$imagegen` system skill is a Codex capability. When the host agent has no
+imagegen skill (for example Claude Code), use a user-supplied asset or
+host-native image generation when available; otherwise skip generation, record
+the missing-icon gap in the report, and keep delivering the plugin. Never block
+plugin delivery on icon generation.
+
 ## Research Baseline
 
 - Apple Human Interface Guidelines, App icons: app icons should express one
@@ -88,7 +96,7 @@ Style boundaries:
 For new plugin scaffolds, prefer this sequence:
 
 ```bash
-python3 scripts/plugin/create_basic_plugin.py <plugin-name> \
+python3 "$PLUGIN_ROOT/scripts/plugin/create_basic_plugin.py" <plugin-name> \
   --with-skills \
   --with-scripts \
   --with-assets \
@@ -98,7 +106,7 @@ python3 scripts/plugin/create_basic_plugin.py <plugin-name> \
 Prepare the imagegen prompt contract:
 
 ```bash
-python3 scripts/plugin/prepare_plugin_icon_prompt.py <plugin-name> \
+python3 "$PLUGIN_ROOT/scripts/plugin/prepare_plugin_icon_prompt.py" <plugin-name> \
   --description "<short plugin purpose>" \
   --json \
   --out plugins/<plugin-name>/assets/icon-prompt.json
@@ -115,7 +123,7 @@ plugins/<plugin-name>/assets/icon.png
 Finally wire the existing asset into the Codex manifest:
 
 ```bash
-python3 scripts/plugin/wire_plugin_icon.py plugins/<plugin-name> \
+python3 "$PLUGIN_ROOT/scripts/plugin/wire_plugin_icon.py" plugins/<plugin-name> \
   --icon-path assets/icon.png \
   --brand-color <brandColor from icon-prompt.json>
 ```
@@ -139,5 +147,5 @@ Before handing off a generated icon:
 - Run plugin validation from the repository root:
 
   ```bash
-  python3 scripts/validate-repository.py
+  python3 scripts/validate-repository.py  # from the repository checkout root
   ```

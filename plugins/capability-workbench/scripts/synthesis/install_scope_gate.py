@@ -10,8 +10,11 @@ from pathlib import Path
 from typing import Any
 
 
+SCHEMA = "capability.install_scope.v1"
+DEPRECATED_SCHEMAS = {"codex.install_scope.v1"}
 VALID_ARTIFACTS = {"skill", "plugin", "mcp", "mixed", "report"}
-VALID_SCOPES = {"global-codex", "repo-local", "workspace-snapshot", "reference-only"}
+VALID_SCOPES = {"global-agent", "repo-local", "workspace-snapshot", "reference-only"}
+DEPRECATED_SCOPES = {"global-codex": "global-agent"}
 VALID_INSTALL_STATES = {"planned", "delivered", "installed", "not-applicable", "partial"}
 VALID_LOCAL_EVIDENCE_SOURCES = {
     "latest_user_message",
@@ -62,7 +65,7 @@ REPO_PROFILE_PHRASES = {
 
 
 TEMPLATE = {
-    "schema": "codex.install_scope.v1",
+    "schema": SCHEMA,
     "target": "",
     "artifact_type": "skill",
     "mode": "new-skill",
@@ -143,8 +146,16 @@ def validate_local_scope_evidence(value: Any) -> list[str]:
     return errors
 
 
+# Matches any agent-home skills dir: ${CODEX_HOME:-...}/skills, $CLAUDE_HOME/skills,
+# ~/.cursor/skills/<name>, <home>/.claude/skills/<name>, and other agents that
+# follow the <home>/.<agent>/skills convention.
+GLOBAL_SKILL_PATH_RE = re.compile(
+    r"(\$\{[A-Z][A-Z0-9_]*_HOME[^}]*\}|\$[A-Z][A-Z0-9_]*_HOME|[/~]\.[A-Za-z][A-Za-z0-9_-]*)/skills(/|$)"
+)
+
+
 def looks_like_global_skill_path(path: str) -> bool:
-    return "${CODEX_HOME" in path or "/.codex/skills/" in path or path.endswith("/.codex/skills")
+    return GLOBAL_SKILL_PATH_RE.search(path) is not None
 
 
 def looks_like_global_plugin_path(path: str) -> bool:
@@ -159,11 +170,17 @@ def validate(data: dict[str, Any], final: bool = False) -> tuple[list[str], list
     errors: list[str] = []
     warnings: list[str] = []
 
-    if data.get("schema") != "codex.install_scope.v1":
-        errors.append("schema_must_be_codex.install_scope.v1")
+    schema = data.get("schema")
+    if schema in DEPRECATED_SCHEMAS:
+        warnings.append(f"schema_{schema}_is_deprecated_use_{SCHEMA}")
+    elif schema != SCHEMA:
+        errors.append(f"schema_must_be_{SCHEMA}")
 
     artifact = data.get("artifact_type")
     scope = data.get("install_scope")
+    if scope in DEPRECATED_SCOPES:
+        warnings.append(f"scope_{scope}_is_deprecated_use_{DEPRECATED_SCOPES[scope]}")
+        scope = DEPRECATED_SCOPES[scope]
     install_state = data.get("install_state")
     destination = data.get("destination_path")
     marketplace = data.get("marketplace_path")
@@ -180,19 +197,19 @@ def validate(data: dict[str, Any], final: bool = False) -> tuple[list[str], list
     if final and install_state == "planned":
         errors.append("final_install_state_cannot_be_planned")
 
-    if scope == "global-codex":
+    if scope == "global-agent":
         if not destination:
-            errors.append("global_codex_requires_destination_path")
+            errors.append("global_agent_requires_destination_path")
         elif artifact == "skill" and not looks_like_global_skill_path(str(destination)):
-            errors.append("global_skill_destination_must_be_codex_home_skills")
+            errors.append("global_skill_destination_must_be_agent_home_skills")
         elif artifact in {"plugin", "mixed"} and not looks_like_global_plugin_path(str(destination)):
             errors.append("global_plugin_destination_should_be_user_plugins_path")
         if artifact in {"plugin", "mixed"} and not marketplace:
             errors.append("global_plugin_requires_marketplace_path")
         if artifact == "mcp":
-            warnings.append("mcp_global_install_requires_codex_global_config_or_marketplace_plugin_not_repo_mcp_json")
+            warnings.append("mcp_global_install_requires_global_agent_config_or_marketplace_plugin_not_repo_mcp_json")
         if final and install_required and install_state != "installed":
-            errors.append("final_global_codex_install_requires_installed_state")
+            errors.append("final_global_agent_install_requires_installed_state")
 
     if scope == "repo-local":
         errors.extend(validate_local_scope_evidence(data.get("local_request_evidence")))
@@ -236,7 +253,7 @@ def main() -> int:
     data = load_json(path)
     errors, warnings = validate(data, final=args.final)
     result = {
-        "schema": "codex.install_scope_gate.result.v1",
+        "schema": "capability.install_scope_gate.result.v1",
         "path": str(path),
         "valid": not errors,
         "errors": errors,

@@ -1,5 +1,7 @@
 # Context Density
 
+`$PLUGIN_ROOT` is the plugin root (see the calling skill's plugin-root preamble).
+
 Use this reference when a skill, plugin, prompt, report, or agent memory surface affects repeated context loading.
 
 ## Load Paths
@@ -53,8 +55,8 @@ Otherwise record the mechanism as `deferred` or `reference-only`; do not import 
 ## Commands
 
 ```bash
-python3 ../../scripts/context/token_count.py <files-or-dirs> --json --top 20
-python3 ../../scripts/context/context_density_audit.py <files-or-dirs> --json --top 20
+python3 "$PLUGIN_ROOT/scripts/context/token_count.py" <files-or-dirs> --json --top 20
+python3 "$PLUGIN_ROOT/scripts/context/context_density_audit.py" <files-or-dirs> --json --top 20
 ```
 
 Report token totals, major hotspots, preserved invariants, commitment preservation, recall/state boundary, compression economics, changes made, validation, and remaining tradeoffs.
