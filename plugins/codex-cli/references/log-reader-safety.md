@@ -1,5 +1,7 @@
 # Codex Log Reader Safety Reference
 
+`$PLUGIN_ROOT` is the plugin root (see the calling skill's plugin-root preamble).
+
 Use this reference with `skills/codex-log-reader/SKILL.md` when raw session
 evidence, manual `jq`, or log-health interpretation is needed.
 
@@ -65,8 +67,8 @@ Use `doctor` when the Codex UI cannot see a thread, resume behaves strangely, or
 a log may be too large:
 
 ```bash
-python3 ../../scripts/codex_log_reader.py doctor --since-days 30 --limit 50
-python3 ../../scripts/codex_log_reader.py doctor /path/to/rollout.jsonl
+python3 "$PLUGIN_ROOT/scripts/codex_log_reader.py" doctor --since-days 30 --limit 50
+python3 "$PLUGIN_ROOT/scripts/codex_log_reader.py" doctor /path/to/rollout.jsonl
 ```
 
 It checks malformed JSONL lines, very large rollout files, archived placement,

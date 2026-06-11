@@ -1,13 +1,15 @@
 # Token Diagnostics
 
+`$PLUGIN_ROOT` is the plugin root (see the calling skill's plugin-root preamble).
+
 Use deterministic measurements before arguing about context cost.
 
 ## Local File Measurement
 
 ```bash
-python3 scripts/token_count.py AGENTS.md README.md --json
-python3 scripts/token_count.py skills --json --top 20
-python3 scripts/context_density_audit.py AGENTS.md skills --json --top 20
+python3 "$PLUGIN_ROOT/skills/context-density/scripts/token_count.py" AGENTS.md README.md --json
+python3 "$PLUGIN_ROOT/skills/context-density/scripts/token_count.py" skills --json --top 20
+python3 "$PLUGIN_ROOT/skills/context-density/scripts/context_density_audit.py" AGENTS.md skills --json --top 20
 ```
 
 The bundled counter uses `tiktoken` when available and falls back to an approximate `chars / 4` estimate. Mark approximate counts as directional.
@@ -21,14 +23,14 @@ Code with `--agent codex|claude`.
 
 | Question | Command |
 | --- | --- |
-| Installed agents | `python3 scripts/agent_context_report.py agents --json` |
-| Overall startup/context pressure | `python3 scripts/agent_context_report.py brief --agent <codex|claude> --project . --usage --json` |
-| Largest skill metadata/body costs | `python3 scripts/agent_context_report.py skills --agent <codex|claude> --limit 10 --ndjson` |
-| One skill's body/metadata cost | `python3 scripts/agent_context_report.py skill SKILL_NAME --agent <codex|claude> --json` |
-| MCP config sections | `python3 scripts/agent_context_report.py mcp --agent <codex|claude> --no-introspect-mcp --json` |
-| MCP server tool filters | `python3 scripts/agent_context_report.py mcp --agent <codex|claude> --tools SERVER --json` |
-| Ranked raw sources | `python3 scripts/agent_context_report.py sources --agent <codex|claude> --ndjson --limit 20` |
-| Export all rows | `python3 scripts/agent_context_report.py export markdown --agent <codex|claude> --project .` |
+| Installed agents | `python3 "$PLUGIN_ROOT/skills/context-density/scripts/agent_context_report.py" agents --json` |
+| Overall startup/context pressure | `python3 "$PLUGIN_ROOT/skills/context-density/scripts/agent_context_report.py" brief --agent <codex|claude> --project . --usage --json` |
+| Largest skill metadata/body costs | `python3 "$PLUGIN_ROOT/skills/context-density/scripts/agent_context_report.py" skills --agent <codex|claude> --limit 10 --ndjson` |
+| One skill's body/metadata cost | `python3 "$PLUGIN_ROOT/skills/context-density/scripts/agent_context_report.py" skill SKILL_NAME --agent <codex|claude> --json` |
+| MCP config sections | `python3 "$PLUGIN_ROOT/skills/context-density/scripts/agent_context_report.py" mcp --agent <codex|claude> --no-introspect-mcp --json` |
+| MCP server tool filters | `python3 "$PLUGIN_ROOT/skills/context-density/scripts/agent_context_report.py" mcp --agent <codex|claude> --tools SERVER --json` |
+| Ranked raw sources | `python3 "$PLUGIN_ROOT/skills/context-density/scripts/agent_context_report.py" sources --agent <codex|claude> --ndjson --limit 20` |
+| Export all rows | `python3 "$PLUGIN_ROOT/skills/context-density/scripts/agent_context_report.py" export markdown --agent <codex|claude> --project .` |
 
 The reporter reads local files only: project `AGENTS.md`, installed
 `SKILL.md` files, plugin manifests, the selected agent's config, and MCP

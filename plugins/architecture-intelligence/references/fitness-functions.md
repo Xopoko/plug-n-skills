@@ -1,5 +1,7 @@
 # Architecture Fitness Functions
 
+`$PLUGIN_ROOT` is the plugin root (see the calling skill's plugin-root preamble).
+
 Fitness functions turn architecture intent into observable signals. They can be tests, static analysis rules, CI checks, review gates, dashboards, or production monitors.
 
 ## Selection Heuristic
@@ -17,7 +19,7 @@ Do not add a dependency just because an architecture tool exists. Add it only wh
 The plugin probe can serve as the first small repository script for top-level dependency conformance:
 
 ```bash
-python3 scripts/architecture_probe.py <repo-path> --json --policy <policy.json>
+python3 "$PLUGIN_ROOT/scripts/architecture_probe.py" <repo-path> --json --policy <policy.json>
 ```
 
 Use it to establish baseline drift before adopting a stronger ecosystem tool.

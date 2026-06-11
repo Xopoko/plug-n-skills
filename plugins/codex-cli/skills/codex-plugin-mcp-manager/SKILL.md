@@ -5,20 +5,20 @@ description: Use when managing Codex CLI plugins, plugin marketplaces, local mar
 
 # Codex Plugin And MCP Manager
 
+Bundled commands use `$PLUGIN_ROOT` for the plugin root. Set it once: use the host's plugin-root variable when defined (Claude Code: `PLUGIN_ROOT="$CLAUDE_PLUGIN_ROOT"`), otherwise the absolute path of this plugin's root directory. Works under any host agent, including Codex, Claude, and Cursor.
+
 Use this skill for `codex plugin ...` and `codex mcp ...` work. It covers
 installed plugin visibility, marketplace sources, plugin add/remove/list,
 marketplace add/list/upgrade/remove, MCP server list/get/add/remove/login/logout,
 stdio and streamable HTTP MCP server configuration, and bearer-token environment
 variable wiring.
 
-From this skill directory, the plugin root is `../..`.
-
 ## Inspect First
 
 Check the local command surface:
 
 ```bash
-python3 ../../scripts/codex_cli_inspector.py --commands plugin "plugin marketplace" mcp --json
+python3 "$PLUGIN_ROOT/scripts/codex_cli_inspector.py" --commands plugin "plugin marketplace" mcp --json
 ```
 
 Then read current state before mutating it:
@@ -37,7 +37,7 @@ For plugin visibility questions:
 
 1. Run `codex plugin marketplace list`.
 2. Run `codex plugin list`.
-3. If this repository is the source surface, prefer the repository installer:
+3. If this repository is the source surface, prefer the repository installer (run from the repository checkout root):
    ```bash
    python3 scripts/install-codex-plugins.py --dry-run
    python3 scripts/install-codex-plugins.py --plugin <plugin-name>

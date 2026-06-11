@@ -5,18 +5,18 @@ description: Use when coordinating Claude Code background agents, `claude agents
 
 # Claude Agents And Worktrees
 
+Bundled commands use `$PLUGIN_ROOT` for the plugin root. Set it once: use the host's plugin-root variable when defined (Claude Code: `PLUGIN_ROOT="$CLAUDE_PLUGIN_ROOT"`), otherwise the absolute path of this plugin's root directory. Works under any host agent, including Codex, Claude, and Cursor.
+
 Use this skill for Claude Code session orchestration: background agents,
 worktrees, tmux/iTerm panes, resumes, PR-linked sessions, forked sessions,
 session names and IDs, remote control, prompt suggestions, and cloud ultrareview.
-
-From this skill directory, the plugin root is `../..`.
 
 ## Inspect First
 
 Check command surface and current background sessions:
 
 ```bash
-python3 ../../scripts/claude_code_inspector.py --commands agents ultrareview --json
+python3 "$PLUGIN_ROOT/scripts/claude_code_inspector.py" --commands agents ultrareview --json
 claude agents --json
 ```
 

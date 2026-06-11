@@ -5,6 +5,8 @@ description: Route and execute Kotlin Multiplatform tasks across architecture, G
 
 # Kotlin Multiplatform Router
 
+Bundled commands use `$PLUGIN_ROOT` for the plugin root. Set it once: use the host's plugin-root variable when defined (Claude Code: `PLUGIN_ROOT="$CLAUDE_PLUGIN_ROOT"`), otherwise the absolute path of this plugin's root directory. Works under any host agent, including Codex, Claude, and Cursor.
+
 Use this skill when the task mentions Kotlin Multiplatform, KMP, KMM, Compose Multiplatform, CMP, Android-KMP, Kotlin/Native, cinterop, Gradle KMP source sets, shared iOS/Android logic, `commonMain`, `iosMain`, `androidMain`, `com.android.kotlin.multiplatform.library`, CocoaPods, or SwiftPM in a Kotlin project.
 
 From this skill directory, the plugin root is `../..`.
@@ -16,7 +18,7 @@ For an existing repository, read the local project before answering:
 1. Inspect `settings.gradle(.kts)`, root `build.gradle(.kts)`, module build files, `gradle/libs.versions.toml`, `gradle.properties`, and `gradle/wrapper/gradle-wrapper.properties`.
 2. Run the offline inspector when available:
    ```bash
-   python3 ../../scripts/kmp_inspector.py --root <project-root> --json
+   python3 "$PLUGIN_ROOT/scripts/kmp_inspector.py" --root <project-root> --json
    ```
 3. Treat the inspector as a triage aid, not a substitute for reading relevant files.
 4. For dependency coordinates, Gradle DSL, plugin versions, platform target support, or migration rules that may have changed, verify against current official docs. Prefer Context7 for Kotlin, Compose, Ktor, SQLDelight, Android Gradle Plugin, and related libraries when available.

@@ -5,19 +5,19 @@ description: Use when diagnosing Codex CLI install, config, auth, runtime, featu
 
 # Codex Doctor And Debugger
 
+Bundled commands use `$PLUGIN_ROOT` for the plugin root. Set it once: use the host's plugin-root variable when defined (Claude Code: `PLUGIN_ROOT="$CLAUDE_PLUGIN_ROOT"`), otherwise the absolute path of this plugin's root directory. Works under any host agent, including Codex, Claude, and Cursor.
+
 Use this skill when Codex CLI itself is failing or unclear: installation,
 config, auth, runtime health, feature flags, sandbox denials, debug model
 catalog, app-server transports, remote-control daemon, remote connection errors,
 or local environment inconsistencies.
-
-From this skill directory, the plugin root is `../..`.
 
 ## Inspect First
 
 Start with cheap, non-mutating commands:
 
 ```bash
-python3 ../../scripts/codex_cli_inspector.py --commands doctor debug sandbox features app-server remote-control --json
+python3 "$PLUGIN_ROOT/scripts/codex_cli_inspector.py" --commands doctor debug sandbox features app-server remote-control --json
 codex doctor --summary --ascii
 ```
 

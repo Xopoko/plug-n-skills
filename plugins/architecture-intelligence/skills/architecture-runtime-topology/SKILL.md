@@ -5,6 +5,8 @@ description: "Use when code work touches runtime shape: services, app/CLI/backgr
 
 # Architecture Runtime Topology
 
+Bundled commands use `$PLUGIN_ROOT` for the plugin root. Set it once: use the host's plugin-root variable when defined (Claude Code: `PLUGIN_ROOT="$CLAUDE_PLUGIN_ROOT"`), otherwise the absolute path of this plugin's root directory. Works under any host agent, including Codex, Claude, and Cursor.
+
 Use when the question is how the system runs, communicates, fails, scales, or is operated.
 
 ## Inputs
@@ -21,7 +23,7 @@ Record paths and signal names only; never repeat secret values.
 ## Probe
 
 ```bash
-python3 scripts/architecture_probe.py <repo-path> --json
+python3 "$PLUGIN_ROOT/scripts/architecture_probe.py" <repo-path> --json
 ```
 
 Use `runtime_topology` as evidence inventory. It detects deployment artifacts and runtime signal names, not production truth.

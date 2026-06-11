@@ -5,13 +5,13 @@ description: Route Codex CLI work across local CLI inspection, non-interactive e
 
 # Codex CLI Router
 
+Bundled commands use `$PLUGIN_ROOT` for the plugin root. Set it once: use the host's plugin-root variable when defined (Claude Code: `PLUGIN_ROOT="$CLAUDE_PLUGIN_ROOT"`), otherwise the absolute path of this plugin's root directory. Works under any host agent, including Codex, Claude, and Cursor.
+
 Use this skill when the user asks to operate, diagnose, automate, wrap, or
 explain the Codex CLI, including `codex`, `codex exec`, `codex review`,
 `codex doctor`, `codex mcp`, `codex plugin`, `codex sandbox`, `codex debug`,
 `codex app-server`, `codex remote-control`, `codex resume`, `codex fork`,
 `codex archive`, or local Codex app Run actions.
-
-From this skill directory, the plugin root is `../..`.
 
 ## First Move
 
@@ -19,13 +19,13 @@ Prefer live local facts over memory. Inspect the installed CLI before building
 commands or debugging version-sensitive behavior:
 
 ```bash
-python3 ../../scripts/codex_cli_inspector.py --json
+python3 "$PLUGIN_ROOT/scripts/codex_cli_inspector.py" --json
 ```
 
 If the user supplies a Codex executable path, use it for the current run:
 
 ```bash
-python3 ../../scripts/codex_cli_inspector.py --codex "$CODEX_CLI_PATH" --json
+python3 "$PLUGIN_ROOT/scripts/codex_cli_inspector.py" --codex "$CODEX_CLI_PATH" --json
 ```
 
 Do not commit personal absolute paths into source files, manifests, docs, or

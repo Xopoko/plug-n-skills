@@ -5,19 +5,19 @@ description: Use when preparing, running, or debugging non-interactive Claude Co
 
 # Claude Print Automation
 
+Bundled commands use `$PLUGIN_ROOT` for the plugin root. Set it once: use the host's plugin-root variable when defined (Claude Code: `PLUGIN_ROOT="$CLAUDE_PLUGIN_ROOT"`), otherwise the absolute path of this plugin's root directory. Works under any host agent, including Codex, Claude, and Cursor.
+
 Use this skill for non-interactive Claude Code runs: `claude --print`, `-p`,
 JSON output, stream-json input/output, partial messages, hook event streams,
 JSON schema validation, budget caps, fallback model, prompt suggestions,
 no-persistence runs, and CI-style reports.
-
-From this skill directory, the plugin root is `../..`.
 
 ## Inspect First
 
 Verify the installed CLI:
 
 ```bash
-python3 ../../scripts/claude_code_inspector.py --commands "plugin validate" doctor auto-mode --json
+python3 "$PLUGIN_ROOT/scripts/claude_code_inspector.py" --commands "plugin validate" doctor auto-mode --json
 ```
 
 If the user supplied a binary path, pass `--claude "$CLAUDE_CLI_PATH"`.

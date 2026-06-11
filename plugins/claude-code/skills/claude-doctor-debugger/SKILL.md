@@ -5,21 +5,22 @@ description: Use when diagnosing Claude Code install/update/auth/config/runtime 
 
 # Claude Doctor And Debugger
 
+Bundled commands use `$PLUGIN_ROOT` for the plugin root. Set it once: use the host's plugin-root variable when defined (Claude Code: `PLUGIN_ROOT="$CLAUDE_PLUGIN_ROOT"`), otherwise the absolute path of this plugin's root directory. Works under any host agent, including Codex, Claude, and Cursor.
+
 Use this skill when Claude Code itself is failing or unclear: install/update
 state, auth, settings, hooks, plugins, MCP startup, keychain/API-key boundaries,
 safe-mode or bare-mode isolation, debug logs, auto-mode classifier behavior,
 IDE/Chrome integration, or native build installation.
 
-From this skill directory, the plugin root is `../..`.
 For broader safety contracts, read
-[../../references/cli-operation-contracts.md](../../references/cli-operation-contracts.md).
+`$PLUGIN_ROOT/references/cli-operation-contracts.md`.
 
 ## Inspect First
 
 Use the inspector and help output before running health checks:
 
 ```bash
-python3 ../../scripts/claude_code_inspector.py --commands doctor auto-mode install auth --json
+python3 "$PLUGIN_ROOT/scripts/claude_code_inspector.py" --commands doctor auto-mode install auth --json
 claude doctor --help
 ```
 

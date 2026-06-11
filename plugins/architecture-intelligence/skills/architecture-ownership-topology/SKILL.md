@@ -5,6 +5,8 @@ description: "Use when architecture crosses ownership or review boundaries: CODE
 
 # Architecture Ownership Topology
 
+Bundled commands use `$PLUGIN_ROOT` for the plugin root. Set it once: use the host's plugin-root variable when defined (Claude Code: `PLUGIN_ROOT="$CLAUDE_PLUGIN_ROOT"`), otherwise the absolute path of this plugin's root directory. Works under any host agent, including Codex, Claude, and Cursor.
+
 Use when the question involves ownership, team boundaries, review paths, CODEOWNERS, OWNERS files, shared modules, Conway-style alignment, or coordination risk across modules/services.
 
 ## Inputs
@@ -20,7 +22,7 @@ Do not infer actual communication, staffing, workload, or review enforcement fro
 ## Probe
 
 ```bash
-python3 scripts/architecture_probe.py <repo-path> --json
+python3 "$PLUGIN_ROOT/scripts/architecture_probe.py" <repo-path> --json
 ```
 
 Use `ownership_topology` for ownership sources, top-level coverage, ownerless areas, and cross-owned static dependency edges.

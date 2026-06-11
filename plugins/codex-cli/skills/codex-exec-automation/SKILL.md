@@ -5,19 +5,19 @@ description: Use when preparing, running, debugging, or reviewing non-interactiv
 
 # Codex Exec Automation
 
+Bundled commands use `$PLUGIN_ROOT` for the plugin root. Set it once: use the host's plugin-root variable when defined (Claude Code: `PLUGIN_ROOT="$CLAUDE_PLUGIN_ROOT"`), otherwise the absolute path of this plugin's root directory. Works under any host agent, including Codex, Claude, and Cursor.
+
 Use this skill for non-interactive Codex CLI work: `codex exec`, `codex e`,
 `codex exec resume`, `codex exec review`, top-level `codex review`, JSONL event
 streams, final-message capture, output schemas, prompt stdin, images, cwd
 selection, and CI-like checks.
-
-From this skill directory, the plugin root is `../..`.
 
 ## Inspect First
 
 Before relying on a flag, verify the installed CLI:
 
 ```bash
-python3 ../../scripts/codex_cli_inspector.py --commands exec review doctor --json
+python3 "$PLUGIN_ROOT/scripts/codex_cli_inspector.py" --commands exec review doctor --json
 ```
 
 If the user supplied a binary path, pass `--codex "$CODEX_CLI_PATH"`.

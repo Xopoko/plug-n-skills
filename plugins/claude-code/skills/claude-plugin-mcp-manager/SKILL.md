@@ -5,20 +5,20 @@ description: Use when managing Claude Code plugins, plugin marketplaces, plugin 
 
 # Claude Plugin And MCP Manager
 
+Bundled commands use `$PLUGIN_ROOT` for the plugin root. Set it once: use the host's plugin-root variable when defined (Claude Code: `PLUGIN_ROOT="$CLAUDE_PLUGIN_ROOT"`), otherwise the absolute path of this plugin's root directory. Works under any host agent, including Codex, Claude, and Cursor.
+
 Use this skill for Claude Code plugin and MCP lifecycle work. It covers plugin
 marketplaces, installed plugins, token-cost details, validation, release tags,
 scoped installs, session-only plugin loading, MCP server configuration, project
 approval state, stdio/http/sse transports, headers, env vars, OAuth, and
 strict-MCP-config runs.
 
-From this skill directory, the plugin root is `../..`.
-
 ## Inspect First
 
 Check the local command surface:
 
 ```bash
-python3 ../../scripts/claude_code_inspector.py --commands plugin "plugin marketplace" "plugin install" "plugin validate" mcp "mcp add" --json
+python3 "$PLUGIN_ROOT/scripts/claude_code_inspector.py" --commands plugin "plugin marketplace" "plugin install" "plugin validate" mcp "mcp add" --json
 ```
 
 Read current state before mutating it:

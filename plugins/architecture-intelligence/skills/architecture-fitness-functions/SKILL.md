@@ -5,6 +5,8 @@ description: "Use when architecture choices need executable guardrails: dependen
 
 # Architecture Fitness Functions
 
+Bundled commands use `$PLUGIN_ROOT` for the plugin root. Set it once: use the host's plugin-root variable when defined (Claude Code: `PLUGIN_ROOT="$CLAUDE_PLUGIN_ROOT"`), otherwise the absolute path of this plugin's root directory. Works under any host agent, including Codex, Claude, and Cursor.
+
 Use when architecture quality should become observable, testable, or CI-enforced.
 
 ## Rule Shape
@@ -38,8 +40,8 @@ Examples: ArchUnit/jQAssistant, NetArchTest/NDepend, dependency-cruiser/eslint/N
 Lightweight start:
 
 ```bash
-python3 scripts/architecture_probe.py <repo-path> --json
-python3 scripts/architecture_probe.py <repo-path> --json --policy <policy.json>
+python3 "$PLUGIN_ROOT/scripts/architecture_probe.py" <repo-path> --json
+python3 "$PLUGIN_ROOT/scripts/architecture_probe.py" <repo-path> --json --policy <policy.json>
 ```
 
 The probe covers top-level coupling, instability, cycles, runtime signals, ownership topology, and simple policy checks.

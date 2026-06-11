@@ -5,13 +5,15 @@ description: Create, update, debug, or remove Codex app local project environmen
 
 # Codex Environments
 
+Bundled commands use `$PLUGIN_ROOT` for the plugin root. Set it once: use the host's plugin-root variable when defined (Claude Code: `PLUGIN_ROOT="$CLAUDE_PLUGIN_ROOT"`), otherwise the absolute path of this plugin's root directory. Works under any host agent, including Codex, Claude, and Cursor.
+
 Use this skill to manage repo-local Codex app environments: usually
 `.codex/environments/environment.toml` plus optional project scripts called by
 actions.
 
 For long-running action patterns, port cleanup, detailed editing rules,
 verification depth, and common failure modes, read
-[../../references/environment-actions.md](../../references/environment-actions.md).
+`$PLUGIN_ROOT/references/environment-actions.md`.
 
 ## Decide Whether To Create Or Edit
 

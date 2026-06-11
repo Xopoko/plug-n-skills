@@ -10,7 +10,7 @@ Supported commands:
   export json|csv|markdown
 
 Supported common options:
-  --agent codex|claude, --agent-home PATH, --codex-home PATH, --project PATH,
+  --agent codex|claude|cursor, --agent-home PATH, --codex-home PATH, --project PATH,
   --usage, --no-usage, --no-introspect-mcp, --limit N, --json, --ndjson.
 
 The script reads local files only and never mutates host-agent configuration.
@@ -152,10 +152,17 @@ class SessionSummary:
     modelCallCount: int
 
 
+AGENT_HOMES = {
+    "codex": ("CODEX_HOME", "~/.codex"),
+    "claude": ("CLAUDE_HOME", "~/.claude"),
+    "cursor": ("CURSOR_HOME", "~/.cursor"),
+}
+AGENT_NAMES = {"codex": "Codex", "claude": "Claude Code", "cursor": "Cursor"}
+
+
 def default_home(agent: str) -> Path:
-    if agent == "claude":
-        return Path(os.environ.get("CLAUDE_HOME", "~/.claude")).expanduser()
-    return Path(os.environ.get("CODEX_HOME", "~/.codex")).expanduser()
+    env_var, fallback = AGENT_HOMES.get(agent, AGENT_HOMES["codex"])
+    return Path(os.environ.get(env_var, fallback)).expanduser()
 
 
 def normalize_text(value: str) -> str:
@@ -308,31 +315,27 @@ def iter_files_named(root: Path, name: str) -> Iterable[Path]:
 
 
 def installed_agents(active_id: str | None = None) -> list[AgentEnvironment]:
-    codex = AgentEnvironment(
-        id="codex",
-        name="Codex",
-        home=default_home("codex"),
-        installed=default_home("codex").is_dir(),
-        active=active_id == "codex",
-    )
-    claude = AgentEnvironment(
-        id="claude",
-        name="Claude Code",
-        home=default_home("claude"),
-        installed=default_home("claude").is_dir(),
-        active=active_id == "claude",
-    )
-    return [codex, claude]
+    return [
+        AgentEnvironment(
+            id=agent,
+            name=AGENT_NAMES[agent],
+            home=default_home(agent),
+            installed=default_home(agent).is_dir(),
+            active=active_id == agent,
+        )
+        for agent in AGENT_HOMES
+    ]
 
 
 def resolve_agent(args: argparse.Namespace) -> AgentEnvironment:
     requested = getattr(args, "agent", None)
     if requested is None:
-        requested = "codex" if default_home("codex").is_dir() else "claude"
+        installed = [agent for agent in AGENT_HOMES if default_home(agent).is_dir()]
+        requested = installed[0] if installed else "codex"
     home = Path(args.agent_home or default_home(requested)).expanduser()
     return AgentEnvironment(
         id=requested,
-        name="Codex" if requested == "codex" else "Claude Code",
+        name=AGENT_NAMES.get(requested, requested),
         home=home,
         installed=home.is_dir(),
         active=True,
@@ -1241,7 +1244,7 @@ def command_export(args: argparse.Namespace) -> int:
 
 
 def add_common(parser: argparse.ArgumentParser) -> None:
-    parser.add_argument("--agent", choices=("codex", "claude"), default=None)
+    parser.add_argument("--agent", choices=("codex", "claude", "cursor"), default=None)
     parser.add_argument("--agent-home", "--codex-home", dest="agent_home", default=None)
     parser.add_argument("--project", default=None)
     parser.add_argument("--encoding", default=DEFAULT_ENCODING)

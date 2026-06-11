@@ -14,6 +14,8 @@ description: >-
 
 # Context Density
 
+Bundled commands use `$PLUGIN_ROOT` for the plugin root. Set it once: use the host's plugin-root variable when defined (Claude Code: `PLUGIN_ROOT="$CLAUDE_PLUGIN_ROOT"`), otherwise the absolute path of this plugin's root directory. Works under any host agent, including Codex, Claude, and Cursor.
+
 Optimize capability density through measured context, explicit contracts, and token-aware design.
 
 ## Hard Rules
@@ -95,14 +97,14 @@ Keep `SKILL.md` lean. Move rare detail to references only when it prevents repea
 Run from this skill directory or pass absolute paths:
 
 ```bash
-python3 scripts/token_count.py <files-or-dirs> --json --top 20
-python3 scripts/context_density_audit.py <files-or-dirs> --json --top 20
-python3 scripts/context_density_audit.py <files-or-dirs> --fail-on-research-gates
-python3 scripts/context_density_audit.py <files-or-dirs> --hot-token-budget 3000 --max-duplication-tokens 500
-python3 scripts/context_density_audit.py <files-or-dirs> --emit-gate-checklist gate-evidence.md
-python3 scripts/context_density_audit.py <files-or-dirs> --load-path-map loadpaths.json
-python3 scripts/context_density_audit.py <files-or-dirs> --commitment-ledger atoms.json --fail-on-missing-commitments
-python3 scripts/description_overlap.py <dirs> --min-jaccard 0.25 --top 20
+python3 "$PLUGIN_ROOT/skills/context-density/scripts/token_count.py" <files-or-dirs> --json --top 20
+python3 "$PLUGIN_ROOT/skills/context-density/scripts/context_density_audit.py" <files-or-dirs> --json --top 20
+python3 "$PLUGIN_ROOT/skills/context-density/scripts/context_density_audit.py" <files-or-dirs> --fail-on-research-gates
+python3 "$PLUGIN_ROOT/skills/context-density/scripts/context_density_audit.py" <files-or-dirs> --hot-token-budget 3000 --max-duplication-tokens 500
+python3 "$PLUGIN_ROOT/skills/context-density/scripts/context_density_audit.py" <files-or-dirs> --emit-gate-checklist gate-evidence.md
+python3 "$PLUGIN_ROOT/skills/context-density/scripts/context_density_audit.py" <files-or-dirs> --load-path-map loadpaths.json
+python3 "$PLUGIN_ROOT/skills/context-density/scripts/context_density_audit.py" <files-or-dirs> --commitment-ledger atoms.json --fail-on-missing-commitments
+python3 "$PLUGIN_ROOT/skills/context-density/scripts/description_overlap.py" <dirs> --min-jaccard 0.25 --top 20
 ```
 
 The audit separates `measured` findings (blocking-eligible) from `advisory`
@@ -116,14 +118,14 @@ context sources, exportable reports, or latest session token usage. It
 auto-detects the installed agent; pass `--agent` to pick one explicitly:
 
 ```bash
-python3 scripts/agent_context_report.py agents --json
-python3 scripts/agent_context_report.py brief --agent <codex|claude> --project . --usage --json
-python3 scripts/agent_context_report.py skills --agent <codex|claude> --limit 10 --ndjson
-python3 scripts/agent_context_report.py skill context-density --agent <codex|claude> --json
-python3 scripts/agent_context_report.py mcp --agent <codex|claude> --no-introspect-mcp --json
-python3 scripts/agent_context_report.py mcp --agent <codex|claude> --tools SERVER --json
-python3 scripts/agent_context_report.py sources --agent <codex|claude> --ndjson --limit 20
-python3 scripts/agent_context_report.py export markdown --agent <codex|claude> --project .
+python3 "$PLUGIN_ROOT/skills/context-density/scripts/agent_context_report.py" agents --json
+python3 "$PLUGIN_ROOT/skills/context-density/scripts/agent_context_report.py" brief --agent <codex|claude> --project . --usage --json
+python3 "$PLUGIN_ROOT/skills/context-density/scripts/agent_context_report.py" skills --agent <codex|claude> --limit 10 --ndjson
+python3 "$PLUGIN_ROOT/skills/context-density/scripts/agent_context_report.py" skill context-density --agent <codex|claude> --json
+python3 "$PLUGIN_ROOT/skills/context-density/scripts/agent_context_report.py" mcp --agent <codex|claude> --no-introspect-mcp --json
+python3 "$PLUGIN_ROOT/skills/context-density/scripts/agent_context_report.py" mcp --agent <codex|claude> --tools SERVER --json
+python3 "$PLUGIN_ROOT/skills/context-density/scripts/agent_context_report.py" sources --agent <codex|claude> --ndjson --limit 20
+python3 "$PLUGIN_ROOT/skills/context-density/scripts/agent_context_report.py" export markdown --agent <codex|claude> --project .
 ```
 
 The reporter is read-only and exposes a CLI-compatible reporting surface for

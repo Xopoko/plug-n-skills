@@ -5,13 +5,14 @@ description: Use when creating, editing, auditing, or debugging Claude Code sett
 
 # Claude Hooks And Settings
 
+Bundled commands use `$PLUGIN_ROOT` for the plugin root. Set it once: use the host's plugin-root variable when defined (Claude Code: `PLUGIN_ROOT="$CLAUDE_PLUGIN_ROOT"`), otherwise the absolute path of this plugin's root directory. Works under any host agent, including Codex, Claude, and Cursor.
+
 Use this skill for Claude Code settings and customization work: settings JSON,
 hooks, CLAUDE.md or rules loading, custom agents, tool allow/deny rules, output
 styles, workflows, setting sources, plugin-provided customizations, safe-mode
 comparisons, and bare-mode explicit context.
 
-From this skill directory, the plugin root is `../..`.
-Read [../../references/hooks-settings.md](../../references/hooks-settings.md)
+Read `$PLUGIN_ROOT/references/hooks-settings.md`
 for hook lifecycle, setting-source boundaries, and safety details.
 
 ## First Move
@@ -27,7 +28,7 @@ Inspect the target files and scope before editing:
 Use CLI evidence when behavior differs from expectation:
 
 ```bash
-python3 ../../scripts/claude_code_inspector.py --commands auto-mode --json
+python3 "$PLUGIN_ROOT/scripts/claude_code_inspector.py" --commands auto-mode --json
 claude auto-mode config
 claude auto-mode defaults
 ```

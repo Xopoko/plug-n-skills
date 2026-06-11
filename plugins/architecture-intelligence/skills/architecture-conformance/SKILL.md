@@ -5,6 +5,8 @@ description: "Use when intended architecture must be compared with implementatio
 
 # Architecture Conformance
 
+Bundled commands use `$PLUGIN_ROOT` for the plugin root. Set it once: use the host's plugin-root variable when defined (Claude Code: `PLUGIN_ROOT="$CLAUDE_PLUGIN_ROOT"`), otherwise the absolute path of this plugin's root directory. Works under any host agent, including Codex, Claude, and Cursor.
+
 Use when the question is whether implementation still matches intended architecture.
 
 Triggers: compare code to ADR/docs/policy, detect drift or erosion, turn intent into checks, classify edges as convergence/divergence/absence/unknown, recover observed architecture before updating docs.
@@ -21,7 +23,7 @@ If intent is thin, label it incomplete. Do not convert recovered source shape in
 ## Probe
 
 ```bash
-python3 scripts/architecture_probe.py <repo-path> --json --policy <policy.json>
+python3 "$PLUGIN_ROOT/scripts/architecture_probe.py" <repo-path> --json --policy <policy.json>
 ```
 
 `architecture_intelligence.policy.v1` supports forbidden edges, required edges, and required documents. See `references/contracts.md`.

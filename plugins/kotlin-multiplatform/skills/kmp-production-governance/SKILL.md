@@ -5,6 +5,8 @@ description: Review Kotlin Multiplatform production readiness, build governance,
 
 # KMP Production Governance
 
+Bundled commands use `$PLUGIN_ROOT` for the plugin root. Set it once: use the host's plugin-root variable when defined (Claude Code: `PLUGIN_ROOT="$CLAUDE_PLUGIN_ROOT"`), otherwise the absolute path of this plugin's root directory. Works under any host agent, including Codex, Claude, and Cursor.
+
 Use this skill for KMP build governance, production-readiness review, convention plugins, version catalogs, repository policy, module dependency hygiene, public API surface, library publishing, ABI validation, Klibs target support, and adoption risk.
 
 ## Review Flow
@@ -12,7 +14,7 @@ Use this skill for KMP build governance, production-readiness review, convention
 1. Read `settings.gradle(.kts)`, version catalogs, root build files, build-logic/buildSrc, module build files, and publishing configuration.
 2. Run:
    ```bash
-   python3 ../../scripts/kmp_inspector.py --root <project-root>
+   python3 "$PLUGIN_ROOT/scripts/kmp_inspector.py" --root <project-root>
    ```
    Use `--json --fail-on none` when you need the readiness scorecard for a report.
 3. Classify project role:

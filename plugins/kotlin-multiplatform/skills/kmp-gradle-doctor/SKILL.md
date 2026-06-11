@@ -5,6 +5,8 @@ description: Diagnose and fix Kotlin Multiplatform Gradle, source-set, dependenc
 
 # KMP Gradle Doctor
 
+Bundled commands use `$PLUGIN_ROOT` for the plugin root. Set it once: use the host's plugin-root variable when defined (Claude Code: `PLUGIN_ROOT="$CLAUDE_PLUGIN_ROOT"`), otherwise the absolute path of this plugin's root directory. Works under any host agent, including Codex, Claude, and Cursor.
+
 Use this skill for KMP build failures, Gradle DSL changes, plugin version alignment, target declarations, source-set hierarchy, Android-KMP plugin migration, dependency placement, KSP/KAPT, detekt/ktlint, Compose compiler, CI, or test task selection.
 
 ## Diagnosis Flow
@@ -17,7 +19,7 @@ Use this skill for KMP build failures, Gradle DSL changes, plugin version alignm
    - `gradle/wrapper/gradle-wrapper.properties`
 2. Run:
    ```bash
-   python3 ../../scripts/kmp_inspector.py --root <project-root>
+   python3 "$PLUGIN_ROOT/scripts/kmp_inspector.py" --root <project-root>
    ```
 3. Classify each module:
    - KMP library

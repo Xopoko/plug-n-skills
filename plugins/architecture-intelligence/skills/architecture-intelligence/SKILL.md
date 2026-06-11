@@ -5,6 +5,8 @@ description: "Use whenever code work has structural consequences: project archit
 
 # Architecture Intelligence
 
+Bundled commands use `$PLUGIN_ROOT` for the plugin root. Set it once: use the host's plugin-root variable when defined (Claude Code: `PLUGIN_ROOT="$CLAUDE_PLUGIN_ROOT"`), otherwise the absolute path of this plugin's root directory. Works under any host agent, including Codex, Claude, and Cursor.
+
 Use for architecture quality in code. Trigger from task context and code
 evidence: designing a new project or feature, choosing structure, changing
 boundaries, moving behavior between layers, introducing runtime/integration
@@ -28,9 +30,9 @@ If context is thin, inspect source first or ask one decision-critical question. 
 From the plugin root:
 
 ```bash
-python3 scripts/architecture_probe.py <repo-path> --json
-python3 scripts/architecture_probe.py <repo-path> --json --git-history
-python3 scripts/architecture_probe.py <repo-path> --json --policy <policy.json>
+python3 "$PLUGIN_ROOT/scripts/architecture_probe.py" <repo-path> --json
+python3 "$PLUGIN_ROOT/scripts/architecture_probe.py" <repo-path> --json --git-history
+python3 "$PLUGIN_ROOT/scripts/architecture_probe.py" <repo-path> --json --policy <policy.json>
 ```
 
 Probe output is an evidence map, not a verdict. It includes:

@@ -5,6 +5,8 @@ description: "Use before architecture-significant code work to recover the actua
 
 # Codebase Architecture Audit
 
+Bundled commands use `$PLUGIN_ROOT` for the plugin root. Set it once: use the host's plugin-root variable when defined (Claude Code: `PLUGIN_ROOT="$CLAUDE_PLUGIN_ROOT"`), otherwise the absolute path of this plugin's root directory. Works under any host agent, including Codex, Claude, and Cursor.
+
 Use to inspect the architecture that exists in code, not the architecture people intend it to have.
 
 ## Inputs
@@ -14,9 +16,9 @@ Gather repository guidance, product/domain context, top-level structure, entry p
 Run the probe when useful:
 
 ```bash
-python3 scripts/architecture_probe.py <repo-path> --json
-python3 scripts/architecture_probe.py <repo-path> --json --git-history
-python3 scripts/architecture_probe.py <repo-path> --json --policy <policy.json>
+python3 "$PLUGIN_ROOT/scripts/architecture_probe.py" <repo-path> --json
+python3 "$PLUGIN_ROOT/scripts/architecture_probe.py" <repo-path> --json --git-history
+python3 "$PLUGIN_ROOT/scripts/architecture_probe.py" <repo-path> --json --policy <policy.json>
 ```
 
 ## Lenses

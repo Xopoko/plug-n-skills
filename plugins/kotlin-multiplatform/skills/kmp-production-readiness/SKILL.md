@@ -5,6 +5,8 @@ description: Audit Kotlin Multiplatform production readiness with explicit score
 
 # KMP Production Readiness
 
+Bundled commands use `$PLUGIN_ROOT` for the plugin root. Set it once: use the host's plugin-root variable when defined (Claude Code: `PLUGIN_ROOT="$CLAUDE_PLUGIN_ROOT"`), otherwise the absolute path of this plugin's root directory. Works under any host agent, including Codex, Claude, and Cursor.
+
 Use this skill for full KMP production readiness audits, release-blocker triage, readiness scorecards, executive summaries, and multi-area risk reviews.
 
 ## Flow
@@ -12,7 +14,7 @@ Use this skill for full KMP production readiness audits, release-blocker triage,
 1. Read project structure, Gradle files, version catalog, `gradle.properties`, CI files, release scripts, and platform app shells.
 2. Run:
    ```bash
-   python3 ../../scripts/kmp_inspector.py --root <project-root> --json --fail-on none
+   python3 "$PLUGIN_ROOT/scripts/kmp_inspector.py" --root <project-root> --json --fail-on none
    ```
 3. Classify the project:
    - app-only shared code

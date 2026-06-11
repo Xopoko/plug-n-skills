@@ -1,5 +1,7 @@
 # Skill Refactor
 
+`$PLUGIN_ROOT` is the plugin root (see the calling skill's plugin-root preamble).
+
 Refactor skill packages for lower hot-path token cost without losing behavior.
 
 This reference optimizes context placement inside an existing skill shape. When the right answer may be to split, merge, delete, move skills across plugins, add a router, extract shared mechanics, move logic into scripts, or redesign plugin boundaries, use Capability Workbench portfolio architecture instead of treating token reduction as the final objective.
@@ -41,8 +43,8 @@ This reference optimizes context placement inside an existing skill shape. When 
 ## Validation
 
 ```bash
-python3 scripts/token_count.py <skill-dir>/SKILL.md --json
-python3 scripts/context_density_audit.py <skill-dir> --commitment-ledger atoms.json --fail-on-missing-commitments
+python3 "$PLUGIN_ROOT/skills/context-density/scripts/token_count.py" <skill-dir>/SKILL.md --json
+python3 "$PLUGIN_ROOT/skills/context-density/scripts/context_density_audit.py" <skill-dir> --commitment-ledger atoms.json --fail-on-missing-commitments
 rg -n --fixed-strings '<critical preserved phrase>' <skill-dir>/SKILL.md
 ```
 

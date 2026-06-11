@@ -5,6 +5,8 @@ description: Start, inspect, scaffold, migrate, or orient Tauri 2 projects. Use 
 
 # Tauri Projects
 
+Bundled commands use `$PLUGIN_ROOT` for the plugin root. Set it once: use the host's plugin-root variable when defined (Claude Code: `PLUGIN_ROOT="$CLAUDE_PLUGIN_ROOT"`), otherwise the absolute path of this plugin's root directory. Works under any host agent, including Codex, Claude, and Cursor.
+
 Use this skill for the first pass on any Tauri 2 repository or for creating and
 migrating projects.
 
@@ -14,7 +16,7 @@ migrating projects.
 2. From the project root, run the plugin probe when possible:
 
 ```bash
-python3 ../../scripts/tauri_project_probe.py .
+python3 "$PLUGIN_ROOT/scripts/tauri_project_probe.py" .
 ```
 
 Resolve the script path relative to this skill folder if the current working

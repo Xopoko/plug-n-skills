@@ -5,6 +5,8 @@ description: Debug, test, or stabilize Tauri 2 apps, including Rust compile/runt
 
 # Tauri Debug And Testing
 
+Bundled commands use `$PLUGIN_ROOT` for the plugin root. Set it once: use the host's plugin-root variable when defined (Claude Code: `PLUGIN_ROOT="$CLAUDE_PLUGIN_ROOT"`), otherwise the absolute path of this plugin's root directory. Works under any host agent, including Codex, Claude, and Cursor.
+
 Use this skill when a Tauri app fails to compile, launch, call native APIs,
 load frontend assets, pass tests, or behave consistently across dev/build.
 
@@ -23,7 +25,7 @@ Classify the failure before changing code:
 Run:
 
 ```bash
-python3 ../../scripts/tauri_project_probe.py .
+python3 "$PLUGIN_ROOT/scripts/tauri_project_probe.py" .
 ```
 
 ## Common Checks
