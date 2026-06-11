@@ -67,9 +67,14 @@ verbose transitions, surplus examples, self-evident header explanations.
 Set a target (25-35% on prose-heavy files) but instruct the agent to stop
 where the hard rules force it to stop and report the real number —
 rule-dense files honestly yield 16-29%, and corpora already authored
-telegraphically yield only 2-9% with a violation rate that usually is not
-worth it. Run the audit's break-even gate first and skip files whose
-compressible prose mass cannot pay for the pipeline.
+telegraphically yield only 1-9% with a violation rate that is not worth
+it. Prose-mass heuristics overestimate on commitment-dense writing: long
+sentences full of rules compress like bullets, not like boilerplate.
+
+Pilot before batch: run ONE representative file through the full
+pipeline first. If its post-restoration yield lands under 10%, abort the
+batch and report the corpus as already dense — that result is a success
+of the gate, not a failure of the run.
 
 ## Refute contract (give verbatim to the reviewing agent)
 
