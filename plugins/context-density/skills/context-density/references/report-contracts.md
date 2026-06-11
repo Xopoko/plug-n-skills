@@ -77,6 +77,20 @@ Suppression: silence a false-positive advisory finding with a
 flagged line or the line above. Markers are explicit and greppable; measured
 findings cannot be suppressed this way.
 
+Tested guarantees (`tests/test_robustness.py`):
+
+- Deterministic: the same tree produces an identical payload (modulo
+  `generated_at_utc`) on every run; re-measuring an unchanged tree is
+  idempotent.
+- Convergent: applying a dedup fix strictly lowers `wasted_tokens` and never
+  introduces new finding kinds on the fixture corpus.
+- No feedback loops: files carrying the `cda:generated` marker (emitted gate
+  checklists) are excluded from scans, duplication, and ledger validation.
+- Degrades cleanly: works without `tiktoken` (`"mode": "approx"`); malformed
+  `--load-path-map`/`--commitment-ledger` JSON exits with a named error, not a
+  traceback; empty, binary-ish, BOM, CRLF, unclosed-fence, and very-long-line
+  inputs are tolerated.
+
 Blocking semantics: only `measured` findings (token budgets, line length,
 duplication, commitment atoms) block by default. `advisory` wording-pattern
 findings block only with `--fail-on-advisory`, because they can be silenced by

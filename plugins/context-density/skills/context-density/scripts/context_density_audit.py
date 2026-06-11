@@ -283,7 +283,12 @@ def is_middle_band(line_no: int, total_lines: int) -> bool:
 
 
 def load_load_path_map(path: Path) -> dict[str, list[str]]:
-    data = json.loads(path.read_text(encoding="utf-8"))
+    try:
+        data = json.loads(path.read_text(encoding="utf-8"))
+    except OSError as exc:
+        raise SystemExit(f"load_path_map_unreadable:{exc}")
+    except json.JSONDecodeError as exc:
+        raise SystemExit(f"load_path_map_invalid_json:{exc.lineno}:{exc.msg}")
     if not isinstance(data, dict):
         raise SystemExit("load_path_map_must_be_object")
     cleaned: dict[str, list[str]] = {}
@@ -320,12 +325,18 @@ def is_test_path(path: Path) -> bool:
 
 
 def load_commitment_ledger(path: Path) -> list[dict]:
-    text = path.read_text(encoding="utf-8")
-    if path.suffix.lower() == ".jsonl":
-        atoms = [json.loads(line) for line in text.splitlines() if line.strip()]
-    else:
-        data = json.loads(text)
-        atoms = data.get("atoms", data) if isinstance(data, dict) else data
+    try:
+        text = path.read_text(encoding="utf-8")
+    except OSError as exc:
+        raise SystemExit(f"commitment_ledger_unreadable:{exc}")
+    try:
+        if path.suffix.lower() == ".jsonl":
+            atoms = [json.loads(line) for line in text.splitlines() if line.strip()]
+        else:
+            data = json.loads(text)
+            atoms = data.get("atoms", data) if isinstance(data, dict) else data
+    except json.JSONDecodeError as exc:
+        raise SystemExit(f"commitment_ledger_invalid_json:{exc.lineno}:{exc.msg}")
     if not isinstance(atoms, list):
         raise SystemExit("commitment_ledger_atoms_must_be_list")
     if not all(isinstance(atom, dict) for atom in atoms):
@@ -719,9 +730,17 @@ def has_blocking_research_gate(gate_risks: list[dict], min_severity: str, includ
     return False
 
 
+GENERATED_ARTIFACT_MARKER = "cda:generated"
+
+
+def is_generated_artifact(text: str) -> bool:
+    """Audit outputs must never feed back into audit inputs."""
+    return GENERATED_ARTIFACT_MARKER in text[:200]
+
+
 def render_gate_checklist(gate_risks: list[dict], summary: list[dict]) -> str:
     """Fillable evidence form for triggered gates, for inclusion in a change report."""
-    lines = ["# Research Gate Evidence Checklist", ""]
+    lines = [f"<!-- {GENERATED_ARTIFACT_MARKER}: excluded from future audit scans -->", "# Research Gate Evidence Checklist", ""]
     if not summary:
         lines.append("No research gates triggered.")
         return "\n".join(lines) + "\n"
@@ -1080,9 +1099,12 @@ def main() -> int:
     contract_risks: list[dict] = []
     texts_by_path: dict[str, str] = {}
 
+    checklist_target = Path(args.emit_gate_checklist).resolve() if args.emit_gate_checklist else None
     for path in iter_files(args.paths):
         text = read_text(path)
         if text is None:
+            continue
+        if is_generated_artifact(text) or (checklist_target and path.resolve() == checklist_target):
             continue
         texts_by_path[str(path)] = text
         load_path = classify_load_path(path, load_path_map)

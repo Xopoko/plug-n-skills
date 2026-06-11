@@ -26,7 +26,7 @@ WORD_RE = re.compile(r"[a-z0-9]+(?:[._/-][a-z0-9]+)*")
 
 
 def parse_frontmatter(text: str) -> dict[str, str]:
-    lines = text.splitlines()
+    lines = text.lstrip("\ufeff").splitlines()
     if not lines or lines[0].strip() != "---":
         return {}
     fields: dict[str, str] = {}
