@@ -5,21 +5,21 @@ description: Design or refactor Kotlin Multiplatform module boundaries, source-s
 
 # KMP Architecture
 
-Use for KMP project/module/source-set structure, shared boundaries, native/shared UI, library selection, Swift API exposure, domain/data/presentation layering, and feature modularization.
+Use this skill for KMP project structure, module design, source-set hierarchy, shared code boundaries, native UI versus shared UI decisions, library selection, API exposure to Swift, domain/data/presentation layering, and feature modularization.
 
-## Contract
+## Architecture Contract
 
-Start from target platforms/product intent, not favorite templates:
+Start from target platforms and product intent, not from a favorite template:
 
-1. First-class platforms: Android/iOS, Desktop, Web/Wasm, JVM server, watchOS/tvOS, Linux/Windows/macOS.
-2. Shared scope: business logic only, presentation state, UI/resources, networking/persistence, validation, models, analytics.
-3. Platforms needing native UI or native APIs.
-4. Runnable-app modules versus library modules.
-5. Proof that must pass per platform.
+1. Which platforms are first-class: Android, iOS, Desktop, Web/Wasm, JVM server, watchOS, tvOS, Linux, Windows, macOS.
+2. What is shared: business logic only, presentation state, UI, resources, networking, persistence, validation, models, analytics.
+3. Which platforms need native UI or native APIs.
+4. Which modules produce runnable apps and which modules produce libraries.
+5. What proof must pass on each platform.
 
-## Default Shape
+## Default Project Shape
 
-New KMP apps, prefer:
+For new KMP apps, prefer:
 
 ```text
 project/
@@ -49,43 +49,43 @@ app/iosApp/
 server/
 ```
 
-Do not rewrite existing projects just for this shape. Migrate only to remove ambiguity, enable AGP compatibility, or reduce platform coupling.
+Existing projects do not need to be rewritten just to match this shape. Migrate only when it removes real ambiguity, enables AGP compatibility, or reduces platform coupling.
 
 ## Boundary Rules
 
-- `commonMain` owns platform-independent domain logic, presentation state, DTOs when stable, validation, interfaces.
-- Platform source sets own SDK calls/filesystem/sensors/platform lifecycle, native UI bridges, and interop wrappers.
-- Prefer interfaces plus platform implementations for coarse-grained or dependency-injected platform behavior.
+- `commonMain` owns platform-independent domain logic, presentation state, DTOs when stable, validation, and interfaces.
+- Platform source sets own SDK calls, filesystem, sensors, platform lifecycle, native UI bridges, and interop wrappers.
+- Prefer interfaces plus platform implementations when the platform behavior is coarse-grained or dependency-injected.
 - Prefer `expect/actual` for small platform abstractions with stable signatures.
 - Do not expose complex Kotlin implementation details directly to Swift if a smaller facade is enough.
 - Keep generated resource access and platform resource namespaces stable during module moves.
 
 ## Library Choice
 
-Do not add cross-platform libraries by habit. Choose after target support is verified:
+Do not add a cross-platform library by habit. Choose after target support is verified:
 
-- Networking: Ktor client when shared HTTP helps.
-- Serialization: kotlinx.serialization for shared stable models.
-- DI: Koin or manual DI in shared code; keep Hilt in Android-only app modules if already used.
-- Persistence: DataStore for key-value settings; Room KMP or SQLDelight for relational persistence after target/migration support is verified.
-- Navigation: Compose navigation, Decompose, Voyager, or platform-native navigation by UI sharing/existing conventions.
+- Networking: Ktor client when shared HTTP is useful.
+- Serialization: kotlinx.serialization when models are shared and stable.
+- DI: Koin or manual DI for shared code; keep Hilt in Android-only app modules if already used.
+- Persistence: DataStore for key-value settings; Room KMP or SQLDelight for relational persistence after target and migration support are verified.
+- Navigation: Compose navigation, Decompose, Voyager, or platform-native navigation depending on UI sharing and existing conventions.
 - Logging: use a project-owned logging facade; do not leak Kermit, Napier, OSLog, or Timber directly into domain code.
 
-## Adoption Check
+## Production Adoption Check
 
 Before recommending broad KMP adoption in an existing codebase, classify risk:
 
 - Team ownership: Android-only, iOS-only, or shared mobile team.
 - UI approach: shared UI, native UI, or mixed.
-- Existing app coupling: Android SDK leakage, Swift API expectations, repository shape, test coverage.
-- Release surface: app-only shared module, published library, internal binary, public artifact.
-- Rollout plan: one feature, one layer, one module, full app shell split.
+- Existing app coupling: Android SDK leakage, Swift API expectations, repository shape, and test coverage.
+- Release surface: app-only shared module, published library, internal binary, or public artifact.
+- Rollout plan: one feature, one layer, one module, or full app shell split.
 
-Prefer incremental adoption: one layer or feature proves build/test/release before broad migration.
+Prefer incremental adoption where one layer or feature can prove build, test, and release paths before a broad migration.
 
 ## Feature Shape
 
-Use repo convention. If starting fresh:
+Use the repo's existing convention. If starting fresh:
 
 ```text
 feature-x/
@@ -99,10 +99,10 @@ Keep use cases for policy-heavy, reused, or independently testable logic. Do not
 
 ## Design Review Checklist
 
-- Every `commonMain` dependency supports all configured targets.
+- Every dependency in `commonMain` supports all configured targets.
 - Platform source sets contain only platform-owned code.
 - Shared UI does not depend on Android-only APIs.
-- Android app code stays in an Android app module, not in a KMP library module.
+- Android app code is in an Android app module, not in a KMP library module.
 - iOS exports are intentional and small.
-- Tests exist at the level where behavior is owned.
+- Tests exist at the level where the behavior is owned.
 - Migration plan includes the smallest reversible step and validation command.

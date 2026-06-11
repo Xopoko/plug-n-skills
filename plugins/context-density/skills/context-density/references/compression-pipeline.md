@@ -55,23 +55,32 @@ Hard rules — violation makes the output unusable:
    rules are the first thing reviewers reject.
 5. Multi-example lists: keep the single most informative example per
    concept; a concept whose every example was dropped is a violation.
-6. Do not add new instructions, opinions, or commentary.
+6. Never change list delimiters. Joining comma-separated items with "/"
+   re-segments compound terms that already contain that character
+   (Kotlin/Native, expect/actual, TLS/certificate pinning) and silently
+   rewrites trigger and scope lists.
+7. Do not add new instructions, opinions, or commentary.
 
 <!-- cda:allow commitment_loss_risk,compression_without_relevance_check -->
 Compress: boilerplate prose, rationale text, redundant restatements,
 verbose transitions, surplus examples, self-evident header explanations.
 Set a target (25-35% on prose-heavy files) but instruct the agent to stop
 where the hard rules force it to stop and report the real number —
-rule-dense files honestly yield 16-29%.
+rule-dense files honestly yield 16-29%, and corpora already authored
+telegraphically yield only 2-9% with a violation rate that usually is not
+worth it. Run the audit's break-even gate first and skip files whose
+compressible prose mass cannot pay for the pipeline.
 
 ## Refute contract (give verbatim to the reviewing agent)
 
 Mission: REFUTE the claim that the compressed file preserves full
 semantics. Hunt for dropped or weakened steps, rules, conditions,
-thresholds, and escalation paths; altered literal templates or
+thresholds, hedges, and escalation paths; altered literal templates or
 placeholders; frontmatter changes; invented instructions; modality
-changes; concepts whose every example was dropped; contamination from any
-reference material used as an editorial guide. Dropped examples are
+changes; quantifier inversions ("any X unsupported" vs "unsupported by
+any X"); compound terms re-segmented by delimiter changes; concepts
+whose every example was dropped; contamination from any reference
+material used as an editorial guide. Dropped examples are
 acceptable only if another example of the same concept survives. Be
 strict: uncertainty counts as a violation. Return structured
 `{pass, violations[]}` — never prose.

@@ -30,11 +30,11 @@ Use for KMP build failures; Gradle DSL changes; plugin version alignment; target
    - convention plugin or build logic
 4. Find smallest failing task. Avoid `clean` unless cache state is suspected.
 5. Check official docs for current DSL/version-sensitive guidance before edits.
-6. For host-specific macOS/iOS failures, split project/environment diagnosis. Use `kdoctor` only if installed or explicitly approved to install; scope: host/toolchain readiness.
+6. If the failure looks host-specific on macOS/iOS, separate project diagnosis from environment diagnosis. Use `kdoctor` only if installed or explicitly approved to install; scope: host/toolchain readiness.
 
 ## Environment Triage
 
-Static project inspection first. Host diagnostics only for Xcode selection, CocoaPods/Ruby, Android Studio plugin, JDK/JAVA_HOME, simulator, or iOS Gradle failures unrelated to source changes.
+Use project static inspection first. Then consider host diagnostics when symptoms include Xcode selection, CocoaPods/Ruby, Android Studio plugin, JDK/JAVA_HOME, simulator, or iOS Gradle task failures unrelated to source changes.
 
 Useful checks:
 
@@ -87,7 +87,7 @@ Android-targeting KMP library modules on modern AGP:
 
 ## Build And Test Commands
 
-Use narrowest proof:
+Prefer the narrowest proof:
 
 ```bash
 ./gradlew :shared:compileKotlinMetadata
@@ -103,7 +103,7 @@ Task names vary by module/target; use `./gradlew :module:tasks --all` when uncer
 ## Static Analysis
 
 - detekt often needs explicit KMP source-set inputs/config; do not assume root `detekt` checks all `commonMain`, `iosMain`, and `androidMain` code.
-- Type-resolution can explode runtime in large KMP monorepos; prefer scoped tasks; avoid all Android variants unless required.
+- Type-resolution can explode runtime in large KMP monorepos; prefer scoped tasks; avoid enabling all Android variants unless required.
 - KSP must match Kotlin versions; verify compatibility before bumping KGP or KSP.
 - KAPT is modern Android/KMP migration risk; prefer KSP or isolate legacy processors.
 - For published KMP libraries, check whether Kotlin ABI validation is configured or intentionally skipped.

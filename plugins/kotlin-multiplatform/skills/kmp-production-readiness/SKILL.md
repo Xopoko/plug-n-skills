@@ -5,13 +5,13 @@ description: Audit Kotlin Multiplatform production readiness with explicit score
 
 # KMP Production Readiness
 
-Use `$PLUGIN_ROOT` for plugin root. Set it once from the host plugin-root variable when defined (Claude Code: `PLUGIN_ROOT="$CLAUDE_PLUGIN_ROOT"`), otherwise to this plugin root's absolute path. Works in any host agent, including Codex, Claude, and Cursor.
+Bundled commands use `$PLUGIN_ROOT` for the plugin root. Set it once: use the host's plugin-root variable when defined (Claude Code: `PLUGIN_ROOT="$CLAUDE_PLUGIN_ROOT"`), otherwise the absolute path of this plugin's root directory. Works under any host agent, including Codex, Claude, and Cursor.
 
-Use for full KMP production readiness audits, release-blocker triage, readiness scorecards, executive summaries, and multi-area risk reviews.
+Use this skill for full KMP production readiness audits, release-blocker triage, readiness scorecards, executive summaries, and multi-area risk reviews.
 
 ## Flow
 
-1. Inspect project structure, Gradle files, version catalog, `gradle.properties`, CI files, release scripts, and platform app shells.
+1. Read project structure, Gradle files, version catalog, `gradle.properties`, CI files, release scripts, and platform app shells.
 2. Run:
    ```bash
    python3 "$PLUGIN_ROOT/scripts/kmp_inspector.py" --root <project-root> --json --fail-on none
@@ -23,7 +23,7 @@ Use for full KMP production readiness audits, release-blocker triage, readiness 
    - shared Compose UI app
    - mixed native UI plus shared logic
    - monorepo with multiple KMP modules
-4. Map evidence to readiness areas:
+4. Map evidence into readiness areas:
    - project structure
    - build governance
    - testing quality
@@ -34,11 +34,11 @@ Use for full KMP production readiness audits, release-blocker triage, readiness 
 
 ## Verdict Rules
 
-- `ready`: area has no release-blocking gaps, validation commands exist, and residual risk is explicit.
+- `ready`: no release-blocking gaps in the area, validation commands exist, and residual risk is explicit.
 - `watch`: shippable with known risk, owner, and follow-up command.
-- `blocked`: missing validation, unsafe config, public API/publishing uncertainty, secret/security risk, or platform integration failure.
+- `blocked`: missing validation, unsafe configuration, public API/publishing uncertainty, secret/security risk, or platform integration failure.
 
-Do not average away a blocker; one blocked area can block the overall verdict.
+Do not average away a blocker. A single blocked area can block the overall verdict.
 
 ## Output
 
