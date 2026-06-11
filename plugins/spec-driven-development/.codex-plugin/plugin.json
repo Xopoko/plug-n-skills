@@ -1,6 +1,6 @@
 {
   "name": "spec-driven-development",
-  "version": "0.2.2",
+  "version": "0.2.3",
   "description": "Spec-Driven Development: route intent into specs, plans, tasks, traceability, implementation, and proof.",
   "author": {
     "name": "Xopoko"

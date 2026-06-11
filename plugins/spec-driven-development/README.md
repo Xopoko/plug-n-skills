@@ -1,6 +1,6 @@
 # Spec-Driven Development
 
-SDD router and validator for Codex. It uses Spec Kit, Kiro, OpenSpec, Agent OS, or generic artifacts as project shapes without copying those ecosystems into every task.
+SDD router and validator. It uses Spec Kit, Kiro, OpenSpec, Agent OS, or generic artifacts as project shapes without copying those ecosystems into every task.
 
 Core surfaces:
 

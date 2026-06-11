@@ -10,8 +10,8 @@ Use for SDD reviews, consistency checks, pre-implementation gates, completion pr
 ## Required Tools
 
 ```bash
-python3 <plugin>/scripts/sdd_surface_audit.py <repo> --json
-python3 <plugin>/scripts/sdd_traceability_check.py <repo> --json
+python3 "$PLUGIN_ROOT/scripts/sdd_surface_audit.py" <repo> --json
+python3 "$PLUGIN_ROOT/scripts/sdd_traceability_check.py" <repo> --json
 ```
 
 Use `--feature-dir <path>` when active feature is not inferable.

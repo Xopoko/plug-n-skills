@@ -14,7 +14,7 @@ Pick the smallest lane that preserves intent, traceability, and proof. Tiny work
 Preflight when a repo path exists:
 
 ```bash
-python3 <plugin>/scripts/sdd_surface_audit.py <repo> --json
+python3 "$PLUGIN_ROOT/scripts/sdd_surface_audit.py" <repo> --json
 ```
 
 Before major edits state: `LANE`, `EVIDENCE_PROFILE`, source-of-truth paths, assumptions/open questions, next gate, and proof.

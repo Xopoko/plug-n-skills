@@ -10,8 +10,8 @@ Use when tasks are ready and the user wants implementation, execution, continuat
 ## Preflight
 
 ```bash
-python3 <plugin>/scripts/sdd_surface_audit.py <repo> --json
-python3 <plugin>/scripts/sdd_traceability_check.py <repo> --json
+python3 "$PLUGIN_ROOT/scripts/sdd_surface_audit.py" <repo> --json
+python3 "$PLUGIN_ROOT/scripts/sdd_traceability_check.py" <repo> --json
 git status --short
 ```
 
@@ -30,7 +30,7 @@ Read active tasks, design/plan, spec/requirements, quickstart, evidence ledger i
 
 ## Evidence
 
-Use the most relevant proof available: tests, build/typecheck, relevant lint, runtime/UI smoke, bug reproduction command, or labeled manual verification when automation is unavailable.
+Use the most relevant proof available: tests, build/typecheck, relevant lint, runtime/UI smoke, bug reproduction command, or labeled manual verification (reproducible by another human, scoped to the claim) when automation is unavailable.
 
 Evidence must match the claim. Lint does not prove behavior; a unit test does not prove runtime boot; a checklist does not prove integration.
 

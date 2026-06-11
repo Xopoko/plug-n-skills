@@ -19,14 +19,14 @@ Load only needed artifacts: spec/requirements, constitution/steering/project con
 - error handling, migration, security/privacy/performance/accessibility when relevant
 - quickstart or validation scenarios
 - traceability graph: requirement ID -> scenario -> decision -> task ID -> verification/evidence -> changed path
-- LLM-use limits for generated code, proprietary code, credentials, or regulated data
+- LLM-use limits for generated code, privacy/memorization, proprietary code, credentials, or regulated data
 
 Preserve Spec Kit layout when present: `plan.md`, `research.md`, `data-model.md`, `contracts/`, `quickstart.md`. Preserve Kiro `design.md`. Use diagrams only for real boundaries.
 
 ## Tasks Must Include
 
 - stable task IDs; requirement/story links; known file paths
-- explicit dependencies; parallel markers only for independent files/work
+- explicit dependencies; foundation tasks block dependent story work; parallel markers only for independent files/work
 - verification step plus expected evidence artifact/command per task or small group
 - bounded implementation surface and boundary notes for multi-component/long-running work
 
@@ -42,7 +42,7 @@ Avoid tasks like "implement feature" or "update tests" without path, expected be
 ## Gate
 
 ```bash
-python3 <plugin>/scripts/sdd_traceability_check.py <repo> --json
+python3 "$PLUGIN_ROOT/scripts/sdd_traceability_check.py" <repo> --json
 ```
 
 Resolve `FAIL` before implementation or record why proceeding is acceptable. Do not proceed if core artifacts are missing. For `strict`/`regulated`, create or identify `evidence.md`, `validation.md`, `proof.md`, or equivalent before tasks can be completed. LLM self-review/model confidence is not verification.

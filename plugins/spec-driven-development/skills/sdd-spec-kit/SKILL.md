@@ -1,6 +1,6 @@
 ---
 name: sdd-spec-kit
-description: Use GitHub Spec Kit projects and commands inside Codex, including constitution, specify, clarify, plan, tasks, analyze, implement, extensions, and presets.
+description: Use GitHub Spec Kit projects and commands, including constitution, specify, clarify, plan, tasks, analyze, implement, extensions, and presets.
 ---
 
 # SDD Spec Kit
@@ -9,12 +9,12 @@ Use for GitHub Spec Kit, Specify CLI, `/speckit.*`, `$speckit-*`, `.specify/`, e
 
 ## Source Model
 
-Project workspace is source of truth. Upstream `github/spec-kit` and any user-provided Spec Kit reference checkout are references unless the user asks to edit Spec Kit itself.
+Project workspace is source of truth. Upstream `https://github.com/github/spec-kit` and any user-provided Spec Kit reference checkout are references unless the user asks to edit Spec Kit itself.
 
 ## Preflight
 
 ```bash
-python3 <plugin>/scripts/sdd_surface_audit.py <repo> --json
+python3 "$PLUGIN_ROOT/scripts/sdd_surface_audit.py" <repo> --json
 git status --short
 ```
 
@@ -25,7 +25,7 @@ Check `.specify/`, `.specify/feature.json`, `.specify/memory/constitution.md`, `
 Follow project command files when present; otherwise use this layout:
 
 - Constitution: `.specify/memory/constitution.md`
-- Specify: `specs/<feature>/spec.md` plus requirements checklist
+- Specify: `specs/<feature>/spec.md` plus `specs/<feature>/checklists/requirements.md`
 - Clarify: resolve `[NEEDS CLARIFICATION]`
 - Plan: `plan.md`, `research.md`, `data-model.md`, `contracts/`, `quickstart.md`, risk/evidence profile
 - Tasks: `tasks.md` with dependency order, requirement links, paths, verification, expected evidence
@@ -43,7 +43,7 @@ For `.specify/extensions.yml`: read relevant `before_*`/`after_*`; skip disabled
 - `tasks.md`: IDs, story labels when applicable, paths, dependencies, independent validation.
 - Strict/regulated work: evidence ledger such as `evidence.md`, `validation.md`, `proof.md`, or equivalent in `quickstart.md`/`tasks.md`.
 - LLM self-review, model confidence, or context-free LLM-as-a-judge is advisory only.
-- Run `python3 <plugin>/scripts/sdd_traceability_check.py <repo> --json` before implementation and before claiming done.
+- Run `python3 "$PLUGIN_ROOT/scripts/sdd_traceability_check.py" <repo> --json` before implementation and before claiming done.
 
 ## Report
 

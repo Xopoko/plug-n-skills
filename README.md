@@ -184,7 +184,7 @@ Token columns are `startup metadata / on-demand body`.
 | `design-intelligence` | 7 | 2 | 1 | 472 | 5,101 |
 | `game-design-intelligence` | 6 | 2 | 1 | 536 | 2,916 |
 | `kotlin-multiplatform` | 14 | 16 | 1 | 1,096 | 9,888 |
-| `spec-driven-development` | 6 | 3 | 2 | 336 | 3,130 |
+| `spec-driven-development` | 6 | 0 | 2 | 333 | 3,177 |
 
 ### Plugin Focus
 
@@ -421,11 +421,11 @@ Token cells are shown as `startup/body`.
 
 | Skill | Tokens | Description |
 | --- | ---: | --- |
-| `sdd` | 59/741 | Route Spec-Driven Development work across lightweight, Spec Kit, Kiro-style, OpenSpec-style, brownfield, bugfix, planning, implementation, and audit lanes. |
-| `sdd-audit` | 51/391 | Audit SDD artifacts, requirement-task traceability, surface selection, and completion evidence before implementation or final delivery. |
-| `sdd-implement` | 54/477 | Execute SDD task lists safely, update task status, handle spec drift, and verify completion with fresh evidence before claiming done. |
-| `sdd-plan-tasks` | 55/482 | Convert approved SDD specs into technical plans, design artifacts, contracts, quickstart validation, and traceable task lists. |
-| `sdd-spec-kit` | 61/541 | Use GitHub Spec Kit projects and commands inside Codex, including constitution, specify, clarify, plan, tasks, analyze, implement, extensions, and presets. |
+| `sdd` | 59/742 | Route Spec-Driven Development work across lightweight, Spec Kit, Kiro-style, OpenSpec-style, brownfield, bugfix, planning, implementation, and audit lanes. |
+| `sdd-audit` | 51/393 | Audit SDD artifacts, requirement-task traceability, surface selection, and completion evidence before implementation or final delivery. |
+| `sdd-implement` | 54/493 | Execute SDD task lists safely, update task status, handle spec drift, and verify completion with fresh evidence before claiming done. |
+| `sdd-plan-tasks` | 55/495 | Convert approved SDD specs into technical plans, design artifacts, contracts, quickstart validation, and traceable task lists. |
+| `sdd-spec-kit` | 58/556 | Use GitHub Spec Kit projects and commands, including constitution, specify, clarify, plan, tasks, analyze, implement, extensions, and presets. |
 | `sdd-specify` | 56/498 | Create or refine SDD requirements and specifications with explicit assumptions, non-goals, acceptance criteria, success metrics, and retrofit truth markers. |
 
 ## Repository Design
