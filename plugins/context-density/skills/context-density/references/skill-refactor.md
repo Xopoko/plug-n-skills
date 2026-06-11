@@ -6,7 +6,7 @@ This reference optimizes context placement inside an existing skill shape. When 
 
 ## Workflow
 
-1. Locate the authoritative skill path: repo-local, `~/.codex/skills`, system skill, or plugin cache.
+1. Locate the authoritative skill path: repo-local, the agent's skills home (`~/.codex/skills`, `~/.claude/skills`), system skill, or plugin cache.
 2. Measure `SKILL.md` before editing.
 3. Read `SKILL.md`, `agents/openai.yaml` if present, and the top resource map.
 4. Preserve triggers, defaults, commands, safety, output contract, validation, and non-obvious local invariants.
@@ -43,11 +43,12 @@ This reference optimizes context placement inside an existing skill shape. When 
 ```bash
 python3 scripts/token_count.py <skill-dir>/SKILL.md --json
 python3 scripts/context_density_audit.py <skill-dir> --commitment-ledger atoms.json --fail-on-missing-commitments
-python3 ${CODEX_HOME:-$HOME/.codex}/skills/.system/skill-creator/scripts/quick_validate.py <skill-dir>
 rg -n --fixed-strings '<critical preserved phrase>' <skill-dir>/SKILL.md
 ```
 
-For plugin skills, also run plugin validation from the plugin root.
+When the host agent ships a skill validator, run it too (for example
+`${CODEX_HOME:-$HOME/.codex}/skills/.system/skill-creator/scripts/quick_validate.py <skill-dir>`
+on Codex). For plugin skills, also run plugin validation from the plugin root.
 
 ## Audit
 

@@ -1,6 +1,6 @@
 # Context Density
 
-Context Density is a Codex marketplace plugin for capability density through measured context, explicit contracts, long-context placement, token-aware design, preserved-behavior compression validation, output and total-cost checks, and structural handoff when compression reveals portfolio refactoring work.
+Context Density is an agent-portable plugin (Codex, Claude Code, and compatible agent CLIs) for capability density through measured context, explicit contracts, long-context placement, token-aware design, preserved-behavior compression validation, output and total-cost checks, and structural handoff when compression reveals portfolio refactoring work.
 
 It consolidates token-efficient context design, runtime context diagnostics, skill footprint optimization, and prompt-contract discipline into one workflow:
 

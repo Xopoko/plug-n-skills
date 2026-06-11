@@ -7,10 +7,10 @@ from pathlib import Path
 
 
 ROOT = Path(__file__).resolve().parents[3]
-SCRIPT = ROOT / "plugins" / "context-density" / "skills" / "context-density" / "scripts" / "codex_context_report.py"
+SCRIPT = ROOT / "plugins" / "context-density" / "skills" / "context-density" / "scripts" / "agent_context_report.py"
 sys.path.insert(0, str(SCRIPT.parent))
 
-import codex_context_report as report  # noqa: E402
+import agent_context_report as report  # noqa: E402
 
 
 class ScrubTests(unittest.TestCase):

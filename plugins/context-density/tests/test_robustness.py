@@ -17,7 +17,7 @@ SKILL_DIR = Path(__file__).resolve().parents[1] / "skills" / "context-density"
 SCRIPT_DIR = SKILL_DIR / "scripts"
 AUDIT = SCRIPT_DIR / "context_density_audit.py"
 OVERLAP = SCRIPT_DIR / "description_overlap.py"
-REPORT = SCRIPT_DIR / "codex_context_report.py"
+REPORT = SCRIPT_DIR / "agent_context_report.py"
 
 from test_context_density_audit import write_seeded_corpus  # noqa: E402
 

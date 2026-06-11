@@ -110,19 +110,20 @@ wording patterns (judgment input; blocking only with `--fail-on-advisory`).
 `duplication_clusters` ranks token-weighted duplicate blocks across files;
 `description_overlap.py` ranks skill-description pairs competing for routing.
 
-Use the bundled runtime reporter when the question is about local Codex or
-Claude Code startup context, installed skills, MCP config, plugin manifests,
-ranked raw context sources, exportable reports, or latest session token usage:
+Use the bundled runtime reporter when the question is about the local agent's
+startup context, installed skills, MCP config, plugin manifests, ranked raw
+context sources, exportable reports, or latest session token usage. It
+auto-detects the installed agent; pass `--agent` to pick one explicitly:
 
 ```bash
-python3 scripts/codex_context_report.py agents --json
-python3 scripts/codex_context_report.py brief --agent codex --project . --usage --json
-python3 scripts/codex_context_report.py skills --agent codex --limit 10 --ndjson
-python3 scripts/codex_context_report.py skill context-density --agent codex --json
-python3 scripts/codex_context_report.py mcp --agent codex --no-introspect-mcp --json
-python3 scripts/codex_context_report.py mcp --agent codex --tools SERVER --json
-python3 scripts/codex_context_report.py sources --agent codex --ndjson --limit 20
-python3 scripts/codex_context_report.py export markdown --agent codex --project .
+python3 scripts/agent_context_report.py agents --json
+python3 scripts/agent_context_report.py brief --agent <codex|claude> --project . --usage --json
+python3 scripts/agent_context_report.py skills --agent <codex|claude> --limit 10 --ndjson
+python3 scripts/agent_context_report.py skill context-density --agent <codex|claude> --json
+python3 scripts/agent_context_report.py mcp --agent <codex|claude> --no-introspect-mcp --json
+python3 scripts/agent_context_report.py mcp --agent <codex|claude> --tools SERVER --json
+python3 scripts/agent_context_report.py sources --agent <codex|claude> --ndjson --limit 20
+python3 scripts/agent_context_report.py export markdown --agent <codex|claude> --project .
 ```
 
 The reporter is read-only and exposes a CLI-compatible reporting surface for

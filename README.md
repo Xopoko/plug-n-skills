@@ -139,7 +139,7 @@ instructions.
 | Reference files | 46 | - | Longer ledgers, contracts, scorecards, and source notes. |
 | Helper and validator scripts | 38 | - | Deterministic plugin-local helpers. |
 | Startup metadata | 155 skills | 11,773 | Skill name, description, and file pointer for routing. |
-| On-demand skill bodies | 155 skills | 96,478 | Instruction bodies after frontmatter, loaded only when selected. |
+| On-demand skill bodies | 155 skills | 96,561 | Instruction bodies after frontmatter, loaded only when selected. |
 
 Regenerate the report after skill edits:
 
@@ -160,7 +160,7 @@ Token columns are `startup metadata / on-demand body`.
 | `pixijs` | 26 | 0 | 0 | 1,861 | 7,967 |
 | `tauri` | 6 | 0 | 1 | 481 | 2,986 |
 | `scientific-research` | 1 | 0 | 0 | 94 | 1,499 |
-| `context-density` | 1 | 0 | 1 | 128 | 2,057 |
+| `context-density` | 1 | 0 | 1 | 128 | 2,140 |
 | `capability-workbench` | 9 | 11 | 21 | 768 | 10,534 |
 | `codex-cli` | 6 | 3 | 2 | 501 | 5,183 |
 | `claude-code` | 6 | 2 | 1 | 528 | 4,370 |
@@ -178,7 +178,7 @@ Token columns are `startup metadata / on-demand body`.
 | `pixijs` | PixiJS v8 skill collection for Codex. |
 | `tauri` | A Tauri 2 development plugin with focused Codex skills for project setup, configuration, security, IPC, plugins, debugging, testing, distribution, and mobile workflows. |
 | `scientific-research` | Plan, collect, deduplicate, and synthesize scientific literature from public scholarly sources with provenance and quality gates. |
-| `context-density` | Context design, prompt-contract optimization, research-backed acceptance gates, and compression validation for Codex skills, plugins, prompts, docs, and agent workflows. |
+| `context-density` | Context design, prompt-contract optimization, research-backed acceptance gates, and compression validation for agent skills, plugins, prompts, docs, and workflows. |
 | `capability-workbench` | A web-first marketplace workbench for broad discovery, creation, synthesis, trigger metadata design, cross-plugin portfolio architecture, vetting, repair, global installation, packaging, and imagegen-backed icon workflows for agent skills and plugins. |
 | `codex-cli` | Codex CLI operations, automation, diagnostics, plugin and MCP lifecycle, session log forensics, and local environment actions. |
 | `claude-code` | Claude Code CLI operations, print-mode automation, diagnostics, plugin and MCP lifecycle, hooks, settings, agents, sessions, and worktrees. |
@@ -308,7 +308,7 @@ Token cells are shown as `startup/body`.
 
 | Skill | Tokens | Description |
 | --- | ---: | --- |
-| `context-density` | 128/2,057 | Use when designing, auditing, refactoring, measuring, or validating token-efficient context and prompt/output contracts. Trigger for AGENTS.md, prompts, skill packages, marketplace plugins, MCP/tool schemas, long-context placement, prompt/context compression, retrieval provenance, runtime context diagnostics, duplicated or overlapping prose, competing skill descriptions, irrelevant-context pruning, prompt reformatting, agent/subagent context handoffs, brittle trigger descriptions, strict JSON/schema/tool-call output, validators, retry/repair loops, or behavior-preserving token reduction. |
+| `context-density` | 128/2,140 | Use when designing, auditing, refactoring, measuring, or validating token-efficient context and prompt/output contracts. Trigger for AGENTS.md, prompts, skill packages, marketplace plugins, MCP/tool schemas, long-context placement, prompt/context compression, retrieval provenance, runtime context diagnostics, duplicated or overlapping prose, competing skill descriptions, irrelevant-context pruning, prompt reformatting, agent/subagent context handoffs, brittle trigger descriptions, strict JSON/schema/tool-call output, validators, retry/repair loops, or behavior-preserving token reduction. |
 
 #### `capability-workbench`
 

@@ -21,18 +21,19 @@ Code with `--agent codex|claude`.
 
 | Question | Command |
 | --- | --- |
-| Installed agents | `python3 scripts/codex_context_report.py agents --json` |
-| Overall startup/context pressure | `python3 scripts/codex_context_report.py brief --agent codex --project . --usage --json` |
-| Largest skill metadata/body costs | `python3 scripts/codex_context_report.py skills --agent codex --limit 10 --ndjson` |
-| One skill's body/metadata cost | `python3 scripts/codex_context_report.py skill SKILL_NAME --agent codex --json` |
-| MCP config sections | `python3 scripts/codex_context_report.py mcp --agent codex --no-introspect-mcp --json` |
-| MCP server tool filters | `python3 scripts/codex_context_report.py mcp --agent codex --tools SERVER --json` |
-| Ranked raw sources | `python3 scripts/codex_context_report.py sources --agent codex --ndjson --limit 20` |
-| Export all rows | `python3 scripts/codex_context_report.py export markdown --agent codex --project .` |
+| Installed agents | `python3 scripts/agent_context_report.py agents --json` |
+| Overall startup/context pressure | `python3 scripts/agent_context_report.py brief --agent <codex|claude> --project . --usage --json` |
+| Largest skill metadata/body costs | `python3 scripts/agent_context_report.py skills --agent <codex|claude> --limit 10 --ndjson` |
+| One skill's body/metadata cost | `python3 scripts/agent_context_report.py skill SKILL_NAME --agent <codex|claude> --json` |
+| MCP config sections | `python3 scripts/agent_context_report.py mcp --agent <codex|claude> --no-introspect-mcp --json` |
+| MCP server tool filters | `python3 scripts/agent_context_report.py mcp --agent <codex|claude> --tools SERVER --json` |
+| Ranked raw sources | `python3 scripts/agent_context_report.py sources --agent <codex|claude> --ndjson --limit 20` |
+| Export all rows | `python3 scripts/agent_context_report.py export markdown --agent <codex|claude> --project .` |
 
 The reporter reads local files only: project `AGENTS.md`, installed
-`SKILL.md` files, plugin manifests, Codex config, and MCP config sections. It
-also reads Claude Code settings and skills when `--agent claude` is selected.
+`SKILL.md` files, plugin manifests, the selected agent's config, and MCP
+config sections. It auto-detects the installed agent home when `--agent` is
+omitted.
 With `--usage` it additionally reads local session transcript files
 (`~/.codex/sessions/**/*.jsonl`, `~/.claude/projects/**/*.jsonl`) but extracts
 only token-usage counters and session IDs, never message content. Config and
