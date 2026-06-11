@@ -531,3 +531,150 @@ def test_malformed_plan_fails_cleanly_named() -> None:
         raise AssertionError("expected SystemExit for corrupt plan")
     except SystemExit as exc:
         assert "invalid_json" in str(exc)
+
+
+def test_fetch_ncbi_parses_esearch_and_esummary() -> None:
+    mod = load_module()
+    payloads = {
+        "esearch": {"esearchresult": {"idlist": ["12345"]}},
+        "esummary": {
+            "result": {
+                "uids": ["12345"],
+                "12345": {
+                    "title": "A PubMed Paper",
+                    "pubdate": "2024 Mar 5",
+                    "fulljournalname": "Journal of Tests",
+                    "authors": [{"name": "Smith J"}, {"name": "Doe A"}],
+                    "articleids": [
+                        {"idtype": "doi", "value": "10.1000/pm1"},
+                        {"idtype": "pmc", "value": "PMC999"},
+                    ],
+                },
+            }
+        },
+    }
+    original = mod.http_json
+    mod.http_json = lambda url, **kw: payloads["esearch"] if "esearch.fcgi" in url else payloads["esummary"]
+    try:
+        records, meta = mod.fetch_ncbi("test query", 5, 10.0, "a@b.c")
+    finally:
+        mod.http_json = original
+    assert len(records) == 1
+    rec = records[0]
+    assert rec["pmid"] == "12345" and rec["doi"] == "10.1000/pm1" and rec["pmcid"] == "PMC999"
+    assert rec["year"] == "2024"
+    assert "pmc/articles/PMC999" in rec["open_copy_url"]
+
+
+def test_fetch_dblp_parses_hits_and_single_author() -> None:
+    mod = load_module()
+    payload = {
+        "result": {
+            "hits": {
+                "hit": [
+                    {
+                        "info": {
+                            "key": "conf/test/1",
+                            "title": "A CS Paper",
+                            "authors": {"author": {"text": "Solo Author"}},
+                            "year": "2025",
+                            "venue": "TestConf",
+                            "doi": "10.1000/dblp1",
+                            "ee": "https://example.org/paper.pdf",
+                            "access": "open",
+                        }
+                    }
+                ]
+            }
+        }
+    }
+    original = mod.http_json
+    mod.http_json = lambda url, **kw: payload
+    try:
+        records, _ = mod.fetch_dblp("cs query", 5, 10.0)
+    finally:
+        mod.http_json = original
+    assert len(records) == 1
+    assert records[0]["creators"] == "Solo Author"
+    assert records[0]["open_copy_url"] == "https://example.org/paper.pdf"
+
+
+def test_fetch_doaj_extracts_doi_and_fulltext() -> None:
+    mod = load_module()
+    payload = {
+        "results": [
+            {
+                "id": "doaj1",
+                "bibjson": {
+                    "title": "An OA Paper",
+                    "year": "2023",
+                    "journal": {"title": "Open Journal"},
+                    "author": [{"name": "A. Author"}],
+                    "identifier": [{"type": "doi", "id": "10.1000/oa1"}],
+                    "link": [{"type": "fulltext", "url": "https://oa.example/full"}],
+                    "abstract": "Abstract text.",
+                },
+            }
+        ]
+    }
+    original = mod.http_json
+    mod.http_json = lambda url, **kw: payload
+    try:
+        records, _ = mod.fetch_doaj("oa query", 5, 10.0)
+    finally:
+        mod.http_json = original
+    assert records[0]["doi"] == "10.1000/oa1"
+    assert records[0]["open_copy_url"] == "https://oa.example/full"
+
+
+def test_fetch_opencitations_requires_doi_query() -> None:
+    mod = load_module()
+    try:
+        mod.fetch_opencitations("not a doi", 5, 10.0)
+        raise AssertionError("expected RuntimeError for non-DOI query")
+    except RuntimeError as exc:
+        state, _, _ = mod.classify_fetch_error("opencitations", exc)
+        assert state == "query_error"
+
+
+def test_fetch_opencitations_parses_doi_metadata() -> None:
+    mod = load_module()
+    payload = json.dumps([
+        {
+            "id": "doi:10.1000/oc1 omid:br/123",
+            "title": "A Cited Paper",
+            "author": "Family, Given [omid:ra/1]; Other, Name [omid:ra/2]",
+            "pub_date": "2022-05",
+            "venue": "Some Venue [issn:1234-5678]",
+        }
+    ])
+    original = mod.http_text
+    mod.http_text = lambda url, **kw: payload
+    try:
+        records, _ = mod.fetch_opencitations("https://doi.org/10.1000/oc1", 5, 10.0)
+    finally:
+        mod.http_text = original
+    assert records[0]["doi"] == "10.1000/oc1"
+    assert "omid" not in records[0]["creators"]
+    assert records[0]["container"] == "Some Venue"
+    assert records[0]["year"] == "2022"
+
+
+def test_fetch_core_without_key_is_auth_required() -> None:
+    mod = load_module()
+    original = mod.env_value
+    mod.env_value = lambda name: ""
+    try:
+        try:
+            mod.fetch_core("query", 5, 10.0)
+            raise AssertionError("expected RuntimeError without CORE_API_KEY")
+        except RuntimeError as exc:
+            state, _, _ = mod.classify_fetch_error("core", exc)
+            assert state == "auth_required"
+    finally:
+        mod.env_value = original
+
+
+def test_all_allowed_sources_have_fetchers() -> None:
+    mod = load_module()
+    assert set(mod.FETCHERS) == mod.ALLOWED_SOURCES, "every allowed source must be implemented"

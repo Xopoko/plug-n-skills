@@ -34,6 +34,8 @@ ALLOWED_SOURCES = {
     "ncbi",
     "core",
     "opencitations",
+    "dblp",
+    "doaj",
 }
 CONFIDENCE = {"low", "medium", "high"}
 SCREENING_DECISIONS = {"include", "exclude", "maybe", "duplicate"}
@@ -51,6 +53,15 @@ SOURCE_POLICIES = {
     "crossref": {"fallbacks": ["openalex", "europepmc"], "cooldown_seconds": 300},
     "europepmc": {"fallbacks": ["ncbi", "crossref"], "cooldown_seconds": 300},
     "semantic-scholar": {"fallbacks": ["openalex", "crossref"], "cooldown_seconds": 300},
+    "ncbi": {
+        "fallbacks": ["europepmc", "crossref"],
+        "cooldown_seconds": 300,
+        "min_interval_seconds": 0.4,
+    },
+    "core": {"fallbacks": ["openalex", "crossref"], "cooldown_seconds": 300, "min_interval_seconds": 1.0},
+    "dblp": {"fallbacks": ["crossref", "semantic-scholar", "openalex"], "cooldown_seconds": 300, "min_interval_seconds": 1.0},
+    "doaj": {"fallbacks": ["europepmc", "crossref"], "cooldown_seconds": 300, "min_interval_seconds": 1.0},
+    "opencitations": {"fallbacks": ["crossref", "openalex"], "cooldown_seconds": 300, "min_interval_seconds": 1.0},
 }
 RECORD_FIELDS = [
     "schema",
@@ -249,7 +260,7 @@ def classify_fetch_error(source: str, exc: BaseException) -> tuple[str, int, int
         code = int(code_match.group(1)) if code_match else 0
     retry_after = exc.retry_after_seconds if isinstance(exc, ScholarlyHttpError) else 0
     lowered = text.lower()
-    if code == 400:
+    if code == 400 or "requires_doi_query" in lowered:
         # Malformed query, not a capacity problem: no cooldown, fix the query.
         return "query_error", code, 0
     if source == "openalex" and code in {403, 429}:
@@ -262,7 +273,7 @@ def classify_fetch_error(source: str, exc: BaseException) -> tuple[str, int, int
         return "cooldown", code, retry_after
     if "rate limit" in lowered or "too many requests" in lowered or "cooldown" in lowered:
         return "cooldown", code, retry_after
-    if "auth" in lowered or "api key" in lowered or "forbidden" in lowered:
+    if "auth" in lowered or "api key" in lowered or "api_key" in lowered or "key_required" in lowered or "forbidden" in lowered:
         return "auth_required", code, retry_after
     return "error", code, retry_after
 
@@ -715,12 +726,229 @@ def fetch_semantic_scholar(query: str, limit: int, timeout: float, contact_email
     return records, {"endpoint": url, "count": len(records)}
 
 
+def fetch_ncbi(query: str, limit: int, timeout: float, contact_email: str = "") -> tuple[list[dict[str, Any]], dict[str, Any]]:
+    """PubMed via NCBI E-utilities: esearch for ids, esummary for metadata."""
+    common: dict[str, Any] = {"db": "pubmed", "retmode": "json", "tool": "plug-n-skills-scientific-research"}
+    api_key = env_value("NCBI_API_KEY")
+    if api_key:
+        common["api_key"] = api_key
+    if contact_email:
+        common["email"] = contact_email
+    search_url = "https://eutils.ncbi.nlm.nih.gov/entrez/eutils/esearch.fcgi?" + urlencode(
+        {**common, "term": query, "retmax": str(min(limit, 100)), "sort": "relevance"}
+    )
+    search_data = http_json(search_url, timeout=timeout)
+    ids = search_data.get("esearchresult", {}).get("idlist", [])
+    ids = [clean_text(item) for item in ids if clean_text(item)][:limit]
+    if not ids:
+        return [], {"endpoint": search_url, "count": 0}
+    summary_url = "https://eutils.ncbi.nlm.nih.gov/entrez/eutils/esummary.fcgi?" + urlencode(
+        {**common, "id": ",".join(ids)}
+    )
+    summary_data = http_json(summary_url, timeout=timeout)
+    result = summary_data.get("result", {}) if isinstance(summary_data.get("result"), dict) else {}
+    records = []
+    for uid in ids:
+        item = result.get(uid)
+        if not isinstance(item, dict):
+            continue
+        doi = ""
+        pmcid = ""
+        for ident in item.get("articleids", []) if isinstance(item.get("articleids"), list) else []:
+            if not isinstance(ident, dict):
+                continue
+            id_type = clean_text(ident.get("idtype", "")).lower()
+            if id_type == "doi":
+                doi = clean_text(ident.get("value", ""))
+            elif id_type == "pmc":
+                pmcid = clean_text(ident.get("value", ""))
+        authors = "; ".join(
+            clean_text(author.get("name", ""))
+            for author in (item.get("authors") or [])[:12]
+            if isinstance(author, dict)
+        )
+        records.append({
+            "source": "ncbi",
+            "source_id": uid,
+            "title": item.get("title", ""),
+            "creators": authors,
+            "year": clean_text(item.get("pubdate", ""))[:4],
+            "container": first_text(item.get("fulljournalname"), item.get("source")),
+            "doi": doi,
+            "pmid": uid,
+            "pmcid": pmcid,
+            "landing_url": f"https://pubmed.ncbi.nlm.nih.gov/{uid}/",
+            "open_copy_url": f"https://www.ncbi.nlm.nih.gov/pmc/articles/{pmcid}/" if pmcid else "",
+            "summary": "",
+            "query": query,
+            "raw_metadata": item,
+        })
+    return records, {"endpoint": search_url, "count": len(records)}
+
+
+def fetch_core(query: str, limit: int, timeout: float, contact_email: str = "") -> tuple[list[dict[str, Any]], dict[str, Any]]:
+    """CORE v3 works search; requires a free CORE_API_KEY."""
+    api_key = env_value("CORE_API_KEY")
+    if not api_key:
+        raise RuntimeError("core_api_key_required: set CORE_API_KEY (free registration at core.ac.uk)")
+    url = "https://api.core.ac.uk/v3/search/works?" + urlencode({"q": query, "limit": str(min(limit, 100))})
+    data = http_json(url, headers={"Authorization": f"Bearer {api_key}"}, timeout=timeout)
+    records = []
+    for item in data.get("results", [])[:limit]:
+        if not isinstance(item, dict):
+            continue
+        authors = "; ".join(
+            clean_text(author.get("name", ""))
+            for author in (item.get("authors") or [])[:12]
+            if isinstance(author, dict)
+        )
+        records.append({
+            "source": "core",
+            "source_id": clean_text(item.get("id", "")),
+            "title": item.get("title", ""),
+            "creators": authors,
+            "year": clean_text(item.get("yearPublished", "")),
+            "container": first_text(item.get("publisher")),
+            "doi": item.get("doi", ""),
+            "landing_url": first_text(item.get("doi") and f"https://doi.org/{normalize_doi(item.get('doi'))}", item.get("downloadUrl")),
+            "open_copy_url": item.get("downloadUrl", ""),
+            "summary": item.get("abstract", ""),
+            "query": query,
+            "raw_metadata": {k: v for k, v in item.items() if k != "fullText"},
+        })
+    return records, {"endpoint": url, "count": len(records)}
+
+
+def fetch_dblp(query: str, limit: int, timeout: float, contact_email: str = "") -> tuple[list[dict[str, Any]], dict[str, Any]]:
+    """DBLP computer-science bibliography; no key required."""
+    url = "https://dblp.org/search/publ/api?" + urlencode({"q": query, "format": "json", "h": str(min(limit, 100))})
+    data = http_json(url, timeout=timeout)
+    hits = data.get("result", {}).get("hits", {}).get("hit", [])
+    if isinstance(hits, dict):
+        hits = [hits]
+    records = []
+    for hit in hits[:limit] if isinstance(hits, list) else []:
+        info = hit.get("info") if isinstance(hit, dict) and isinstance(hit.get("info"), dict) else {}
+        if not info:
+            continue
+        raw_authors = info.get("authors", {})
+        author_items = raw_authors.get("author", []) if isinstance(raw_authors, dict) else []
+        if isinstance(author_items, dict):
+            author_items = [author_items]
+        authors = "; ".join(
+            clean_text(author.get("text", "") if isinstance(author, dict) else author)
+            for author in author_items[:12]
+        )
+        records.append({
+            "source": "dblp",
+            "source_id": clean_text(info.get("key", "")),
+            "title": info.get("title", ""),
+            "creators": authors,
+            "year": clean_text(info.get("year", "")),
+            "container": info.get("venue", ""),
+            "doi": info.get("doi", ""),
+            "landing_url": first_text(info.get("ee"), info.get("url")),
+            "open_copy_url": info.get("ee", "") if clean_text(info.get("access", "")) == "open" else "",
+            "summary": "",
+            "query": query,
+            "raw_metadata": info,
+        })
+    return records, {"endpoint": url, "count": len(records)}
+
+
+def fetch_doaj(query: str, limit: int, timeout: float, contact_email: str = "") -> tuple[list[dict[str, Any]], dict[str, Any]]:
+    """DOAJ open-access article search; no key required."""
+    url = f"https://doaj.org/api/search/articles/{quote_component(query)}?pageSize={min(limit, 100)}"
+    data = http_json(url, timeout=timeout)
+    records = []
+    for item in data.get("results", [])[:limit]:
+        bib = item.get("bibjson") if isinstance(item, dict) and isinstance(item.get("bibjson"), dict) else {}
+        if not bib:
+            continue
+        doi = ""
+        for ident in bib.get("identifier", []) if isinstance(bib.get("identifier"), list) else []:
+            if isinstance(ident, dict) and clean_text(ident.get("type", "")).lower() == "doi":
+                doi = clean_text(ident.get("id", ""))
+                break
+        fulltext = ""
+        for link in bib.get("link", []) if isinstance(bib.get("link"), list) else []:
+            if isinstance(link, dict) and clean_text(link.get("type", "")).lower() == "fulltext":
+                fulltext = clean_text(link.get("url", ""))
+                break
+        authors = "; ".join(
+            clean_text(author.get("name", ""))
+            for author in (bib.get("author") or [])[:12]
+            if isinstance(author, dict)
+        )
+        journal = bib.get("journal") if isinstance(bib.get("journal"), dict) else {}
+        records.append({
+            "source": "doaj",
+            "source_id": clean_text(item.get("id", "")),
+            "title": bib.get("title", ""),
+            "creators": authors,
+            "year": clean_text(bib.get("year", "")),
+            "container": journal.get("title", ""),
+            "doi": doi,
+            "landing_url": f"https://doi.org/{normalize_doi(doi)}" if doi else fulltext,
+            "open_copy_url": fulltext,
+            "summary": bib.get("abstract", ""),
+            "query": query,
+            "raw_metadata": bib,
+        })
+    return records, {"endpoint": url, "count": len(records)}
+
+
+DOI_QUERY_RE = re.compile(r"^(?:https?://(?:dx\.)?doi\.org/|doi:)?(10\.\d{4,9}/\S+)$", re.IGNORECASE)
+
+
+def strip_omid_brackets(value: Any) -> str:
+    return clean_text(re.sub(r"\s*\[[^\]]*\]", "", clean_text(value)))
+
+
+def fetch_opencitations(query: str, limit: int, timeout: float, contact_email: str = "") -> tuple[list[dict[str, Any]], dict[str, Any]]:
+    """OpenCitations Meta metadata lookup; the query must be a DOI."""
+    match = DOI_QUERY_RE.match(clean_text(query))
+    if not match:
+        raise RuntimeError("opencitations_requires_doi_query: pass a DOI (10.xxxx/...) as the query")
+    doi = match.group(1)
+    url = f"https://opencitations.net/meta/api/v1/metadata/doi:{quote_component(doi)}"
+    headers = {}
+    token = env_value("OPENCITATIONS_ACCESS_TOKEN")
+    if token:
+        headers["authorization"] = token
+    raw = http_text(url, headers={"Accept": "application/json", **headers}, timeout=timeout)
+    data = json.loads(raw) if raw.strip() else []
+    records = []
+    for item in data[:limit] if isinstance(data, list) else []:
+        if not isinstance(item, dict):
+            continue
+        records.append({
+            "source": "opencitations",
+            "source_id": clean_text(item.get("id", "")),
+            "title": item.get("title", ""),
+            "creators": strip_omid_brackets(item.get("author", "")),
+            "year": clean_text(item.get("pub_date", ""))[:4],
+            "container": strip_omid_brackets(item.get("venue", "")),
+            "doi": doi,
+            "landing_url": f"https://doi.org/{doi}",
+            "summary": "",
+            "query": query,
+            "raw_metadata": item,
+        })
+    return records, {"endpoint": url, "count": len(records)}
+
+
 FETCHERS = {
     "openalex": fetch_openalex,
     "arxiv": fetch_arxiv,
     "crossref": fetch_crossref,
     "europepmc": fetch_europepmc,
     "semantic-scholar": fetch_semantic_scholar,
+    "ncbi": fetch_ncbi,
+    "core": fetch_core,
+    "dblp": fetch_dblp,
+    "doaj": fetch_doaj,
+    "opencitations": fetch_opencitations,
 }
 
 
@@ -985,6 +1213,14 @@ def planned_source_status(source: str, saved: dict[str, Any]) -> dict[str, Any]:
         payload["max_per_page"] = SOURCE_POLICIES["openalex"]["max_per_page"]
     if source == "semantic-scholar":
         payload["api_key_configured"] = bool(env_value("SEMANTIC_SCHOLAR_API_KEY"))
+    if source == "core":
+        payload["api_key_configured"] = bool(env_value("CORE_API_KEY"))
+        payload["api_key_policy"] = "required"
+    if source == "ncbi":
+        payload["api_key_configured"] = bool(env_value("NCBI_API_KEY"))
+        payload["api_key_policy"] = "optional_raises_rate_limit"
+    if source == "opencitations":
+        payload["query_contract"] = "doi_only"
     if source == "arxiv":
         payload["min_interval_seconds"] = SOURCE_POLICIES["arxiv"]["min_interval_seconds"]
     return payload

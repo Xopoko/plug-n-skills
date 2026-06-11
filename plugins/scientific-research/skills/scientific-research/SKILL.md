@@ -104,6 +104,14 @@ Default discovery sources:
 - Europe PMC: biomedical/life-science records and open-access full text metadata.
 - Semantic Scholar Graph API: paper search plus citation/reference fields. Use `SEMANTIC_SCHOLAR_API_KEY` when configured.
 
+Additional sources, selected with `--source` per plan:
+
+- NCBI E-utilities (`ncbi`): PubMed search and summaries. `NCBI_API_KEY` optional (raises rate limits); sends `tool` and `email`.
+- DBLP (`dblp`): computer-science bibliography, strong for CS/ML venues; no key.
+- DOAJ (`doaj`): open-access journal articles with full-text links; no key.
+- CORE (`core`): open-access repository aggregation; requires free `CORE_API_KEY`, fails as `auth_required` without it.
+- OpenCitations (`opencitations`): DOI-only metadata lookup for targeted enrichment — the query must be a DOI, anything else fails as `query_error`. `OPENCITATIONS_ACCESS_TOKEN` optional.
+
 Optional source profiles are in `references/source-profiles.md`.
 
 ## Corpus Layout

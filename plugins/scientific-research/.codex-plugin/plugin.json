@@ -1,6 +1,6 @@
 {
   "name": "scientific-research",
-  "version": "0.2.0",
+  "version": "0.3.0",
   "description": "Plan, collect, deduplicate, and synthesize scientific literature from public scholarly sources with provenance and quality gates.",
   "author": {
     "name": "Xopoko"

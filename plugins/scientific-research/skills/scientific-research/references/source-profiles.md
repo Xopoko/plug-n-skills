@@ -60,13 +60,26 @@ Use this file when selecting or debugging scholarly sources. Prefer official doc
 - API overview: https://core.ac.uk/services/api
 - API docs: https://core.ac.uk/documentation/api
 - Strengths: open-access repository aggregation.
-- Auth: optional registration may improve limits. Treat it as opt-in.
+- Auth: the bundled fetcher requires a free `CORE_API_KEY` (Bearer); without it the source fails as `auth_required` and routes to fallbacks.
+
+## DBLP
+
+- Search API: https://dblp.org/faq/How+to+use+the+dblp+search+API.html
+- Strengths: authoritative computer-science bibliography (venues, years, DOIs); excellent for CS/ML topics.
+- Auth: none. Keep queries paced (~1s interval).
+
+## DOAJ
+
+- Search API: https://doaj.org/api/docs
+- Strengths: open-access journal articles with direct full-text links; everything indexed is OA by definition.
+- Auth: none. Keep queries paced (~1s interval).
 
 ## OpenCitations
 
-- REST API: https://api.opencitations.net/index
-- Strengths: open citation/index metadata.
-- Policy: use for citation graph enrichment, not as the only discovery source.
+- Meta API: https://opencitations.net/meta/api/v1
+- Strengths: open bibliographic and citation metadata keyed by DOI.
+- Query contract: the bundled fetcher accepts only DOI queries (`10.xxxx/...`); non-DOI queries fail fast as `query_error`. `OPENCITATIONS_ACCESS_TOKEN` optional.
+- Policy: use for citation graph enrichment and DOI verification, not as the only discovery source.
 
 ## Source Routing Rules
 
