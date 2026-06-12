@@ -9,8 +9,8 @@ jobs:
   validate:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-python@v5
+      - uses: actions/checkout@v6
+      - uses: actions/setup-python@v6
         with:
           python-version: "3.11"
       - name: Dependencies
@@ -23,6 +23,8 @@ jobs:
         run: python3 -m unittest discover -s plugins/context-density/tests
       - name: codex-cli plugin tests
         run: python3 -m unittest discover -s plugins/codex-cli/tests
+      - name: capability-workbench smoke tests
+        run: python3 plugins/capability-workbench/tests/run_smoke.py
       - name: Install dry-runs
         run: |
           python3 scripts/install-codex-plugins.py --dry-run
