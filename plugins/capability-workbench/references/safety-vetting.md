@@ -52,6 +52,8 @@ Run first-pass scans, then verify important findings manually:
 ```bash
 python3 "$PLUGIN_ROOT/scripts/synthesis/audit_skill_candidate.py" <skill-dir> --output candidate-audit.json
 python3 "$PLUGIN_ROOT/scripts/context/context_density_audit.py" <paths> --json --top 20
+# Optional external scan; pin a release tag once upstream publishes one; skips cleanly when absent:
+command -v skillspector >/dev/null 2>&1 && skillspector scan <skill-dir> --format json || echo "skillspector absent"
 ```
 
-The helpers are triage, not final judgment.
+The helpers are triage, not final judgment. SkillSpector (optional, external) adds prompt-injection, exfiltration, and supply-chain detection as a first-pass scan; when it is unavailable the bundled helpers above still apply.

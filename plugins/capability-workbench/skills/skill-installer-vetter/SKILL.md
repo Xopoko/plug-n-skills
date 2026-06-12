@@ -47,7 +47,11 @@ Use:
 ```bash
 python3 "$PLUGIN_ROOT/scripts/synthesis/audit_skill_candidate.py" <skill-dir> --output candidate-audit.json
 python3 "$PLUGIN_ROOT/scripts/skill/quick_validate.py" <skill-dir>
+# Optional external scan; pin a release tag once upstream publishes one; skips cleanly when absent:
+command -v skillspector >/dev/null 2>&1 && skillspector scan <skill-dir> --format json || echo "skillspector absent; rely on audit_skill_candidate.py"
 ```
+
+SkillSpector is an optional external first-pass scanner that supplements `audit_skill_candidate.py`; treat its output as triage, never a gate, and proceed when it is not installed.
 
 Reject or isolate candidates that require paid APIs, API keys, telemetry, hidden network dependencies, unsafe shell execution, obscure installers, or unrelated infrastructure.
 

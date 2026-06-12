@@ -5,6 +5,25 @@ This script never executes candidate code. It reads text files, extracts coarse
 metadata, and reports risk and quality indicators for manual review.
 """
 
+# Portions of the detection patterns in this file (several risk-category regular
+# expressions) are adapted from NVIDIA SkillSpector
+# (https://github.com/NVIDIA/SkillSpector), licensed under the Apache License,
+# Version 2.0: http://www.apache.org/licenses/LICENSE-2.0
+#
+# SPDX-FileCopyrightText: Copyright (c) 2026 NVIDIA CORPORATION & AFFILIATES.
+# All rights reserved.
+#
+# Changes from the original (Apache-2.0 section 4(b) notice of modification):
+# multi-line / re.DOTALL / AST / taint-flow patterns were degraded to single-line
+# case-insensitive regexes; the zero-width-character class was narrowed; the
+# setuid chmod patterns were tightened; POST/GET tokens were scoped case-sensitive;
+# per-pattern confidences and severity values were dropped and remapped onto this
+# script's risk tiers; the static-runner, OSV/CVE network lookups, YARA rules,
+# Unicode/codepoint analysis, and LLM-based analyzers were not ported.
+#
+# This file as a whole is distributed under the MIT license of this repository.
+# SPDX-License-Identifier: MIT
+
 from __future__ import annotations
 
 import argparse
@@ -61,11 +80,21 @@ PATTERNS = {
         r"\b[A-Z0-9_]*(?:AUTH_TOKEN|AUTHORIZATION)[A-Z0-9_]*\b",
         r"\b(?:keychain|password manager|pass\b|op item|get-secret)\b",
         r"\b(?:Authorization|Bearer|Basic)\b",
+        r"\bfor\s+\w+\s*,\s*\w+\s+in\s+os\.environ\.items\s*\(\s*\)",
+        r"\bObject\.keys\s*\(\s*process\.env\s*\)",
+        r"\benv\s*\|\s*grep\s+(?:-i\s+)?(?:key|secret|token|password)",
+        r"\bos\.environ\.copy\s*\(\s*\)",
     ],
     "private_paths": [
         r"~/(?:\.ssh|\.aws|\.config|\.gnupg|Library/Application Support)",
         r"\b(?:id_rsa|known_hosts|aws_access_key|credentials|\.env)\b",
         r"\b(?:Cookies|Login Data|Local State|browser cookies)\b",
+        r"/etc/(?:passwd|shadow)\b",
+        r"~?/?\.(?:kube/config|docker/config\.json|npmrc|git-credentials|netrc|azure/)",
+        r"\b(?:kubeconfig|application_default_credentials\.json|accessTokens\.json)\b",
+        r"\b(?:id_ed25519|id_ecdsa|id_dsa|authorized_keys)\b",
+        r"glob\s*\.\s*glob\s*\([^)]*(?:\.env|\.ssh|\.aws|\.config|credentials)",
+        r"os\s*\.\s*(?:walk|listdir|scandir)\s*\([^)]*(?:\.ssh|\.aws|\.config|\.gnupg|/Users|/home)",
     ],
     "network_calls": [
         r"\b(?:curl|wget)\b",
@@ -81,11 +110,17 @@ PATTERNS = {
         r"\bos\.system\s*\(",
         r"\bsubprocess\.(?:run|Popen|call|check_call|check_output)\b",
         r"\bchild_process\.(?:exec|spawn|execSync|spawnSync)\b",
+        r"\bsudo\s+(?!-v\b|-l\b|--version\b|--list\b)\S",
+        r"\b(?:doas|pkexec)\s+\S",
+        r"\bchmod\s+(?:[4567][0-7]{3})\b",
+        r"chmod\s+[ugo]*[-+=]s\b",
     ],
     "installers": [
         r"\b(?:npm|pnpm|yarn|pip|pip3|uv|brew|cargo|go)\s+(?:install|add|get)\b",
         r"\bcurl\b.+\|\s*(?:sh|bash|zsh)",
         r"\bwget\b.+\|\s*(?:sh|bash|zsh)",
+        r"\b(?:curl|wget)\b[^|]*\|\s*(?:sudo\s+)?(?:python|python3|node|ruby|perl)\b",
+        r"\bcurl\b[^&]*-o\s+\S+\s*&&\s*(?:sudo\s+)?(?:ba)?sh\b",
     ],
     "obfuscation": [
         r"\bbase64\s+(?:-d|--decode)\b",
@@ -93,6 +128,11 @@ PATTERNS = {
         r"\batob\s*\(",
         r"\beval\s*\(",
         r"[A-Za-z0-9+/]{120,}={0,2}",
+        r"\bmarshal\.loads\s*\(",
+        r"\bexec\s*\(\s*(?:base64\.)?b64decode\s*\(",
+        r"\bexec\s*\(\s*bytes\.fromhex\s*\(",
+        r"\b__import__\s*\(\s*['\"]os['\"]\s*\)\s*\.\s*system",
+        r"_0x[a-f0-9]{4,}\s*\(",
     ],
     "broad_file_writes_or_deletes": [
         r"\brm\s+-rf\s+(?:/|~|\$HOME|\*)",
@@ -103,6 +143,75 @@ PATTERNS = {
         r"\b(?:OpenAI|Anthropic|Claude|Gemini|Stability|Replicate|Runway|Midjourney|Tavily|SerpAPI|Pinecone)\b",
         r"\b(?:AWS|Azure|Google Cloud|GCP|Firebase|Supabase|Convex)\b",
         r"\b(?:paid plan|subscription|billing|credit card|API key required)\b",
+    ],
+    "prompt_injection": [
+        r"ignore\s+(?:all\s+)?previous\s+instructions?",
+        r"ignore\s+(?:all\s+)?(?:safety|security)\s+(?:rules?|constraints?|guidelines?)",
+        r"override\s+(?:safety|security|system)\s+(?:prompt|instructions?|rules?)",
+        r"disregard\s+(?:all\s+)?(?:previous|safety|security)",
+        r"forget\s+(?:all\s+)?(?:previous|your)\s+instructions?",
+        r"you\s+are\s+now\s+(?:in\s+)?(?:jailbreak|unrestricted|unfiltered)\s+mode",
+    ],
+    "system_prompt_leakage": [
+        r"(?:verbatim|exactly|word\s+for\s+word)\s+(?:repeat|output|print)\s+(?:the\s+)?(?:your\s+)?(?:system\s+)?(?:prompt|instructions?)",
+        r"(?:share|disclose|leak|give\s+me)\s+(?:your\s+)?(?:internal|hidden|system|secret)\s+(?:prompt|instructions?|rules?|config)",
+        r"(?:repeat|recite|reproduce)\s+(?:everything|all|the\s+text)\s+(?:above|before|prior|preceding)",
+        r"(?:encode|encrypt|rot13|base64|reverse)\s+(?:your\s+)?(?:system\s+)?(?:prompt|instructions?|rules?)",
+        r"(?:send|post|upload|transmit)\s+(?:your\s+)?(?:system\s+)?(?:prompt|instructions?|rules?)\s+(?:to|via)\s+(?:https?://|external|remote|webhook|api|server)",
+        r"(?:write|save|store|log|dump)\s+(?:your\s+)?(?:system\s+)?(?:prompt|instructions?|rules?)\s+(?:to|into|in)\s+(?:a\s+)?(?:file|disk|log|database|storage)",
+    ],
+    "instruction_exfiltration": [
+        r"(?:send|transmit|upload|post|forward)\s+(?:the\s+)?(?:conversation|context|chat|history)\s+to",
+        r"(?:silently|quietly|secretly|covertly)\s+(?:send|transmit|log|record)",
+        r"(?:copy|extract|collect)\s+(?:the\s+)?(?:conversation|context|session)\s+(?:and\s+)?(?:send|upload|transmit)",
+        r"include\s+(?:the\s+)?(?:full\s+)?(?:conversation|context|history)\s+in\s+(?:the\s+)?(?:request|payload|body)",
+        r"(?:export|dump|save)\s+(?:the\s+)?(?:conversation|chat|messages?)\s+to\s+(?:external|remote|server)",
+        r"log\s+(?:all\s+)?(?:user\s+)?(?:input|messages?|queries?|prompts?)\s+to\s+(?:external|remote|server)",
+    ],
+    "memory_poisoning": [
+        r"(?:clear|reset|wipe|erase|delete|purge)\s+(?:your\s+)?(?:memory|context|state|history|conversation)",
+        r"(?:forget|discard|drop|abandon)\s+(?:all\s+)?(?:previous|prior|earlier|past)\s+(?:instructions?|context|conversation|messages?|rules?)",
+        r"(?:you\s+are\s+no\s+longer|stop\s+being|cease\s+to\s+be)\s+(?:a\s+)?(?:\w+\s+){0,3}(?:assistant|helper|agent|bot)",
+        r"(?:inject|insert|plant)\s+(?:false|fake|fabricated|malicious)\s+(?:memories?|information|context|data|history)",
+        r"(?:poison|contaminate|corrupt|taint)\s+(?:your\s+)?(?:memory|context|state|knowledge|training)",
+        r"(?:overwrite|replace|substitute|swap)\s+(?:your\s+)?(?:memory|context|state|instructions?|rules?)",
+    ],
+    "self_modification": [
+        r"open\s*\(\s*__file__\s*,\s*['\"]w",
+        r"(?:Path|pathlib)\s*\(\s*__file__\s*\)\s*\.\s*write_text",
+        r"self[_-]?(?:modify|rewrite|patch|evolve)",
+        r"(?:modify|edit|change|rewrite|alter)\s+(?:your\s+own|its\s+own)\s+(?:code|source|script|instructions?|rules?)",
+        r"(?:disable|remove|delete|bypass)\s+(?:the\s+)?(?:safety|security|guard|protection|constraint)\s+(?:check|rule|mechanism|feature)",
+        r"open\s*\(\s*['\"]skill\.md['\"][^)]*['\"][wa]",
+    ],
+    "excessive_agency": [
+        r"(?:skip|bypass|disable)\s+(?:user\s+)?(?:confirmation|approval|consent|verification)\b",
+        r"\bauto[_-]?(?:approve|confirm|execute|deploy)\s+(?:all|every|any|each)\b",
+        r"(?:auto(?:matically)?|autonomously)\s+(?:execute|run|perform|delete|remove|modify|send|deploy)",
+        r"without\s+(?:asking|confirmation|approval|consent)",
+        r"(?:proceed|continue|execute)\s+without\s+(?:waiting|asking)\s+(?:for\s+)?(?:user|human|permission)",
+    ],
+    "hidden_instructions": [
+        r"<!--.*?(?:system|instructions?|ignore|(?-i:POST|GET)|send|transmit).*?-->",
+        r"\[//\]:\s*#\s*\(.*?(?:system|instructions?|ignore|(?-i:POST|GET)|send|transmit).*?\)",
+        r"[\u200b\u2060]",
+        r"data:text/[^;,]+;base64,[A-Za-z0-9+/=]{50,}",
+    ],
+    "harmful_content": [
+        r"add\s+(?:a\s+)?(?:dash|pinch|bit|drop|amount)\s+of\s+(?:cyanide|arsenic|ricin|botulinum|strychnine|thallium|polonium|sarin|anthrax|hemlock|oleander|aconite)",
+        r"mix\s+bleach\s+(?:and|with)\s+ammonia",
+        r"mix\s+ammonia\s+(?:and|with)\s+bleach",
+        r"(?:drink|consume|ingest)\s+(?:the\s+)?(?:bleach|antifreeze|drain\s+cleaner)",
+        r"(?:instructions?\s+(?:for|to|on)\s+)?(?:make|build|create)\s+(?:an?\s+)?(?:bomb|explosive|weapon)",
+        r"(?:how\s+to\s+)?(?:poison|kill|murder)\s+(?:someone|a\s+person|people)",
+    ],
+    "unsafe_defaults": [
+        r"\bverify\s*=\s*False\b",
+        r"(?:ssl|tls)[._]?verify\s*=\s*(?:False|0|off|no|disable)",
+        r"\bNODE_TLS_REJECT_UNAUTHORIZED\s*=\s*['\"]?0['\"]?",
+        r"\b(?:curl|wget)\b[^|]*(?:--insecure|--no-check-certificate|\s-k\b)",
+        r"(?:disable|skip|ignore|bypass)[_-](?:security|auth|authentication|validation|sanitization|encoding|escaping)\b",
+        r"\bchmod\s+(?:-R\s+)?(?:(?:0?o?)?(?:777|666)|a\+rwx)\b",
     ],
     "quality_mechanisms": [
         r"\b(?:validate|validator|schema|strict json|typed|contract|dry[- ]run)\b",
@@ -228,6 +337,20 @@ ADVISORY_RE = re.compile(
     re.IGNORECASE,
 )
 
+# Instruction-attack categories: the skill's own prose is the attack surface, so
+# plain prose counts as active. unsafe_defaults stays out: it is a code/config
+# category whose prose mentions must remain inert.
+PROSE_ATTACK_CATEGORIES = {
+    "excessive_agency",
+    "harmful_content",
+    "hidden_instructions",
+    "instruction_exfiltration",
+    "memory_poisoning",
+    "prompt_injection",
+    "self_modification",
+    "system_prompt_leakage",
+}
+
 
 def frontmatter_line_count(text: str) -> int:
     if not text.startswith("---"):
@@ -262,6 +385,8 @@ def risk_class_for(category: str, context: str, line: str) -> str:
         return "mention"
     if context == "advisory" or ADVISORY_RE.search(stripped):
         return "advisory"
+    if category in PROSE_ATTACK_CATEGORIES and context == "prose":
+        return "active"
     if category == "quality_mechanisms" or category == "pipeline_indicators":
         return "positive_signal"
     if context in {"code", "command_example", "metadata", "code_block"}:
@@ -346,13 +471,25 @@ def classify(indicators: dict[str, list[Match]]) -> tuple[str, str, dict[str, ob
     advisory = set(summary["advisory_categories"])
     mentions = set(summary["mention_categories"])
 
-    high_active = {"obfuscation", "telemetry_or_tracking"}
+    high_active = {
+        "harmful_content",
+        "hidden_instructions",
+        "instruction_exfiltration",
+        "obfuscation",
+        "prompt_injection",
+        "self_modification",
+        "telemetry_or_tracking",
+    }
     medium_active = {
         "credentials_or_secrets",
+        "excessive_agency",
         "installers",
+        "memory_poisoning",
         "network_calls",
         "paid_or_api_services",
         "private_paths",
+        "system_prompt_leakage",
+        "unsafe_defaults",
         "unsafe_shell",
     }
 
