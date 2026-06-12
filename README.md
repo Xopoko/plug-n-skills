@@ -155,7 +155,7 @@ instructions.
 | Reference files | 43 | - | Longer ledgers, contracts, scorecards, and source notes. |
 | Helper and validator scripts | 38 | - | Deterministic plugin-local helpers. |
 | Startup metadata | 155 skills | 11,813 | Skill name, description, and file pointer for routing. |
-| On-demand skill bodies | 155 skills | 98,779 | Instruction bodies after frontmatter, loaded only when selected. |
+| On-demand skill bodies | 155 skills | 98,873 | Instruction bodies after frontmatter, loaded only when selected. |
 
 Regenerate the report after skill edits:
 
@@ -177,7 +177,7 @@ Token columns are `startup metadata / on-demand body`.
 | `tauri` | 6 | 0 | 1 | 481 | 3,175 |
 | `scientific-research` | 1 | 0 | 0 | 91 | 2,009 |
 | `context-density` | 1 | 0 | 1 | 128 | 2,500 |
-| `capability-workbench` | 9 | 11 | 21 | 814 | 10,699 |
+| `capability-workbench` | 9 | 11 | 21 | 814 | 10,793 |
 | `codex-cli` | 6 | 3 | 2 | 501 | 5,434 |
 | `claude-code` | 6 | 2 | 1 | 528 | 4,579 |
 | `architecture-intelligence` | 8 | 7 | 2 | 523 | 5,033 |
@@ -337,7 +337,7 @@ Token cells are shown as `startup/body`.
 | `capability-workbench` | 74/1,647 | Route and orchestrate agent skill and plugin lifecycle work. Use when work involves agent skills, plugins, marketplace packages, capability acquisition, synthesis, creation, installation, packaging, audit, or context-density optimization. |
 | `plugin-factory` | 79/1,182 | Create, update, validate, optionally install/cache-refresh, and hand off marketplace-backed agent plugins. Use for plugin manifests, local marketplace entries, plugin-pack synthesis, triggerable skill bundles, install visibility gates, and Codex app deeplinks. |
 | `skill-factory` | 79/1,147 | Create, refactor, split, compress, validate, or package agent skills. Use for SKILL.md trigger design, agents/openai.yaml metadata, skill resources, progressive disclosure, token-efficient instructions, quick validation, and plugin-contained skills. |
-| `skill-installer-vetter` | 82/788 | Find, list, vet, install, or update agent skills from curated catalogs, GitHub repo paths, local folders, or user-provided references. Use when installation must be preceded by provenance, safety, dependency, and capability checks. |
+| `skill-installer-vetter` | 82/882 | Find, list, vet, install, or update agent skills from curated catalogs, GitHub repo paths, local folders, or user-provided references. Use when installation must be preceded by provenance, safety, dependency, and capability checks. |
 | `skill-trigger-metadata` | 85/856 | Use when creating, editing, auditing, or debugging skill names, descriptions, SKILL.md frontmatter, plugin skill metadata, discovery triggers, routing phrases, under-triggering, over-triggering, or cases where a relevant skill is not being invoked or read. |
 
 #### `codex-cli`
