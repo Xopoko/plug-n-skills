@@ -76,6 +76,9 @@ def word_count(text: str, word: str) -> int:
                           text, re.IGNORECASE))
 
 
+WORDLIST_COVERAGE_MIN_PROSE = 400
+
+
 def collect_warnings(original: str, compressed: str,
                      modality_words: tuple[str, ...]) -> list[dict]:
     warnings: list[dict] = []
@@ -87,13 +90,26 @@ def collect_warnings(original: str, compressed: str,
         warnings.append({"kind": "number-lost",
                          "detail": f"numeric literal lost from prose: {number}"})
 
+    wordlist_hits = 0
     for group, words in (("modality", modality_words),
                          ("quantifier", QUANTIFIER_WORDS)):
         for word in words:
             before, after = word_count(orig_prose, word), word_count(comp_prose, word)
+            wordlist_hits += before
             if after < before:
                 warnings.append({"kind": f"{group}-drop",
                                  "detail": f"'{word}' count {before} -> {after}"})
+
+    # Loud degradation: zero hits on substantial prose means the wordlist
+    # does not cover the corpus language and these detectors are inert.
+    if wordlist_hits == 0 and len(orig_prose.strip()) >= WORDLIST_COVERAGE_MIN_PROSE:
+        warnings.append({
+            "kind": "wordlist-no-coverage",
+            "detail": "modality/quantifier wordlists matched nothing in the "
+                      "original; the corpus language is likely not covered - "
+                      "these hints are INACTIVE for this file. Pass "
+                      "--modality-words for the corpus language; semantic "
+                      "review remains the language-independent guard."})
     return warnings
 
 

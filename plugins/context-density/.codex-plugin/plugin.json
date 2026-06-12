@@ -1,6 +1,6 @@
 {
   "name": "context-density",
-  "version": "0.3.1",
+  "version": "0.3.2",
   "description": "Context design, prompt-contract optimization, research-backed acceptance gates, compression validation, and structural handoff for agent skills, plugins, prompts, docs, and workflows.",
   "author": {
     "name": "Xopoko"

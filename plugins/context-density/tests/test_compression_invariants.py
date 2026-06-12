@@ -233,6 +233,33 @@ class WarningTests(unittest.TestCase):
                           ignore_spans=set(), ignore_fenced_prefixes=[])
         self.assertEqual(result["warnings"], [])
 
+    def test_uncovered_language_degrades_loudly(self):
+        ru_sentence = ("\u042d\u0442\u043e \u043e\u0431\u044f\u0437\u0430"
+                       "\u0442\u0435\u043b\u044c\u043d\u043e \u0434\u043b"
+                       "\u044f \u0432\u0441\u0435\u0445 \u0441\u043b\u0443"
+                       "\u0447\u0430\u0435\u0432 \u0431\u0435\u0437 \u0438"
+                       "\u0441\u043a\u043b\u044e\u0447\u0435\u043d\u0438"
+                       "\u0439. ")
+        base = "---\nname: w\ndescription: d\n---\n\n" + ru_sentence * 12
+        result = ci.check(base, base, frontmatter_check=True,
+                          ignore_spans=set(), ignore_fenced_prefixes=[])
+        kinds_found = {w["kind"] for w in result["warnings"]}
+        self.assertIn("wordlist-no-coverage", kinds_found)
+        self.assertTrue(result["passed"])
+        # with a matching wordlist the coverage nag disappears
+        covered = ci.check(base, base, frontmatter_check=True,
+                           ignore_spans=set(), ignore_fenced_prefixes=[],
+                           modality_words=("\u043e\u0431\u044f\u0437\u0430"
+                                           "\u0442\u0435\u043b\u044c\u043d\u043e",))
+        self.assertNotIn("wordlist-no-coverage",
+                         {w["kind"] for w in covered["warnings"]})
+
+    def test_short_files_skip_coverage_nag(self):
+        base = "---\nname: w\ndescription: d\n---\n\nKurz und knapp.\n"
+        result = ci.check(base, base, frontmatter_check=True,
+                          ignore_spans=set(), ignore_fenced_prefixes=[])
+        self.assertEqual(result["warnings"], [])
+
 
 class CliTests(unittest.TestCase):
     def test_cli_exit_codes(self):
