@@ -219,6 +219,13 @@ class WarningTests(unittest.TestCase):
                           modality_words=("\u043e\u0431\u044f\u0437\u0430\u0442\u0435\u043b\u044c\u043d\u043e",))
         self.assertIn("modality-drop", {w["kind"] for w in result["warnings"]})
 
+    def test_percent_sign_loss_warns(self):
+        compressed = self.BASE.replace("a 50% backoff", "a 50 backoff")
+        result = self._check(compressed)
+        details = [w["detail"] for w in result["warnings"]]
+        self.assertTrue(any("50%" in d for d in details), details)
+        self.assertTrue(result["passed"])
+
     def test_numbers_inside_code_do_not_warn(self):
         base = "---\nname: w\ndescription: d\n---\n\nRun `retry --max 3`.\n"
         compressed = base  # identical; code numbers never enter prose inventory

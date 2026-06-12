@@ -56,7 +56,7 @@ TOKEN_PATTERNS = (
     ("output-marker", re.compile(r"^[ \t]*[A-Z][A-Z_]{3,}:", re.M)),
 )
 
-NUMBER_RE = re.compile(r"\b\d+(?:[.,]\d+)?%?\b")
+NUMBER_RE = re.compile(r"\b\d+(?:[.,]\d+)?%?")
 MODALITY_WORDS = ("must", "never", "always", "only", "unless", "should",
                   "may", "cannot", "do not")
 QUANTIFIER_WORDS = ("any", "all", "every", "each", "none")
