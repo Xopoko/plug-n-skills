@@ -19,6 +19,12 @@ literals lost from prose, and count drops of modality/quantifier words.
 The default wordlist is English; pass ``--modality-words`` with a
 comma-separated list for other languages.
 
+Profiles: default is strict. ``--lean`` (for reference documentation
+consumed by agents that can search the repository) downgrades lost inline
+code spans to warnings (kind ``span-lost-lean``) so paths and identifiers
+may be shortened to greppable names; frontmatter, fenced blocks, and
+machine placeholder tokens still block in both profiles.
+
 Notes: a compressed file larger than the original is reported with a
 negative reduction but does not fail (size is not an invariant);
 ``--ignore-span`` suppresses only the span finding, not token-inventory
@@ -160,8 +166,10 @@ def code_spans(text: str) -> set[str]:
 
 def check(original: str, compressed: str, *, frontmatter_check: bool,
           ignore_spans: set[str], ignore_fenced_prefixes: list[str],
-          modality_words: tuple[str, ...] = MODALITY_WORDS) -> dict:
+          modality_words: tuple[str, ...] = MODALITY_WORDS,
+          lean: bool = False) -> dict:
     violations: list[dict] = []
+    lean_warnings: list[dict] = []
 
     if frontmatter_check:
         orig_fm = frontmatter(original)
@@ -185,7 +193,9 @@ def check(original: str, compressed: str, *, frontmatter_check: bool,
 
     missing_spans = code_spans(original) - code_spans(compressed) - ignore_spans
     for span in sorted(missing_spans):
-        violations.append({"kind": "span", "detail": f"inline code span lost: `{span}`"})
+        finding = {"kind": "span-lost-lean" if lean else "span",
+                   "detail": f"inline code span lost: `{span}`"}
+        (lean_warnings if lean else violations).append(finding)
 
     for kind, pattern in TOKEN_PATTERNS:
         lost = set(pattern.findall(original)) - set(pattern.findall(compressed))
@@ -199,7 +209,9 @@ def check(original: str, compressed: str, *, frontmatter_check: bool,
         "reduction_pct": round((1 - len(compressed) / len(original)) * 100, 1)
         if original else 0.0,
         "violations": violations,
-        "warnings": collect_warnings(original, compressed, modality_words),
+        "warnings": lean_warnings + collect_warnings(original, compressed,
+                                                     modality_words),
+        "profile": "lean" if lean else "strict",
         "passed": not violations,
     }
 
@@ -219,6 +231,9 @@ def main(argv: list[str] | None = None) -> int:
                         metavar="LINE_PREFIX",
                         help="fenced blocks whose first content line starts with "
                              "this prefix may be dropped (repeatable)")
+    parser.add_argument("--lean", action="store_true",
+                        help="lean profile: lost code spans become warnings "
+                             "(reference docs whose consumers can grep)")
     parser.add_argument("--modality-words", default=None, metavar="W1,W2,...",
                         help="comma-separated modality wordlist for warnings "
                              "(default: English; set for other languages)")
@@ -237,7 +252,7 @@ def main(argv: list[str] | None = None) -> int:
                    frontmatter_check=not args.no_frontmatter,
                    ignore_spans=set(args.ignore_span),
                    ignore_fenced_prefixes=args.ignore_fenced_prefix,
-                   modality_words=modality)
+                   modality_words=modality, lean=args.lean)
     result["original"] = args.original
     result["compressed"] = args.compressed
 

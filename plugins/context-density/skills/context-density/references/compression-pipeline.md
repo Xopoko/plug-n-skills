@@ -25,13 +25,27 @@ before compressing anything:
    - evidence/legal — changelogs, ADRs, release notes, migration
      histories, LICENSE/NOTICE, generated files: EXCLUDE. These are
      records and legal text, not compressible prose.
-2. Pilot one representative file per group (pilot-first rule below) and
-   skip groups under the yield bar; report exclusions and skips.
-3. In a repository you do not own outright, work on a fresh branch and do
+2. Assign a contract profile per group:
+   - **strict** (mandatory): agent instruction files, skills, prompt
+     templates — anything an agent obeys without reading the repo. The
+     <!-- cda:allow compression_without_relevance_check -->
+     full compress contract below applies.
+   - **lean** (reference documentation whose consumers can search the
+     repository): the lean deltas below apply, and the deterministic
+     checker runs with `--lean`. Hot files NEVER get lean. Report the
+     profile per file.
+3. Pilot one representative file per group and profile (pilot-first rule
+   below); skip groups under the yield bar; report exclusions and skips.
+   For hot files judge absolute economics, not percentage alone: saved
+   tokens are paid back on every session load, so a small percentage on a
+   large always-loaded file can still be worth it — and a large percentage
+   on a rarely read document may not be.
+4. In a repository you do not own outright, work on a fresh branch and do
    not push unless asked; state the branch and commit status explicitly.
-4. Consumer validation for documentation: every relative link in a
-   compressed file must still resolve, and document structure agents
-   navigate by (headings, anchors) must survive.
+5. Consumer validation for documentation: every relative link in a
+   compressed file must still resolve; document structure agents navigate
+   by (headings, anchors) must survive in strict files, and in lean files
+   may be flattened only after verifying nothing links to the anchor.
 
 ## Shape
 
@@ -128,6 +142,28 @@ Pilot before batch: run ONE representative file through the full
 pipeline first. If its post-restoration yield lands under 10%, abort the
 batch and report the corpus as already dense — that result is a success
 of the gate, not a failure of the run.
+
+## Lean profile deltas (reference docs only, never hot files)
+
+Relaxations — each is recoverable by the consumer with one repository
+search, which is why they are safe only for searching consumers:
+
+- Full file paths may shrink to their unique greppable identifiers
+  (terminal file or symbol name); never invent or approximate names.
+<!-- cda:allow compression_without_relevance_check -->
+- Itemized inventories and example lists may compress to the pattern
+  plus a pointer to the source of truth (the code or directory itself).
+- Headings may flatten when nothing links to their anchors (verify by
+  searching the repository for the anchor before flattening).
+<!-- cda:allow token_only_metric,compression_without_relevance_check -->
+- Multi-step checklists may condense if every step survives semantically;
+  descriptive prose sentences may merge. Actual RULES keep one per bullet.
+
+Still binding in lean: fenced blocks verbatim, frontmatter byte-identical,
+machine placeholder tokens, every fact, number, condition, and modality
+unchanged, nothing invented. The lean refuter flags MATERIAL meaning
+changes and factual losses; it does not flag span shortenings or structure
+flattenings that the deltas above explicitly allow.
 
 ## Refute contract (give verbatim to the reviewing agent)
 

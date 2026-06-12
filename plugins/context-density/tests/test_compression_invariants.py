@@ -254,6 +254,31 @@ class WarningTests(unittest.TestCase):
         self.assertNotIn("wordlist-no-coverage",
                          {w["kind"] for w in covered["warnings"]})
 
+    def test_lean_profile_downgrades_span_loss(self):
+        compressed = ORIGINAL.replace(
+            "run `scripts/check.sh --json` first", "run the checker first")
+        strict = ci.check(ORIGINAL, compressed, frontmatter_check=True,
+                          ignore_spans=set(), ignore_fenced_prefixes=[])
+        self.assertFalse(strict["passed"])
+        lean = ci.check(ORIGINAL, compressed, frontmatter_check=True,
+                        ignore_spans=set(), ignore_fenced_prefixes=[],
+                        lean=True)
+        self.assertTrue(lean["passed"])
+        self.assertIn("span-lost-lean", {w["kind"] for w in lean["warnings"]})
+        self.assertEqual(lean["profile"], "lean")
+
+    def test_lean_profile_still_blocks_fences_and_placeholders(self):
+        compressed = (ORIGINAL
+                      .replace("EXECUTE_COMMAND: {command}", "EXEC: {command}")
+                      .replace("[FEATURE NAME]", "the feature name"))
+        lean = ci.check(ORIGINAL, compressed, frontmatter_check=True,
+                        ignore_spans=set(), ignore_fenced_prefixes=[],
+                        lean=True)
+        self.assertFalse(lean["passed"])
+        kinds_found = kinds(lean)
+        self.assertIn("fenced", kinds_found)
+        self.assertIn("bracket-placeholder", kinds_found)
+
     def test_short_files_skip_coverage_nag(self):
         base = "---\nname: w\ndescription: d\n---\n\nKurz und knapp.\n"
         result = ci.check(base, base, frontmatter_check=True,
