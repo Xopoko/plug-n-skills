@@ -1,9 +1,11 @@
 ---
 name: scientific-research
-description: Use when the user asks the agent to conduct scientific or scholarly research, literature reviews, paper discovery, arXiv/OpenAlex/Crossref/Europe PMC/Semantic Scholar/PubMed queries, corpus building, DOI deduplication, source-backed claim extraction, evidence synthesis, or research quality validation.
+description: Use for scientific or scholarly research with source traceability, literature reviews, paper discovery, arXiv/OpenAlex/Crossref/Europe PMC/Semantic Scholar/PubMed queries, corpus building, DOI deduplication, source-backed claim extraction, evidence synthesis, or research quality validation.
 ---
 
 # Scientific Research
+
+Bundled commands use `$PLUGIN_ROOT` for the plugin root. Set it once: use the host's plugin-root variable when defined (Claude Code: `PLUGIN_ROOT="$CLAUDE_PLUGIN_ROOT"`), otherwise the absolute path of this plugin's root directory.
 
 Use this skill for scholarly research that needs source traceability, not just web summaries. The default posture is public, read-only, bounded, provenance-preserving research.
 
@@ -22,14 +24,14 @@ Use this skill for scholarly research that needs source traceability, not just w
 2. Route sources before querying. Check current availability, credentials, and rate-limit/cooldown state. If one source is blocked, continue with named fallbacks.
 
    ```bash
-   python3 skills/scientific-research/scripts/scholarly_research.py source-status \
+   python3 "$PLUGIN_ROOT/skills/scientific-research/scripts/scholarly_research.py" source-status \
      --out-dir research-corpus
    ```
 
 3. Build a bounded plan with the helper:
 
    ```bash
-   python3 skills/scientific-research/scripts/scholarly_research.py plan \
+   python3 "$PLUGIN_ROOT/skills/scientific-research/scripts/scholarly_research.py" plan \
      --topic "retrieval augmented generation evaluation" \
      --question "Which evaluation methods are source-grounded?" \
      --out research-plan.json
@@ -38,28 +40,28 @@ Use this skill for scholarly research that needs source traceability, not just w
 4. Validate the plan:
 
    ```bash
-   python3 skills/scientific-research/scripts/scholarly_research.py validate-plan research-plan.json
+   python3 "$PLUGIN_ROOT/skills/scientific-research/scripts/scholarly_research.py" validate-plan research-plan.json
    ```
 
 5. Search public APIs into a small corpus:
 
    ```bash
-   python3 skills/scientific-research/scripts/scholarly_research.py search \
+   python3 "$PLUGIN_ROOT/skills/scientific-research/scripts/scholarly_research.py" search \
      --plan research-plan.json \
      --out-dir research-corpus \
      --per-source 20
    ```
 
    Repeated searches into the same `--out-dir` merge into the existing index:
-   prior records survive dedupe and the `total_records` cap, the previous
-   index is backed up under `03_runs/records-pre-search-*.jsonl`, and records
-   dropped over the cap are listed in `03_runs/dropped-over-limit.jsonl` —
-   never silently discarded.
+
+   - prior records survive dedupe and the `total_records` cap;
+   - the previous index is backed up under `03_runs/records-pre-search-*.jsonl`;
+   - records dropped over the cap are listed in `03_runs/dropped-over-limit.jsonl`, never silently discarded.
 
 6. For literature reviews or evidence synthesis, write screening decisions as JSONL and create a PRISMA-style screening summary:
 
    ```bash
-   python3 skills/scientific-research/scripts/scholarly_research.py screening-summary \
+   python3 "$PLUGIN_ROOT/skills/scientific-research/scripts/scholarly_research.py" screening-summary \
      --records research-corpus/01_index/records.jsonl \
      --decisions screening-decisions.jsonl \
      --out research-corpus/05_reports/screening_summary.json
@@ -70,7 +72,7 @@ Use this skill for scholarly research that needs source traceability, not just w
    citing excluded records fail and the plan's own thresholds are enforced:
 
    ```bash
-   python3 skills/scientific-research/scripts/scholarly_research.py quality-gate \
+   python3 "$PLUGIN_ROOT/skills/scientific-research/scripts/scholarly_research.py" quality-gate \
      --records research-corpus/01_index/records.jsonl \
      --claims claims.jsonl \
      --decisions screening-decisions.jsonl \
@@ -89,16 +91,20 @@ Use this skill for scholarly research that needs source traceability, not just w
 
 - OpenAlex `403` or `429`, arXiv `429` or `503`, timeouts, and rate-limit text are cooldown signals. Record them in `01_index/query_log.jsonl` and `03_runs/source-status.json`, then use fallbacks instead of retry-looping.
 - HTTP `400` is a malformed-query signal (`query_error`), not capacity: fix the query instead of cooling down. The helper strips OpenAlex wildcard characters (`?`, `*`) from search queries automatically, so question-form queries are safe.
-- OpenAlex `409` is an API-key/quota/auth signal in the 2026 API model. Mark it `auth_required`, name `OPENALEX_API_KEY` as optional configuration, and continue through Crossref, Semantic Scholar, or Europe PMC when they are in scope.
-- Do not call arXiv repeatedly in a loop. Keep direct arXiv searches small, wait at least 3 seconds between sequential arXiv API requests, and use OAI-PMH or bulk access for corpus-scale arXiv metadata.
-- For OpenAlex, use `OPENALEX_API_KEY` when configured, send a real `mailto` when available, keep quick searches bounded to `per_page <= 100`, and inspect rate-limit headers/status before expanding.
+- OpenAlex `409` is undocumented but observed; treat it defensively as a key/quota signal (documented exhaustion signals are `403`/`429`). Mark it `auth_required`, name `OPENALEX_API_KEY` as optional configuration, and continue through Crossref, Semantic Scholar, or Europe PMC when they are in scope.
+- Do not call arXiv repeatedly in a loop; keep direct arXiv searches small.
+- Wait at least 3 seconds between sequential arXiv API requests.
+- Use OAI-PMH or bulk access for corpus-scale arXiv metadata.
+- For OpenAlex, use `OPENALEX_API_KEY` when configured, keep quick searches bounded to `per_page <= 100`, and inspect `X-RateLimit-*` headers/status before expanding.
 - For Crossref, include `mailto` when available and keep list queries paced; public list-query limits are tighter than single-record lookups.
 
 ## Source Selection
 
 Default discovery sources:
 
-- OpenAlex: broad scholarly metadata and citation/entity graph. Use `OPENALEX_API_KEY` when configured; anonymous requests may work for small tests but must degrade on 403/429 cooldown, 409 key/quota signals, or 401 auth failure.
+- OpenAlex: broad scholarly metadata and citation/entity graph.
+  - Use `OPENALEX_API_KEY` when configured; anonymous requests may work for small tests.
+  - Degrade on 403/429 cooldown, 409 key/quota signals, or 401 auth failure.
 - arXiv API: preprints and arXiv metadata. Keep requests small; for bulk metadata use arXiv OAI-PMH instead of repeated search calls.
 - Crossref REST API: DOI metadata and publisher records. Include `mailto` when a real contact email is available.
 - Europe PMC: biomedical/life-science records and open-access full text metadata.
@@ -110,7 +116,8 @@ Additional sources, selected with `--source` per plan:
 - DBLP (`dblp`): computer-science bibliography, strong for CS/ML venues; no key.
 - DOAJ (`doaj`): open-access journal articles with full-text links; no key.
 - CORE (`core`): open-access repository aggregation; requires free `CORE_API_KEY`, fails as `auth_required` without it.
-- OpenCitations (`opencitations`): DOI-only metadata lookup for targeted enrichment — the query must be a DOI, anything else fails as `query_error`. `OPENCITATIONS_ACCESS_TOKEN` optional.
+- OpenCitations (`opencitations`): DOI-only metadata lookup for targeted enrichment. `OPENCITATIONS_ACCESS_TOKEN` optional.
+  - The query must be a DOI; anything else fails as `query_error`.
 
 Optional source profiles are in `references/source-profiles.md`.
 

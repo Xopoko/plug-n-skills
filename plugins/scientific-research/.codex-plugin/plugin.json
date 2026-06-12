@@ -1,6 +1,6 @@
 {
   "name": "scientific-research",
-  "version": "0.3.1",
+  "version": "0.3.2",
   "description": "Disciplined scholarly research workflow: discovery, source routing, DOI dedup, claim ledgers, and evidence quality gates across arXiv/OpenAlex/Crossref/Europe PMC/Semantic Scholar/NCBI/CORE/OpenCitations.",
   "author": {
     "name": "Xopoko"

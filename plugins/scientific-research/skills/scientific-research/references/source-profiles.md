@@ -8,9 +8,9 @@ Use this file when selecting or debugging scholarly sources. Prefer official doc
 - API intro: https://developers.openalex.org/api-reference/introduction
 - Primary endpoint: `https://api.openalex.org/works`
 - Strengths: broad cross-domain metadata, DOI normalization, open-access metadata, citation/entity graph.
-- Auth: support `OPENALEX_API_KEY` if configured. The 2026 API model requires a key for scale and can return `409` after unauthenticated free credits; treat that as `auth_required` and continue with fallbacks.
+- Auth: support `OPENALEX_API_KEY` if configured. Since February 2026 OpenAlex requires a key for production scale; anonymous calls work only for small demo use. Documented exhaustion signals are `403` (rate) and `429` (daily limit); a `409` is undocumented but observed in the wild — treat it defensively as `auth_required` and continue with fallbacks.
 - Pagination: use `per_page <= 100`, prefer cursor paging for large pulls, and keep quick searches bounded.
-- Policy: identify the client with a useful User-Agent and contact email when available.
+- Policy: identify via `api_key`; current docs no longer document `mailto`/User-Agent identification. Track usage through `X-RateLimit-*` headers and the `/rate-limit` endpoint.
 - Diagnostics: record HTTP status, body excerpt, `Retry-After`, and `X-RateLimit-*` headers when available. A failed OpenAlex query should not block Crossref, Semantic Scholar, or Europe PMC fallbacks.
 
 ## arXiv
@@ -60,13 +60,13 @@ Use this file when selecting or debugging scholarly sources. Prefer official doc
 - API overview: https://core.ac.uk/services/api
 - API docs: https://core.ac.uk/documentation/api
 - Strengths: open-access repository aggregation.
-- Auth: the bundled fetcher requires a free `CORE_API_KEY` (Bearer); without it the source fails as `auth_required` and routes to fallbacks.
+- Auth: the API itself allows limited keyless access (100 tokens/day, max 10/min); a free registered key raises that to 1,000/day. The bundled fetcher chooses to require `CORE_API_KEY` (Bearer) and fails as `auth_required` without it, routing to fallbacks.
 
 ## DBLP
 
 - Search API: https://dblp.org/faq/How+to+use+the+dblp+search+API.html
 - Strengths: authoritative computer-science bibliography (venues, years, DOIs); excellent for CS/ML topics.
-- Auth: none. Keep queries paced (~1s interval).
+- Auth: none. Keep queries paced (~1s interval — a self-imposed default; official docs cap result size, not request rate).
 
 ## DOAJ
 
@@ -76,7 +76,8 @@ Use this file when selecting or debugging scholarly sources. Prefer official doc
 
 ## OpenCitations
 
-- Meta API: https://opencitations.net/meta/api/v1
+- Meta API: https://api.opencitations.net/meta/v1 (canonical; the old opencitations.net/meta/api/v1 URL redirects here)
+- Official limit: 180 requests/minute per IP; use dumps for large-scale retrieval. The API also accepts issn/isbn/omid ids; the bundled fetcher restricts queries to DOIs.
 - Strengths: open bibliographic and citation metadata keyed by DOI.
 - Query contract: the bundled fetcher accepts only DOI queries (`10.xxxx/...`); non-DOI queries fail fast as `query_error`. `OPENCITATIONS_ACCESS_TOKEN` optional.
 - Policy: use for citation graph enrichment and DOI verification, not as the only discovery source.
@@ -84,7 +85,7 @@ Use this file when selecting or debugging scholarly sources. Prefer official doc
 ## Source Routing Rules
 
 - If a source returns 401/403, mark it `auth_required` and continue.
-- For OpenAlex specifically, treat 403 and 429 as cooldown/rate-limit unless the response clearly says credentials are invalid, and treat 409 as `auth_required`/quota-key state.
+- For OpenAlex specifically, treat 403 and 429 as cooldown/rate-limit unless the response clearly says credentials are invalid; treat an undocumented 409 defensively as `auth_required`/quota-key state.
 - If a source returns 429/503 or times out, mark it `cooldown` and continue with fallbacks.
 - Retry at most once after a backoff for transient network errors in interactive work.
 - Record blocked sources in `query_log.jsonl` or a source status sidecar.
