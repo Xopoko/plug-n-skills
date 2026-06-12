@@ -5,27 +5,21 @@ description: Create, update, debug, or remove Codex app local project environmen
 
 # Codex Environments
 
-Bundled commands use `$PLUGIN_ROOT` for the plugin root. Set it once: use the host's plugin-root variable when defined (Claude Code: `PLUGIN_ROOT="$CLAUDE_PLUGIN_ROOT"`), otherwise the absolute path of this plugin's root directory.
+Bundled commands use `$PLUGIN_ROOT` for the plugin root. Set it once: the host's plugin-root variable when defined (Claude Code: `PLUGIN_ROOT="$CLAUDE_PLUGIN_ROOT"`), otherwise this plugin's absolute root path.
 
-Use this skill to manage repo-local Codex app environments: usually
-`.codex/environments/environment.toml` plus optional project scripts called by
-actions.
+Manages repo-local Codex app environments: usually `.codex/environments/environment.toml` plus optional project scripts called by actions.
 
-For long-running action patterns, port cleanup, detailed editing rules,
-verification depth, and common failure modes, read
-`$PLUGIN_ROOT/references/environment-actions.md`.
+For long-running action patterns, port cleanup, detailed editing rules, verification depth, and common failure modes, read `$PLUGIN_ROOT/references/environment-actions.md`.
 
 ## Decide Whether To Create Or Edit
 
-Create or edit a Codex environment when the user wants a repeatable Codex app
-action, such as Run, Test, Preview, Open Simulator, Start Dev Server, Launch
-Browser, or a stable local workflow behind a Codex Run button.
+Create or edit a Codex environment when the user wants a repeatable Codex app action — Run, Test, Preview, Open Simulator, Start Dev Server, Launch Browser — or a stable local workflow behind a Codex Run button.
 
 Prefer a repo-local environment when:
 
 - the command must run from a specific project root;
 - the workflow needs stable env vars, ports, simulators, devices, URLs, or log paths;
-- the user is repeatedly pasting the same long command;
+- the user repeatedly pastes the same long command;
 - Codex Run should start an app or local service without manual shell assembly.
 
 Do not create an environment for a one-off command, destructive operation,
@@ -55,13 +49,11 @@ cd /absolute/project/root
 '''
 ```
 
-Common optional action fields may appear in existing files, such as
-`platform = "darwin"`. Preserve them when still correct.
+Existing files may contain optional action fields such as `platform = "darwin"`; preserve them when still correct.
 
 Use absolute project paths inside actions unless the action is guaranteed to be
-launched from the repo root. Absolute paths make Codex app actions less
-sensitive to caller cwd. Do not commit personal paths into shared templates or
-plugin source.
+launched from the repo root. Do not commit personal paths into shared templates
+or plugin source.
 
 ## Command Design
 
@@ -109,7 +101,7 @@ small launcher surface.
 
 After edits, validate at the right depth:
 
-- TOML syntax: parse with an available TOML parser if one exists, or inspect carefully when no parser is available.
+- TOML syntax: parse with an available TOML parser, or inspect carefully when none is available.
 - Script syntax: run `bash -n scripts/name.sh`.
 - Executability: run `chmod +x scripts/name.sh` for direct scripts.
 - Smoke: run the action command or script long enough to prove startup, readiness, and expected UI/browser/simulator behavior.

@@ -1,6 +1,6 @@
 # Source Profiles
 
-Use this file when selecting or debugging scholarly sources. Prefer official docs and live source behavior over stale memory.
+Use when selecting or debugging scholarly sources. Prefer official docs and live source behavior over stale memory.
 
 ## OpenAlex
 
@@ -8,9 +8,9 @@ Use this file when selecting or debugging scholarly sources. Prefer official doc
 - API intro: https://developers.openalex.org/api-reference/introduction
 - Primary endpoint: `https://api.openalex.org/works`
 - Strengths: broad cross-domain metadata, DOI normalization, open-access metadata, citation/entity graph.
-- Auth: support `OPENALEX_API_KEY` if configured. Since February 2026 OpenAlex requires a key for production scale; anonymous calls work only for small demo use. Documented exhaustion signals are `403` (rate) and `429` (daily limit); a `409` is undocumented but observed in the wild — treat it defensively as `auth_required` and continue with fallbacks.
+- Auth: support `OPENALEX_API_KEY` if configured. Since February 2026 a key is required at production scale; anonymous calls are demo-only. Documented exhaustion signals: `403` (rate) and `429` (daily limit); `409` is undocumented but observed — treat defensively as `auth_required` and continue with fallbacks.
 - Pagination: use `per_page <= 100`, prefer cursor paging for large pulls, and keep quick searches bounded.
-- Policy: identify via `api_key`; current docs no longer document `mailto`/User-Agent identification. Track usage through `X-RateLimit-*` headers and the `/rate-limit` endpoint.
+- Policy: identify via `api_key`; current docs no longer document `mailto`/User-Agent identification. Track usage via `X-RateLimit-*` headers and the `/rate-limit` endpoint.
 - Diagnostics: record HTTP status, body excerpt, `Retry-After`, and `X-RateLimit-*` headers when available. A failed OpenAlex query should not block Crossref, Semantic Scholar, or Europe PMC fallbacks.
 
 ## arXiv
@@ -30,7 +30,7 @@ Use this file when selecting or debugging scholarly sources. Prefer official doc
 - Rate-limit update: https://www.crossref.org/blog/announcing-changes-to-rest-api-rate-limits/
 - Endpoint: `https://api.crossref.org/works`
 - Strengths: DOI metadata, publisher metadata, references where available.
-- Policy: include `mailto` when a real contact is available. Keep list queries paced because public list requests are more constrained than single-record lookups; use cursor pagination for large pulls.
+- Policy: include `mailto` when a real contact is available. Pace list queries (public list requests are more constrained than single-record lookups); use cursor pagination for large pulls.
 
 ## Europe PMC
 
@@ -60,7 +60,7 @@ Use this file when selecting or debugging scholarly sources. Prefer official doc
 - API overview: https://core.ac.uk/services/api
 - API docs: https://core.ac.uk/documentation/api
 - Strengths: open-access repository aggregation.
-- Auth: the API itself allows limited keyless access (100 tokens/day, max 10/min); a free registered key raises that to 1,000/day. The bundled fetcher chooses to require `CORE_API_KEY` (Bearer) and fails as `auth_required` without it, routing to fallbacks.
+- Auth: keyless access is limited (100 tokens/day, max 10/min); a free registered key raises that to 1,000/day. The bundled fetcher requires `CORE_API_KEY` (Bearer) and fails as `auth_required` without it, routing to fallbacks.
 
 ## DBLP
 
@@ -85,7 +85,7 @@ Use this file when selecting or debugging scholarly sources. Prefer official doc
 ## Source Routing Rules
 
 - If a source returns 401/403, mark it `auth_required` and continue.
-- For OpenAlex specifically, treat 403 and 429 as cooldown/rate-limit unless the response clearly says credentials are invalid; treat an undocumented 409 defensively as `auth_required`/quota-key state.
+- For OpenAlex, treat 403 and 429 as cooldown/rate-limit unless the response clearly says credentials are invalid; treat an undocumented 409 defensively as `auth_required`/quota-key state.
 - If a source returns 429/503 or times out, mark it `cooldown` and continue with fallbacks.
 - Retry at most once after a backoff for transient network errors in interactive work.
 - Record blocked sources in `query_log.jsonl` or a source status sidecar.

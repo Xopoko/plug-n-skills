@@ -5,10 +5,7 @@ description: Start, inspect, scaffold, migrate, or orient Tauri 2 projects. Use 
 
 # Tauri Projects
 
-Bundled commands use `$PLUGIN_ROOT` for the plugin root. Set it once: use the host's plugin-root variable when defined (Claude Code: `PLUGIN_ROOT="$CLAUDE_PLUGIN_ROOT"`), otherwise the absolute path of this plugin's root directory.
-
-Use this skill for the first pass on any Tauri 2 repository or for creating and
-migrating projects.
+Bundled commands use `$PLUGIN_ROOT` for the plugin root. Set it once: the host's plugin-root variable when defined (Claude Code: `PLUGIN_ROOT="$CLAUDE_PLUGIN_ROOT"`), otherwise the absolute path of this plugin's root directory.
 
 ## First Pass
 
@@ -19,8 +16,7 @@ migrating projects.
 python3 "$PLUGIN_ROOT/scripts/tauri_project_probe.py" .
 ```
 
-Resolve the script path relative to this skill folder if the current working
-directory is not inside the plugin.
+If the current working directory is not inside the plugin, resolve the script path relative to this skill folder.
 
 3. Inspect `package.json`, lockfiles, `src-tauri/Cargo.toml`,
    `src-tauri/tauri.conf.*`, `src-tauri/capabilities/*`, and
@@ -29,8 +25,7 @@ directory is not inside the plugin.
 ## Scaffolding
 
 - Prefer official package-manager scaffolding such as `pnpm create tauri-app@2`,
-  `npm create tauri-app@2`, or `cargo create-tauri-app`; choose based on the
-  repo/team convention.
+  `npm create tauri-app@2`, or `cargo create-tauri-app`; choose by repo/team convention.
 - Do not run remote shell installers such as `curl | sh` as the default.
 - Treat Rustup, Node, Xcode, Android SDK, WebView/system packages, and mobile
   SDK installation as environment mutations requiring explicit approval.
@@ -48,8 +43,7 @@ directory is not inside the plugin.
 
 ## Migration
 
-For Tauri 1 or Tauri 2 beta migration, check current official Tauri docs before
-editing. Pay close attention to:
+For Tauri 1 or Tauri 2 beta migration, check current official Tauri docs before editing. Pay attention to:
 
 - Tauri 2 capability and permission files;
 - namespaced `core:*` permissions;

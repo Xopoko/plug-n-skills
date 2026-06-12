@@ -5,13 +5,9 @@ description: Use when managing Claude Code plugins, plugin marketplaces, plugin 
 
 # Claude Plugin And MCP Manager
 
-Bundled commands use `$PLUGIN_ROOT` for the plugin root. Set it once: use the host's plugin-root variable when defined (Claude Code: `PLUGIN_ROOT="$CLAUDE_PLUGIN_ROOT"`), otherwise the absolute path of this plugin's root directory.
+Bundled commands use `$PLUGIN_ROOT` for the plugin root. Set it once: the host's plugin-root variable when defined (Claude Code: `PLUGIN_ROOT="$CLAUDE_PLUGIN_ROOT"`), otherwise this plugin's absolute root path.
 
-Use this skill for Claude Code plugin and MCP lifecycle work. It covers plugin
-marketplaces, installed plugins, token-cost details, validation, release tags,
-scoped installs, session-only plugin loading, MCP server configuration, project
-approval state, stdio/http/sse transports, headers, env vars, OAuth, and
-strict-MCP-config runs.
+Covers plugin marketplaces, installed plugins, token-cost details, validation, release tags, scoped installs, session-only plugin loading, MCP server configuration, project approval state, stdio/http/sse transports, headers, env vars, OAuth, and strict-MCP-config runs.
 
 ## Inspect First
 
@@ -29,8 +25,7 @@ claude plugin marketplace list
 claude mcp list
 ```
 
-Use `claude plugin details <name>` and `claude mcp get <name>` before changing
-an existing item.
+Use `claude plugin details <name>` and `claude mcp get <name>` before changing an existing item.
 
 ## Plugin Workflow
 
@@ -61,35 +56,32 @@ claude --plugin-dir /path/to/plugin
 claude --plugin-url https://example.com/plugin.zip
 ```
 
-Do not run `plugin update`, `plugin uninstall`, `plugin prune`, marketplace
-update/remove, or tag creation without an explicit target and user intent.
+Do not run `plugin update`, `plugin uninstall`, `plugin prune`, marketplace update/remove, or tag creation without an explicit target and user intent.
 
 ## MCP Workflow
 
-For stdio MCP servers:
+Stdio MCP servers:
 
 ```bash
 claude mcp add <name> --scope local -- <command> <args>
 claude mcp add <name> --scope project -e KEY=VALUE -- <command> <args>
 ```
 
-For HTTP/SSE servers:
+HTTP/SSE servers:
 
 ```bash
 claude mcp add --transport http <name> https://example.com/mcp
 claude mcp add --transport sse <name> https://example.com/sse
 ```
 
-For auth-bearing servers, avoid literal secrets in commands. Prefer environment
-variables or prompts:
+For auth-bearing servers, avoid literal secrets in commands; prefer env vars or prompts:
 
 ```bash
 claude mcp add --transport http <name> https://example.com/mcp --header "Authorization: Bearer $TOKEN"
 claude mcp add --transport http <name> https://example.com/mcp --client-id "$CLIENT_ID" --client-secret
 ```
 
-Use `--strict-mcp-config` on session startup when the task must ignore all MCP
-servers except explicit `--mcp-config` files or JSON.
+Use `--strict-mcp-config` on session startup when the task must ignore all MCP servers except explicit `--mcp-config` files or JSON.
 
 ## Safety Boundaries
 
@@ -109,6 +101,4 @@ servers except explicit `--mcp-config` files or JSON.
 
 ## Completion Standard
 
-Report state inspected, exact commands run, scopes used, validation/details/get
-evidence, any source/config/cache path touched, and any remaining user action
-such as auth or setting an environment variable.
+Report state inspected, exact commands run, scopes used, validation/details/get evidence, any source/config/cache path touched, and any remaining user action such as auth or setting an env var.

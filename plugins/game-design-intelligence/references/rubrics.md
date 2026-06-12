@@ -6,7 +6,7 @@
 - Verb clarity: primary actions are legible and expressive.
 - Feedback: consequences are readable and timely.
 - Reinvestment: each loop changes future choices.
-- Skill gradient: skilled players make different decisions than novices.
+- Skill gradient: skilled players decide differently than novices.
 - Variety: repetition changes through context, mastery, risk, or social meaning.
 - Failure: mistakes teach and preserve momentum.
 
@@ -68,8 +68,8 @@
 
 - Player-to-player actions and incentives are mapped.
 - The design rewards cooperation, teaching, leadership, and repair when relevant.
-- Competition supports mastery rather than humiliation.
-- Communication tools are designed with abuse risk in mind.
+- Competition supports mastery, not humiliation.
+- Communication tools account for abuse risk.
 - Newcomers, solo players, teams, veterans, and spectators have clear roles.
 - Moderation is not the only defense against toxic dynamics.
 
@@ -84,4 +84,4 @@
 
 ## Ethical Guardrails
 
-Flag designs that rely on fake scarcity, opaque odds, pay-to-win, artificial deficit, coercive streaks, sunk-cost pressure, forced appointments, hostile comparison, or dark-pattern friction. Reframe toward transparent value, optional goals, fair challenge, catch-up, player-set pace, and respectful social systems.
+Flag designs relying on fake scarcity, opaque odds, pay-to-win, artificial deficit, coercive streaks, sunk-cost pressure, forced appointments, hostile comparison, or dark-pattern friction. Reframe toward transparent value, optional goals, fair challenge, catch-up, player-set pace, and respectful social systems.

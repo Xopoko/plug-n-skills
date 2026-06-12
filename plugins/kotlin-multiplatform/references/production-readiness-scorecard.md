@@ -2,7 +2,7 @@
 
 `$PLUGIN_ROOT` is the plugin root (see the calling skill's plugin-root preamble).
 
-Use the scorecard for KMP release decisions and broad audits. It is a decision aid, not a replacement for running the relevant Gradle, platform, or release commands.
+Use for KMP release decisions and broad audits — a decision aid, not a replacement for running the relevant Gradle, platform, or release commands.
 
 ## Areas
 
@@ -24,4 +24,4 @@ Run:
 python3 "$PLUGIN_ROOT/scripts/kmp_inspector.py" --root <project-root> --json --fail-on none
 ```
 
-Use the `readiness` array as a first-pass scorecard. The final verdict should still account for commands that the inspector cannot run.
+Use the `readiness` array as a first-pass scorecard. The final verdict should still account for commands the inspector cannot run.

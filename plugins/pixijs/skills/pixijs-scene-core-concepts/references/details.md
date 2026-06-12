@@ -1,6 +1,6 @@
 # pixijs-scene-core-concepts Details
 
-This skill is the shared mental model referenced by all `pixijs-scene-*` leaves. It explains what the scene graph is in PixiJS v8, how a `Container` differs from a leaf, and where each concept lives. It does not go deep on any single API; it frames the pieces and points to the skill or reference file that does.
+Shared mental model for all `pixijs-scene-*` leaves: what the PixiJS v8 scene graph is, how a `Container` differs from a leaf, and which skill or reference file covers each concept in depth.
 
 ## Quick Start
 
@@ -26,36 +26,34 @@ hero.position.set(world.width / 2, world.height / 2);
 
 ### What the scene graph is
 
-The PixiJS scene graph is a tree of display objects rooted at `app.stage`. Each node has a parent, a transform (position, scale, rotation, pivot, skew) relative to its parent, and optional visual state (alpha, tint, blendMode, visibility). Each frame the renderer walks the tree, composes transforms and visual state down to world-space, culls what's offscreen, and emits draw calls. The scene graph is both the layout model and the render order: earlier siblings draw behind later siblings.
+A tree of display objects rooted at `app.stage`. Each node has a parent, a transform (position, scale, rotation, pivot, skew) relative to its parent, and optional visual state (alpha, tint, blendMode, visibility). Each frame the renderer walks the tree, composes transforms and visual state to world-space, culls offscreen objects, and emits draw calls. The tree is both layout model and render order: earlier siblings draw behind later siblings.
 
 Every display object in v8 is a `Container` subclass. `DisplayObject` from earlier versions was removed.
 
 ### Container vs leaf (CRITICAL)
 
-There are two roles in the tree:
+Two roles in the tree:
 
 - **Containers**: nodes that hold children. Use a `Container` (or `RenderLayer`) for any node that groups, positions, or transforms other nodes.
 - **Leaves**: nodes that draw something and have no children. Use `Sprite`, `Graphics`, `Text`, `Mesh`, `ParticleContainer`'s `Particle`, `DOMContainer`, or `GifSprite` as leaves.
 
-In PixiJS v8, leaves must not have children. Adding children to a `Sprite` / `Graphics` / `Text` / `Mesh` logs a deprecation warning and is scheduled to become a hard error. The rule is: **use `Container` for any node that needs children; do not nest children inside leaf scene objects.** If you need to group a leaf with other leaves, wrap them in a `Container`.
-
-This distinction is why the `pixijs-scene-*` skills are split the way they are: `pixijs-scene-container` covers the grouping node, and each leaf gets its own skill focused on its draw behavior.
+In PixiJS v8, leaves must not have children. Adding children to a `Sprite` / `Graphics` / `Text` / `Mesh` logs a deprecation warning and is scheduled to become a hard error. The rule is: **use `Container` for any node that needs children; do not nest children inside leaf scene objects.** To group a leaf with other leaves, wrap them in a `Container`.
 
 ### Transforms and coordinate spaces
 
-Every container composes a `localTransform` (a `Matrix`) from its `position`, `scale`, `rotation`, `pivot`, and `skew`. The renderer multiplies parents' local transforms together to produce the `worldTransform` (and `groupTransform` if a render group is in the chain), which maps local points to scene-root space. Use `toGlobal(point)` and `toLocal(point, from?)` to convert between spaces, and `getGlobalPosition()` for this object's world position. Full Matrix detail lives in `pixijs-math`; transform setters and `toLocal`/`toGlobal` live in `pixijs-scene-container`.
+Every container composes a `localTransform` (a `Matrix`) from its `position`, `scale`, `rotation`, `pivot`, and `skew`. The renderer multiplies parents' local transforms to produce the `worldTransform` (and `groupTransform` if a render group is in the chain), mapping local points to scene-root space. Use `toGlobal(point)` and `toLocal(point, from?)` to convert between spaces, and `getGlobalPosition()` for this object's world position. Full Matrix detail lives in `pixijs-math`; transform setters and `toLocal`/`toGlobal` live in `pixijs-scene-container`.
 
 ### Render order and explicit z-ordering
 
-Children render in array order: index 0 first, last index last. For explicit z-ordering on a single container, set `sortableChildren = true` and assign `zIndex` values to children. For render order that is decoupled from the logical hierarchy (e.g., a character's parent is a game world but its drawing happens on a UI layer), use `RenderLayer`. Deep detail, including when to prefer sortable children vs RenderLayer, is in `references/scene-management.md`.
+Children render in array order: index 0 first, last index last. For explicit z-ordering on a single container, set `sortableChildren = true` and assign `zIndex` values to children. For render order decoupled from the logical hierarchy (e.g., a character parented to the game world but drawn on a UI layer), use `RenderLayer`. Deep detail, including when to prefer sortable children vs RenderLayer, is in `references/scene-management.md`.
 
 ### Render groups
 
-Flagging a container with `isRenderGroup: true` (or calling `container.enableRenderGroup()`) tells PixiJS to apply its transform on the GPU as a single matrix instead of recomputing every descendant's world transform on the CPU each frame. Use render groups on large, stable sub-trees such as worlds, UI layers, or parallax strips. Deep detail in `references/scene-management.md`.
+`isRenderGroup: true` (or `container.enableRenderGroup()`) applies the container's transform on the GPU as a single matrix instead of recomputing every descendant's world transform on the CPU each frame. Use render groups on large, stable sub-trees such as worlds, UI layers, or parallax strips. Deep detail in `references/scene-management.md`.
 
 ### Culling
 
-`cullable = true` + a `cullArea: Rectangle` tells the `CullerPlugin` (or any culling pass) to skip rendering objects that fall outside the visible area. `cullableChildren = false` short-circuits recursive culling for a sub-tree whose children are always on screen. Culling is a performance topic; `pixijs-performance` and `references/scene-management.md` cover the trade-offs.
+`cullable = true` + a `cullArea: Rectangle` tells the `CullerPlugin` (or any culling pass) to skip rendering objects outside the visible area. `cullableChildren = false` short-circuits recursive culling for a sub-tree whose children are always on screen. Trade-offs are covered in `pixijs-performance` and `references/scene-management.md`.
 
 ### Masking
 
@@ -63,7 +61,7 @@ Set `container.mask` to another display object to clip its rendering. PixiJS pic
 
 ### Visibility, alpha, tint, and blend mode
 
-`visible = false` skips rendering and transform updates; `renderable = false` skips rendering but still updates transforms (use when hit-testing or bounds queries need to stay live). `alpha` and `tint` multiply down through the sub-tree; `blendMode` controls how this container's draw instructions composite against what is already on the target. See `pixijs-blend-modes` for the full blend-mode list and `pixijs-scene-container` for per-node state.
+`visible = false` skips rendering and transform updates; `renderable = false` skips rendering but still updates transforms (use when hit-testing or bounds queries need to stay live). `alpha` and `tint` multiply down through the sub-tree; `blendMode` controls how this container's draw instructions composite against the target. See `pixijs-blend-modes` for the full blend-mode list and `pixijs-scene-container` for per-node state.
 
 ### Destroy semantics
 
@@ -71,21 +69,21 @@ Set `container.mask` to another display object to clip its rendering. PixiJS pic
 
 ### Lifecycle events
 
-Containers emit events for hierarchy and visibility changes: `childAdded` / `childRemoved` on the parent, `added` / `removed` on the child, plus `visibleChanged` and `destroyed` on the container itself. Useful for wiring reactive UI updates or resource bookkeeping. Full details in `references/container-hierarchy.md`.
+Containers emit events for hierarchy and visibility changes: `childAdded` / `childRemoved` on the parent, `added` / `removed` on the child, plus `visibleChanged` and `destroyed` on the container itself. Full details in `references/container-hierarchy.md`.
 
 ## Leaf comparison: which skill covers which object
 
-| Leaf                                                                 | Primary use                                                                                                                                                                 | Skill                             |
-| -------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | --------------------------------- |
-| `Sprite`                                                             | Draw a single texture at a position (with variants `NineSliceSprite` for resizable UI panels and `TilingSprite` for repeating backgrounds).                                 | `pixijs-scene-sprite`             |
-| `Text` / `BitmapText` / `HTMLText` / `SplitText` / `SplitBitmapText` | Render text. Canvas-based `Text` for general use, `BitmapText` for high-volume cheap text, `HTMLText` for rich HTML/CSS layout, split variants for per-character animation. | `pixijs-scene-text`               |
-| `Graphics`                                                           | Vector drawing: shapes, lines, paths, fills, strokes. Backed by a `GraphicsContext`.                                                                                        | `pixijs-scene-graphics`           |
-| `Mesh` / `MeshSimple` / `MeshPlane` / `MeshRope` / `PerspectiveMesh` | Custom geometry with a shader or texture. Use `MeshRope` for textured path-following ribbons and `PerspectiveMesh` for 2D perspective.                                      | `pixijs-scene-mesh`               |
-| `ParticleContainer` + `Particle`                                     | Thousands of lightweight sprites with a restricted transform set, for high-throughput particle effects.                                                                     | `pixijs-scene-particle-container` |
-| `DOMContainer`                                                       | Render an HTML element positioned inside the scene graph (useful for inputs, iframes, accessibility overlays).                                                              | `pixijs-scene-dom-container`      |
-| `GifSprite`                                                          | Animated GIF playback as a display object. Requires `pixi.js/gif`.                                                                                                          | `pixijs-scene-gif`                |
+| Leaf | Primary use | Skill |
+| --- | --- | --- |
+| `Sprite` | Draw a single texture at a position (variants: `NineSliceSprite` for resizable UI panels, `TilingSprite` for repeating backgrounds). | `pixijs-scene-sprite` |
+| `Text` / `BitmapText` / `HTMLText` / `SplitText` / `SplitBitmapText` | Render text. Canvas-based `Text` for general use, `BitmapText` for high-volume cheap text, `HTMLText` for rich HTML/CSS layout, split variants for per-character animation. | `pixijs-scene-text` |
+| `Graphics` | Vector drawing: shapes, lines, paths, fills, strokes. Backed by a `GraphicsContext`. | `pixijs-scene-graphics` |
+| `Mesh` / `MeshSimple` / `MeshPlane` / `MeshRope` / `PerspectiveMesh` | Custom geometry with a shader or texture. `MeshRope` for textured path-following ribbons, `PerspectiveMesh` for 2D perspective. | `pixijs-scene-mesh` |
+| `ParticleContainer` + `Particle` | Thousands of lightweight sprites with a restricted transform set, for high-throughput particle effects. | `pixijs-scene-particle-container` |
+| `DOMContainer` | Render an HTML element positioned inside the scene graph (inputs, iframes, accessibility overlays). | `pixijs-scene-dom-container` |
+| `GifSprite` | Animated GIF playback as a display object. Requires `pixi.js/gif`. | `pixijs-scene-gif` |
 
-`Container` itself is covered in `pixijs-scene-container` and is the node every leaf lives inside.
+`Container` itself is covered in `pixijs-scene-container`.
 
 ## When to use what (quick decisions)
 
@@ -129,7 +127,7 @@ group.addChild(new Sprite(texture));
 group.addChild(new Graphics().rect(0, 0, 10, 10).fill(0xff0000));
 ```
 
-In v8 leaves (`Sprite`, `Graphics`, `Text`, `Mesh`, `ParticleContainer`, `DOMContainer`, `GifSprite`) technically extend `Container` but should not hold children. Adding children to a leaf produces undefined rendering behavior. Wrap the leaf in a `Container` when you need grouping.
+In v8 leaves (`Sprite`, `Graphics`, `Text`, `Mesh`, `ParticleContainer`, `DOMContainer`, `GifSprite`) extend `Container` but should not hold children. Adding children to a leaf produces undefined rendering behavior. Wrap the leaf in a `Container` when you need grouping.
 
 ### [CRITICAL] Referencing DisplayObject
 
@@ -175,7 +173,7 @@ for (let i = 0; i < 5000; i++) {
 app.stage.addChild(world);
 ```
 
-Without `isRenderGroup: true`, the renderer recomposes every child's transform against its parents every frame. Marking the subtree as a render group caches transforms and draw state until a child changes, which is essential for large or mostly-static trees.
+Without `isRenderGroup: true`, the renderer recomposes every child's transform against its parents every frame. A render group caches transforms and draw state until a child changes -- essential for large or mostly-static trees.
 
 ### [HIGH] Treating child.x as world space
 
@@ -196,7 +194,7 @@ const worldPos = enemy.toGlobal({ x: 0, y: 0 });
 console.log(worldPos.x); // 700
 ```
 
-`Container.x/y/scale/rotation` are LOCAL to the parent. Use `toGlobal(point)` to compute world-space coordinates, or `getGlobalPosition()` for the container's origin in world space. The world transform is not exposed as a simple `x/y` pair.
+`Container.x/y/scale/rotation` are LOCAL to the parent. Use `toGlobal(point)` for world-space coordinates, or `getGlobalPosition()` for the container's origin in world space. The world transform is not exposed as a simple `x/y` pair.
 
 ### [MEDIUM] sortableChildren without zIndex
 
@@ -226,7 +224,7 @@ layer.addChild(bg, mid, fg);
 
 ## Tooling
 
-The [PixiJS Devtools Chrome extension](https://chromewebstore.google.com/detail/pixijs-devtools/aamddddknhcagpehecnhphigffljadon) lets you inspect and manipulate a running scene graph in real time. Install it for any non-trivial layout or render-order debugging.
+The [PixiJS Devtools Chrome extension](https://chromewebstore.google.com/detail/pixijs-devtools/aamddddknhcagpehecnhphigffljadon) inspects and manipulates a running scene graph in real time. Install it for any non-trivial layout or render-order debugging.
 
 ## API Reference
 

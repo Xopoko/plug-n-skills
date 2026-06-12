@@ -7,11 +7,12 @@ development work.
 
 Plug'n Skills is a library of plugin packs for Codex, Claude Code, Cursor, and
 other coding agents. The source tree is agent-agnostic: every pack works from
-any of those hosts and is never locked to one of them. Each pack gives an agent a focused workflow: what to inspect,
-which commands to run, what to verify, and when to use a deterministic helper
-instead of improvising from a prompt.
+any of those hosts and is never locked to one of them. Each pack gives an
+agent a focused workflow: what to inspect, which
+commands to run, what to verify, and when to use a deterministic helper instead
+of improvising from a prompt.
 
-Use it when you want an agent that can handle more than generic code edits:
+Use it when you want an agent to handle more than generic code edits:
 
 - build, debug, profile, test, package, and release Swift apps;
 - work with Kotlin Multiplatform, Tauri, PixiJS, Codex CLI, and Claude Code;
@@ -19,18 +20,17 @@ Use it when you want an agent that can handle more than generic code edits:
 - plan scientific research, spec-driven delivery, context compression, and
   agent capability synthesis.
 
-The repository ships 13 installable plugin packs and more than 150 focused
-agent skills. Every pack is plain repository content: manifests, `SKILL.md`
-files, references, validators, and helper scripts. You can inspect it, validate
-it from a fresh clone, install only the packs you need, and keep generated local
-marketplace or cache state out of the repo.
+The repository ships 13 installable plugin packs and 150+ focused agent
+skills, all plain repository content: manifests, `SKILL.md` files, references,
+validators, and helper scripts. Inspect it, validate it from a fresh clone,
+install only the packs you need, and keep generated local marketplace or cache
+state out of the repo.
 
 ## Quick Start
 
 ### Easiest: Ask Your Agent
 
-For most users, the simplest path is to paste this prompt into the coding agent
-you already use:
+Paste this prompt into the coding agent you already use:
 
 ```text
 Install Plug'n Skills from https://github.com/Xopoko/plug-n-skills on this
@@ -77,12 +77,12 @@ file at `.agents/plugins/marketplace.json`, points Codex's `local` marketplace
 at this checkout, enables the selected plugins, and materializes cache entries
 under `~/.codex/plugins/cache/local/...`.
 
-`.agents/` and Codex cache directories are local runtime state. They are not
-part of the published source tree.
+`.agents/` and Codex cache directories are local runtime state, not part of
+the published source tree.
 
 ### Claude Code
 
-Add this repository as a Claude Code marketplace, then install the plugin pack you
+Add this repository as a Claude Code marketplace, then install the pack you
 need:
 
 ```text
@@ -91,7 +91,7 @@ need:
 /reload-plugins
 ```
 
-For a local checkout, use the checkout path instead of the GitHub shorthand:
+For a local checkout, use its path instead of the GitHub shorthand:
 
 ```text
 /plugin marketplace add /path/to/plug-n-skills
@@ -155,7 +155,7 @@ instructions.
 | Reference files | 43 | - | Longer ledgers, contracts, scorecards, and source notes. |
 | Helper and validator scripts | 38 | - | Deterministic plugin-local helpers. |
 | Startup metadata | 155 skills | 11,813 | Skill name, description, and file pointer for routing. |
-| On-demand skill bodies | 155 skills | 98,896 | Instruction bodies after frontmatter, loaded only when selected. |
+| On-demand skill bodies | 155 skills | 98,779 | Instruction bodies after frontmatter, loaded only when selected. |
 
 Regenerate the report after skill edits:
 
@@ -174,12 +174,12 @@ Token columns are `startup metadata / on-demand body`.
 | --- | ---: | ---: | ---: | ---: | ---: |
 | `build-swift-apps` | 59 | 0 | 5 | 4,449 | 36,680 |
 | `pixijs` | 26 | 0 | 0 | 1,861 | 7,967 |
-| `tauri` | 6 | 0 | 1 | 481 | 3,206 |
+| `tauri` | 6 | 0 | 1 | 481 | 3,175 |
 | `scientific-research` | 1 | 0 | 0 | 91 | 2,009 |
 | `context-density` | 1 | 0 | 1 | 128 | 2,500 |
-| `capability-workbench` | 9 | 11 | 21 | 814 | 10,716 |
-| `codex-cli` | 6 | 3 | 2 | 501 | 5,473 |
-| `claude-code` | 6 | 2 | 1 | 528 | 4,609 |
+| `capability-workbench` | 9 | 11 | 21 | 814 | 10,699 |
+| `codex-cli` | 6 | 3 | 2 | 501 | 5,434 |
+| `claude-code` | 6 | 2 | 1 | 528 | 4,579 |
 | `architecture-intelligence` | 8 | 7 | 2 | 523 | 5,033 |
 | `design-intelligence` | 7 | 2 | 1 | 472 | 5,101 |
 | `game-design-intelligence` | 6 | 2 | 1 | 536 | 2,916 |
@@ -311,7 +311,7 @@ Token cells are shown as `startup/body`.
 | `tauri-debug-testing` | 77/562 | Debug, test, or stabilize Tauri 2 apps, including Rust compile/runtime errors, frontend API mocks, permissions failures, dev/build mismatches, WebDriver, CI checks, logs, DevTools, and platform-specific test gaps. |
 | `tauri-distribution-mobile` | 82/470 | Package, sign, notarize, update, release, or validate Tauri 2 desktop/mobile builds, including bundle targets, updater signatures, macOS/Windows/Linux distribution, Android/iOS setup, CI release checks, and store-readiness planning. |
 | `tauri-ipc-plugins` | 77/465 | Implement or review Tauri 2 Rust commands, frontend invoke wrappers, events, Channels, custom errors, state, official plugins, or custom Tauri plugins across Rust, JavaScript, permissions, and mobile surfaces. |
-| `tauri-projects` | 98/621 | Start, inspect, scaffold, migrate, or orient Tauri 2 projects. Use when a task mentions creating a Tauri app, adding Tauri to an existing frontend, src-tauri project structure, package-manager selection, framework selection, Tauri 1 to 2 migration, or "what shape is this Tauri repo in? |
+| `tauri-projects` | 98/590 | Start, inspect, scaffold, migrate, or orient Tauri 2 projects. Use when a task mentions creating a Tauri app, adding Tauri to an existing frontend, src-tauri project structure, package-manager selection, framework selection, Tauri 1 to 2 migration, or "what shape is this Tauri repo in? |
 | `tauri-shell-ui` | 79/445 | Build or review Tauri 2 desktop shell features: windows, webviews, menus, tray icons, custom titlebars, resources, icons, state, sidecars, opener/shell APIs, deep links, and native-feeling desktop interactions. |
 
 #### `scientific-research`
@@ -334,7 +334,7 @@ Token cells are shown as `startup/body`.
 | `capability-portfolio-architect` | 103/922 | Audit agent skill/plugin portfolio architecture. Use for cross-plugin capability overlap, weak routing, duplicated or missing skills, split/merge/delete/move decisions, shared capability extraction, reference/script extraction, and plugin boundary redesign. For safety, coverage, or validation review of a single artifact without boundary changes, use capability-auditor instead. |
 | `capability-reality-repair` | 92/804 | Repair stale or false agent capability instructions immediately. Use when a skill, script, plugin manifest/helper, MCP/tool contract, connector guidance, validator, or bundled reference describes commands, schemas, paths, outputs, install state, dependencies, or behavior that does not match live reality. |
 | `capability-synthesizer` | 124/2,200 | Perform broad external-first discovery, vetting, scoring, distillation, and synthesis of agent skills or plugin packs from the public web, GitHub/public repositories, OpenClaw/ClawHub, marketplaces, research sources, community implementations, user references, and local skills. Use for well-vetted capability synthesis, cross-skill comparison, plugin-pack synthesis, global capability acquisition, skill strengthening, and adoption/rejection changelogs. |
-| `capability-workbench` | 74/1,664 | Route and orchestrate agent skill and plugin lifecycle work. Use when work involves agent skills, plugins, marketplace packages, capability acquisition, synthesis, creation, installation, packaging, audit, or context-density optimization. |
+| `capability-workbench` | 74/1,647 | Route and orchestrate agent skill and plugin lifecycle work. Use when work involves agent skills, plugins, marketplace packages, capability acquisition, synthesis, creation, installation, packaging, audit, or context-density optimization. |
 | `plugin-factory` | 79/1,182 | Create, update, validate, optionally install/cache-refresh, and hand off marketplace-backed agent plugins. Use for plugin manifests, local marketplace entries, plugin-pack synthesis, triggerable skill bundles, install visibility gates, and Codex app deeplinks. |
 | `skill-factory` | 79/1,147 | Create, refactor, split, compress, validate, or package agent skills. Use for SKILL.md trigger design, agents/openai.yaml metadata, skill resources, progressive disclosure, token-efficient instructions, quick validation, and plugin-contained skills. |
 | `skill-installer-vetter` | 82/788 | Find, list, vet, install, or update agent skills from curated catalogs, GitHub repo paths, local folders, or user-provided references. Use when installation must be preceded by provenance, safety, dependency, and capability checks. |
@@ -346,7 +346,7 @@ Token cells are shown as `startup/body`.
 | --- | ---: | --- |
 | `codex-cli` | 74/939 | Route Codex CLI work across local CLI inspection, non-interactive exec/review automation, plugin and MCP management, doctor/debug/sandbox/app-server diagnostics, session log forensics, and Codex app local environment actions. |
 | `codex-doctor-debugger` | 82/824 | Use when diagnosing Codex CLI install, config, auth, runtime, feature flags, sandbox denials, debug models, prompt input, app-server, remote-control, remote websocket/unix connections, or local Codex health failures. |
-| `codex-environments` | 84/1,019 | Create, update, debug, or remove Codex app local project environments and actions, including `.codex/environments/environment.toml`, Run/Test/Preview buttons, startup commands, simulator/browser/dev-server launch actions, environment variables, and repeatable local commands. |
+| `codex-environments` | 84/980 | Create, update, debug, or remove Codex app local project environments and actions, including `.codex/environments/environment.toml`, Run/Test/Preview buttons, startup commands, simulator/browser/dev-server launch actions, environment variables, and repeatable local commands. |
 | `codex-exec-automation` | 97/1,003 | Use when preparing, running, debugging, or reviewing non-interactive Codex CLI automation with `codex exec`, `codex exec resume`, `codex review`, JSONL events, output schemas, last-message files, cwd/profile/config flags, sandbox and approval modes, or CI-style agent runs. |
 | `codex-log-reader` | 87/808 | Use when locating, summarizing, or debugging Codex session rollout JSONL logs by CODEX_THREAD_ID, cwd, query, issue key, project path, malformed or huge log symptoms, world-readable log concerns, or "what happened in this Codex thread" questions. |
 | `codex-plugin-mcp-manager` | 77/880 | Use when managing Codex CLI plugins, plugin marketplaces, local marketplace refreshes, cache visibility, MCP server list/get/add/remove/login/logout, MCP bearer token environment variables, or plugin/MCP installation failures. |
@@ -359,7 +359,7 @@ Token cells are shown as `startup/body`.
 | `claude-code` | 72/774 | Route Claude Code CLI work across local CLI inspection, interactive and print-mode automation, plugin and MCP lifecycle, diagnostics, hooks/settings, background agents, worktrees, sessions, remote control, and ultrareview. |
 | `claude-doctor-debugger` | 91/723 | Use when diagnosing Claude Code install/update/auth/config/runtime health, broken customizations, safe mode, bare mode, debug logs, auto-mode classifier, settings validation, keychain or API-key auth boundaries, IDE/Chrome integration, doctor warnings, or update/install/setup-token issues. |
 | `claude-hooks-settings` | 87/693 | Use when creating, editing, auditing, or debugging Claude Code settings, hooks, CLAUDE.md/rules loading, custom agents, tool allow/deny permissions, output styles, workflows, setting sources, safe-mode/bare-mode differences, or plugin-provided customizations. |
-| `claude-plugin-mcp-manager` | 95/853 | Use when managing Claude Code plugins, plugin marketplaces, plugin validation/details/token cost/tag/install/update/remove/prune, session-only plugin-dir or plugin-url, MCP list/get/add/remove/import/serve, project MCP approvals, strict MCP config, transports, headers, OAuth, or MCP/plugin installation failures. |
+| `claude-plugin-mcp-manager` | 95/823 | Use when managing Claude Code plugins, plugin marketplaces, plugin validation/details/token cost/tag/install/update/remove/prune, session-only plugin-dir or plugin-url, MCP list/get/add/remove/import/serve, project MCP approvals, strict MCP config, transports, headers, OAuth, or MCP/plugin installation failures. |
 | `claude-print-automation` | 93/825 | Use when preparing, running, or debugging non-interactive Claude Code with `claude --print`, output-format text/json/stream-json, input-format text/stream-json, JSON schema validation, budget caps, fallback model, no session persistence, prompt suggestions, or trusted-directory CI-style runs. |
 
 #### `architecture-intelligence`
@@ -430,8 +430,7 @@ Token cells are shown as `startup/body`.
 
 ## Repository Design
 
-The repository is organized so source, install state, and runtime cache do not
-get mixed together:
+Source, install state, and runtime cache stay separated:
 
 ```text
 plugins/

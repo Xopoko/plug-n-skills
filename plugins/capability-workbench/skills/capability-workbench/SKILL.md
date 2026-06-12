@@ -5,11 +5,11 @@ description: Route and orchestrate agent skill and plugin lifecycle work. Use wh
 
 # Capability Workbench
 
-Use this as the first stop for agent capability work. Decide the output shape, call the narrow sibling skill, and keep validation complete. Treat installation or cache refresh as an explicit activation step, not as an automatic side effect of every synthesis.
+First stop for agent capability work: decide the output shape, call the narrow sibling skill, keep validation complete. Treat installation or cache refresh as an explicit activation step, not an automatic side effect of every synthesis.
 
 ## Plugin Root
 
-Bundled commands use `$PLUGIN_ROOT` for the plugin root. Set it once: use the host's plugin-root variable when defined (Claude Code: `PLUGIN_ROOT="$CLAUDE_PLUGIN_ROOT"`), otherwise the absolute path of this skill folder's `../..`. Shared scripts live in `$PLUGIN_ROOT/scripts/`, shared references in `$PLUGIN_ROOT/references/`, sibling skills in `$PLUGIN_ROOT/skills/`. Prefer bundled scripts when they fit; use system skills only as source references or fallbacks.
+Bundled commands use `$PLUGIN_ROOT`. Set it once: the host's plugin-root variable when defined (Claude Code: `PLUGIN_ROOT="$CLAUDE_PLUGIN_ROOT"`), otherwise the absolute path of this skill folder's `../..`. Shared scripts live in `$PLUGIN_ROOT/scripts/`, references in `$PLUGIN_ROOT/references/`, sibling skills in `$PLUGIN_ROOT/skills/`. Prefer bundled scripts when they fit; use system skills only as source references or fallbacks.
 
 ## Route The Work
 
@@ -35,7 +35,7 @@ If a capability artifact contradicts live behavior while any workflow is running
 
 ## Bind Target And Scope
 
-Bind the primary target and delivery surface before editing. If the user names a skill or plugin with `$...` or `@...`, treat that named capability as the thing to create, synthesize, strengthen, install, or package. Then decide where the source artifact should live from the latest user message, repo instructions, and workspace shape. A current plugin/skill source repository can be the target surface when the request is to create or improve artifacts in that repository. Do not install, cache-refresh, or write global agent state unless the user asks for installed/global use or the selected lifecycle step explicitly requires activation proof.
+Bind the primary target and delivery surface before editing. If the user names a skill or plugin with `$...` or `@...`, that named capability is the thing to create, synthesize, strengthen, install, or package. Decide where the source artifact should live from the latest user message, repo instructions, and workspace shape; a current plugin/skill source repository can be the target surface when the request is to create or improve artifacts there. Do not install, cache-refresh, or write global agent state unless the user asks for installed/global use or the selected lifecycle step explicitly requires activation proof.
 
 ## Minimum Workflow
 

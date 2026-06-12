@@ -1,13 +1,13 @@
 # Design Intelligence Scorecards
 
-Use these scorecards as shared language across the focused skills. They are not a substitute for user research, usability testing, accessibility testing, analytics, or domain expertise.
+Shared language across the focused skills; not a substitute for user research, usability testing, accessibility testing, analytics, or domain expertise.
 
 ## Severity
 
 | Severity | Meaning | Action |
 | --- | --- | --- |
 | P0 | Causes user harm, legal/accessibility risk, destructive data loss, deceptive UX, or blocks a critical task. | Must fix or explicitly reject before launch. |
-| P1 | Blocks or seriously degrades a primary user task for a meaningful user segment. | Fix before launch or before the next high-risk release. |
+| P1 | Blocks or seriously degrades a primary user task for a meaningful user segment. | Fix before launch or the next high-risk release. |
 | P2 | Causes avoidable friction, confusion, support load, or measurable task slowdown. | Plan and prioritize with nearby work. |
 | P3 | Polish, consistency, or clarity issue with low task impact. | Fix opportunistically. |
 
@@ -60,7 +60,7 @@ When a surface-specific recommendation matters, check:
 
 Every review finding should include:
 
-- `id`: stable kebab-case finding id.
+- `id`: stable kebab-case id.
 - `severity`: `P0`, `P1`, `P2`, or `P3`.
 - `lens`: one of the core lenses above.
 - `evidence`: what was observed, with file/screenshot/step/source reference when available.

@@ -1,6 +1,6 @@
 # Architecture Intelligence Contracts
 
-Use these contracts for durable architecture outputs. Keep lightweight answers short, but use these schemas when the output should be saved, checked, or reused.
+Use these schemas when the output should be saved, checked, or reused; keep lightweight answers short.
 
 ## `architecture_intelligence.audit.v1`
 
@@ -134,7 +134,7 @@ Use this contract only when there is both an intended architecture source and ob
 
 ## `architecture_intelligence.policy.v1`
 
-This lightweight input schema is accepted by `scripts/architecture_probe.py --policy`.
+Input schema accepted by `scripts/architecture_probe.py --policy`.
 
 ```json
 {
@@ -161,7 +161,7 @@ The probe matches top-level static import edges and exact required document path
 
 ## `architecture_intelligence.structure_metrics.v1`
 
-This schema records conservative static structure metrics from the offline probe.
+Conservative static structure metrics from the offline probe.
 
 ```json
 {
@@ -310,9 +310,7 @@ Allowed rollout modes: `measure`, `warn`, `enforce`.
 
 ## `architecture_intelligence.refactor_report.v1`
 
-Use this contract after architecture-changing refactors that should remain
-reviewable after the session. It links the observed baseline, skill route,
-changed boundary, proof, and residual risks.
+Use after architecture-changing refactors that should remain reviewable after the session; links the observed baseline, skill route, changed boundary, proof, and residual risks.
 
 Required fields:
 
@@ -376,7 +374,7 @@ Allowed severities: `P0`, `P1`, `P2`, `P3`.
 
 ## `architecture_intelligence.runtime_topology.v1`
 
-This schema records runtime architecture evidence from source, config, deployment, and operational signals.
+Runtime architecture evidence from source, config, deployment, and operational signals.
 
 ```json
 {
@@ -435,7 +433,7 @@ Never put secret values in this contract. Use paths, signal names, command outpu
 
 ## `architecture_intelligence.ownership_topology.v1`
 
-This schema records source-backed ownership evidence and coordination-risk signals.
+Source-backed ownership evidence and coordination-risk signals.
 
 ```json
 {
