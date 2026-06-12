@@ -174,7 +174,12 @@ Language robustness: planted exam violations are language-neutral
 (structure and numbers, not English words); checker wordlists are
 configurable; all role outputs are structured JSON, which works the same
 in any conversation language. Contracts may be translated, but the
-literal output templates and token names must stay verbatim.
+literal output templates and token names must stay verbatim. Lexical
+wordlist warnings are hints, never decisions: blocking checks use only
+language-independent structure, semantics belongs to the reviewer, and
+when the wordlist matches nothing in a substantial corpus the checker
+says so out loud (`wordlist-no-coverage`) instead of staying silently
+inert.
 
 ## Cross-file duplication pass (before per-file compression)
 
