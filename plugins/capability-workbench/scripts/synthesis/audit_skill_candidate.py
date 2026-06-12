@@ -18,8 +18,10 @@ metadata, and reports risk and quality indicators for manual review.
 # case-insensitive regexes; the zero-width-character class was narrowed; the
 # setuid chmod patterns were tightened; POST/GET tokens were scoped case-sensitive;
 # per-pattern confidences and severity values were dropped and remapped onto this
-# script's risk tiers; the static-runner, OSV/CVE network lookups, YARA rules,
-# Unicode/codepoint analysis, and LLM-based analyzers were not ported.
+# script's risk tiers; Unicode/codepoint analysis was partially ported (narrowed
+# to ASCII-escaped bidi/invisible char-classes plus a small Cyrillic/Greek
+# confusables-in-identifier check via unicodedata); the static-runner, OSV/CVE
+# network lookups, YARA rules, and LLM-based analyzers were not ported.
 #
 # This file as a whole is distributed under the MIT license of this repository.
 # SPDX-License-Identifier: MIT
@@ -31,6 +33,7 @@ import json
 import mimetypes
 import os
 import re
+import unicodedata
 from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Iterable
@@ -213,6 +216,34 @@ PATTERNS = {
         r"(?:disable|skip|ignore|bypass)[_-](?:security|auth|authentication|validation|sanitization|encoding|escaping)\b",
         r"\bchmod\s+(?:-R\s+)?(?:(?:0?o?)?(?:777|666)|a\+rwx)\b",
     ],
+    # Authored as ASCII \uXXXX escapes, never literal codepoints: the regex must
+    # match the real characters in scanned content without matching its own
+    # ASCII source line (the file stays pure ASCII).
+    "unicode_deception": [
+        r"[\u202a-\u202e\u2066-\u2069]",
+        r"[\u00ad\u034f\u2061-\u2064]",
+    ],
+    "session_persistence": [
+        r"\bcrontab\s+(?:-[el]|.*?>>?\s*/)",
+        r"\b(?:add|create|install|register)\s+(?:a\s+)?(?:cron\s+)?(?:job|task|entry)\s+(?:for|to|that)\b",
+        r"(?:>>?|append|write|install)\s+(?:to\s+)?(?:~/)?\.(?:bashrc|zshrc|profile|bash_profile|login|cshrc)\b",
+        r"\b(?:systemctl|launchctl)\s+(?:enable|load|install|register|bootstrap)\b",
+        r"\b(?:systemd|launchd|init\.d)\b.*\b(?:enable|install|register|create)\b",
+        r"\b(?:create|install|register|add)\s+(?:a\s+)?(?:systemd\s+)?(?:service|daemon|agent)\s+(?:file|unit)\b",
+        r"\b(?:nohup|disown|setsid)\b",
+        r"\b(?:defaults\s+write|launchctl\s+load)\b",
+        r"\b(?:LaunchAgents|LaunchDaemons)\b",
+        r"(?:persist|maintain|keep|preserve)\s+(?:the\s+)?(?:state|data|context|session)\s+(?:across|between|through)\s+(?:sessions?|restarts?|reboots?|invocations?)",
+    ],
+    "output_handling": [
+        r"\b(?:exec|eval)\s*\(\s*(?:response|output|result|answer|completion|reply|generated)",
+        r"\bsubprocess\.\w+\s*\([^)]*\b(?:response|output|result|answer|completion)\b",
+        r"\bos\.system\s*\(\s*[^)]*\b(?:response|output|result|answer|completion)\b",
+        r"\b(?:innerHTML|outerHTML)\s*=\s*[^=].*\b(?:response|output|result|answer|completion)\b",
+        r"\bdocument\.write\s*\(\s*[^)]*\b(?:response|output|result|answer|completion)\b",
+        r"\bdangerouslySetInnerHTML\s*=\s*\{",
+        r"\bf['\"](?:SELECT|INSERT|UPDATE|DELETE)\b[^'\"]*\{\s*(?:response|output|result)\b",
+    ],
     "quality_mechanisms": [
         r"\b(?:validate|validator|schema|strict json|typed|contract|dry[- ]run)\b",
         r"\b(?:test|pytest|vitest|playwright|snapshot|golden|fixture)\b",
@@ -349,7 +380,51 @@ PROSE_ATTACK_CATEGORIES = {
     "prompt_injection",
     "self_modification",
     "system_prompt_leakage",
+    "unicode_deception",
 }
+
+# Cyrillic/Greek glyphs that look like Latin letters. Applied ONLY to the parsed
+# frontmatter name (an identifier), never to prose, mirroring SkillSpector's
+# is_identifier scoping so legitimate non-Latin documentation does not trip it.
+CONFUSABLE_TO_LATIN = {
+    0x0430: "a", 0x0435: "e", 0x043E: "o", 0x0440: "p", 0x0441: "c", 0x0445: "x",
+    0x0443: "y", 0x0456: "i", 0x0458: "j", 0x0455: "s", 0x051B: "q",
+    0x0410: "A", 0x0412: "B", 0x0415: "E", 0x041A: "K", 0x041C: "M", 0x041D: "H",
+    0x041E: "O", 0x0420: "P", 0x0421: "C", 0x0422: "T", 0x0425: "X", 0x0405: "S",
+    0x0406: "I", 0x0408: "J",
+    0x03B1: "a", 0x03BF: "o", 0x03C1: "p", 0x03BD: "v", 0x0391: "A", 0x0392: "B",
+    0x0395: "E", 0x0397: "H", 0x0399: "I", 0x039A: "K", 0x039C: "M", 0x039D: "N",
+    0x039F: "O", 0x03A1: "P", 0x03A4: "T", 0x03A7: "X", 0x0396: "Z",
+}
+
+
+def detect_name_confusables(name: str) -> list["Match"]:
+    """Flag Cyrillic/Greek Latin-lookalikes in a skill name identifier.
+
+    A mixed Latin+confusable name is a deliberate typosquat (active); an
+    all-non-Latin name still surfaces as a milder signal (mention).
+    """
+    out: list[Match] = []
+    if not name:
+        return out
+    has_latin = any("a" <= c.lower() <= "z" for c in name)
+    for ch in name:
+        cp = ord(ch)
+        if cp in CONFUSABLE_TO_LATIN:
+            try:
+                uname = unicodedata.name(ch)
+            except ValueError:
+                uname = "UNNAMED"
+            out.append(
+                Match(
+                    "<frontmatter:name>",
+                    0,
+                    f"name contains {uname} (U+{cp:04X}) lookalike for '{CONFUSABLE_TO_LATIN[cp]}'",
+                    "metadata",
+                    "active" if has_latin else "mention",
+                )
+            )
+    return out
 
 
 def frontmatter_line_count(text: str) -> int:
@@ -479,6 +554,7 @@ def classify(indicators: dict[str, list[Match]]) -> tuple[str, str, dict[str, ob
         "prompt_injection",
         "self_modification",
         "telemetry_or_tracking",
+        "unicode_deception",
     }
     medium_active = {
         "credentials_or_secrets",
@@ -486,8 +562,10 @@ def classify(indicators: dict[str, list[Match]]) -> tuple[str, str, dict[str, ob
         "installers",
         "memory_poisoning",
         "network_calls",
+        "output_handling",
         "paid_or_api_services",
         "private_paths",
+        "session_persistence",
         "system_prompt_leakage",
         "unsafe_defaults",
         "unsafe_shell",
@@ -556,6 +634,11 @@ def audit_candidate(path: Path, max_file_bytes: int, max_matches: int) -> Candid
             audit.frontmatter = frontmatter
             raw = str(frontmatter.get("_raw", ""))
             audit.declared_env, audit.declared_bins = collect_declared_requirements(raw)
+            name_val = frontmatter.get("name")
+            if isinstance(name_val, str):
+                confusables = detect_name_confusables(name_val)
+                if confusables:
+                    audit.indicators.setdefault("unicode_deception", []).extend(confusables[:max_matches])
 
         merge_indicators(audit.indicators, scan_text(relative, text, max_matches), max_matches)
 

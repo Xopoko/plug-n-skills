@@ -47,7 +47,7 @@ Candidate:
 
 ## Static Helpers
 
-Run first-pass scans, then verify important findings manually:
+Run first-pass scans, then verify important findings manually. `audit_skill_candidate.py` flags instruction-attack prose (prompt injection, exfiltration, memory poisoning, system-prompt leakage), unicode deception (bidi/invisible chars anywhere; Cyrillic/Greek confusables in the skill name), and code-context risks (session persistence, model-output sinks, unsafe defaults):
 
 ```bash
 python3 "$PLUGIN_ROOT/scripts/synthesis/audit_skill_candidate.py" <skill-dir> --output candidate-audit.json
