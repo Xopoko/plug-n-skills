@@ -13,6 +13,8 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version: "3.11"
+      - name: Dependencies
+        run: python3 -m pip install --quiet pyyaml tiktoken
       - name: Repository validation
         run: python3 scripts/validate-repository.py
       - name: Repo script tests
@@ -26,6 +28,4 @@ jobs:
           python3 scripts/install-codex-plugins.py --dry-run
           python3 scripts/install-cursor-skills.py --dry-run --dest /tmp/cursor-preview
       - name: README token-table drift
-        run: |
-          python3 -m pip install --quiet tiktoken
-          python3 scripts/token-report.py --check
+        run: python3 scripts/token-report.py --check
