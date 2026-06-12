@@ -17,5 +17,9 @@ Bundled helpers:
 - `description_overlap.py`: rank skill-description pairs competing for routing
   by token overlap.
 - `compression_invariants.py`: deterministic original-vs-compressed invariant
-  check (frontmatter, fenced blocks, code spans, placeholder inventories) for
-  the compression pipeline.
+  check (frontmatter, fenced blocks, code spans, placeholder inventories) plus
+  non-blocking review warnings (numbers, modality/quantifier drops) for the
+  compression pipeline.
+- `refuter_calibration.py`: plant language-neutral violations into a real file
+  and grade a reviewer's verdict against the answer key — the qualification
+  exam semantic reviewers pass before their verdicts count.

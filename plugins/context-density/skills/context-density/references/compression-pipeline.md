@@ -27,6 +27,9 @@ Per file, as an independent pipeline (no barrier between files):
 4. **Re-refute** — a repair invalidates every earlier semantic verdict. A
    FRESH refuter (not the one that found the violations) must return clean;
    loop repair/re-refute until it does.
+5. **Cap the loop** — at most 3 repair rounds per file. A file that cannot
+   converge is REVERTED to the original and reported; never force-accept,
+   never loop forever. Reverting is a safe outcome, not a failure.
 
 Deterministic half:
 
@@ -36,6 +39,31 @@ python3 "$PLUGIN_ROOT/skills/context-density/scripts/compression_invariants.py" 
 
 Validate the checker itself once per batch with a tamper test: corrupt one
 protected token in a known-good output and confirm the checker fails.
+
+The checker also emits non-blocking WARNINGS (lost numbers, drops in
+modality/quantifier word counts) — hand them to the semantic reviewer as
+attention pointers. The wordlist is English by default; pass
+`--modality-words` for corpora in other languages.
+
+## Reviewer qualification (once per batch, before verdicts count)
+
+Executing agents differ in model strength and language; a reviewer's
+"CLEAN" is only evidence if the reviewer demonstrably catches violations.
+Qualify each reviewer role on a planted exam built from a real batch file:
+
+```bash
+python3 "$PLUGIN_ROOT/skills/context-density/scripts/refuter_calibration.py" plant <original> --exam exam.md --key key.json
+python3 "$PLUGIN_ROOT/skills/context-density/scripts/refuter_calibration.py" grade key.json verdict.json
+```
+
+Give the reviewer exam.md as if it were a compressed candidate; grade its
+JSON verdict against the key (pass = catches at least 4 of 5 blatant,
+language-neutral plants; grading is lenient by line window and clue text).
+A reviewer that fails the exam disqualifies the RUN — stop and report that
+semantic verification is unavailable on this host, rather than shipping
+<!-- cda:allow compression_without_relevance_check -->
+unreviewed compression. Do not make the exam harder than the default: it
+exists to catch negligent reviewers, not to demand your own strength.
 
 ## Compress contract (give verbatim to the compressing agent)
 
@@ -78,17 +106,19 @@ of the gate, not a failure of the run.
 
 ## Refute contract (give verbatim to the reviewing agent)
 
-Mission: REFUTE the claim that the compressed file preserves full
-semantics. Hunt for dropped or weakened steps, rules, conditions,
-thresholds, hedges, and escalation paths; altered literal templates or
-placeholders; frontmatter changes; invented instructions; modality
-changes; quantifier inversions ("any X unsupported" vs "unsupported by
-any X"); compound terms re-segmented by delimiter changes; concepts
-whose every example was dropped; contamination from any reference
-material used as an editorial guide. Dropped examples are
-acceptable only if another example of the same concept survives. Be
-strict: uncertainty counts as a violation. Return structured
-`{pass, violations[]}` — never prose.
+Work from the diff, not from memory: you receive the original, the
+compressed candidate, the unified diff between them, and the checker's
+warnings. Adjudicate EVERY diff hunk — for each one answer "meaning
+preserved" or report a violation; a hunk you cannot confidently clear
+counts as a violation. Hunt for dropped or weakened steps, rules,
+conditions, thresholds, hedges, and escalation paths; altered literal
+templates or placeholders; frontmatter changes; invented instructions;
+modality changes; quantifier inversions ("any X unsupported" vs
+"unsupported by any X"); compound terms re-segmented by delimiter
+changes; concepts whose every example was dropped; contamination from any
+reference material used as an editorial guide. Dropped examples are
+acceptable only if another example of the same concept survives. Return
+structured `{pass, violations[]}` with line numbers — never prose.
 
 ## Workflow skeleton
 
@@ -105,11 +135,20 @@ const results = await pipeline(FILES,
   },
   async (prev, f) => {
     if (prev.ok) return prev
-    await agent(repairPrompt(f, prev.violations), {schema: REPAIR})
-    const fresh = await agent(refutePrompt(f), {schema: VERDICT})  // re-refute
-    return {...prev, ok: fresh?.pass, violations: fresh?.violations ?? []}
+    let violations = prev.violations
+    for (let round = 1; round <= 3; round++) {          // capped repair loop
+      await agent(repairPrompt(f, violations), {schema: REPAIR})
+      const fresh = await agent(refutePrompt(f), {schema: VERDICT})  // re-refute
+      if (fresh?.pass) return {...prev, ok: true, rounds: round}
+      violations = fresh?.violations ?? []
+    }
+    await agent(`Revert ${f} to the original; it did not converge.`, {schema: REPAIR})
+    return {...prev, ok: false, reverted: true, violations}
   })
 ```
+
+(Before this pipeline: tamper-test the checker and run the reviewer
+qualification exam; both are single agents plus the calibration script.)
 
 Expect repairs: in a calibration run over nine rule-dense command templates,
 five failed first-round refutation (dropped "do not" rules, weakened MUST
@@ -117,10 +156,61 @@ scoping, a should-to-must inversion), and a second refutation round after
 repair caught five more residual losses. Files that pass first try are the
 minority, not the norm.
 
+## Weaker executors and single-agent hosts
+
+The pipeline must degrade safely, not silently. The fallback ladder:
+
+1. Full multi-agent host: run the pipeline as specified.
+2. Limited fan-out: keep ONE qualified reviewer and feed it files
+   sequentially — coverage of every file beats parallelism. Never skip
+   reviews to save agents.
+3. No subagents at all: run the deterministic checker and warnings, but do
+   NOT claim semantic verification — mark the output "deterministic-only,
+   requires external semantic review" and leave it uncommitted, or revert.
+4. Reviewer fails the qualification exam: same as 3 — the run downgrades;
+   files never ship on an unqualified "CLEAN".
+
+Language robustness: planted exam violations are language-neutral
+(structure and numbers, not English words); checker wordlists are
+configurable; all role outputs are structured JSON, which works the same
+in any conversation language. Contracts may be translated, but the
+literal output templates and token names must stay verbatim.
+
+## Cross-file duplication pass (before per-file compression)
+
+<!-- cda:allow commitment_loss_risk,compression_without_relevance_check -->
+Per-file editorial compression misses the largest win in template-style
+corpora: identical boilerplate repeated across files. Before compressing,
+run the audit over the whole batch and read `duplication_clusters`:
+
+```bash
+python3 "$PLUGIN_ROOT/skills/context-density/scripts/context_density_audit.py" <batch-dir> --json --top 20
+```
+
+High-mass clusters are extraction candidates (shared reference loaded
+conditionally), which is a STRUCTURAL change: route it as its own
+reviewed change with consumer validation, never fold it silently into
+the compression batch. Never mechanically merge safety text, consent
+wording, or deliberate router pointers.
+
+## Opt-in modes (never run these by default)
+
+- **Trigger-surface compression**: frontmatter descriptions are routing
+  commitments and stay byte-identical in the normal pipeline. Compressing
+  them is a separate, explicitly requested mode that additionally requires
+  description-overlap measurement before and after, and trigger-metadata
+  tests asserting discriminating terms per skill. Without those guards,
+  do not touch descriptions.
+- **Behavioral smoke validation**: for high-stakes corpora, run 2-3
+  representative consumer tasks against original and compressed versions
+  and compare outcomes; this is the only direct test of the economics
+  rule's "task success" clause.
+
 ## Acceptance and reporting
 
 - A file is done only when the deterministic checker passes AND the latest
-  fresh refuter returns clean.
+  fresh, exam-qualified refuter returns clean.
+- A file that hit the repair cap is reverted and listed as such.
 - Report per file and total: chars/tokens before and after, violations
   found and restored, and the token cost of restorations (restored
   commitments routinely cost back 1-3% — report it, do not hide it).

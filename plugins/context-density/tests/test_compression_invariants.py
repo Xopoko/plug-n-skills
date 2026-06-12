@@ -184,6 +184,49 @@ class CheckTests(unittest.TestCase):
         self.assertLess(result["reduction_pct"], 0)
 
 
+class WarningTests(unittest.TestCase):
+    BASE = ("---\nname: w\ndescription: d\n---\n\nYou must keep all items and "
+            "retry at most 3 times with a 50% backoff.\n")
+
+    def _check(self, compressed, **kw):
+        return ci.check(self.BASE, compressed, frontmatter_check=True,
+                        ignore_spans=set(), ignore_fenced_prefixes=[], **kw)
+
+    def test_identical_has_no_warnings(self):
+        result = self._check(self.BASE)
+        self.assertEqual(result["warnings"], [])
+
+    def test_lost_number_warns_but_passes(self):
+        compressed = self.BASE.replace(" 3 times with a 50% backoff", " a few times")
+        result = self._check(compressed)
+        kinds = {w["kind"] for w in result["warnings"]}
+        self.assertIn("number-lost", kinds)
+        self.assertTrue(result["passed"])
+
+    def test_modality_and_quantifier_drop_warn(self):
+        compressed = self.BASE.replace("You must keep all items", "Keep items")
+        result = self._check(compressed)
+        kinds = {w["kind"] for w in result["warnings"]}
+        self.assertIn("modality-drop", kinds)
+        self.assertIn("quantifier-drop", kinds)
+        self.assertTrue(result["passed"])
+
+    def test_custom_modality_wordlist(self):
+        base = "---\nname: w\ndescription: d\n---\n\n\u042d\u0442\u043e \u043e\u0431\u044f\u0437\u0430\u0442\u0435\u043b\u044c\u043d\u043e \u0434\u043b\u044f \u0432\u0441\u0435\u0445.\n"
+        compressed = base.replace("\u043e\u0431\u044f\u0437\u0430\u0442\u0435\u043b\u044c\u043d\u043e ", "")
+        result = ci.check(base, compressed, frontmatter_check=True,
+                          ignore_spans=set(), ignore_fenced_prefixes=[],
+                          modality_words=("\u043e\u0431\u044f\u0437\u0430\u0442\u0435\u043b\u044c\u043d\u043e",))
+        self.assertIn("modality-drop", {w["kind"] for w in result["warnings"]})
+
+    def test_numbers_inside_code_do_not_warn(self):
+        base = "---\nname: w\ndescription: d\n---\n\nRun `retry --max 3`.\n"
+        compressed = base  # identical; code numbers never enter prose inventory
+        result = ci.check(base, compressed, frontmatter_check=True,
+                          ignore_spans=set(), ignore_fenced_prefixes=[])
+        self.assertEqual(result["warnings"], [])
+
+
 class CliTests(unittest.TestCase):
     def test_cli_exit_codes(self):
         with tempfile.TemporaryDirectory() as tmp:

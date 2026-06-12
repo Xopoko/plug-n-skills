@@ -13,6 +13,12 @@ original automatically, with no hand-authored ledger required:
                 $VARS, {curly_tokens}, __DUNDER__, [BRACKETED PLACEHOLDERS],
                 ALLCAPS: output markers
 
+Besides blocking violations, the check emits non-blocking WARNINGS that
+direct the semantic review's attention (never the exit code): numeric
+literals lost from prose, and count drops of modality/quantifier words.
+The default wordlist is English; pass ``--modality-words`` with a
+comma-separated list for other languages.
+
 Notes: a compressed file larger than the original is reported with a
 negative reduction but does not fail (size is not an invariant);
 ``--ignore-span`` suppresses only the span finding, not token-inventory
@@ -49,6 +55,46 @@ TOKEN_PATTERNS = (
     ("bracket-placeholder", re.compile(r"\[[A-Z][A-Z0-9 _-]{2,}\]")),
     ("output-marker", re.compile(r"^[ \t]*[A-Z][A-Z_]{3,}:", re.M)),
 )
+
+NUMBER_RE = re.compile(r"\b\d+(?:[.,]\d+)?%?\b")
+MODALITY_WORDS = ("must", "never", "always", "only", "unless", "should",
+                  "may", "cannot", "do not")
+QUANTIFIER_WORDS = ("any", "all", "every", "each", "none")
+MAX_WARNINGS_PER_KIND = 10
+
+
+def prose_only(text: str) -> str:
+    """Text with fenced blocks and inline code spans removed."""
+    out = text
+    for block in fenced_blocks(text):
+        out = out.replace(block, "", 1)
+    return SPAN_RE.sub("", out)
+
+
+def word_count(text: str, word: str) -> int:
+    return len(re.findall(r"(?<!\w)" + re.escape(word) + r"(?!\w)",
+                          text, re.IGNORECASE))
+
+
+def collect_warnings(original: str, compressed: str,
+                     modality_words: tuple[str, ...]) -> list[dict]:
+    warnings: list[dict] = []
+    orig_prose, comp_prose = prose_only(original), prose_only(compressed)
+
+    lost_numbers = sorted(set(NUMBER_RE.findall(orig_prose))
+                          - set(NUMBER_RE.findall(comp_prose)))
+    for number in lost_numbers[:MAX_WARNINGS_PER_KIND]:
+        warnings.append({"kind": "number-lost",
+                         "detail": f"numeric literal lost from prose: {number}"})
+
+    for group, words in (("modality", modality_words),
+                         ("quantifier", QUANTIFIER_WORDS)):
+        for word in words:
+            before, after = word_count(orig_prose, word), word_count(comp_prose, word)
+            if after < before:
+                warnings.append({"kind": f"{group}-drop",
+                                 "detail": f"'{word}' count {before} -> {after}"})
+    return warnings
 
 
 def frontmatter(text: str) -> str:
@@ -97,7 +143,8 @@ def code_spans(text: str) -> set[str]:
 
 
 def check(original: str, compressed: str, *, frontmatter_check: bool,
-          ignore_spans: set[str], ignore_fenced_prefixes: list[str]) -> dict:
+          ignore_spans: set[str], ignore_fenced_prefixes: list[str],
+          modality_words: tuple[str, ...] = MODALITY_WORDS) -> dict:
     violations: list[dict] = []
 
     if frontmatter_check:
@@ -136,6 +183,7 @@ def check(original: str, compressed: str, *, frontmatter_check: bool,
         "reduction_pct": round((1 - len(compressed) / len(original)) * 100, 1)
         if original else 0.0,
         "violations": violations,
+        "warnings": collect_warnings(original, compressed, modality_words),
         "passed": not violations,
     }
 
@@ -155,6 +203,9 @@ def main(argv: list[str] | None = None) -> int:
                         metavar="LINE_PREFIX",
                         help="fenced blocks whose first content line starts with "
                              "this prefix may be dropped (repeatable)")
+    parser.add_argument("--modality-words", default=None, metavar="W1,W2,...",
+                        help="comma-separated modality wordlist for warnings "
+                             "(default: English; set for other languages)")
     args = parser.parse_args(argv)
 
     try:
@@ -164,10 +215,13 @@ def main(argv: list[str] | None = None) -> int:
         print(f"ERROR: {err}", file=sys.stderr)
         return 2
 
+    modality = (tuple(w.strip() for w in args.modality_words.split(",") if w.strip())
+                if args.modality_words else MODALITY_WORDS)
     result = check(original, compressed,
                    frontmatter_check=not args.no_frontmatter,
                    ignore_spans=set(args.ignore_span),
-                   ignore_fenced_prefixes=args.ignore_fenced_prefix)
+                   ignore_fenced_prefixes=args.ignore_fenced_prefix,
+                   modality_words=modality)
     result["original"] = args.original
     result["compressed"] = args.compressed
 
@@ -182,6 +236,10 @@ def main(argv: list[str] | None = None) -> int:
                 print(f"  - [{violation['kind']}] {violation['detail']}")
         else:
             print("INVARIANTS: PASS")
+        if result["warnings"]:
+            print("WARNINGS (review attention, non-blocking):")
+            for warning in result["warnings"]:
+                print(f"  - [{warning['kind']}] {warning['detail']}")
     return 0 if result["passed"] else 1
 
 

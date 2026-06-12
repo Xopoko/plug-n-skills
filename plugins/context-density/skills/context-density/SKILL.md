@@ -40,8 +40,9 @@ Optimize capability density through measured context, explicit contracts, and to
 - Silence a false-positive advisory with an explicit `cda:allow <kind>` marker on or above the flagged line, not by sprinkling suppression vocabulary into prose.
 - Converge, do not iterate blindly: after adopting changes, re-run the audit; if measured findings or wasted tokens got worse, revert the change instead of optimizing the new state.
 - Keep one rule per bullet when compressing; never collapse a rule list into a multi-clause sentence.
-- Batch compression runs the compress/verify/repair pipeline with deterministic invariants plus adversarial semantic review; a compressing agent never accepts its own work.
-- A repair invalidates earlier review verdicts; a compressed file is done only when a fresh reviewer returns clean.
+- Batch compression uses the compress/verify/repair pipeline: deterministic invariants plus exam-qualified adversarial review; a compressing agent never accepts its own work.
+- A repair invalidates earlier verdicts; done means a fresh qualified reviewer returns clean.
+- Cap repair loops (3 rounds); a non-converging file is reverted, never force-accepted.
 - If a skill/plugin portfolio needs split, merge, delete, move, router, cross-plugin overlap review, reference extraction, shared-capability extraction, or script extraction, treat token pressure as a signal.
 - Route structural work to Capability Workbench portfolio architecture when available.
 - Do not treat context-window size as proof of reliable recall, relevance, or reasoning; effective task length is usually well below the advertised maximum, so state validation scope and residual risk.
@@ -110,6 +111,8 @@ python3 "$PLUGIN_ROOT/skills/context-density/scripts/context_density_audit.py" <
 python3 "$PLUGIN_ROOT/skills/context-density/scripts/context_density_audit.py" <files-or-dirs> --commitment-ledger atoms.json --fail-on-missing-commitments
 python3 "$PLUGIN_ROOT/skills/context-density/scripts/description_overlap.py" <dirs> --min-jaccard 0.25 --top 20
 python3 "$PLUGIN_ROOT/skills/context-density/scripts/compression_invariants.py" <original> <compressed> --json
+python3 "$PLUGIN_ROOT/skills/context-density/scripts/refuter_calibration.py" plant <original> --exam exam.md --key key.json
+python3 "$PLUGIN_ROOT/skills/context-density/scripts/refuter_calibration.py" grade key.json verdict.json
 ```
 
 The audit separates `measured` findings (blocking-eligible) from `advisory`
