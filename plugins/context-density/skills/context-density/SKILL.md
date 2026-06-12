@@ -88,7 +88,7 @@ Load paths:
 | Shared terminology, workflow, source-of-truth layout | `references/operating-model.md` |
 | Startup/context/token diagnostics and host-runtime measurement choices | `references/token-diagnostics.md` |
 | SKILL.md or plugin skill package footprint reduction | `references/skill-refactor.md` |
-| Batch behavior-preserving compression with subagents: compress, deterministic invariants, adversarial refute, repair loop | `references/compression-pipeline.md` |
+| Batch or repository-wide behavior-preserving compression (docs, AGENTS.md, skills): target selection, compress, deterministic invariants, adversarial refute, repair loop | `references/compression-pipeline.md` |
 | Skill/plugin portfolio split, merge, delete, move, router, cross-plugin overlap, or script-extract decisions | Capability Workbench `capability-portfolio-architect` when available |
 | Prompt, model-output, tool-call, schema, retry, or prose-parsing review | `references/prompt-contracts.md` |
 | Long-context placement, compression, schema/task validity, retrieval citation, cache-prefix, distractor-budget, format-sensitivity, or handoff acceptance gates | `references/research-backed-gates.md` |

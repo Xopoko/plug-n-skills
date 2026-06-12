@@ -9,6 +9,30 @@ its own work cannot be trusted to notice what it dropped; this pipeline
 splits the roles and only accepts a file when a fresh adversary finds
 nothing.
 
+## Scope and target selection
+
+When the request names a repository or a doc tree rather than explicit
+<!-- cda:allow token_only_metric,compression_without_relevance_check -->
+files ("reduce tokens in this repo", "compress the docs"), select targets
+before compressing anything:
+
+1. Enumerate prompt-bearing text (*.md and agent instruction files), then
+   classify by load path:
+   - hot — agent instruction files (AGENTS.md, CLAUDE.md, rules files,
+     <!-- cda:allow token_only_metric,compression_without_relevance_check -->
+     prompt templates): compress first; they cost tokens every session.
+   - reference — guides, runbooks, docs/ trees: payoff only when read.
+   - evidence/legal — changelogs, ADRs, release notes, migration
+     histories, LICENSE/NOTICE, generated files: EXCLUDE. These are
+     records and legal text, not compressible prose.
+2. Pilot one representative file per group (pilot-first rule below) and
+   skip groups under the yield bar; report exclusions and skips.
+3. In a repository you do not own outright, work on a fresh branch and do
+   not push unless asked; state the branch and commit status explicitly.
+4. Consumer validation for documentation: every relative link in a
+   compressed file must still resolve, and document structure agents
+   navigate by (headings, anchors) must survive.
+
 ## Shape
 
 Per file, as an independent pipeline (no barrier between files):
@@ -69,7 +93,8 @@ exists to catch negligent reviewers, not to demand your own strength.
 
 Hard rules — violation makes the output unusable:
 
-1. The frontmatter block must be byte-identical to the original.
+1. The frontmatter block must be byte-identical to the original (applies
+   only to files that have one).
 2. Preserve verbatim: every fenced block containing commands or literal
    output templates; all file paths; all placeholder tokens of any form
    ($VARS, {curly}, __DUNDER__, [BRACKETED]); machine-consumed output

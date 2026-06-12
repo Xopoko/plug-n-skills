@@ -155,7 +155,7 @@ instructions.
 | Reference files | 43 | - | Longer ledgers, contracts, scorecards, and source notes. |
 | Helper and validator scripts | 38 | - | Deterministic plugin-local helpers. |
 | Startup metadata | 155 skills | 11,813 | Skill name, description, and file pointer for routing. |
-| On-demand skill bodies | 155 skills | 98,885 | Instruction bodies after frontmatter, loaded only when selected. |
+| On-demand skill bodies | 155 skills | 98,896 | Instruction bodies after frontmatter, loaded only when selected. |
 
 Regenerate the report after skill edits:
 
@@ -176,7 +176,7 @@ Token columns are `startup metadata / on-demand body`.
 | `pixijs` | 26 | 0 | 0 | 1,861 | 7,967 |
 | `tauri` | 6 | 0 | 1 | 481 | 3,206 |
 | `scientific-research` | 1 | 0 | 0 | 91 | 2,009 |
-| `context-density` | 1 | 0 | 1 | 128 | 2,489 |
+| `context-density` | 1 | 0 | 1 | 128 | 2,500 |
 | `capability-workbench` | 9 | 11 | 21 | 814 | 10,716 |
 | `codex-cli` | 6 | 3 | 2 | 501 | 5,473 |
 | `claude-code` | 6 | 2 | 1 | 528 | 4,609 |
@@ -324,7 +324,7 @@ Token cells are shown as `startup/body`.
 
 | Skill | Tokens | Description |
 | --- | ---: | --- |
-| `context-density` | 128/2,489 | Use when designing, auditing, refactoring, measuring, or validating token-efficient context and prompt/output contracts. Trigger for AGENTS.md, prompts, skill packages, marketplace plugins, MCP/tool schemas, long-context placement, prompt/context compression, retrieval provenance, runtime context diagnostics, duplicated or overlapping prose, competing skill descriptions, irrelevant-context pruning, prompt reformatting, agent/subagent context handoffs, brittle trigger descriptions, strict JSON/schema/tool-call output, validators, retry/repair loops, or behavior-preserving token reduction. |
+| `context-density` | 128/2,500 | Use when designing, auditing, refactoring, measuring, or validating token-efficient context and prompt/output contracts. Trigger for AGENTS.md, prompts, skill packages, marketplace plugins, MCP/tool schemas, long-context placement, prompt/context compression, retrieval provenance, runtime context diagnostics, duplicated or overlapping prose, competing skill descriptions, irrelevant-context pruning, prompt reformatting, agent/subagent context handoffs, brittle trigger descriptions, strict JSON/schema/tool-call output, validators, retry/repair loops, or behavior-preserving token reduction. |
 
 #### `capability-workbench`
 
