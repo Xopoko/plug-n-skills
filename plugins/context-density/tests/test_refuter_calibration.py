@@ -80,6 +80,46 @@ class PlantTests(unittest.TestCase):
             self.assertIn("{step1}", exam, f"seed {seed} mutated token line")
 
 
+DIFF = """--- a/src/service.py
++++ b/src/service.py
+@@ -10,6 +10,9 @@ def handler(request):
+ context line stays
++    retries = settings.get("retries", 4)
++    if not request.user.is_active and request.attempts > 2:
++        raise PermissionError("inactive user exceeded attempts")
++    audit_log.record(request.user, action="login", source="handler")
+ another context line
+-removed_old_line()
+"""
+
+
+class PlantDiffTests(unittest.TestCase):
+    def test_mutates_only_added_lines(self):
+        exam, plants = rc.plant_diff(DIFF, count=3, seed=7)
+        self.assertTrue(plants)
+        self.assertIn("context line stays", exam)
+        self.assertIn("-removed_old_line()", exam)
+        self.assertIn("+++ b/src/service.py", exam)  # header untouched
+        self.assertNotEqual(exam, DIFF)
+
+    def test_deterministic(self):
+        a = rc.plant_diff(DIFF, count=3, seed=7)
+        b = rc.plant_diff(DIFF, count=3, seed=7)
+        self.assertEqual(a, b)
+
+    def test_grade_roundtrip(self):
+        _, plants = rc.plant_diff(DIFF, count=3, seed=7)
+        key = {"schema": rc.SCHEMA_KEY, "plants": plants}
+        good = {"violations": [{"line": p["line"]} for p in plants]}
+        self.assertTrue(rc.grade(key, good, threshold=0.8)["passed"])
+        self.assertFalse(rc.grade(key, {"violations": []}, threshold=0.8)["passed"])
+
+    def test_no_added_lines_yields_no_plants(self):
+        ctx_only = "--- a/f\n+++ b/f\n@@ -1,2 +1,2 @@\n context\n-old\n"
+        _, plants = rc.plant_diff(ctx_only, count=3, seed=7)
+        self.assertEqual(plants, [])
+
+
 class GradeTests(unittest.TestCase):
     def setUp(self):
         self.exam, self.plants = rc.plant(ORIGINAL, count=3, seed=7)

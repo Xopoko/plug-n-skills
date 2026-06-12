@@ -20,7 +20,14 @@ stays silent):
 Usage:
   refuter_calibration.py plant <original> --exam exam.md --key key.json
       [--count 5] [--seed 7]
+  refuter_calibration.py plant-diff <unified.diff> --exam exam.diff --key key.json
+      [--count 5] [--seed 7]
   refuter_calibration.py grade <key.json> <verdict.json> [--threshold 0.8]
+
+plant-diff generalizes the exam to any adversarial reviewer of changes
+(code review, MR review): it mutates only ADDED lines of a unified diff
+(dropping an added line or editing a number), so a reviewer that approves
+the mutated diff without noticing is unqualified.
 
 Verdict format (lenient by design, for weaker agents): JSON with a
 ``violations`` array whose items are either strings or objects with
@@ -142,6 +149,39 @@ def plant(original: str, count: int, seed: int) -> tuple[str, list[dict]]:
     return exam, plants
 
 
+DIFF_ADDED_RE = re.compile(r"^\+(?!\+\+)")
+
+
+def plant_diff(diff_text: str, count: int, seed: int) -> tuple[str, list[dict]]:
+    lines = diff_text.split("\n")
+    rng = random.Random(seed)
+    candidates = [i for i, l in enumerate(lines)
+                  if DIFF_ADDED_RE.match(l) and len(l.strip()) > 10]
+    rng.shuffle(candidates)
+    plants: list[dict] = []
+    used: set[int] = set()
+    for i in candidates:
+        if len(plants) >= count:
+            break
+        if any(abs(i - u) <= 2 for u in used):
+            continue
+        line = lines[i]
+        match = NUMBER_RE.search(line[1:])
+        if match and rng.random() < 0.5:
+            old = match.group(0)
+            new = str(int(old) * 2 + 1)
+            lines[i] = "+" + line[1:][:match.start()] + new + line[1:][match.end():]
+            plants.append({"id": f"P{len(plants) + 1}", "kind": "edit_number",
+                           "line": i + 1, "clue": f"{old} -> {new}"})
+        else:
+            plants.append({"id": f"P{len(plants) + 1}", "kind": "drop_added_line",
+                           "line": i + 1, "clue": fragment(line)})
+            lines[i] = None  # type: ignore[call-overload]
+        used.add(i)
+    exam = "\n".join(l for l in lines if l is not None)
+    return exam, plants
+
+
 def verdict_items(verdict: dict | list) -> list[dict]:
     items = verdict.get("violations", verdict) if isinstance(verdict, dict) else verdict
     out = []
@@ -193,6 +233,12 @@ def main(argv: list[str] | None = None) -> int:
     p_plant.add_argument("--key", required=True)
     p_plant.add_argument("--count", type=int, default=5)
     p_plant.add_argument("--seed", type=int, default=7)
+    p_pdiff = sub.add_parser("plant-diff")
+    p_pdiff.add_argument("original")
+    p_pdiff.add_argument("--exam", required=True)
+    p_pdiff.add_argument("--key", required=True)
+    p_pdiff.add_argument("--count", type=int, default=5)
+    p_pdiff.add_argument("--seed", type=int, default=7)
     p_grade = sub.add_parser("grade")
     p_grade.add_argument("key")
     p_grade.add_argument("verdict")
@@ -200,11 +246,13 @@ def main(argv: list[str] | None = None) -> int:
     args = parser.parse_args(argv)
 
     try:
-        if args.mode == "plant":
+        if args.mode in ("plant", "plant-diff"):
             original = Path(args.original).read_text(encoding="utf-8")
-            exam, plants = plant(original, args.count, args.seed)
+            planter = plant if args.mode == "plant" else plant_diff
+            exam, plants = planter(original, args.count, args.seed)
             if not plants:
-                print("ERROR: no plantable prose found in original", file=sys.stderr)
+                kind = "prose" if args.mode == "plant" else "added lines"
+                print(f"ERROR: no plantable {kind} found in original", file=sys.stderr)
                 return 2
             Path(args.exam).write_text(exam, encoding="utf-8")
             Path(args.key).write_text(json.dumps(

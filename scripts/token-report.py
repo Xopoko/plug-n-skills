@@ -336,6 +336,26 @@ def render_json(plugin_reports: list[PluginReport], skill_reports: list[SkillRep
     return json.dumps(payload, indent=2, sort_keys=True) + "\n"
 
 
+
+README_SECTION_START = "## Token Efficiency"
+
+
+def splice_readme(readme_text: str, rendered: str) -> str:
+    """Replace the README's auto-generated token section with `rendered`.
+
+    The managed region starts at README_SECTION_START and ends just before
+    the next second-level heading. Raises ValueError when the markers are
+    missing so callers fail loudly instead of appending duplicates.
+    """
+    start = readme_text.find(README_SECTION_START)
+    if start == -1:
+        raise ValueError(f"README has no '{README_SECTION_START}' section")
+    end = readme_text.find("\n## ", start + len(README_SECTION_START))
+    if end == -1:
+        raise ValueError("README has no section after the token region")
+    return readme_text[:start] + rendered.rstrip("\n") + "\n\n" + readme_text[end + 1:]
+
+
 def main() -> None:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument(
@@ -344,11 +364,35 @@ def main() -> None:
         default="markdown",
         help="Output format. Defaults to markdown.",
     )
+    parser.add_argument(
+        "--update-readme",
+        action="store_true",
+        help="Rewrite README.md's auto-generated token section in place.",
+    )
+    parser.add_argument(
+        "--check",
+        action="store_true",
+        help="Exit 1 if README.md's token section differs from a fresh render.",
+    )
     args = parser.parse_args()
 
     root = repo_root()
     encoder = load_encoder()
     plugin_reports, skill_reports = collect_reports(root, encoder)
+    if args.update_readme or args.check:
+        readme = root / "README.md"
+        rendered = render_markdown(plugin_reports, skill_reports)
+        updated = splice_readme(readme.read_text(encoding="utf-8"), rendered)
+        if args.check:
+            if updated != readme.read_text(encoding="utf-8"):
+                sys.stderr.write("README token section is stale; run "
+                                 "scripts/token-report.py --update-readme\n")
+                raise SystemExit(1)
+            print("README token section is current")
+            return
+        readme.write_text(updated, encoding="utf-8")
+        print("README token section updated")
+        return
     if args.format == "json":
         sys.stdout.write(render_json(plugin_reports, skill_reports))
     else:

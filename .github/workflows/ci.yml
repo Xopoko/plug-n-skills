@@ -1,0 +1,31 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - name: Repository validation
+        run: python3 scripts/validate-repository.py
+      - name: Repo script tests
+        run: python3 -m unittest discover -s scripts/tests
+      - name: context-density plugin tests
+        run: python3 -m unittest discover -s plugins/context-density/tests
+      - name: codex-cli plugin tests
+        run: python3 -m unittest discover -s plugins/codex-cli/tests
+      - name: Install dry-runs
+        run: |
+          python3 scripts/install-codex-plugins.py --dry-run
+          python3 scripts/install-cursor-skills.py --dry-run --dest /tmp/cursor-preview
+      - name: README token-table drift
+        run: |
+          python3 -m pip install --quiet tiktoken
+          python3 scripts/token-report.py --check
