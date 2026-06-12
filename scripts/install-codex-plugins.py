@@ -257,7 +257,7 @@ def ensure_codex_marketplace_config(
     marketplace_root: Path,
     dry_run: bool,
 ) -> None:
-    source_line = f'source = "{marketplace_root}"'
+    source_line = f"source = {toml_basic_string(str(marketplace_root))}"
     desired_block = [
         "[marketplaces.local]",
         f'last_updated = "{datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")}"',
@@ -284,6 +284,30 @@ def ensure_codex_marketplace_config(
         return
     config_path.parent.mkdir(parents=True, exist_ok=True)
     config_path.write_text(next_text, encoding="utf-8")
+
+
+def toml_basic_string(value: str) -> str:
+    escaped: list[str] = []
+    for char in value:
+        if char == "\\":
+            escaped.append("\\\\")
+        elif char == '"':
+            escaped.append('\\"')
+        elif char == "\b":
+            escaped.append("\\b")
+        elif char == "\t":
+            escaped.append("\\t")
+        elif char == "\n":
+            escaped.append("\\n")
+        elif char == "\f":
+            escaped.append("\\f")
+        elif char == "\r":
+            escaped.append("\\r")
+        elif ord(char) < 0x20:
+            escaped.append(f"\\u{ord(char):04x}")
+        else:
+            escaped.append(char)
+    return f'"{"".join(escaped)}"'
 
 
 def find_section(lines: list[str], section: str) -> int | None:

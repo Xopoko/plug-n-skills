@@ -10,7 +10,13 @@ from pathlib import Path, PurePosixPath
 from typing import Any
 from urllib.parse import urlparse
 
-import yaml
+try:
+    import yaml
+except Exception:  # pragma: no cover - import environment issue.
+    yaml = None  # type: ignore[assignment]
+else:
+    if not hasattr(yaml, "safe_load") or not hasattr(yaml, "YAMLError"):
+        yaml = None  # type: ignore[assignment]
 
 
 TODO_MARKER = "[TODO:"
@@ -439,13 +445,12 @@ def validate_skill_manifest(skill_root: Path, errors: list[str]) -> None:
     if frontmatter_end == -1:
         errors.append(f"skill `{skill_root.name}` frontmatter is not closed")
         return
-    try:
-        frontmatter = yaml.safe_load(contents[4:frontmatter_end])
-    except yaml.YAMLError:
-        errors.append(f"skill `{skill_root.name}` frontmatter must be valid YAML")
-        return
-    if not isinstance(frontmatter, dict):
-        errors.append(f"skill `{skill_root.name}` frontmatter must be an object")
+    frontmatter = load_yaml_mapping(
+        contents[4:frontmatter_end],
+        f"skill `{skill_root.name}` frontmatter",
+        errors,
+    )
+    if frontmatter is None:
         return
     skill_name = frontmatter.get("name")
     if not isinstance(skill_name, str) or not skill_name.strip():
@@ -480,15 +485,17 @@ def validate_skill_agent_manifest(
     errors: list[str],
 ) -> None:
     try:
-        payload = yaml.safe_load(agent_yaml_path.read_text(encoding="utf-8"))
+        raw_yaml = agent_yaml_path.read_text(encoding="utf-8")
     except OSError:
         errors.append(f"unable to read skill `{skill_root.name}` agent YAML")
         return
-    except yaml.YAMLError:
-        errors.append(f"skill `{skill_root.name}` agent YAML must be valid YAML")
-        return
-    if not isinstance(payload, dict):
-        errors.append(f"skill `{skill_root.name}` agent YAML must be an object")
+
+    payload = load_yaml_mapping(
+        raw_yaml,
+        f"skill `{skill_root.name}` agent YAML",
+        errors,
+    )
+    if payload is None:
         return
 
     reject_skill_agent_unknown_fields(
@@ -596,6 +603,145 @@ def reject_skill_agent_unknown_fields(
         errors.append(
             f"skill `{skill_root.name}` agent field `{field}` is not accepted by plugin validation"
         )
+
+
+def load_yaml_mapping(text: str, label: str, errors: list[str]) -> dict[str, Any] | None:
+    if yaml is not None:
+        try:
+            payload = yaml.safe_load(text)
+        except yaml.YAMLError:
+            errors.append(f"{label} must be valid YAML")
+            return None
+    else:
+        try:
+            payload = parse_simple_yaml_mapping(text)
+        except ValueError:
+            errors.append(f"{label} must be valid YAML")
+            return None
+
+    if not isinstance(payload, dict):
+        errors.append(f"{label} must be an object")
+        return None
+    return payload
+
+
+def parse_simple_yaml_mapping(text: str) -> dict[str, Any]:
+    root: dict[str, Any] = {}
+    stack: list[tuple[int, dict[str, Any]]] = [(-1, root)]
+    lines = text.splitlines()
+    index = 0
+    while index < len(lines):
+        raw_line = lines[index]
+        stripped = raw_line.strip()
+        if not stripped or stripped.startswith("#"):
+            index += 1
+            continue
+        indent = count_indent(raw_line)
+        if stripped.startswith("- "):
+            raise ValueError("sequence YAML is not supported by the fallback parser")
+        if ":" not in stripped:
+            raise ValueError("expected key-value YAML")
+        key, raw_value = stripped.split(":", 1)
+        key = key.strip()
+        if not key:
+            raise ValueError("empty YAML key")
+
+        while stack and indent <= stack[-1][0]:
+            stack.pop()
+        if not stack:
+            raise ValueError("invalid YAML indentation")
+        current = stack[-1][1]
+
+        value = raw_value.strip()
+        if not value:
+            child: dict[str, Any] = {}
+            current[key] = child
+            stack.append((indent, child))
+            index += 1
+            continue
+        if value in {">", ">-", ">+", "|", "|-", "|+"}:
+            block, index = consume_yaml_block(lines, index + 1, indent, value)
+            current[key] = block
+            continue
+        current[key] = parse_simple_yaml_scalar(value)
+        index += 1
+    return root
+
+
+def count_indent(line: str) -> int:
+    indent = len(line) - len(line.lstrip(" "))
+    if "\t" in line[:indent]:
+        raise ValueError("tabs are not supported in YAML indentation")
+    return indent
+
+
+def consume_yaml_block(
+    lines: list[str],
+    start: int,
+    parent_indent: int,
+    marker: str,
+) -> tuple[str, int]:
+    parts: list[str] = []
+    block_indent: int | None = None
+    index = start
+    while index < len(lines):
+        raw_line = lines[index]
+        stripped = raw_line.strip()
+        if not stripped:
+            parts.append("")
+            index += 1
+            continue
+        indent = count_indent(raw_line)
+        if indent <= parent_indent:
+            break
+        if block_indent is None:
+            block_indent = indent
+        parts.append(raw_line[min(block_indent, len(raw_line)):])
+        index += 1
+
+    if marker.startswith(">"):
+        value = " ".join(part.strip() for part in parts if part.strip())
+    else:
+        value = "\n".join(parts)
+    return value, index
+
+
+def parse_simple_yaml_scalar(value: str) -> Any:
+    value = strip_yaml_comment(value)
+    if value in {"true", "True"}:
+        return True
+    if value in {"false", "False"}:
+        return False
+    if value in {"null", "Null", "~"}:
+        return None
+    if len(value) >= 2 and value[0] == value[-1] == '"':
+        return json.loads(value)
+    if len(value) >= 2 and value[0] == value[-1] == "'":
+        return value[1:-1].replace("''", "'")
+    return value
+
+
+def strip_yaml_comment(value: str) -> str:
+    in_single = False
+    in_double = False
+    escaped = False
+    for index, char in enumerate(value):
+        if escaped:
+            escaped = False
+            continue
+        if in_double and char == "\\":
+            escaped = True
+            continue
+        if char == "'" and not in_double:
+            in_single = not in_single
+            continue
+        if char == '"' and not in_single:
+            in_double = not in_double
+            continue
+        if char == "#" and not in_single and not in_double:
+            if index == 0 or value[index - 1].isspace():
+                return value[:index].rstrip()
+    return value
 
 
 def validate_optional_asset_path(
