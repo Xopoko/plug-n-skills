@@ -4,7 +4,7 @@ These plugins are workflow and instruction packs. They should not contain API ke
 
 ## Reporting
 
-For now, report issues through the repository owner. When this repository becomes public, use GitHub private vulnerability reporting if it is enabled.
+Report issues through GitHub private vulnerability reporting on this repository when enabled, or directly to the repository owner.
 
 ## Handling Sensitive Data
 

@@ -5,7 +5,7 @@ description: Create, update, validate, optionally install/cache-refresh, and han
 
 # Plugin Factory
 
-Bundled commands use `$PLUGIN_ROOT` for the plugin root. Set it once: use the host's plugin-root variable when defined (Claude Code: `PLUGIN_ROOT="$CLAUDE_PLUGIN_ROOT"`), otherwise the absolute path of this skill folder's `../..`. Works under any host agent, including Codex, Claude, and Cursor.
+Bundled commands use `$PLUGIN_ROOT` for the plugin root. Set it once: use the host's plugin-root variable when defined (Claude Code: `PLUGIN_ROOT="$CLAUDE_PLUGIN_ROOT"`), otherwise the absolute path of this skill folder's `../..`.
 
 Build marketplace-ready plugin source first. Install or cache-refresh only when the user asked for an installed/global plugin or the validated contract has `install_required=true`.
 

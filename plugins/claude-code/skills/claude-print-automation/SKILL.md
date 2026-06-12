@@ -5,7 +5,7 @@ description: Use when preparing, running, or debugging non-interactive Claude Co
 
 # Claude Print Automation
 
-Bundled commands use `$PLUGIN_ROOT` for the plugin root. Set it once: use the host's plugin-root variable when defined (Claude Code: `PLUGIN_ROOT="$CLAUDE_PLUGIN_ROOT"`), otherwise the absolute path of this plugin's root directory. Works under any host agent, including Codex, Claude, and Cursor.
+Bundled commands use `$PLUGIN_ROOT` for the plugin root. Set it once: use the host's plugin-root variable when defined (Claude Code: `PLUGIN_ROOT="$CLAUDE_PLUGIN_ROOT"`), otherwise the absolute path of this plugin's root directory.
 
 Use this skill for non-interactive Claude Code runs: `claude --print`, `-p`,
 JSON output, stream-json input/output, partial messages, hook event streams,

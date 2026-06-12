@@ -5,7 +5,7 @@ description: Search Apple Dev Search for Swift, SwiftUI, Xcode, iOS, macOS, and 
 
 # Apple Developer Research
 
-Bundled commands use `$PLUGIN_ROOT` for the plugin root. Set it once: use the host's plugin-root variable when defined (Claude Code: `PLUGIN_ROOT="$CLAUDE_PLUGIN_ROOT"`), otherwise the absolute path of this plugin's root directory. Works under any host agent, including Codex, Claude, and Cursor.
+Bundled commands use `$PLUGIN_ROOT` for the plugin root. Set it once: use the host's plugin-root variable when defined (Claude Code: `PLUGIN_ROOT="$CLAUDE_PLUGIN_ROOT"`), otherwise the absolute path of this plugin's root directory.
 
 Use Apple Dev Search for Apple-platform community content when the user wants articles, tutorials, or reading material rather than official docs or generic web results. Do not hard-code service counts; query `--counts` when counts matter.
 

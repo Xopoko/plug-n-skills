@@ -5,7 +5,7 @@ description: "Build or review Tauri 2 desktop shell features: windows, webviews,
 
 # Tauri Shell UI
 
-Bundled commands use `$PLUGIN_ROOT` for the plugin root. Set it once: use the host's plugin-root variable when defined (Claude Code: `PLUGIN_ROOT="$CLAUDE_PLUGIN_ROOT"`), otherwise the absolute path of this plugin's root directory. Works under any host agent, including Codex, Claude, and Cursor.
+Bundled commands use `$PLUGIN_ROOT` for the plugin root. Set it once: use the host's plugin-root variable when defined (Claude Code: `PLUGIN_ROOT="$CLAUDE_PLUGIN_ROOT"`), otherwise the absolute path of this plugin's root directory.
 
 Use this skill for native app-shell behavior around a web frontend: windows,
 menus, tray, titlebars, resources, icons, sidecars, opener/shell APIs, and deep

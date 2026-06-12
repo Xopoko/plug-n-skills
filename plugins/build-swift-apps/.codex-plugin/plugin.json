@@ -1,6 +1,6 @@
 {
   "name": "build-swift-apps",
-  "version": "0.3.6",
+  "version": "0.3.7",
   "description": "Agent skills for building, debugging, profiling, testing, refactoring, and shipping Swift apps across Apple platforms.",
   "author": {
     "name": "Build Swift Apps Maintainers",

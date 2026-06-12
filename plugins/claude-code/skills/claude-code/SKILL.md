@@ -5,7 +5,7 @@ description: Route Claude Code CLI work across local CLI inspection, interactive
 
 # Claude Code Router
 
-Bundled commands use `$PLUGIN_ROOT` for the plugin root. Set it once: use the host's plugin-root variable when defined (Claude Code: `PLUGIN_ROOT="$CLAUDE_PLUGIN_ROOT"`), otherwise the absolute path of this plugin's root directory. Works under any host agent, including Codex, Claude, and Cursor.
+Bundled commands use `$PLUGIN_ROOT` for the plugin root. Set it once: use the host's plugin-root variable when defined (Claude Code: `PLUGIN_ROOT="$CLAUDE_PLUGIN_ROOT"`), otherwise the absolute path of this plugin's root directory.
 
 Use this skill when the user asks to operate, diagnose, automate, wrap, or
 explain Claude Code CLI, including `claude`, `claude --print`, `claude plugin`,

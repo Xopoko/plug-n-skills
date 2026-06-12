@@ -5,7 +5,7 @@ description: Use when diagnosing Codex CLI install, config, auth, runtime, featu
 
 # Codex Doctor And Debugger
 
-Bundled commands use `$PLUGIN_ROOT` for the plugin root. Set it once: use the host's plugin-root variable when defined (Claude Code: `PLUGIN_ROOT="$CLAUDE_PLUGIN_ROOT"`), otherwise the absolute path of this plugin's root directory. Works under any host agent, including Codex, Claude, and Cursor.
+Bundled commands use `$PLUGIN_ROOT` for the plugin root. Set it once: use the host's plugin-root variable when defined (Claude Code: `PLUGIN_ROOT="$CLAUDE_PLUGIN_ROOT"`), otherwise the absolute path of this plugin's root directory.
 
 Use this skill when Codex CLI itself is failing or unclear: installation,
 config, auth, runtime health, feature flags, sandbox denials, debug model

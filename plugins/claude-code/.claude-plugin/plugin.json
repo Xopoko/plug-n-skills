@@ -1,6 +1,6 @@
 {
   "name": "claude-code",
-  "version": "0.1.1",
+  "version": "0.1.2",
   "description": "Claude Code CLI operations, print-mode automation, diagnostics, plugin and MCP lifecycle, hooks, settings, agents, sessions, and worktrees.",
   "author": {
     "name": "Xopoko"

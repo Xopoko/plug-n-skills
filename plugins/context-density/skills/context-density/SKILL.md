@@ -14,9 +14,8 @@ description: >-
 
 # Context Density
 
-Bundled commands use `$PLUGIN_ROOT` for the plugin root. Set it once: use the host's plugin-root variable when defined (Claude Code: `PLUGIN_ROOT="$CLAUDE_PLUGIN_ROOT"`), otherwise the absolute path of this plugin's root directory. Works under any host agent, including Codex, Claude, and Cursor.
+Bundled commands use `$PLUGIN_ROOT` for the plugin root. Set it once: use the host's plugin-root variable when defined (Claude Code: `PLUGIN_ROOT="$CLAUDE_PLUGIN_ROOT"`), otherwise the absolute path of this plugin's root directory.
 
-Optimize capability density through measured context, explicit contracts, and token-aware design.
 
 ## Hard Rules
 
@@ -27,8 +26,8 @@ Optimize capability density through measured context, explicit contracts, and to
 - Treat raw logs, transcripts, reports, and source packs as evidence archives. Do not hot-load them; keep compact claims plus source refs.
 - Do not let retrieval, memory recall, or archived artifacts become authoritative state without provenance, confidence, and validation.
 - Do not bury action-critical commitments in the middle of large hot/router files; keep anchors, source order, or explicit state pointers.
-- Pack only context with a stated relevance criterion; related-but-non-answering material is the most harmful distractor class, and padding is a cost, not neutral filler.
-- Order context to match the consumer's reasoning or execution order; order changes alone measurably change accuracy.
+- Pack only context with a stated relevance criterion; related-but-non-answering material is the most harmful distractor class.
+- Order context to match the consumer's reasoning or execution order.
 - Treat reformatting as a behavior-relevant edit: validate rewritten prompts and context on the consumer task; meaning-preserving is not behavior-preserving.
 - Hand off context between agents, sessions, or compaction boundaries through typed contracts with source refs and receiver-side verification, not free prose.
 - Do not call a compression change successful from input-token reduction alone; include output cost/length, task success, preserved atoms, and validation proof when available.

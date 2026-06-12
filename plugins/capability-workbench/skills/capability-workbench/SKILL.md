@@ -9,7 +9,7 @@ Use this as the first stop for agent capability work. Decide the output shape, c
 
 ## Plugin Root
 
-Bundled commands use `$PLUGIN_ROOT` for the plugin root. Set it once: use the host's plugin-root variable when defined (Claude Code: `PLUGIN_ROOT="$CLAUDE_PLUGIN_ROOT"`), otherwise the absolute path of this skill folder's `../..`. Works under any host agent, including Codex, Claude, and Cursor. Shared scripts live in `$PLUGIN_ROOT/scripts/`, shared references in `$PLUGIN_ROOT/references/`, sibling skills in `$PLUGIN_ROOT/skills/`. Prefer bundled scripts when they fit; use system skills only as source references or fallbacks.
+Bundled commands use `$PLUGIN_ROOT` for the plugin root. Set it once: use the host's plugin-root variable when defined (Claude Code: `PLUGIN_ROOT="$CLAUDE_PLUGIN_ROOT"`), otherwise the absolute path of this skill folder's `../..`. Shared scripts live in `$PLUGIN_ROOT/scripts/`, shared references in `$PLUGIN_ROOT/references/`, sibling skills in `$PLUGIN_ROOT/skills/`. Prefer bundled scripts when they fit; use system skills only as source references or fallbacks.
 
 ## Route The Work
 

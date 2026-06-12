@@ -5,7 +5,7 @@ description: Diagnose and fix Kotlin Multiplatform Gradle, source-set, dependenc
 
 # KMP Gradle Doctor
 
-Set `$PLUGIN_ROOT` once: host plugin-root variable when defined (Claude Code: `PLUGIN_ROOT="$CLAUDE_PLUGIN_ROOT"`), else this plugin root's absolute path. Bundled commands use it. Works under any host agent, including Codex, Claude, and Cursor.
+Set `$PLUGIN_ROOT` once: host plugin-root variable when defined (Claude Code: `PLUGIN_ROOT="$CLAUDE_PLUGIN_ROOT"`), else this plugin root's absolute path. Bundled commands use it.
 
 Use for KMP build failures; Gradle DSL changes; plugin version alignment; target declarations; source-set hierarchy; Android-KMP plugin migration; dependency placement; KSP/KAPT; detekt/ktlint; Compose compiler; CI; test task selection.
 

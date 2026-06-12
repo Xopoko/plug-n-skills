@@ -60,7 +60,7 @@ def redact(value: Any) -> str:
 def clip(text: Any, max_chars: int) -> str:
     value = re.sub(r"\s+", " ", redact(text)).strip()
     if max_chars > 0 and len(value) > max_chars:
-        return value[: max_chars - 1].rstrip() + "…"
+        return value[: max(1, max_chars - 3)].rstrip() + "..."
     return value
 
 
