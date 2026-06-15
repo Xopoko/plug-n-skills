@@ -121,7 +121,7 @@ replaced to match the repository source, and repeated runs converge.
 | --- | --- |
 | `architecture-intelligence` | Source-backed architecture audits, ownership and runtime topology, module boundaries, ADRs, fitness functions, conformance checks, and refactoring strategy. |
 | `build-swift-apps` | Building, debugging, profiling, testing, packaging, and releasing Swift apps across iOS and macOS. |
-| `capability-workbench` | Capability discovery, synthesis, plugin packaging, trigger metadata, install-scope decisions, vetting, repair, icon workflows, and visibility checks. |
+| `capability-workbench` | Capability discovery, synthesis, plugin packaging, agent guidance files, trigger metadata, install-scope decisions, vetting, repair, icon workflows, and visibility checks. |
 | `claude-code` | Claude Code CLI operations, print-mode automation, diagnostics, plugin and MCP lifecycle, hooks, settings, agents, sessions, and worktrees. |
 | `codex-cli` | Codex CLI operations, automation, diagnostics, plugin and MCP lifecycle, session log forensics, and local environment actions. |
 | `context-density` | Context design, long-context placement, research-backed acceptance gates, prompt contracts, skill compression, structural handoff, and validation reporting. |
@@ -151,11 +151,11 @@ instructions.
 | Metric | Count | Tokens | Notes |
 | --- | ---: | ---: | --- |
 | Plugin packs | 13 | - | Installable packages under `plugins/`. |
-| Skill entrypoints | 155 | - | `SKILL.md` files exposed through plugin metadata. |
+| Skill entrypoints | 156 | - | `SKILL.md` files exposed through plugin metadata. |
 | Reference files | 43 | - | Longer ledgers, contracts, scorecards, and source notes. |
 | Helper and validator scripts | 38 | - | Deterministic plugin-local helpers. |
-| Startup metadata | 155 skills | 11,813 | Skill name, description, and file pointer for routing. |
-| On-demand skill bodies | 155 skills | 98,873 | Instruction bodies after frontmatter, loaded only when selected. |
+| Startup metadata | 156 skills | 11,932 | Skill name, description, and file pointer for routing. |
+| On-demand skill bodies | 156 skills | 99,486 | Instruction bodies after frontmatter, loaded only when selected. |
 
 Regenerate the report after skill edits:
 
@@ -177,7 +177,7 @@ Token columns are `startup metadata / on-demand body`.
 | `tauri` | 6 | 0 | 1 | 481 | 3,175 |
 | `scientific-research` | 1 | 0 | 0 | 91 | 2,009 |
 | `context-density` | 1 | 0 | 1 | 128 | 2,500 |
-| `capability-workbench` | 9 | 11 | 21 | 814 | 10,793 |
+| `capability-workbench` | 10 | 11 | 21 | 933 | 11,406 |
 | `codex-cli` | 6 | 3 | 2 | 501 | 5,434 |
 | `claude-code` | 6 | 2 | 1 | 528 | 4,579 |
 | `architecture-intelligence` | 8 | 7 | 2 | 523 | 5,033 |
@@ -195,7 +195,7 @@ Token columns are `startup metadata / on-demand body`.
 | `tauri` | Tauri 2 development: project setup/migration, tauri.conf & capabilities/security, Rust IPC & plugins, shell UI, debug/test, and distribution/mobile release. |
 | `scientific-research` | Disciplined scholarly research workflow: discovery, source routing, DOI dedup, claim ledgers, and evidence quality gates across arXiv/OpenAlex/Crossref/Europe PMC/Semantic Scholar/NCBI/CORE/OpenCitations. |
 | `context-density` | Context design, prompt-contract optimization, research-backed acceptance gates, compression validation, and structural handoff for agent skills, plugins, prompts, docs, and workflows. |
-| `capability-workbench` | Agent-agnostic capability workbench: discover, synthesize, architect cross-plugin portfolios, design trigger metadata, vet, repair, install, package, and run imagegen-backed icon workflows for agent skills and plugins. |
+| `capability-workbench` | Agent-agnostic capability workbench: discover, synthesize, architect portfolios, design trigger metadata and agent guidance files, vet, repair, install, package, and run imagegen-backed icon workflows for agent skills and plugins. |
 | `codex-cli` | Codex CLI operations, automation, diagnostics, plugin and MCP lifecycle, session log forensics, and local environment actions. |
 | `claude-code` | Claude Code CLI operations, print-mode automation, diagnostics, plugin and MCP lifecycle, hooks, settings, agents, sessions, and worktrees. |
 | `architecture-intelligence` | Source-backed software architecture intelligence for codebase audits, ownership topology, runtime topology, architecture conformance and drift checks, structure metrics, module boundaries, dependency flow, ADRs, architecture fitness functions, and incremental refactoring strategy. |
@@ -330,6 +330,7 @@ Token cells are shown as `startup/body`.
 
 | Skill | Tokens | Description |
 | --- | ---: | --- |
+| `agent-guidance-factory` | 119/613 | Create, refresh, audit, or migrate repository agent guidance files such as AGENTS.md, AGENTS.override.md, CLAUDE.md, .claude/rules, and Cursor rules. Use when a repo needs durable coding-agent instructions, instruction load-order decisions, nested guidance, or cleanup of bloated or stale agent docs. Do not use for ordinary human README or CONTRIBUTING docs unless they must feed agent guidance. |
 | `capability-auditor` | 96/1,153 | Audit agent skills and plugins for safety, capability coverage, duplicated logic, token/context cost, prompt-contract risk, validation readiness, marketplace visibility, dependencies, network behavior, and install/update risks. For structural split/merge/move/delete/router decisions across skills or plugins, use capability-portfolio-architect instead. |
 | `capability-portfolio-architect` | 103/922 | Audit agent skill/plugin portfolio architecture. Use for cross-plugin capability overlap, weak routing, duplicated or missing skills, split/merge/delete/move decisions, shared capability extraction, reference/script extraction, and plugin boundary redesign. For safety, coverage, or validation review of a single artifact without boundary changes, use capability-auditor instead. |
 | `capability-reality-repair` | 92/804 | Repair stale or false agent capability instructions immediately. Use when a skill, script, plugin manifest/helper, MCP/tool contract, connector guidance, validator, or bundled reference describes commands, schemas, paths, outputs, install state, dependencies, or behavior that does not match live reality. |

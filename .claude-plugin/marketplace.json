@@ -36,7 +36,7 @@
     {
       "name": "capability-workbench",
       "source": "./plugins/capability-workbench",
-      "description": "Capability discovery, synthesis, cross-plugin portfolio architecture, skill trigger metadata, vetting, plugin packaging, installation, and marketplace visibility."
+      "description": "Capability discovery, synthesis, portfolio architecture, skill trigger metadata, agent guidance file authoring, vetting, plugin packaging, installation, and marketplace visibility."
     },
     {
       "name": "codex-cli",

@@ -1,0 +1,4 @@
+interface:
+  display_name: "Agent Guidance Factory"
+  short_description: "Create AGENTS.md and CLAUDE.md"
+  default_prompt: "Create or refresh this repository's AGENTS.md and CLAUDE.md guidance."
