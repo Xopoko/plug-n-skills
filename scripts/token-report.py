@@ -19,7 +19,7 @@ ENCODING_NAME = "o200k_base"
 class SkillReport:
     plugin: str
     skill: str
-    path: Path
+    path: str
     description: str
     startup_tokens: int
     body_tokens: int
@@ -53,6 +53,11 @@ def load_encoder() -> Any:
 
 def count_tokens(encoder: Any, text: str) -> int:
     return len(encoder.encode(text))
+
+
+def normalize_newlines(text: str) -> str:
+    """Make token counts stable across Git checkouts with CRLF or LF."""
+    return text.replace("\r\n", "\n").replace("\r", "\n")
 
 
 def plugin_order(root: Path) -> list[str]:
@@ -133,11 +138,11 @@ def collect_reports(root: Path, encoder: Any) -> tuple[list[PluginReport], list[
         plugin_skills: list[SkillReport] = []
 
         for skill_path in sorted(plugin_dir.glob("skills/*/SKILL.md")):
-            text = skill_path.read_text(encoding="utf-8")
+            text = normalize_newlines(skill_path.read_text(encoding="utf-8"))
             fields, body = parse_frontmatter(text)
             skill_name = fields.get("name") or skill_path.parent.name
             description = normalize_text(fields.get("description", ""))
-            rel_path = skill_path.relative_to(root)
+            rel_path = skill_path.relative_to(root).as_posix()
             startup_text = (
                 f"name: {plugin_name}:{skill_name}\n"
                 f"description: {description}\n"
@@ -328,7 +333,7 @@ def render_json(plugin_reports: list[PluginReport], skill_reports: list[SkillRep
         "skills": [
             {
                 **{k: v for k, v in skill.__dict__.items() if k != "path"},
-                "path": str(skill.path),
+                "path": skill.path,
             }
             for skill in skill_reports
         ],
@@ -382,9 +387,10 @@ def main() -> None:
     if args.update_readme or args.check:
         readme = root / "README.md"
         rendered = render_markdown(plugin_reports, skill_reports)
-        updated = splice_readme(readme.read_text(encoding="utf-8"), rendered)
+        current_readme = normalize_newlines(readme.read_text(encoding="utf-8"))
+        updated = splice_readme(current_readme, rendered)
         if args.check:
-            if updated != readme.read_text(encoding="utf-8"):
+            if updated != current_readme:
                 sys.stderr.write("README token section is stale; run "
                                  "scripts/token-report.py --update-readme\n")
                 raise SystemExit(1)
