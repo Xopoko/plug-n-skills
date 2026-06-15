@@ -10,6 +10,7 @@ description: >-
 # Capability Reality Repair
 
 Bundled commands use `$PLUGIN_ROOT` for the plugin root. Set it once: use the host's plugin-root variable when defined (Claude Code: `PLUGIN_ROOT="$CLAUDE_PLUGIN_ROOT"`), otherwise the absolute path of this skill folder's `../..`.
+On Windows PowerShell, set and read this as `$env:PLUGIN_ROOT`; translate shown POSIX-style `$PLUGIN_ROOT/...` paths to the same path under `$env:PLUGIN_ROOT`.
 
 Treat a false skill, plugin, script, or MCP contract as an urgent capability defect. The target is not to work around the bad instruction once; the target is to repair the source that made the agent wrong so the same failure does not recur.
 

@@ -6,6 +6,7 @@ description: Audit agent skills and plugins for safety, capability coverage, dup
 # Capability Auditor
 
 Bundled commands use `$PLUGIN_ROOT` for the plugin root. Set it once: use the host's plugin-root variable when defined (Claude Code: `PLUGIN_ROOT="$CLAUDE_PLUGIN_ROOT"`), otherwise the absolute path of this skill folder's `../..`.
+On Windows PowerShell, set and read this as `$env:PLUGIN_ROOT`; translate shown POSIX-style `$PLUGIN_ROOT/...` paths to the same path under `$env:PLUGIN_ROOT`.
 
 Use this for independent review before adopting, installing, publishing, or relying on a skill or plugin.
 

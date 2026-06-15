@@ -1,7 +1,9 @@
 import importlib.util
 import io
 import json
+import os
 import stat
+import sys
 import tempfile
 import textwrap
 import unittest
@@ -19,18 +21,13 @@ spec.loader.exec_module(inspector)
 class ClaudeCodeInspectorTests(unittest.TestCase):
     def setUp(self):
         self.tmp = tempfile.TemporaryDirectory()
-        self.fake_claude = Path(self.tmp.name) / "claude"
-        self.fake_claude.write_text(
+        self.fake_script = Path(self.tmp.name) / "fake_claude.py"
+        self.fake_script.write_text(
             textwrap.dedent(
                 """\
-                #!/usr/bin/env sh
-                if [ "$1" = "--version" ]; then
-                  echo "2.9.9 (Claude Code)"
-                  exit 0
-                fi
-                if [ "$1" = "--help" ]; then
-                  cat <<'EOF'
-                Usage: claude [options] [command] [prompt]
+                import sys
+
+                ROOT_HELP = '''Usage: claude [options] [command] [prompt]
 
                 Options:
                   --dangerously-skip-permissions
@@ -44,47 +41,60 @@ class ClaudeCodeInspectorTests(unittest.TestCase):
                   mcp                                   Configure and manage MCP servers
                   plugin|plugins                        Manage Claude Code plugins
                   project                               Manage Claude Code project state
-                EOF
-                  exit 0
-                fi
-                if [ "$2" = "--help" ]; then
-                  case "$1" in
-                    plugin)
-                      cat <<'EOF'
-                Usage: claude plugin|plugins [options] [command]
+                '''
+
+                PLUGIN_HELP = '''Usage: claude plugin|plugins [options] [command]
 
                 Commands:
                   details [options] <name>
                   install|i [options] <plugin>
                   validate [options] <path>
                   marketplace
-                EOF
-                      ;;
-                    mcp)
-                      cat <<'EOF'
-                Usage: claude mcp [options] [command]
+                '''
+
+                MCP_HELP = '''Usage: claude mcp [options] [command]
 
                 Commands:
                   add [options] <name> <commandOrUrl> [args...]
                   list
                   remove [options] <name>
                   serve [options]
-                EOF
-                      ;;
-                    *)
-                      echo "unknown command" >&2
-                      exit 2
-                      ;;
-                  esac
-                  exit 0
-                fi
-                echo "unexpected args: $*" >&2
-                exit 2
+                '''
+
+                args = sys.argv[1:]
+                if args == ["--version"]:
+                    print("2.9.9 (Claude Code)")
+                    raise SystemExit(0)
+                if args == ["--help"]:
+                    print(ROOT_HELP)
+                    raise SystemExit(0)
+                if len(args) == 2 and args[1] == "--help":
+                    if args[0] == "plugin":
+                        print(PLUGIN_HELP)
+                        raise SystemExit(0)
+                    if args[0] == "mcp":
+                        print(MCP_HELP)
+                        raise SystemExit(0)
+                    print("unknown command", file=sys.stderr)
+                    raise SystemExit(2)
+                print("unexpected args: " + " ".join(args), file=sys.stderr)
+                raise SystemExit(2)
                 """
             ),
             encoding="utf-8",
         )
-        self.fake_claude.chmod(self.fake_claude.stat().st_mode | stat.S_IXUSR)
+        self.fake_claude = Path(self.tmp.name) / ("claude.cmd" if os.name == "nt" else "claude")
+        if os.name == "nt":
+            self.fake_claude.write_text(
+                f'@echo off\r\n"{sys.executable}" "{self.fake_script}" %*\r\nexit /b %ERRORLEVEL%\r\n',
+                encoding="utf-8",
+            )
+        else:
+            self.fake_claude.write_text(
+                f'#!/usr/bin/env sh\nexec "{sys.executable}" "{self.fake_script}" "$@"\n',
+                encoding="utf-8",
+            )
+            self.fake_claude.chmod(self.fake_claude.stat().st_mode | stat.S_IXUSR)
 
     def tearDown(self):
         self.tmp.cleanup()

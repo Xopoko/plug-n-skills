@@ -46,6 +46,20 @@ class CodexInstallerTest(unittest.TestCase):
         parsed = tomllib.loads(f"source = {encoded}\n")
         self.assertEqual(parsed["source"], 'D:\\agent-work\\Plug "N" Skills')
 
+    def test_exclude_plugins_removes_default_plugins(self):
+        selected = install_codex_plugins.select_plugins(
+            None,
+            ["build-swift-apps", "tauri", "pixijs", "kotlin-multiplatform"],
+        )
+
+        self.assertNotIn("build-swift-apps", selected)
+        self.assertNotIn("tauri", selected)
+        self.assertIn("capability-workbench", selected)
+
+    def test_plugin_cannot_be_selected_and_excluded(self):
+        with self.assertRaises(SystemExit):
+            install_codex_plugins.select_plugins(["codex-cli"], ["codex-cli"])
+
 
 if __name__ == "__main__":
     unittest.main()

@@ -10,6 +10,7 @@ First stop for agent capability work: decide the output shape, call the narrow s
 ## Plugin Root
 
 Bundled commands use `$PLUGIN_ROOT`. Set it once: the host's plugin-root variable when defined (Claude Code: `PLUGIN_ROOT="$CLAUDE_PLUGIN_ROOT"`), otherwise the absolute path of this skill folder's `../..`. Shared scripts live in `$PLUGIN_ROOT/scripts/`, references in `$PLUGIN_ROOT/references/`, sibling skills in `$PLUGIN_ROOT/skills/`. Prefer bundled scripts when they fit; use system skills only as source references or fallbacks.
+On Windows PowerShell, set and read this as `$env:PLUGIN_ROOT`; translate shown POSIX-style `$PLUGIN_ROOT/...` paths to the same path under `$env:PLUGIN_ROOT`.
 
 ## Route The Work
 

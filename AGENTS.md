@@ -175,9 +175,13 @@ Run these before committing publication-facing changes:
 ```bash
 python3 scripts/validate-repository.py
 python3 scripts/install-codex-plugins.py --dry-run
-python3 scripts/install-cursor-skills.py --dry-run --dest /tmp/cursor-skills-preview
+python3 scripts/install-cursor-skills.py --dry-run --dest tmp/cursor-skills-preview
 python3 -m unittest discover -s scripts/tests
 ```
+
+If the local host intentionally disables platform-specific plugins, pass
+repeated `--exclude-plugin <plugin-name>` to install or check commands instead
+of reinstalling those plugins.
 
 For install-affecting changes, also run a targeted install and visibility check:
 

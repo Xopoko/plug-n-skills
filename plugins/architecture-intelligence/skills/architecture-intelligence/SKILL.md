@@ -6,6 +6,7 @@ description: "Use whenever code work has structural consequences: project archit
 # Architecture Intelligence
 
 Bundled commands use `$PLUGIN_ROOT` for the plugin root. Set it once: use the host's plugin-root variable when defined (Claude Code: `PLUGIN_ROOT="$CLAUDE_PLUGIN_ROOT"`), otherwise the absolute path of this plugin's root directory.
+On Windows PowerShell, set and read this as `$env:PLUGIN_ROOT`; translate shown POSIX-style `$PLUGIN_ROOT/...` paths to the same path under `$env:PLUGIN_ROOT`.
 
 Use for architecture quality in code. Trigger from task context and code
 evidence: designing a new project or feature, choosing structure, changing

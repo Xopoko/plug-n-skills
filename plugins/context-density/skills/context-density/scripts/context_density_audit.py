@@ -248,7 +248,7 @@ COMMITMENT_SCHEMA = "context_density.commitment_ledger.v1"
 # Findings that cannot be silenced by rewording alone; only these may block.
 MEASURED_KINDS = {"oversized_hot_surface", "dense_hot_line"}
 LOAD_PATH_PRECEDENCE = ("hot", "router", "reference", "evidence")
-LEGAL_FILENAME_RE = re.compile(r"(^|/)(licen[cs]e|notice|copying|patents|legal)[^/]*$", re.IGNORECASE)
+LEGAL_FILENAME_RE = re.compile(r"(^|[\\/])(licen[cs]e|notice|copying|patents|legal)[^\\/]*$", re.IGNORECASE)
 # Explicit, auditable suppression for advisory findings: a `cda:allow kind[,kind]`
 # marker on the flagged line or the line above. Measured findings cannot be
 # suppressed this way.

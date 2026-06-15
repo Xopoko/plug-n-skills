@@ -62,6 +62,15 @@ def parse_args() -> argparse.Namespace:
         help="Limit to one or more plugin names (repeatable; default: all).",
     )
     parser.add_argument(
+        "--exclude-plugin",
+        action="append",
+        default=[],
+        help=(
+            "Exclude a plugin from the selected set. Repeat to exclude several. "
+            "Useful for host-specific local installs."
+        ),
+    )
+    parser.add_argument(
         "--dest",
         help="Destination skills directory (default: Cursor global skills dir).",
     )
@@ -80,8 +89,7 @@ def main() -> int:
     args = parse_args()
     root = repo_root()
     names = plugin_names(root)
-    selected = args.plugin or names
-    unknown = sorted(set(selected) - set(names))
+    selected, unknown = select_plugins(names, args.plugin, args.exclude_plugin)
     if unknown:
         print(f"unknown plugin(s): {', '.join(unknown)}", file=sys.stderr)
         return 2
@@ -142,6 +150,30 @@ def main() -> int:
         return 1 if drifted else 0
     print(("dry-run: " if args.dry_run else "") + summary)
     return 0
+
+
+def select_plugins(
+    available: list[str],
+    included: list[str],
+    excluded: list[str],
+) -> tuple[list[str], list[str]]:
+    known = set(available)
+    unknown = sorted((set(included) | set(excluded)) - known)
+    if unknown:
+        return [], unknown
+    overlap = sorted(set(included) & set(excluded))
+    if overlap:
+        print(
+            f"plugin(s) cannot be both selected and excluded: {', '.join(overlap)}",
+            file=sys.stderr,
+        )
+        raise SystemExit(2)
+    base = included or available
+    selected = [name for name in base if name not in set(excluded)]
+    if not selected:
+        print("no plugins selected after applying --exclude-plugin", file=sys.stderr)
+        raise SystemExit(2)
+    return selected, []
 
 
 if __name__ == "__main__":

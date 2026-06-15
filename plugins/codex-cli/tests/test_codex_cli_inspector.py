@@ -3,6 +3,7 @@ import io
 import json
 import os
 import stat
+import sys
 import tempfile
 import textwrap
 import unittest
@@ -20,18 +21,13 @@ spec.loader.exec_module(inspector)
 class CodexCliInspectorTests(unittest.TestCase):
     def setUp(self):
         self.tmp = tempfile.TemporaryDirectory()
-        self.fake_codex = Path(self.tmp.name) / "codex"
-        self.fake_codex.write_text(
+        self.fake_script = Path(self.tmp.name) / "fake_codex.py"
+        self.fake_script.write_text(
             textwrap.dedent(
                 """\
-                #!/usr/bin/env sh
-                if [ "$1" = "--version" ]; then
-                  echo "codex-cli 9.9.9"
-                  exit 0
-                fi
-                if [ "$1" = "--help" ]; then
-                  cat <<'EOF'
-                Codex CLI
+                import sys
+
+                ROOT_HELP = '''Codex CLI
 
                 Usage: codex [OPTIONS] [PROMPT]
 
@@ -46,14 +42,9 @@ class CodexCliInspectorTests(unittest.TestCase):
                   -C, --cd <DIR>
                   -s, --sandbox <SANDBOX_MODE>
                       --dangerously-bypass-approvals-and-sandbox
-                EOF
-                  exit 0
-                fi
-                if [ "$2" = "--help" ]; then
-                  case "$1" in
-                    exec)
-                      cat <<'EOF'
-                Run Codex non-interactively
+                '''
+
+                EXEC_HELP = '''Run Codex non-interactively
 
                 Usage: codex exec [OPTIONS] [PROMPT]
 
@@ -61,33 +52,51 @@ class CodexCliInspectorTests(unittest.TestCase):
                       --json
                       --output-schema <FILE>
                   -o, --output-last-message <FILE>
-                EOF
-                      ;;
-                    doctor)
-                      cat <<'EOF'
-                Diagnose local Codex installation
+                '''
+
+                DOCTOR_HELP = '''Diagnose local Codex installation
 
                 Options:
                       --json
                       --summary
                       --ascii
-                EOF
-                      ;;
-                    *)
-                      echo "unknown command" >&2
-                      exit 2
-                      ;;
-                  esac
-                  exit 0
-                fi
-                echo "unexpected args: $*" >&2
-                exit 2
+                '''
+
+                args = sys.argv[1:]
+                if args == ["--version"]:
+                    print("codex-cli 9.9.9")
+                    raise SystemExit(0)
+                if args == ["--help"]:
+                    print(ROOT_HELP)
+                    raise SystemExit(0)
+                if len(args) == 2 and args[1] == "--help":
+                    if args[0] == "exec":
+                        print(EXEC_HELP)
+                        raise SystemExit(0)
+                    if args[0] == "doctor":
+                        print(DOCTOR_HELP)
+                        raise SystemExit(0)
+                    print("unknown command", file=sys.stderr)
+                    raise SystemExit(2)
+                print("unexpected args: " + " ".join(args), file=sys.stderr)
+                raise SystemExit(2)
                 """
             ),
             encoding="utf-8",
         )
-        mode = self.fake_codex.stat().st_mode
-        self.fake_codex.chmod(mode | stat.S_IXUSR)
+        self.fake_codex = Path(self.tmp.name) / ("codex.cmd" if os.name == "nt" else "codex")
+        if os.name == "nt":
+            self.fake_codex.write_text(
+                f'@echo off\r\n"{sys.executable}" "{self.fake_script}" %*\r\nexit /b %ERRORLEVEL%\r\n',
+                encoding="utf-8",
+            )
+        else:
+            self.fake_codex.write_text(
+                f'#!/usr/bin/env sh\nexec "{sys.executable}" "{self.fake_script}" "$@"\n',
+                encoding="utf-8",
+            )
+            mode = self.fake_codex.stat().st_mode
+            self.fake_codex.chmod(mode | stat.S_IXUSR)
 
     def tearDown(self):
         self.tmp.cleanup()

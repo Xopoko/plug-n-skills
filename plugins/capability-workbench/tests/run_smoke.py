@@ -49,8 +49,12 @@ def check(label: str, ok: bool, detail: str = "") -> None:
 def write_skill(root: Path, name: str, frontmatter: str) -> Path:
     skill_dir = root / name
     skill_dir.mkdir(parents=True)
-    (skill_dir / "SKILL.md").write_text(frontmatter)
+    (skill_dir / "SKILL.md").write_text(frontmatter, encoding="utf-8")
     return skill_dir
+
+
+def path_ends_with(path: str, *parts: str) -> bool:
+    return tuple(Path(path).parts[-len(parts) :]) == parts
 
 
 def test_validate_plugin() -> None:
@@ -314,9 +318,9 @@ NEUTRAL_HOMES = {"CODEX_HOME": "", "CLAUDE_HOME": "", "CURSOR_HOME": ""}
 def test_agent_target() -> None:
     script = str(SCRIPTS / "agent_target.py")
     for agent, marker in (
-        ("claude", "/.claude/skills"),
-        ("codex", "/.codex/skills"),
-        ("cursor", "/.cursor/skills"),
+        ("claude", (".claude", "skills")),
+        ("codex", (".codex", "skills")),
+        ("cursor", (".cursor", "skills")),
     ):
         result = run([script, "--json"], env={"AGENT_TARGET": agent, **NEUTRAL_HOMES})
         check(f"agent_target: resolves {agent}", result.returncode == 0, result.stderr)
@@ -324,7 +328,7 @@ def test_agent_target() -> None:
             payload = json.loads(result.stdout)
             check(
                 f"agent_target: {agent} skills dir",
-                payload["skills_dir"].endswith(marker),
+                path_ends_with(payload["skills_dir"], *marker),
                 payload["skills_dir"],
             )
             if agent == "cursor":
@@ -356,14 +360,14 @@ def test_install_skill_default_dest() -> None:
         "print(mod._default_dest())"
     )
     for agent, marker in (
-        ("codex", "/.codex/skills"),
-        ("claude", "/.claude/skills"),
-        ("cursor", "/.cursor/skills"),
+        ("codex", (".codex", "skills")),
+        ("claude", (".claude", "skills")),
+        ("cursor", (".cursor", "skills")),
     ):
         result = run(["-c", snippet], env={"AGENT_TARGET": agent, **NEUTRAL_HOMES})
         check(
             f"install-skill-from-github: default dest follows {agent}",
-            result.returncode == 0 and result.stdout.strip().endswith(marker),
+            result.returncode == 0 and path_ends_with(result.stdout.strip(), *marker),
             result.stdout + result.stderr,
         )
 

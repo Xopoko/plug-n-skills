@@ -43,6 +43,16 @@ def parse_args() -> argparse.Namespace:
         help="Install one plugin. Repeat to install several. Defaults to all.",
     )
     parser.add_argument(
+        "--exclude-plugin",
+        action="append",
+        choices=PLUGIN_NAMES,
+        default=[],
+        help=(
+            "Exclude a plugin from the selected set. Repeat to exclude several. "
+            "Useful for host-specific local installs."
+        ),
+    )
+    parser.add_argument(
         "--global-source-root",
         default=None,
         help=(
@@ -84,7 +94,7 @@ def parse_args() -> argparse.Namespace:
 def main() -> None:
     args = parse_args()
     root = repo_root()
-    selected = args.plugin or PLUGIN_NAMES
+    selected = select_plugins(args.plugin, args.exclude_plugin)
     source_root = root / "plugins"
     global_source_root = (
         Path(args.global_source_root).expanduser().resolve()
@@ -171,6 +181,20 @@ def main() -> None:
         )
 
     print("install complete" if not args.dry_run else "dry run complete")
+
+
+def select_plugins(included: list[str] | None, excluded: list[str]) -> list[str]:
+    include_set = list(included) if included else list(PLUGIN_NAMES)
+    excluded_set = set(excluded)
+    overlap = sorted(set(included or []) & excluded_set)
+    if overlap:
+        raise SystemExit(
+            "plugin(s) cannot be both selected and excluded: " + ", ".join(overlap)
+        )
+    selected = [name for name in include_set if name not in excluded_set]
+    if not selected:
+        raise SystemExit("no plugins selected after applying --exclude-plugin")
+    return selected
 
 
 def require_file(path: Path) -> None:

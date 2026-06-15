@@ -6,6 +6,7 @@ description: Route and execute Kotlin Multiplatform tasks across architecture, G
 # Kotlin Multiplatform Router
 
 Bundled commands use `$PLUGIN_ROOT` for the plugin root. Set it once: use the host's plugin-root variable when defined (Claude Code: `PLUGIN_ROOT="$CLAUDE_PLUGIN_ROOT"`), otherwise the absolute path of this plugin's root directory.
+On Windows PowerShell, set and read this as `$env:PLUGIN_ROOT`; translate shown POSIX-style `$PLUGIN_ROOT/...` paths to the same path under `$env:PLUGIN_ROOT`.
 
 Use this skill when the task mentions Kotlin Multiplatform, KMP, KMM, Compose Multiplatform, CMP, Android-KMP, Kotlin/Native, cinterop, Gradle KMP source sets, shared iOS/Android logic, `commonMain`, `iosMain`, `androidMain`, `com.android.kotlin.multiplatform.library`, CocoaPods, or SwiftPM in a Kotlin project.
 
