@@ -11,6 +11,8 @@ Use first for Spec-Driven Development, Spec Kit, specs, requirements, design doc
 
 Pick the smallest lane that preserves intent, traceability, and proof. Tiny work stays light; ambiguous, risky, cross-boundary, orchestration, or LLM-heavy work cannot jump straight to code.
 
+PowerShell: use `$env:PLUGIN_ROOT` for `$PLUGIN_ROOT` command paths.
+
 Preflight when a repo path exists:
 
 ```bash

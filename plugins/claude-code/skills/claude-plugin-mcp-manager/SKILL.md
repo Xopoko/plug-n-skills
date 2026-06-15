@@ -5,8 +5,7 @@ description: Use when managing Claude Code plugins, plugin marketplaces, plugin 
 
 # Claude Plugin And MCP Manager
 
-Bundled commands use `$PLUGIN_ROOT` for the plugin root. Set it once: the host's plugin-root variable when defined (Claude Code: `PLUGIN_ROOT="$CLAUDE_PLUGIN_ROOT"`), otherwise this plugin's absolute root path.
-On Windows PowerShell, set and read this as `$env:PLUGIN_ROOT`; translate shown POSIX-style `$PLUGIN_ROOT/...` paths to the same path under `$env:PLUGIN_ROOT`.
+Bundled commands use `$PLUGIN_ROOT` (`$env:PLUGIN_ROOT` in PowerShell; same path suffix) for the plugin root. Set it once: the host's plugin-root variable when defined (Claude Code: `PLUGIN_ROOT="$CLAUDE_PLUGIN_ROOT"`), otherwise this plugin's absolute root path.
 
 Covers plugin marketplaces, installed plugins, token-cost details, validation, release tags, scoped installs, session-only plugin loading, MCP server configuration, project approval state, stdio/http/sse transports, headers, env vars, OAuth, and strict-MCP-config runs.
 

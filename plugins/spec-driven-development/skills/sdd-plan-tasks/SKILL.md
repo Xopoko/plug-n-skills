@@ -41,6 +41,8 @@ Avoid tasks like "implement feature" or "update tests" without path, expected be
 
 ## Gate
 
+PowerShell: use `$env:PLUGIN_ROOT` for `$PLUGIN_ROOT` command paths.
+
 ```bash
 python3 "$PLUGIN_ROOT/scripts/sdd_traceability_check.py" <repo> --json
 ```

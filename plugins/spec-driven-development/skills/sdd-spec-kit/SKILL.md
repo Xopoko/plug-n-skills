@@ -13,6 +13,8 @@ Project workspace is source of truth. Upstream `https://github.com/github/spec-k
 
 ## Preflight
 
+PowerShell: use `$env:PLUGIN_ROOT` for `$PLUGIN_ROOT` command paths.
+
 ```bash
 python3 "$PLUGIN_ROOT/scripts/sdd_surface_audit.py" <repo> --json
 git status --short

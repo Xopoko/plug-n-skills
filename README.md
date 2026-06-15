@@ -166,7 +166,7 @@ instructions.
 | Reference files | 43 | - | Longer ledgers, contracts, scorecards, and source notes. |
 | Helper and validator scripts | 38 | - | Deterministic plugin-local helpers. |
 | Startup metadata | 156 skills | 11,932 | Skill name, description, and file pointer for routing. |
-| On-demand skill bodies | 156 skills | 100,969 | Instruction bodies after frontmatter, loaded only when selected. |
+| On-demand skill bodies | 156 skills | 100,176 | Instruction bodies after frontmatter, loaded only when selected. |
 
 Regenerate the report after skill edits:
 
@@ -183,19 +183,19 @@ Token columns are `startup metadata / on-demand body`.
 
 | Plugin | Skills | Refs | Scripts | Startup | Body |
 | --- | ---: | ---: | ---: | ---: | ---: |
-| `build-swift-apps` | 59 | 0 | 5 | 4,449 | 36,794 |
+| `build-swift-apps` | 59 | 0 | 5 | 4,449 | 36,725 |
 | `pixijs` | 26 | 0 | 0 | 1,861 | 7,967 |
-| `tauri` | 6 | 0 | 1 | 481 | 3,327 |
-| `scientific-research` | 1 | 0 | 0 | 91 | 2,047 |
-| `context-density` | 1 | 0 | 1 | 128 | 2,539 |
-| `capability-workbench` | 10 | 11 | 21 | 933 | 11,748 |
-| `codex-cli` | 6 | 3 | 2 | 501 | 5,662 |
-| `claude-code` | 6 | 2 | 1 | 528 | 4,807 |
-| `architecture-intelligence` | 8 | 7 | 2 | 523 | 5,261 |
+| `tauri` | 6 | 0 | 1 | 481 | 3,235 |
+| `scientific-research` | 1 | 0 | 0 | 91 | 2,024 |
+| `context-density` | 1 | 0 | 1 | 128 | 2,515 |
+| `capability-workbench` | 10 | 11 | 21 | 933 | 11,541 |
+| `codex-cli` | 6 | 3 | 2 | 501 | 5,524 |
+| `claude-code` | 6 | 2 | 1 | 528 | 4,669 |
+| `architecture-intelligence` | 8 | 7 | 2 | 523 | 5,123 |
 | `design-intelligence` | 7 | 2 | 1 | 472 | 5,101 |
 | `game-design-intelligence` | 6 | 2 | 1 | 536 | 2,916 |
-| `kotlin-multiplatform` | 14 | 16 | 1 | 1,096 | 9,623 |
-| `spec-driven-development` | 6 | 0 | 2 | 333 | 3,177 |
+| `kotlin-multiplatform` | 14 | 16 | 1 | 1,096 | 9,569 |
+| `spec-driven-development` | 6 | 0 | 2 | 333 | 3,267 |
 
 ### Plugin Focus
 
@@ -224,7 +224,7 @@ Token cells are shown as `startup/body`.
 | Skill | Tokens | Description |
 | --- | ---: | --- |
 | `app-icon-studio` | 70/984 | Create, generate, evaluate, export, install, or debug iOS and macOS app icons, including AppIcon.appiconset assets and macOS .icns bundle icons. |
-| `apple-dev-research` | 67/526 | Search Apple Dev Search for Swift, SwiftUI, Xcode, iOS, macOS, and Apple-platform community articles, tutorials, blogs, and write-ups. |
+| `apple-dev-research` | 67/503 | Search Apple Dev Search for Swift, SwiftUI, Xcode, iOS, macOS, and Apple-platform community articles, tutorials, blogs, and write-ups. |
 | `apple-firmware-inspector` | 87/676 | Apple firmware and binary reverse engineering with the `ipsw` CLI: IPSW/kernelcache download/extraction, dyld_shared_cache disassembly, private headers, entitlements, Mach-O analysis, Apple internals, KEXTs, and security research. |
 | `appstore-ads-operator` | 72/843 | Manage Apple Ads with `asc ads`: separate auth, org lookup, campaigns, ad groups, ads, keywords, reports, raw API requests, and safe live testing. |
 | `appstore-archive-uploader` | 73/800 | Manage Xcode version/build numbers, archive, export, upload, and publish IPA/PKG artifacts with `asc xcode` helpers before TestFlight or App Store submission. |
@@ -269,7 +269,7 @@ Token cells are shown as `startup/body`.
 | `macos-test-diagnoser` | 83/323 | Triage failing macOS tests across Xcode and SwiftPM workflows. Use when asked to run macOS tests, narrow failing scopes, explain assertion or crash failures, or separate real test regressions from setup and environment problems. |
 | `macos-view-architect` | 70/500 | Refactor macOS SwiftUI views/scenes into small stable subviews, explicit scene roots, command/toolbar ownership, scene-aware state, and narrow AppKit bridges. |
 | `macos-window-architect` | 76/799 | Customize macOS 15+ SwiftUI windows and scene behavior: toolbar/title visibility, drag regions, window materials, minimize/restoration, default/ideal placement, launch behavior, and borderless windows. |
-| `swiftpm-build-inspector` | 71/559 | Analyze Swift Package Manager dependencies, plugins, module variants, branch pins, package graph shape, macros, binary targets, and CI/local build overhead that slow Xcode builds. |
+| `swiftpm-build-inspector` | 71/536 | Analyze Swift Package Manager dependencies, plugins, module variants, branch pins, package graph shape, macros, binary targets, and CI/local build overhead that slow Xcode builds. |
 | `swiftui-performance-inspector` | 70/543 | Audit SwiftUI runtime performance from code and profiling evidence for slow rendering, janky scrolling, high CPU or memory, excessive updates, hangs, and layout thrash. |
 | `swiftui-view-architect` | 69/481 | Refactor SwiftUI view files toward small dedicated subviews, MV-first data flow, stable view trees, explicit dependencies, extracted actions, and correct Observation usage. |
 | `tuist-flaky-test-stabilizer` | 83/554 | Investigate and fix flaky tests using Tuist test insights and local repeated test runs. Use when a user provides a flaky test URL, test case identifier, or asks to find and stabilize flaky tests. |
@@ -277,7 +277,7 @@ Token cells are shown as `startup/body`.
 | `tuist-migration-planner` | 75/577 | Migrate existing Xcode projects toward Tuist-generated workspaces. Use when converting hand-maintained Xcode projects, mapping targets/settings/dependencies, or validating generated builds and launches. |
 | `tuist-workspace-navigator` | 80/500 | Work productively in Tuist-generated Xcode workspaces. Use for `tuist generate`, generated workspace builds, focused generation, tags, buildable folders, and Xcode build/test commands after generation. |
 | `xcode-build-baseline` | 66/550 | Benchmark Xcode clean, cached-clean, zero-change, and incremental builds with repeatable inputs, timing summaries, and `.build-benchmark/` artifacts. |
-| `xcode-build-strategist` | 78/982 | Recommend-first Xcode build optimization: benchmark, run specialist analyses, prioritize wall-clock findings, request approval, delegate fixes, and re-benchmark. Use for speeding up Xcode builds or full build audits. |
+| `xcode-build-strategist` | 78/959 | Recommend-first Xcode build optimization: benchmark, run specialist analyses, prioritize wall-clock findings, request approval, delegate fixes, and re-benchmark. Use for speeding up Xcode builds or full build audits. |
 | `xcode-build-tuner` | 77/749 | Apply approved Xcode build optimization changes and re-benchmark. Use after `xcode-build-strategist` approval, or for explicit build-setting, script-phase, Swift compilation, or SwiftPM graph fixes. |
 | `xcode-compile-profiler` | 70/494 | Analyze Swift and mixed-language compile hotspots from timing summaries, Swift frontend diagnostics, type-checking warnings, CompileSwiftSources, SwiftEmitModule, and related build evidence. |
 | `xcode-project-auditor` | 68/483 | Audit Xcode project configuration, schemes, build settings, target dependencies, run scripts, module maps, explicit modules, and fixed build overhead with approval gates. |
@@ -318,74 +318,74 @@ Token cells are shown as `startup/body`.
 
 | Skill | Tokens | Description |
 | --- | ---: | --- |
-| `tauri-config-security` | 68/681 | Configure or review Tauri 2 tauri.conf files, capabilities, permissions, CSP, scoped filesystem/network/shell access, window labels, plugin permissions, and security-sensitive frontend API exposure. |
-| `tauri-debug-testing` | 77/600 | Debug, test, or stabilize Tauri 2 apps, including Rust compile/runtime errors, frontend API mocks, permissions failures, dev/build mismatches, WebDriver, CI checks, logs, DevTools, and platform-specific test gaps. |
+| `tauri-config-security` | 68/658 | Configure or review Tauri 2 tauri.conf files, capabilities, permissions, CSP, scoped filesystem/network/shell access, window labels, plugin permissions, and security-sensitive frontend API exposure. |
+| `tauri-debug-testing` | 77/577 | Debug, test, or stabilize Tauri 2 apps, including Rust compile/runtime errors, frontend API mocks, permissions failures, dev/build mismatches, WebDriver, CI checks, logs, DevTools, and platform-specific test gaps. |
 | `tauri-distribution-mobile` | 82/470 | Package, sign, notarize, update, release, or validate Tauri 2 desktop/mobile builds, including bundle targets, updater signatures, macOS/Windows/Linux distribution, Android/iOS setup, CI release checks, and store-readiness planning. |
 | `tauri-ipc-plugins` | 77/465 | Implement or review Tauri 2 Rust commands, frontend invoke wrappers, events, Channels, custom errors, state, official plugins, or custom Tauri plugins across Rust, JavaScript, permissions, and mobile surfaces. |
-| `tauri-projects` | 98/628 | Start, inspect, scaffold, migrate, or orient Tauri 2 projects. Use when a task mentions creating a Tauri app, adding Tauri to an existing frontend, src-tauri project structure, package-manager selection, framework selection, Tauri 1 to 2 migration, or "what shape is this Tauri repo in? |
-| `tauri-shell-ui` | 79/483 | Build or review Tauri 2 desktop shell features: windows, webviews, menus, tray icons, custom titlebars, resources, icons, state, sidecars, opener/shell APIs, deep links, and native-feeling desktop interactions. |
+| `tauri-projects` | 98/605 | Start, inspect, scaffold, migrate, or orient Tauri 2 projects. Use when a task mentions creating a Tauri app, adding Tauri to an existing frontend, src-tauri project structure, package-manager selection, framework selection, Tauri 1 to 2 migration, or "what shape is this Tauri repo in? |
+| `tauri-shell-ui` | 79/460 | Build or review Tauri 2 desktop shell features: windows, webviews, menus, tray icons, custom titlebars, resources, icons, state, sidecars, opener/shell APIs, deep links, and native-feeling desktop interactions. |
 
 #### `scientific-research`
 
 | Skill | Tokens | Description |
 | --- | ---: | --- |
-| `scientific-research` | 91/2,047 | Use for scientific or scholarly research with source traceability, literature reviews, paper discovery, arXiv/OpenAlex/Crossref/Europe PMC/Semantic Scholar/PubMed queries, corpus building, DOI deduplication, source-backed claim extraction, evidence synthesis, or research quality validation. |
+| `scientific-research` | 91/2,024 | Use for scientific or scholarly research with source traceability, literature reviews, paper discovery, arXiv/OpenAlex/Crossref/Europe PMC/Semantic Scholar/PubMed queries, corpus building, DOI deduplication, source-backed claim extraction, evidence synthesis, or research quality validation. |
 
 #### `context-density`
 
 | Skill | Tokens | Description |
 | --- | ---: | --- |
-| `context-density` | 128/2,539 | Use when designing, auditing, refactoring, measuring, or validating token-efficient context and prompt/output contracts. Trigger for AGENTS.md, prompts, skill packages, marketplace plugins, MCP/tool schemas, long-context placement, prompt/context compression, retrieval provenance, runtime context diagnostics, duplicated or overlapping prose, competing skill descriptions, irrelevant-context pruning, prompt reformatting, agent/subagent context handoffs, brittle trigger descriptions, strict JSON/schema/tool-call output, validators, retry/repair loops, or behavior-preserving token reduction. |
+| `context-density` | 128/2,515 | Use when designing, auditing, refactoring, measuring, or validating token-efficient context and prompt/output contracts. Trigger for AGENTS.md, prompts, skill packages, marketplace plugins, MCP/tool schemas, long-context placement, prompt/context compression, retrieval provenance, runtime context diagnostics, duplicated or overlapping prose, competing skill descriptions, irrelevant-context pruning, prompt reformatting, agent/subagent context handoffs, brittle trigger descriptions, strict JSON/schema/tool-call output, validators, retry/repair loops, or behavior-preserving token reduction. |
 
 #### `capability-workbench`
 
 | Skill | Tokens | Description |
 | --- | ---: | --- |
 | `agent-guidance-factory` | 119/613 | Create, refresh, audit, or migrate repository agent guidance files such as AGENTS.md, AGENTS.override.md, CLAUDE.md, .claude/rules, and Cursor rules. Use when a repo needs durable coding-agent instructions, instruction load-order decisions, nested guidance, or cleanup of bloated or stale agent docs. Do not use for ordinary human README or CONTRIBUTING docs unless they must feed agent guidance. |
-| `capability-auditor` | 96/1,191 | Audit agent skills and plugins for safety, capability coverage, duplicated logic, token/context cost, prompt-contract risk, validation readiness, marketplace visibility, dependencies, network behavior, and install/update risks. For structural split/merge/move/delete/router decisions across skills or plugins, use capability-portfolio-architect instead. |
-| `capability-portfolio-architect` | 103/960 | Audit agent skill/plugin portfolio architecture. Use for cross-plugin capability overlap, weak routing, duplicated or missing skills, split/merge/delete/move decisions, shared capability extraction, reference/script extraction, and plugin boundary redesign. For safety, coverage, or validation review of a single artifact without boundary changes, use capability-auditor instead. |
-| `capability-reality-repair` | 92/842 | Repair stale or false agent capability instructions immediately. Use when a skill, script, plugin manifest/helper, MCP/tool contract, connector guidance, validator, or bundled reference describes commands, schemas, paths, outputs, install state, dependencies, or behavior that does not match live reality. |
-| `capability-synthesizer` | 124/2,238 | Perform broad external-first discovery, vetting, scoring, distillation, and synthesis of agent skills or plugin packs from the public web, GitHub/public repositories, OpenClaw/ClawHub, marketplaces, research sources, community implementations, user references, and local skills. Use for well-vetted capability synthesis, cross-skill comparison, plugin-pack synthesis, global capability acquisition, skill strengthening, and adoption/rejection changelogs. |
-| `capability-workbench` | 74/1,685 | Route and orchestrate agent skill and plugin lifecycle work. Use when work involves agent skills, plugins, marketplace packages, capability acquisition, synthesis, creation, installation, packaging, audit, or context-density optimization. |
-| `plugin-factory` | 79/1,220 | Create, update, validate, optionally install/cache-refresh, and hand off marketplace-backed agent plugins. Use for plugin manifests, local marketplace entries, plugin-pack synthesis, triggerable skill bundles, install visibility gates, and Codex app deeplinks. |
-| `skill-factory` | 79/1,185 | Create, refactor, split, compress, validate, or package agent skills. Use for SKILL.md trigger design, agents/openai.yaml metadata, skill resources, progressive disclosure, token-efficient instructions, quick validation, and plugin-contained skills. |
-| `skill-installer-vetter` | 82/920 | Find, list, vet, install, or update agent skills from curated catalogs, GitHub repo paths, local folders, or user-provided references. Use when installation must be preceded by provenance, safety, dependency, and capability checks. |
-| `skill-trigger-metadata` | 85/894 | Use when creating, editing, auditing, or debugging skill names, descriptions, SKILL.md frontmatter, plugin skill metadata, discovery triggers, routing phrases, under-triggering, over-triggering, or cases where a relevant skill is not being invoked or read. |
+| `capability-auditor` | 96/1,168 | Audit agent skills and plugins for safety, capability coverage, duplicated logic, token/context cost, prompt-contract risk, validation readiness, marketplace visibility, dependencies, network behavior, and install/update risks. For structural split/merge/move/delete/router decisions across skills or plugins, use capability-portfolio-architect instead. |
+| `capability-portfolio-architect` | 103/937 | Audit agent skill/plugin portfolio architecture. Use for cross-plugin capability overlap, weak routing, duplicated or missing skills, split/merge/delete/move decisions, shared capability extraction, reference/script extraction, and plugin boundary redesign. For safety, coverage, or validation review of a single artifact without boundary changes, use capability-auditor instead. |
+| `capability-reality-repair` | 92/819 | Repair stale or false agent capability instructions immediately. Use when a skill, script, plugin manifest/helper, MCP/tool contract, connector guidance, validator, or bundled reference describes commands, schemas, paths, outputs, install state, dependencies, or behavior that does not match live reality. |
+| `capability-synthesizer` | 124/2,215 | Perform broad external-first discovery, vetting, scoring, distillation, and synthesis of agent skills or plugin packs from the public web, GitHub/public repositories, OpenClaw/ClawHub, marketplaces, research sources, community implementations, user references, and local skills. Use for well-vetted capability synthesis, cross-skill comparison, plugin-pack synthesis, global capability acquisition, skill strengthening, and adoption/rejection changelogs. |
+| `capability-workbench` | 74/1,662 | Route and orchestrate agent skill and plugin lifecycle work. Use when work involves agent skills, plugins, marketplace packages, capability acquisition, synthesis, creation, installation, packaging, audit, or context-density optimization. |
+| `plugin-factory` | 79/1,197 | Create, update, validate, optionally install/cache-refresh, and hand off marketplace-backed agent plugins. Use for plugin manifests, local marketplace entries, plugin-pack synthesis, triggerable skill bundles, install visibility gates, and Codex app deeplinks. |
+| `skill-factory` | 79/1,162 | Create, refactor, split, compress, validate, or package agent skills. Use for SKILL.md trigger design, agents/openai.yaml metadata, skill resources, progressive disclosure, token-efficient instructions, quick validation, and plugin-contained skills. |
+| `skill-installer-vetter` | 82/897 | Find, list, vet, install, or update agent skills from curated catalogs, GitHub repo paths, local folders, or user-provided references. Use when installation must be preceded by provenance, safety, dependency, and capability checks. |
+| `skill-trigger-metadata` | 85/871 | Use when creating, editing, auditing, or debugging skill names, descriptions, SKILL.md frontmatter, plugin skill metadata, discovery triggers, routing phrases, under-triggering, over-triggering, or cases where a relevant skill is not being invoked or read. |
 
 #### `codex-cli`
 
 | Skill | Tokens | Description |
 | --- | ---: | --- |
-| `codex-cli` | 74/977 | Route Codex CLI work across local CLI inspection, non-interactive exec/review automation, plugin and MCP management, doctor/debug/sandbox/app-server diagnostics, session log forensics, and Codex app local environment actions. |
-| `codex-doctor-debugger` | 82/862 | Use when diagnosing Codex CLI install, config, auth, runtime, feature flags, sandbox denials, debug models, prompt input, app-server, remote-control, remote websocket/unix connections, or local Codex health failures. |
-| `codex-environments` | 84/1,018 | Create, update, debug, or remove Codex app local project environments and actions, including `.codex/environments/environment.toml`, Run/Test/Preview buttons, startup commands, simulator/browser/dev-server launch actions, environment variables, and repeatable local commands. |
-| `codex-exec-automation` | 97/1,041 | Use when preparing, running, debugging, or reviewing non-interactive Codex CLI automation with `codex exec`, `codex exec resume`, `codex review`, JSONL events, output schemas, last-message files, cwd/profile/config flags, sandbox and approval modes, or CI-style agent runs. |
-| `codex-log-reader` | 87/846 | Use when locating, summarizing, or debugging Codex session rollout JSONL logs by CODEX_THREAD_ID, cwd, query, issue key, project path, malformed or huge log symptoms, world-readable log concerns, or "what happened in this Codex thread" questions. |
-| `codex-plugin-mcp-manager` | 77/918 | Use when managing Codex CLI plugins, plugin marketplaces, local marketplace refreshes, cache visibility, MCP server list/get/add/remove/login/logout, MCP bearer token environment variables, or plugin/MCP installation failures. |
+| `codex-cli` | 74/954 | Route Codex CLI work across local CLI inspection, non-interactive exec/review automation, plugin and MCP management, doctor/debug/sandbox/app-server diagnostics, session log forensics, and Codex app local environment actions. |
+| `codex-doctor-debugger` | 82/839 | Use when diagnosing Codex CLI install, config, auth, runtime, feature flags, sandbox denials, debug models, prompt input, app-server, remote-control, remote websocket/unix connections, or local Codex health failures. |
+| `codex-environments` | 84/995 | Create, update, debug, or remove Codex app local project environments and actions, including `.codex/environments/environment.toml`, Run/Test/Preview buttons, startup commands, simulator/browser/dev-server launch actions, environment variables, and repeatable local commands. |
+| `codex-exec-automation` | 97/1,018 | Use when preparing, running, debugging, or reviewing non-interactive Codex CLI automation with `codex exec`, `codex exec resume`, `codex review`, JSONL events, output schemas, last-message files, cwd/profile/config flags, sandbox and approval modes, or CI-style agent runs. |
+| `codex-log-reader` | 87/823 | Use when locating, summarizing, or debugging Codex session rollout JSONL logs by CODEX_THREAD_ID, cwd, query, issue key, project path, malformed or huge log symptoms, world-readable log concerns, or "what happened in this Codex thread" questions. |
+| `codex-plugin-mcp-manager` | 77/895 | Use when managing Codex CLI plugins, plugin marketplaces, local marketplace refreshes, cache visibility, MCP server list/get/add/remove/login/logout, MCP bearer token environment variables, or plugin/MCP installation failures. |
 
 #### `claude-code`
 
 | Skill | Tokens | Description |
 | --- | ---: | --- |
-| `claude-agent-worktrees` | 90/779 | Use when coordinating Claude Code background agents, `claude agents --json`, dispatched-session defaults, git worktrees, tmux/iTerm panes, resume/continue/from-pr/fork-session, session names and IDs, remote control, prompt suggestions, or cloud ultrareview runs. |
-| `claude-code` | 72/812 | Route Claude Code CLI work across local CLI inspection, interactive and print-mode automation, plugin and MCP lifecycle, diagnostics, hooks/settings, background agents, worktrees, sessions, remote control, and ultrareview. |
-| `claude-doctor-debugger` | 91/761 | Use when diagnosing Claude Code install/update/auth/config/runtime health, broken customizations, safe mode, bare mode, debug logs, auto-mode classifier, settings validation, keychain or API-key auth boundaries, IDE/Chrome integration, doctor warnings, or update/install/setup-token issues. |
-| `claude-hooks-settings` | 87/731 | Use when creating, editing, auditing, or debugging Claude Code settings, hooks, CLAUDE.md/rules loading, custom agents, tool allow/deny permissions, output styles, workflows, setting sources, safe-mode/bare-mode differences, or plugin-provided customizations. |
-| `claude-plugin-mcp-manager` | 95/861 | Use when managing Claude Code plugins, plugin marketplaces, plugin validation/details/token cost/tag/install/update/remove/prune, session-only plugin-dir or plugin-url, MCP list/get/add/remove/import/serve, project MCP approvals, strict MCP config, transports, headers, OAuth, or MCP/plugin installation failures. |
-| `claude-print-automation` | 93/863 | Use when preparing, running, or debugging non-interactive Claude Code with `claude --print`, output-format text/json/stream-json, input-format text/stream-json, JSON schema validation, budget caps, fallback model, no session persistence, prompt suggestions, or trusted-directory CI-style runs. |
+| `claude-agent-worktrees` | 90/756 | Use when coordinating Claude Code background agents, `claude agents --json`, dispatched-session defaults, git worktrees, tmux/iTerm panes, resume/continue/from-pr/fork-session, session names and IDs, remote control, prompt suggestions, or cloud ultrareview runs. |
+| `claude-code` | 72/789 | Route Claude Code CLI work across local CLI inspection, interactive and print-mode automation, plugin and MCP lifecycle, diagnostics, hooks/settings, background agents, worktrees, sessions, remote control, and ultrareview. |
+| `claude-doctor-debugger` | 91/738 | Use when diagnosing Claude Code install/update/auth/config/runtime health, broken customizations, safe mode, bare mode, debug logs, auto-mode classifier, settings validation, keychain or API-key auth boundaries, IDE/Chrome integration, doctor warnings, or update/install/setup-token issues. |
+| `claude-hooks-settings` | 87/708 | Use when creating, editing, auditing, or debugging Claude Code settings, hooks, CLAUDE.md/rules loading, custom agents, tool allow/deny permissions, output styles, workflows, setting sources, safe-mode/bare-mode differences, or plugin-provided customizations. |
+| `claude-plugin-mcp-manager` | 95/838 | Use when managing Claude Code plugins, plugin marketplaces, plugin validation/details/token cost/tag/install/update/remove/prune, session-only plugin-dir or plugin-url, MCP list/get/add/remove/import/serve, project MCP approvals, strict MCP config, transports, headers, OAuth, or MCP/plugin installation failures. |
+| `claude-print-automation` | 93/840 | Use when preparing, running, or debugging non-interactive Claude Code with `claude --print`, output-format text/json/stream-json, input-format text/stream-json, JSON schema validation, budget caps, fallback model, no session persistence, prompt suggestions, or trusted-directory CI-style runs. |
 
 #### `architecture-intelligence`
 
 | Skill | Tokens | Description |
 | --- | ---: | --- |
-| `architecture-conformance` | 61/569 | Use when intended architecture must be compared with implementation: dependency policies, ADRs, ownership rules, drift, erosion, recovered models, and conformance classifications. |
+| `architecture-conformance` | 61/546 | Use when intended architecture must be compared with implementation: dependency policies, ADRs, ownership rules, drift, erosion, recovered models, and conformance classifications. |
 | `architecture-decisions` | 59/383 | Use when structural code choices need durable rationale: ADRs, tradeoffs, consequences, reversibility, ownership, review triggers, and validation plans. |
-| `architecture-fitness-functions` | 67/648 | Use when architecture choices need executable guardrails: dependency rules, cycle checks, boundary tests, ownership review gates, ADR compliance, runtime/resilience checks, and CI fitness functions. |
-| `architecture-intelligence` | 63/1,143 | Use whenever code work has structural consequences: project architecture, module boundaries, dependency direction, runtime topology, ownership, ADRs, fitness functions, or architecture refactoring. |
-| `architecture-ownership-topology` | 66/606 | Use when architecture crosses ownership or review boundaries: CODEOWNERS/OWNERS, module coverage, cross-owned dependencies, socio-technical coordination, and governance paths. |
+| `architecture-fitness-functions` | 67/625 | Use when architecture choices need executable guardrails: dependency rules, cycle checks, boundary tests, ownership review gates, ADR compliance, runtime/resilience checks, and CI fitness functions. |
+| `architecture-intelligence` | 63/1,120 | Use whenever code work has structural consequences: project architecture, module boundaries, dependency direction, runtime topology, ownership, ADRs, fitness functions, or architecture refactoring. |
+| `architecture-ownership-topology` | 66/583 | Use when architecture crosses ownership or review boundaries: CODEOWNERS/OWNERS, module coverage, cross-owned dependencies, socio-technical coordination, and governance paths. |
 | `architecture-refactoring-strategy` | 67/517 | Use when code changes need staged structural design: boundary extraction, modularization, dependency inversion, migrations, anti-corruption layers, tests, rollout gates, and rollback. |
-| `architecture-runtime-topology` | 67/533 | Use when code work touches runtime shape: services, app/CLI/background flows, deployment/IaC, observability, resilience, external integrations, ownership, and runtime coupling. |
-| `codebase-architecture-audit` | 73/862 | Use before architecture-significant code work to recover the actual source-backed system shape: modules, dependencies, domain seams, runtime coupling, ownership, quality attributes, tests, docs, and risks. |
+| `architecture-runtime-topology` | 67/510 | Use when code work touches runtime shape: services, app/CLI/background flows, deployment/IaC, observability, resilience, external integrations, ownership, and runtime coupling. |
+| `codebase-architecture-audit` | 73/839 | Use before architecture-significant code work to recover the actual source-backed system shape: modules, dependencies, domain seams, runtime coupling, ownership, quality attributes, tests, docs, and risks. |
 
 #### `design-intelligence`
 
@@ -418,26 +418,26 @@ Token cells are shown as `startup/body`.
 | `kmp-compose-ui` | 69/842 | Build and repair Compose Multiplatform UI, state, navigation, resources, platform entry points, previews, performance, accessibility, and UI tests in Kotlin Multiplatform projects. |
 | `kmp-data-layer` | 71/413 | Design and review KMP data layers, repositories, source-of-truth, DTO/domain mapping, sync, offline-first behavior, persistence choices, error handling, threading, and API exposure. |
 | `kmp-ecosystem-selection` | 85/400 | Select Kotlin Multiplatform ecosystem libraries, services, and tools for persistence, networking, DI, navigation, logging, observability, testing, code quality, resources, images, docs, payments, and reference templates without forcing a stack. |
-| `kmp-gradle-doctor` | 74/1,161 | Diagnose and fix Kotlin Multiplatform Gradle, source-set, dependency, Android target, Compose plugin, KGP/AGP, testing, static-analysis, and CI issues. |
+| `kmp-gradle-doctor` | 74/1,176 | Diagnose and fix Kotlin Multiplatform Gradle, source-set, dependency, Android target, Compose plugin, KGP/AGP, testing, static-analysis, and CI issues. |
 | `kmp-interop-bridges` | 89/581 | Design and review KMP platform bridges, source-set placement, expect/actual, entry-point wiring, cinterop, Swift API readiness, SKIE, KMP-NativeCoroutines, KDoctor, XCFrameworks, and SwiftPM export. |
 | `kmp-migration-release` | 86/727 | Plan and execute Kotlin Multiplatform migrations and release gates, including AGP 9 Android-KMP, monolithic composeApp splits, CocoaPods to SwiftPM, cinterop, iOS framework integration, CI, publishing, and app-store readiness. |
 | `kmp-performance-observability` | 80/461 | Diagnose Kotlin Multiplatform performance and observability across Gradle build time, Kotlin/Native memory and GC, Compose Multiplatform jank, binary size, startup, runtime logging, and release-mode verification. |
-| `kmp-production-governance` | 76/704 | Review Kotlin Multiplatform production readiness, build governance, convention plugins, version catalogs, repository policy, module API hygiene, Klibs target support, ABI validation, publishing, and adoption risk. |
-| `kmp-production-readiness` | 77/439 | Audit Kotlin Multiplatform production readiness with explicit scorecards, release blockers, risk ownership, validation commands, and deferred checks across architecture, build, testing, interop, security, performance, and publishing. |
+| `kmp-production-governance` | 76/681 | Review Kotlin Multiplatform production readiness, build governance, convention plugins, version catalogs, repository policy, module API hygiene, Klibs target support, ABI validation, publishing, and adoption risk. |
+| `kmp-production-readiness` | 77/416 | Audit Kotlin Multiplatform production readiness with explicit scorecards, release blockers, risk ownership, validation commands, and deferred checks across architecture, build, testing, interop, security, performance, and publishing. |
 | `kmp-publishing-ci` | 80/510 | Design and verify Kotlin Multiplatform CI and publishing workflows for Maven publications, Gradle metadata, ABI validation, XCFramework, SwiftPM export, KMMBridge, artifact hosting, signing boundaries, and app release gates. |
 | `kmp-security-privacy` | 75/326 | Review Kotlin Multiplatform security and privacy across secure storage, tokens, Ktor auth, TLS, certificate pinning, logging redaction, runtime protection, platform APIs, and commonMain boundaries. |
 | `kmp-testing-quality` | 76/495 | Design and review KMP testing strategy, commonTest, kotlin.test, platform tests, Compose Multiplatform UI tests, screenshot tests, test doubles, refactor safety, code review gates, and regression validation. |
-| `kotlin-multiplatform` | 90/1,632 | Route and execute Kotlin Multiplatform tasks across architecture, Gradle diagnosis, Compose Multiplatform UI, Android-KMP migration, iOS interop, CocoaPods or SwiftPM migration, testing, performance, security, CI, publishing, and production readiness. |
+| `kotlin-multiplatform` | 90/1,609 | Route and execute Kotlin Multiplatform tasks across architecture, Gradle diagnosis, Compose Multiplatform UI, Android-KMP migration, iOS interop, CocoaPods or SwiftPM migration, testing, performance, security, CI, publishing, and production readiness. |
 
 #### `spec-driven-development`
 
 | Skill | Tokens | Description |
 | --- | ---: | --- |
-| `sdd` | 59/742 | Route Spec-Driven Development work across lightweight, Spec Kit, Kiro-style, OpenSpec-style, brownfield, bugfix, planning, implementation, and audit lanes. |
-| `sdd-audit` | 51/393 | Audit SDD artifacts, requirement-task traceability, surface selection, and completion evidence before implementation or final delivery. |
-| `sdd-implement` | 54/493 | Execute SDD task lists safely, update task status, handle spec drift, and verify completion with fresh evidence before claiming done. |
-| `sdd-plan-tasks` | 55/495 | Convert approved SDD specs into technical plans, design artifacts, contracts, quickstart validation, and traceable task lists. |
-| `sdd-spec-kit` | 58/556 | Use GitHub Spec Kit projects and commands, including constitution, specify, clarify, plan, tasks, analyze, implement, extensions, and presets. |
+| `sdd` | 59/760 | Route Spec-Driven Development work across lightweight, Spec Kit, Kiro-style, OpenSpec-style, brownfield, bugfix, planning, implementation, and audit lanes. |
+| `sdd-audit` | 51/411 | Audit SDD artifacts, requirement-task traceability, surface selection, and completion evidence before implementation or final delivery. |
+| `sdd-implement` | 54/511 | Execute SDD task lists safely, update task status, handle spec drift, and verify completion with fresh evidence before claiming done. |
+| `sdd-plan-tasks` | 55/513 | Convert approved SDD specs into technical plans, design artifacts, contracts, quickstart validation, and traceable task lists. |
+| `sdd-spec-kit` | 58/574 | Use GitHub Spec Kit projects and commands, including constitution, specify, clarify, plan, tasks, analyze, implement, extensions, and presets. |
 | `sdd-specify` | 56/498 | Create or refine SDD requirements and specifications with explicit assumptions, non-goals, acceptance criteria, success metrics, and retrofit truth markers. |
 
 ## Repository Design

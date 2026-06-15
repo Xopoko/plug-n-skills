@@ -9,6 +9,8 @@ Use when tasks are ready and the user wants implementation, execution, continuat
 
 ## Preflight
 
+PowerShell: use `$env:PLUGIN_ROOT` for `$PLUGIN_ROOT` command paths.
+
 ```bash
 python3 "$PLUGIN_ROOT/scripts/sdd_surface_audit.py" <repo> --json
 python3 "$PLUGIN_ROOT/scripts/sdd_traceability_check.py" <repo> --json

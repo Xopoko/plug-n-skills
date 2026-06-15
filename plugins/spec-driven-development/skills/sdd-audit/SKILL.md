@@ -9,6 +9,8 @@ Use for SDD reviews, consistency checks, pre-implementation gates, completion pr
 
 ## Required Tools
 
+PowerShell: use `$env:PLUGIN_ROOT` for `$PLUGIN_ROOT` command paths.
+
 ```bash
 python3 "$PLUGIN_ROOT/scripts/sdd_surface_audit.py" <repo> --json
 python3 "$PLUGIN_ROOT/scripts/sdd_traceability_check.py" <repo> --json
