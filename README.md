@@ -163,10 +163,10 @@ instructions.
 | --- | ---: | ---: | --- |
 | Plugin packs | 13 | - | Installable packages under `plugins/`. |
 | Skill entrypoints | 156 | - | `SKILL.md` files exposed through plugin metadata. |
-| Reference files | 43 | - | Longer ledgers, contracts, scorecards, and source notes. |
+| Reference files | 44 | - | Longer ledgers, contracts, scorecards, and source notes. |
 | Helper and validator scripts | 38 | - | Deterministic plugin-local helpers. |
 | Startup metadata | 156 skills | 11,932 | Skill name, description, and file pointer for routing. |
-| On-demand skill bodies | 156 skills | 100,176 | Instruction bodies after frontmatter, loaded only when selected. |
+| On-demand skill bodies | 156 skills | 100,290 | Instruction bodies after frontmatter, loaded only when selected. |
 
 Regenerate the report after skill edits:
 
@@ -188,7 +188,7 @@ Token columns are `startup metadata / on-demand body`.
 | `tauri` | 6 | 0 | 1 | 481 | 3,235 |
 | `scientific-research` | 1 | 0 | 0 | 91 | 2,024 |
 | `context-density` | 1 | 0 | 1 | 128 | 2,515 |
-| `capability-workbench` | 10 | 11 | 21 | 933 | 11,541 |
+| `capability-workbench` | 10 | 12 | 21 | 933 | 11,655 |
 | `codex-cli` | 6 | 3 | 2 | 501 | 5,524 |
 | `claude-code` | 6 | 2 | 1 | 528 | 4,669 |
 | `architecture-intelligence` | 8 | 7 | 2 | 523 | 5,123 |
@@ -348,8 +348,8 @@ Token cells are shown as `startup/body`.
 | `capability-synthesizer` | 124/2,215 | Perform broad external-first discovery, vetting, scoring, distillation, and synthesis of agent skills or plugin packs from the public web, GitHub/public repositories, OpenClaw/ClawHub, marketplaces, research sources, community implementations, user references, and local skills. Use for well-vetted capability synthesis, cross-skill comparison, plugin-pack synthesis, global capability acquisition, skill strengthening, and adoption/rejection changelogs. |
 | `capability-workbench` | 74/1,662 | Route and orchestrate agent skill and plugin lifecycle work. Use when work involves agent skills, plugins, marketplace packages, capability acquisition, synthesis, creation, installation, packaging, audit, or context-density optimization. |
 | `plugin-factory` | 79/1,197 | Create, update, validate, optionally install/cache-refresh, and hand off marketplace-backed agent plugins. Use for plugin manifests, local marketplace entries, plugin-pack synthesis, triggerable skill bundles, install visibility gates, and Codex app deeplinks. |
-| `skill-factory` | 79/1,162 | Create, refactor, split, compress, validate, or package agent skills. Use for SKILL.md trigger design, agents/openai.yaml metadata, skill resources, progressive disclosure, token-efficient instructions, quick validation, and plugin-contained skills. |
-| `skill-installer-vetter` | 82/897 | Find, list, vet, install, or update agent skills from curated catalogs, GitHub repo paths, local folders, or user-provided references. Use when installation must be preceded by provenance, safety, dependency, and capability checks. |
+| `skill-factory` | 79/1,231 | Create, refactor, split, compress, validate, or package agent skills. Use for SKILL.md trigger design, agents/openai.yaml metadata, skill resources, progressive disclosure, token-efficient instructions, quick validation, and plugin-contained skills. |
+| `skill-installer-vetter` | 82/942 | Find, list, vet, install, or update agent skills from curated catalogs, GitHub repo paths, local folders, or user-provided references. Use when installation must be preceded by provenance, safety, dependency, and capability checks. |
 | `skill-trigger-metadata` | 85/871 | Use when creating, editing, auditing, or debugging skill names, descriptions, SKILL.md frontmatter, plugin skill metadata, discovery triggers, routing phrases, under-triggering, over-triggering, or cases where a relevant skill is not being invoked or read. |
 
 #### `codex-cli`

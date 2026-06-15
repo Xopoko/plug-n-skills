@@ -9,6 +9,12 @@ Bundled commands use `$PLUGIN_ROOT` (`$env:PLUGIN_ROOT` in PowerShell; same path
 
 Create skills that any host agent can actually use: clear trigger metadata, compact hot-path instructions, conditional resources, and executable validation.
 
+Read `$PLUGIN_ROOT/references/skill-runtime-model.md` before creating,
+synthesizing, materially refactoring, or installing skills across Codex,
+Claude Code, Cursor, or the open Agent Skills format. It records startup
+metadata, on-demand body loading, resource loading, host-specific discovery
+paths, and install/reload behavior.
+
 For material `name` or `description` work, use `skill-trigger-metadata` first. For portfolio-level split, merge, delete, router, reference-extract, or script-extract decisions across multiple skills, use `capability-portfolio-architect` first. This skill owns concrete skill structure, resources, scripts, packaging, and validation after the boundary decision is made.
 
 ## Create A Skill

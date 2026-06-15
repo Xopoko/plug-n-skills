@@ -9,6 +9,8 @@ Bundled commands use `$PLUGIN_ROOT` (`$env:PLUGIN_ROOT` in PowerShell; same path
 
 Install only after provenance and safety are clear. Discovery candidates are not executable until the user requested installation and the vetting result supports it.
 
+Read `$PLUGIN_ROOT/references/skill-runtime-model.md` when choosing a skill install/update destination, explaining restart or live-reload behavior, or comparing Codex, Claude Code, Cursor, and open Agent Skills discovery surfaces.
+
 ## Source Types
 
 - Curated OpenAI skills: list or install with bundled GitHub helpers.
