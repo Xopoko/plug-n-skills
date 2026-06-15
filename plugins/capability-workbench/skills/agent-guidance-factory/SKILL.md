@@ -35,12 +35,16 @@ materially changing `AGENTS.md`, `CLAUDE.md`, `.claude/rules/`, or
    that matter in most relevant sessions: layout, exact commands, coding
    conventions, test expectations, security/configuration boundaries, review
    expectations, and completion proof.
-5. Keep hot guidance small. Move long procedures, architecture notes, release
-   runbooks, and rare variants into linked docs or skills.
+5. Keep hot guidance small. Include repo evidence only when it changes an
+   agent action, boundary, command, style rule, test rule, or contribution
+   workflow. Move long procedures, architecture notes, release runbooks, and
+   rare variants into linked docs or skills.
 6. Preserve and reconcile existing rules. If instructions conflict, stop and
    ask unless source evidence makes one rule clearly stale.
 7. Validate with the repo's normal checks and any agent-specific visibility
    proof that is cheap and safe for the current host.
+8. For monorepos, many guidance files, or density/scale work, use the scale
+   pipeline in `references/agent-guidance-files.md` before editing.
 
 ## Content Rules
 

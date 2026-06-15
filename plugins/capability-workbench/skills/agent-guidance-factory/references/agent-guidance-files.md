@@ -215,6 +215,44 @@ Conflict handling:
    commands, no outdated names, no conflicts with existing guidance.
 10. Run repo checks and, when safe, an agent visibility probe.
 
+## Scale And Density Pipeline
+
+Use this pipeline before editing when the task spans many repositories,
+monorepo subtrees, or multiple hot instruction files.
+
+1. Classify every candidate file by load path:
+   - hot: startup or auto-loaded agent instructions such as `AGENTS.md`,
+     `CLAUDE.md`, prompt templates, and always-applied rules;
+   - reference: docs, runbooks, architecture notes, and rare procedures that
+     agents should open only when relevant;
+   - evidence: raw logs, audits, ledgers, source packs, changelogs, and prior
+     reports;
+   - legal or generated: license files, notices, vendored output, lockfiles,
+     generated docs, and build artifacts.
+2. Edit hot files first. They should contain only instructions that change an
+   agent action, boundary, command, style rule, test rule, or contribution
+   workflow.
+3. Keep reference files searchable and linked. Do not copy long procedures into
+   hot guidance when a stable relative link or skill pointer is enough.
+4. Treat evidence files as provenance, not current instructions. Promote a
+   claim from evidence only after recording the source path and checking that it
+   still applies to the live repository state.
+5. For each batch, run one pilot file before touching the rest. If the pilot
+   yields little improvement or exposes conflicts, stop and report the corpus
+   as already dense or structurally unclear.
+6. Maintain an evidence ledger for batch work with these fields: target path,
+   load path, source facts used, rules changed, commands added, commands
+   omitted, validation command, and residual risk.
+7. Audit distractors. Remove related but non-answering material: old plans,
+   stale architecture summaries, unused package managers, obsolete commands,
+   and style preferences with no repo evidence.
+8. Preserve existing mandatory rules unless the source of truth proves they are
+   stale. Prefer deleting a stale rule to adding an exception around it.
+9. Validate each changed file with Markdown/path checks, command spelling,
+   public-safety review, repository validators, and `git diff --check`.
+10. Report per file: why it is hot or reference, what changed, what evidence
+    supported the change, what checks ran, and what was intentionally omitted.
+
 ## Recommended Shape
 
 ```markdown
@@ -267,8 +305,8 @@ Do not add guidance for:
 Codex:
 
 - Start a fresh run or session after changing guidance.
-- Ask Codex to summarize active instruction sources:
-  `codex --ask-for-approval never "Summarize the current instructions."`
+- Ask Codex to list active instruction sources:
+  `codex --ask-for-approval never "List the active instruction files for this run."`
 - For nested guidance, run from the target subdirectory and confirm parent plus
   child guidance appears in order:
   `codex --cd subdir --ask-for-approval never "Show which instruction files are active."`

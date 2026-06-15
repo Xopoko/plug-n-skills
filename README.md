@@ -188,7 +188,7 @@ Token columns are `startup metadata / on-demand body`.
 | `tauri` | 6 | 0 | 1 | 481 | 3,235 |
 | `scientific-research` | 1 | 0 | 0 | 91 | 2,024 |
 | `context-density` | 1 | 0 | 1 | 128 | 2,515 |
-| `capability-workbench` | 10 | 12 | 21 | 933 | 11,655 |
+| `capability-workbench` | 10 | 12 | 21 | 933 | 11,720 |
 | `codex-cli` | 6 | 3 | 2 | 501 | 5,524 |
 | `claude-code` | 6 | 2 | 1 | 528 | 4,669 |
 | `architecture-intelligence` | 8 | 7 | 2 | 523 | 5,123 |
@@ -341,7 +341,7 @@ Token cells are shown as `startup/body`.
 
 | Skill | Tokens | Description |
 | --- | ---: | --- |
-| `agent-guidance-factory` | 119/613 | Create, refresh, audit, or migrate repository agent guidance files such as AGENTS.md, AGENTS.override.md, CLAUDE.md, .claude/rules, and Cursor rules. Use when a repo needs durable coding-agent instructions, instruction load-order decisions, nested guidance, or cleanup of bloated or stale agent docs. Do not use for ordinary human README or CONTRIBUTING docs unless they must feed agent guidance. |
+| `agent-guidance-factory` | 119/678 | Create, refresh, audit, or migrate repository agent guidance files such as AGENTS.md, AGENTS.override.md, CLAUDE.md, .claude/rules, and Cursor rules. Use when a repo needs durable coding-agent instructions, instruction load-order decisions, nested guidance, or cleanup of bloated or stale agent docs. Do not use for ordinary human README or CONTRIBUTING docs unless they must feed agent guidance. |
 | `capability-auditor` | 96/1,168 | Audit agent skills and plugins for safety, capability coverage, duplicated logic, token/context cost, prompt-contract risk, validation readiness, marketplace visibility, dependencies, network behavior, and install/update risks. For structural split/merge/move/delete/router decisions across skills or plugins, use capability-portfolio-architect instead. |
 | `capability-portfolio-architect` | 103/937 | Audit agent skill/plugin portfolio architecture. Use for cross-plugin capability overlap, weak routing, duplicated or missing skills, split/merge/delete/move decisions, shared capability extraction, reference/script extraction, and plugin boundary redesign. For safety, coverage, or validation review of a single artifact without boundary changes, use capability-auditor instead. |
 | `capability-reality-repair` | 92/819 | Repair stale or false agent capability instructions immediately. Use when a skill, script, plugin manifest/helper, MCP/tool contract, connector guidance, validator, or bundled reference describes commands, schemas, paths, outputs, install state, dependencies, or behavior that does not match live reality. |
