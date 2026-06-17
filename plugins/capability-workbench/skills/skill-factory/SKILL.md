@@ -1,6 +1,6 @@
 ---
 name: skill-factory
-description: Create, refactor, split, compress, validate, or package agent skills. Use for SKILL.md trigger design, agents/openai.yaml metadata, skill resources, progressive disclosure, token-efficient instructions, quick validation, and plugin-contained skills.
+description: Use when creating, refactoring, splitting, compressing, validating, or packaging agent skills. Use for SKILL.md trigger design, agents/openai.yaml metadata, skill resources, progressive disclosure, token-efficient instructions, quick validation, and plugin-contained skills.
 ---
 
 # Skill Factory
@@ -67,6 +67,18 @@ python3 "$PLUGIN_ROOT/scripts/context/context_density_audit.py" <skill-dir> --js
 ```
 
 Use the audit to remove duplicate hot-path prose, stale history, brittle request-phrase trigger design, and brittle parsing of generated model text. Do not shrink away trigger precision, safety rules, or required commands.
+
+For material skill refactors, run a structured quality-review pass before and
+after the change:
+
+```bash
+python3 "$PLUGIN_ROOT/scripts/context/token_count.py" <skill-dir> --json --top 20
+python3 "$PLUGIN_ROOT/scripts/context/context_density_audit.py" <skill-dir> --json --top 20
+```
+
+Use token hotspots, measured risk entries, duplication clusters, and blocking
+flags as triage input, not as a replacement for the skill runtime model,
+trigger metadata review, or `quick_validate.py`.
 
 ## Validate
 

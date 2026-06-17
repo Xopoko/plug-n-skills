@@ -1,6 +1,6 @@
 ---
 name: capability-auditor
-description: Audit agent skills and plugins for safety, capability coverage, duplicated logic, token/context cost, prompt-contract risk, validation readiness, marketplace visibility, dependencies, network behavior, and install/update risks. For structural split/merge/move/delete/router decisions across skills or plugins, use capability-portfolio-architect instead.
+description: Use when auditing agent skills or plugins for safety, coverage, duplicated logic, token/context cost, prompt-contract risk, validation readiness, marketplace visibility, dependencies, network behavior, or install/update risk. For structural split/merge/move/delete/router decisions across skills or plugins, use capability-portfolio-architect instead.
 ---
 
 # Capability Auditor
@@ -33,6 +33,13 @@ Context and prompt-contract audit:
 ```bash
 python3 "$PLUGIN_ROOT/scripts/context/token_count.py" <paths> --json --top 20
 python3 "$PLUGIN_ROOT/scripts/context/context_density_audit.py" <paths> --json --top 20
+```
+
+Structured quality review for Codex skills or plugins:
+
+```bash
+python3 "$PLUGIN_ROOT/scripts/context/token_count.py" <skill-or-plugin-dir> --json --top 20
+python3 "$PLUGIN_ROOT/scripts/context/context_density_audit.py" <skill-or-plugin-dir> --json --top 20
 ```
 
 Skill validation:
@@ -118,6 +125,11 @@ For trigger metadata changes, map the adopted mechanism to one of:
 - safety rule for tool or skill selection;
 - validator/audit signal.
 
+For structured quality-review findings, read the JSON fields directly. Use
+token hotspots, measured risk entries, duplication clusters, research-gate
+summaries, blocking flags, and validator results as evidence, then verify any
+adopted change with Workbench validators.
+
 ## Report
 
 Use concise sections:
@@ -133,6 +145,7 @@ Capability audit:
 - Dependencies/runtime:
 - Safety risks:
 - Context-density findings:
+- Quality-review findings:
 - Validation:
 - Install scope:
 - Verdict:

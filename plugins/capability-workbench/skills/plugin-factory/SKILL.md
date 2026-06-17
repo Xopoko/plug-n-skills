@@ -1,6 +1,6 @@
 ---
 name: plugin-factory
-description: Create, update, validate, optionally install/cache-refresh, and hand off marketplace-backed agent plugins. Use for plugin manifests, local marketplace entries, plugin-pack synthesis, triggerable skill bundles, install visibility gates, and Codex app deeplinks.
+description: Use when creating, updating, validating, optionally installing/cache-refreshing, or handing off marketplace-backed agent plugins. Use for plugin manifests, local marketplace entries, plugin-pack synthesis, triggerable skill bundles, install visibility gates, and Codex app deeplinks.
 ---
 
 # Plugin Factory
@@ -92,6 +92,12 @@ For every marketplace-backed plugin:
 
 ```bash
 python3 "$PLUGIN_ROOT/scripts/plugin/validate_plugin.py" <plugin-dir>
+```
+
+For Codex plugins, add a structured quality-review pass:
+
+```bash
+python3 "$PLUGIN_ROOT/scripts/context/context_density_audit.py" <plugin-dir> --json --top 20
 ```
 
 When `install_required=true`:

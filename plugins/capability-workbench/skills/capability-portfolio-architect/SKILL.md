@@ -1,10 +1,10 @@
 ---
 name: capability-portfolio-architect
 description: >-
-  Audit agent skill/plugin portfolio architecture. Use for cross-plugin
+  Use when auditing agent skill/plugin portfolio architecture for cross-plugin
   capability overlap, weak routing, duplicated or missing skills,
   split/merge/delete/move decisions, shared capability extraction,
-  reference/script extraction, and plugin boundary redesign. For safety,
+  reference/script extraction, or plugin boundary redesign. For safety,
   coverage, or validation review of a single artifact without boundary
   changes, use capability-auditor instead.
 license: MIT

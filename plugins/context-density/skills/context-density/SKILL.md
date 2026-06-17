@@ -52,6 +52,7 @@ Bundled commands use `$PLUGIN_ROOT` (`$env:PLUGIN_ROOT` in PowerShell; same path
 - Machine decisions must come from strict JSON/schema, tool arguments/results, typed protocols, validators, or closed keys.
 - Invalid structured output must reject, retry, repair under the same schema, fallback, or fail loudly.
 - Do not add regex/substring patches over generated explanations to recover status, IDs, categories, scores, dates, or actions.
+- Treat structured quality-review output as evidence for skill/plugin quality and budgets, not as a replacement for context-density gates or repo validators.
 - Do not run host-agent config changes unless the user requested a config-changing action.
 
 ## Operating Model
@@ -88,6 +89,7 @@ Load paths:
 | Shared terminology, workflow, source-of-truth layout | `references/operating-model.md` |
 | Startup/context/token diagnostics and host-runtime measurement choices | `references/token-diagnostics.md` |
 | SKILL.md or plugin skill package footprint reduction | `references/skill-refactor.md` |
+| Skill/plugin quality review, improvement briefs, budget comparison, or observed-usage calibration | `references/quality-review-contract.md` |
 | Batch or repository-wide behavior-preserving compression (docs, AGENTS.md, skills): target selection, compress, deterministic invariants, adversarial refute, repair loop | `references/compression-pipeline.md` |
 | Skill/plugin portfolio split, merge, delete, move, router, cross-plugin overlap, or script-extract decisions | Capability Workbench `capability-portfolio-architect` when available |
 | Prompt, model-output, tool-call, schema, retry, or prose-parsing review | `references/prompt-contracts.md` |
@@ -112,6 +114,15 @@ python3 "$PLUGIN_ROOT/skills/context-density/scripts/description_overlap.py" <di
 python3 "$PLUGIN_ROOT/skills/context-density/scripts/compression_invariants.py" <original> <compressed> --json
 python3 "$PLUGIN_ROOT/skills/context-density/scripts/refuter_calibration.py" plant <original> --exam exam.md --key key.json
 python3 "$PLUGIN_ROOT/skills/context-density/scripts/refuter_calibration.py" grade key.json verdict.json
+```
+
+When the target is a Codex skill or plugin, add a structured quality-review
+pass from local evidence:
+
+```bash
+python3 "$PLUGIN_ROOT/skills/context-density/scripts/token_count.py" <skill-or-plugin-dir> --json --top 20
+python3 "$PLUGIN_ROOT/skills/context-density/scripts/context_density_audit.py" <skill-or-plugin-dir> --json --top 20
+python3 "$PLUGIN_ROOT/skills/context-density/scripts/description_overlap.py" <plugin-skills-dir> --min-jaccard 0.25 --top 20
 ```
 
 The audit separates `measured` findings (blocking-eligible) from `advisory`
@@ -154,6 +165,7 @@ Context density audit:
 - Existing context refactor:
 - Preserved invariants:
 - Contract discipline:
+- Quality review: token summary, hotspots, measured/advisory risks, blocking flags, validation verdicts, or why unavailable.
 - Validation:
 - Adopted/rejected changes:
 - Remaining tradeoffs:
