@@ -114,13 +114,13 @@ metadata, larger instructions on demand.
 
 | Metric | Tokens | Notes |
 | --- | ---: | --- |
-| Startup metadata | 3,918 | Name, description, and file pointer for all 59 skills. |
-| On-demand skill bodies | 36,450 | Full body text loaded only when a skill is selected. |
+| Startup metadata | 4,194 | Name, description, and file pointer for all 61 skills. |
+| On-demand skill bodies | 38,587 | Full body text loaded only when a skill is selected. |
 
 | Skill | Startup metadata | On-demand body |
 | --- | ---: | ---: |
 | `app-icon-studio` | 61 | 984 |
-| `apple-dev-research` | 58 | 386 |
+| `apple-dev-research` | 58 | 503 |
 | `apple-firmware-inspector` | 78 | 676 |
 | `appstore-ads-operator` | 63 | 843 |
 | `appstore-archive-uploader` | 64 | 800 |
@@ -129,43 +129,45 @@ metadata, larger instructions on demand.
 | `appstore-connect-cli` | 56 | 521 |
 | `appstore-crash-insights` | 60 | 494 |
 | `appstore-id-resolver` | 56 | 318 |
-| `appstore-metadata-localizer` | 73 | 893 |
-| `appstore-metadata-sync` | 71 | 857 |
-| `appstore-notary-runner` | 57 | 770 |
+| `appstore-metadata-localizer` | 87 | 954 |
+| `appstore-metadata-sync` | 76 | 914 |
+| `appstore-notary-runner` | 73 | 815 |
 | `appstore-pricing-planner` | 66 | 850 |
 | `appstore-record-creator` | 59 | 570 |
 | `appstore-release-director` | 79 | 726 |
-| `appstore-release-notes-writer` | 67 | 644 |
-| `appstore-release-planner` | 77 | 870 |
+| `appstore-release-notes-writer` | 79 | 688 |
+| `appstore-release-planner` | 84 | 722 |
 | `appstore-revenuecat-sync` | 72 | 784 |
-| `appstore-review-readiness` | 55 | 969 |
+| `appstore-review-readiness` | 79 | 1,013 |
 | `appstore-screenshot-pipeline` | 63 | 1,013 |
 | `appstore-screenshot-studio` | 64 | 653 |
 | `appstore-screenshot-validator` | 58 | 637 |
 | `appstore-signing-setup` | 56 | 646 |
-| `appstore-subscription-localizer` | 64 | 673 |
+| `appstore-subscription-localizer` | 73 | 715 |
 | `appstore-testflight-coordinator` | 55 | 346 |
 | `appstore-wall-publisher` | 79 | 373 |
 | `appstore-workflow-runner` | 65 | 793 |
+| `build-swift-apps` | 82 | 758 |
 | `ios-ettrace-profiler` | 60 | 1,034 |
 | `ios-intents-architect` | 69 | 556 |
 | `ios-liquid-glass-designer` | 69 | 452 |
 | `ios-memgraph-inspector` | 62 | 581 |
 | `ios-rocketsim-operator` | 68 | 486 |
-| `ios-simulator-debugger` | 62 | 480 |
+| `ios-simulator-browser` | 82 | 805 |
+| `ios-simulator-debugger` | 83 | 532 |
 | `ios-swiftui-architect` | 71 | 708 |
 | `macos-appkit-bridge` | 87 | 566 |
 | `macos-liquid-glass-designer` | 78 | 593 |
-| `macos-notarization-packager` | 72 | 252 |
+| `macos-notarization-packager` | 80 | 305 |
 | `macos-runtime-debugger` | 75 | 770 |
-| `macos-signing-inspector` | 73 | 379 |
+| `macos-signing-inspector` | 69 | 428 |
 | `macos-swiftpm-runner` | 76 | 280 |
 | `macos-swiftui-architect` | 69 | 821 |
 | `macos-telemetry-probe` | 63 | 412 |
 | `macos-test-diagnoser` | 74 | 323 |
 | `macos-view-architect` | 61 | 500 |
 | `macos-window-architect` | 67 | 799 |
-| `swiftpm-build-inspector` | 62 | 457 |
+| `swiftpm-build-inspector` | 62 | 536 |
 | `swiftui-performance-inspector` | 61 | 543 |
 | `swiftui-view-architect` | 60 | 481 |
 | `tuist-flaky-test-stabilizer` | 74 | 554 |
@@ -173,7 +175,7 @@ metadata, larger instructions on demand.
 | `tuist-migration-planner` | 66 | 577 |
 | `tuist-workspace-navigator` | 71 | 500 |
 | `xcode-build-baseline` | 57 | 550 |
-| `xcode-build-strategist` | 69 | 880 |
+| `xcode-build-strategist` | 69 | 959 |
 | `xcode-build-tuner` | 68 | 749 |
 | `xcode-compile-profiler` | 61 | 494 |
 | `xcode-project-auditor` | 59 | 483 |
@@ -200,6 +202,7 @@ The skill IDs follow a deliberate naming system:
 
 | Skill | Purpose |
 | --- | --- |
+| `build-swift-apps` | Route broad or ambiguous Swift and Apple-platform work to the right focused skill. |
 | `macos-runtime-debugger` | Build, launch, log, and debug local macOS apps and desktop executables. |
 | `macos-swiftpm-runner` | Build, run, and test SwiftPM-first macOS packages and command-line tools. |
 | `macos-test-diagnoser` | Triage failing Xcode or SwiftPM test runs and separate real regressions from setup issues. |
@@ -210,7 +213,8 @@ The skill IDs follow a deliberate naming system:
 
 | Skill | Purpose |
 | --- | --- |
-| `ios-simulator-debugger` | Use XcodeBuildMCP to build, run, inspect, and debug iOS simulator apps. |
+| `ios-simulator-browser` | Preferred user-facing Simulator surface: mirror an iOS app into the Codex browser and render SwiftUI package previews with hot reload. |
+| `ios-simulator-debugger` | Use XcodeBuildMCP to build, run, inspect, and debug iOS simulator apps; hand off to `ios-simulator-browser` for visible proof. |
 | `ios-rocketsim-operator` | Use RocketSim's bundled agent skill and CLI for visible simulator UI interaction. |
 | `ios-ettrace-profiler` | Capture and interpret symbolicated ETTrace profiles for iOS simulator flows. |
 | `ios-memgraph-inspector` | Capture, inspect, and compare simulator memory graphs with `leaks` evidence. |
@@ -245,8 +249,8 @@ The skill IDs follow a deliberate naming system:
 
 | Skill | Purpose |
 | --- | --- |
-| `macos-signing-inspector` | Inspect code signing, entitlements, sandboxing, hardened runtime, and Gatekeeper issues. |
-| `macos-notarization-packager` | Prepare and troubleshoot macOS packaging, signing, and notarization workflows. |
+| `macos-signing-inspector` | Diagnose existing macOS app signing, entitlements, sandboxing, hardened runtime, Gatekeeper, and trust-policy issues. |
+| `macos-notarization-packager` | Prepare or diagnose Developer ID distribution artifacts, bundle structure, and notarization readiness. |
 | `appstore-release-director` | Orchestrate an end-to-end iOS App Store release from local repo state through App Store Connect review readiness. |
 | `app-icon-studio` | Create, evaluate, export, and install iOS AppIcon asset catalogs or macOS .icns bundle icons. |
 | `appstore-screenshot-studio` | Generate, revise, translate, scrape, and crop App Store marketing screenshot panels. |
@@ -305,14 +309,14 @@ preflight them and fail clearly when missing. Dependency profiles are:
 | Profile | Main tools |
 | --- | --- |
 | `core` | Xcode, Swift, `xcodebuild`, `xcrun`, `git`, `python3`, signing and plist tools. |
-| `mcp` | Node.js, `npm`, and `npx` for bundled MCP servers. |
+| `mcp` | Node.js, `npm`, and `npx` for bundled MCP servers and browser-preview helpers. |
 | `github` | `gh` for GitHub-oriented publishing and issue or PR workflows. |
 | `tuist` | `mise` and `tuist@latest`. |
 | `app-store` | `asc`, `notarytool`, `stapler`, signing tools, and App Store Connect credentials. |
 | `screenshots` | AXe (`axe`) for `asc screenshots capture/run`, plus Node.js and the bundled `appstore-screenshot-studio` script dependency: `sharp`. |
 | `performance` | `ettrace`, Xcode tools, Python helper scripts, and dSYM utilities. |
 | `firmware` | `ipsw`. |
-| `simulator` | RocketSim.app with its bundled Agent Skill and CLI. |
+| `simulator` | RocketSim.app with its bundled Agent Skill and CLI, plus Node/npx for `serve-sim` browser mirroring. |
 
 ## Repository Layout
 
@@ -326,6 +330,7 @@ preflight them and fail clearly when missing. Dependency profiles are:
 ├── commands/             # Short command entrypoints
 ├── docs/                 # Installation and operational documentation
 ├── NOTICE                # Required copyright and permission notices
+├── references/           # Plugin-level audits, ledgers, and routing notes
 ├── scripts/              # Install, dependency, doctor, and validation helpers
 ├── shared/               # Shared scripts, references, schemas, and support docs
 └── skills/               # Installable Agent Skills, one directory per workflow

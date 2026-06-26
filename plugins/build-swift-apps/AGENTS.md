@@ -10,6 +10,8 @@ Claude Code, Cursor, pi, and manual skill installs.
   `SKILL.md` entrypoint and any local scripts or references that skill needs.
 - `shared/` contains canonical support files used by multiple skills. Link to
   shared files instead of duplicating long guidance.
+- `references/` contains plugin-level audits, ledgers, and routing notes that
+  should not live in hot skill files.
 - `commands/` contains short command entrypoints that delegate to canonical
   skills.
 - `.codex-plugin/`, `.claude-plugin/`, `.cursor-plugin/`, `agents/`, and
@@ -31,8 +33,9 @@ generic and reusable.
 
 | Area | Skills |
 | --- | --- |
+| Router | `build-swift-apps` |
 | Build, run, debug, test | `macos-runtime-debugger`, `macos-swiftpm-runner`, `macos-test-diagnoser`, `xcode-ui-test-stabilizer`, `macos-telemetry-probe` |
-| iOS simulator and runtime evidence | `ios-simulator-debugger`, `ios-rocketsim-operator`, `ios-ettrace-profiler`, `ios-memgraph-inspector`, `swiftui-performance-inspector` |
+| iOS simulator and runtime evidence | `ios-simulator-browser`, `ios-simulator-debugger`, `ios-rocketsim-operator`, `ios-ettrace-profiler`, `ios-memgraph-inspector`, `swiftui-performance-inspector` |
 | SwiftUI, AppKit, and product UI | `ios-swiftui-architect`, `macos-swiftui-architect`, `swiftui-view-architect`, `macos-view-architect`, `macos-appkit-bridge`, `macos-window-architect`, `ios-intents-architect`, `macos-liquid-glass-designer`, `ios-liquid-glass-designer` |
 | Xcode build performance | `xcode-build-strategist`, `xcode-build-baseline`, `xcode-compile-profiler`, `xcode-project-auditor`, `swiftpm-build-inspector`, `xcode-build-tuner` |
 | Release and distribution | `app-icon-studio`, `macos-signing-inspector`, `macos-notarization-packager`, and the `appstore-*` App Store Connect skills |
