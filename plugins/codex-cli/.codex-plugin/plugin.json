@@ -1,6 +1,6 @@
 {
   "name": "codex-cli",
-  "version": "0.1.2",
+  "version": "0.1.3",
   "description": "Codex CLI operations, automation, diagnostics, plugin and MCP lifecycle, session log forensics, and local environment actions.",
   "author": {
     "name": "Xopoko"
@@ -30,7 +30,7 @@
       "Codex plugin marketplace visibility, install, removal, and cache-check workflows",
       "Codex MCP server list, get, add, remove, login, logout, stdio, HTTP, bearer-token-env, and OAuth workflows",
       "Codex doctor, debug, feature flag, sandbox denial, app-server, remote-control, and remote connection diagnostics",
-      "Redacted Codex rollout JSONL discovery, summaries, timelines, tool-call views, search, and log health checks",
+      "Redacted Codex rollout JSONL discovery, lineage normalization, active-scope views, deterministic trace audits, search, and log health checks",
       "Codex app local environment.toml actions for Run, Test, Preview, dev server, browser, and simulator workflows"
     ],
     "defaultPrompt": "Help me operate, automate, or debug the Codex CLI safely.",

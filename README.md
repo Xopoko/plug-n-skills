@@ -134,7 +134,7 @@ replaced to match the repository source, and repeated runs converge.
 | `build-swift-apps` | Building, debugging, profiling, testing, packaging, and releasing Swift apps across iOS and macOS. |
 | `capability-workbench` | Capability discovery, synthesis, plugin packaging, agent guidance files, trigger metadata, install-scope decisions, vetting, repair, icon workflows, and visibility checks. |
 | `claude-code` | Claude Code CLI operations, print-mode automation, diagnostics, plugin and MCP lifecycle, hooks, settings, agents, sessions, and worktrees. |
-| `codex-cli` | Codex CLI operations, automation, diagnostics, plugin and MCP lifecycle, session log forensics, and local environment actions. |
+| `codex-cli` | Codex CLI operations, automation, diagnostics, plugin and MCP lifecycle, normalized session trace audits, and local environment actions. |
 | `context-density` | Context design, long-context placement, research-backed acceptance gates, prompt contracts, skill compression, structural handoff, and validation reporting. |
 | `design-intelligence` | Product framing, interface architecture, interaction design, visual hierarchy, accessibility, and design-system governance. |
 | `game-design-intelligence` | Gameplay loops, systems, progression, economies, motivation, retention, onboarding, difficulty, multiplayer, and live-service critique. |
@@ -165,8 +165,8 @@ instructions.
 | Skill entrypoints | 158 | - | `SKILL.md` files exposed through plugin metadata. |
 | Reference files | 53 | - | Longer ledgers, contracts, scorecards, and source notes. |
 | Helper and validator scripts | 38 | - | Deterministic plugin-local helpers. |
-| Startup metadata | 158 skills | 12,235 | Skill name, description, and file pointer for routing. |
-| On-demand skill bodies | 158 skills | 99,847 | Instruction bodies after frontmatter, loaded only when selected. |
+| Startup metadata | 158 skills | 12,241 | Skill name, description, and file pointer for routing. |
+| On-demand skill bodies | 158 skills | 100,303 | Instruction bodies after frontmatter, loaded only when selected. |
 
 Regenerate the report after skill edits:
 
@@ -189,7 +189,7 @@ Token columns are `startup metadata / on-demand body`.
 | `scientific-research` | 1 | 0 | 0 | 91 | 2,024 |
 | `context-density` | 1 | 0 | 1 | 128 | 2,713 |
 | `capability-workbench` | 10 | 13 | 21 | 942 | 12,040 |
-| `codex-cli` | 6 | 3 | 2 | 501 | 5,524 |
+| `codex-cli` | 6 | 3 | 2 | 507 | 5,980 |
 | `claude-code` | 6 | 2 | 1 | 528 | 4,669 |
 | `architecture-intelligence` | 8 | 7 | 2 | 523 | 5,123 |
 | `design-intelligence` | 7 | 2 | 1 | 472 | 5,101 |
@@ -362,7 +362,7 @@ Token cells are shown as `startup/body`.
 | `codex-doctor-debugger` | 82/839 | Use when diagnosing Codex CLI install, config, auth, runtime, feature flags, sandbox denials, debug models, prompt input, app-server, remote-control, remote websocket/unix connections, or local Codex health failures. |
 | `codex-environments` | 84/995 | Create, update, debug, or remove Codex app local project environments and actions, including `.codex/environments/environment.toml`, Run/Test/Preview buttons, startup commands, simulator/browser/dev-server launch actions, environment variables, and repeatable local commands. |
 | `codex-exec-automation` | 97/1,018 | Use when preparing, running, debugging, or reviewing non-interactive Codex CLI automation with `codex exec`, `codex exec resume`, `codex review`, JSONL events, output schemas, last-message files, cwd/profile/config flags, sandbox and approval modes, or CI-style agent runs. |
-| `codex-log-reader` | 87/823 | Use when locating, summarizing, or debugging Codex session rollout JSONL logs by CODEX_THREAD_ID, cwd, query, issue key, project path, malformed or huge log symptoms, world-readable log concerns, or "what happened in this Codex thread" questions. |
+| `codex-log-reader` | 93/1,279 | Use when locating, summarizing, auditing, or debugging Codex session rollout JSONL logs by CODEX_THREAD_ID, cwd, query, issue key, project path, child or inherited-history symptoms, malformed or huge log symptoms, permission concerns, or "what happened in this Codex thread" questions. |
 | `codex-plugin-mcp-manager` | 77/895 | Use when managing Codex CLI plugins, plugin marketplaces, local marketplace refreshes, cache visibility, MCP server list/get/add/remove/login/logout, MCP bearer token environment variables, or plugin/MCP installation failures. |
 
 #### `claude-code`

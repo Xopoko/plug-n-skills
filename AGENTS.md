@@ -79,6 +79,9 @@ alone. When adding or materially changing a plugin:
   when the target agent supports that field.
 - Keep plugin-local tests near the plugin when behavior is complex enough to
   regress.
+- For session and log parsers, use public-safe synthetic fixtures for every
+  supported record-shape variant; never copy raw host rollout excerpts into
+  tracked tests.
 - Prefer additive, backwards-compatible changes unless a rename or removal is
   explicitly part of the task.
 

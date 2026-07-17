@@ -15,6 +15,10 @@ evidence, manual `jq`, or log-health interpretation is needed.
 
 If `CODEX_HOME` is unset, tools usually use `~/.codex`.
 
+Explicit file targets are restricted to regular `rollout-*.jsonl` files. This
+keeps the helper from becoming a generic arbitrary-file printer; use a separate
+purpose-built reader for other artifacts.
+
 ## Session JSONL Shape
 
 Common top-level `type` values:
@@ -28,6 +32,24 @@ Common top-level `type` values:
 Common `response_item.payload.type` values include `message`, `reasoning`,
 `function_call`, `function_call_output`, `custom_tool_call`, and
 `custom_tool_call_output`.
+
+Modern child rollouts may start with the child's `session_meta`, followed by
+copied ancestor metadata and history. Do not let a later copied `session_meta`
+replace the rollout id from the filename or first metadata record. Use the
+helper's active boundary and lineage fields; active views exclude the inherited
+prefix unless `--include-inherited` is requested. If only a low-confidence
+legacy boundary is available, the helper returns metadata-only
+`boundary-undetermined` scope until all history is requested explicitly.
+
+The runtime can mirror one logical user or assistant message as adjacent
+`event_msg` and `response_item/message` records. The helper suppresses only
+these adjacent cross-shape pairs, not a later repeated message. Some modern
+records also use `response_item/agent_message`.
+
+An orchestrator may record a `custom_tool_call` named `exec` whose input is
+JavaScript that calls other tools. The outer call is evidence; nested calls are
+not structured JSONL events and must not be presented as independently verified
+tool calls.
 
 ## Manual jq And rg Fallback
 
@@ -46,12 +68,15 @@ List assistant plaintext events:
 jq -r 'select(.type=="event_msg" and .payload.type=="agent_message") | .payload.message' /path/to/rollout.jsonl | head
 ```
 
-List executed shell commands only:
+List legacy executed shell commands only:
 
 ```bash
 jq -r 'select(.type=="response_item" and .payload.type=="function_call" and .payload.name=="exec_command")
   | (.payload.arguments | fromjson | .cmd)' /path/to/rollout.jsonl | head
 ```
+
+For current `shell_command` and outer `exec` records, prefer the helper because
+their payload shapes differ and its output is redacted.
 
 Search with line numbers:
 
@@ -72,11 +97,17 @@ python3 "$PLUGIN_ROOT/scripts/codex_log_reader.py" doctor /path/to/rollout.jsonl
 ```
 
 It checks malformed JSONL lines, very large rollout files, archived placement,
-and loose Unix permissions. Treat findings as evidence for diagnosis, not as
-permission to delete, move, chmod, or edit logs without explicit approval.
+and loose Unix permissions. Permission warnings are POSIX-only; Windows ACLs
+cannot be inferred from Unix mode bits. Treat findings as evidence for
+diagnosis, not as permission to delete, move, chmod, or edit logs without
+explicit approval.
 
 ## Secret Handling
 
+- The helper recursively redacts common sensitive structured keys, quoted and
+  bare assignments, authorization and cookie headers, URL credentials, private
+  key blocks, long token-like blobs, and terminal control characters. Treat
+  this as defense in depth, not proof that an unknown credential format is safe.
 - Do not paste raw rollout lines unless the user explicitly needs that exact excerpt and you checked it for secrets.
 - Default to snippets, line numbers, counts, tool names, cwd, timestamps, and summarized commands.
 - Never expose raw secrets, cookies, Authorization headers, API keys, private keys, seed phrases, wallet material, `.env` values, or credential-bearing history.

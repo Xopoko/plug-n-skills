@@ -9,7 +9,7 @@ Codex app project environments, and Codex session evidence.
 - `codex-exec-automation`: non-interactive `codex exec` and `codex review` runs.
 - `codex-plugin-mcp-manager`: plugin marketplaces, installed plugins, and MCP servers.
 - `codex-doctor-debugger`: `doctor`, `debug`, `sandbox`, feature flags, app-server, and remote-control diagnostics.
-- `codex-log-reader`: redacted rollout JSONL lookup, summaries, timelines, searches, and log health checks.
+- `codex-log-reader`: redacted rollout JSONL lookup, root/child normalization, active-scope views, deterministic trace audits, searches, and log health checks.
 - `codex-environments`: `.codex/environments/environment.toml` actions and long-running project commands.
 
 ## Scripts
@@ -24,7 +24,8 @@ python3 scripts/codex_log_reader.py --help
 session.
 
 `codex_log_reader.py` reads Codex rollout JSONL under `$CODEX_HOME` or
-`~/.codex`, redacts likely secrets, and produces compact views before any raw
+`~/.codex`, redacts likely secrets, separates active child work from inherited
+history, and produces compact views and evidence-ledger audits before any raw
 log line is opened.
 
 ## Validation
