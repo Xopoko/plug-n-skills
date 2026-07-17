@@ -20,7 +20,7 @@ Choose one primary mode before making changes:
 | Build well-vetted skill or plugin from references | `capability-synthesizer` | Reports plus final skill/plugin |
 | Redesign skill/plugin architecture: split, merge, delete, move, router, cross-plugin overlap, reference extraction, script extraction, shared capability extraction, or boundary changes | `capability-portfolio-architect` | Portfolio decision ledger plus structural refactor plan |
 | Create or refactor one skill | `skill-factory` | Skill folder and validation |
-| Design, audit, or debug skill names/descriptions and trigger metadata | `skill-trigger-metadata` | Trigger-ready frontmatter and prompt boundary examples |
+| Design, audit, or debug skill names/descriptions and trigger metadata | `skill-trigger-metadata` | Trigger-ready frontmatter, prompt boundary examples, and Codex catalog-budget audit |
 | Find, vet, install, or update skills | `skill-installer-vetter` | Provenance, vetting, install state |
 | Create, update, install, or publish agent marketplace plugin | `plugin-factory` | Plugin folder, marketplace entry when needed, validation, optional visibility proof |
 | Review safety, coverage, validation, token cost, or prompt contracts | `capability-auditor` | Structured audit and fixes or recommendations |

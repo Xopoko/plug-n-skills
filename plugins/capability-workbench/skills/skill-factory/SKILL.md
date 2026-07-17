@@ -68,6 +68,18 @@ python3 "$PLUGIN_ROOT/scripts/context/context_density_audit.py" <skill-dir> --js
 
 Use the audit to remove duplicate hot-path prose, stale history, brittle request-phrase trigger design, and brittle parsing of generated model text. Do not shrink away trigger precision, safety rules, or required commands.
 
+When Codex is a target host, audit aggregate catalog pressure after material
+metadata or skill-count changes:
+
+```bash
+python3 "$PLUGIN_ROOT/scripts/skill/codex_skill_catalog_audit.py" \
+  <enabled-skill-roots-or-plugin-roots> --context-window <tokens> --json
+```
+
+Do not substitute an isolated description-length check: visibility depends on
+the full enabled implicit inventory. Use `skill-trigger-metadata` to repair
+prefix information scent when the result is `descriptions_shortened`.
+
 For material skill refactors, run a structured quality-review pass before and
 after the change:
 

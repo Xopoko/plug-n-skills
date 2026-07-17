@@ -79,8 +79,57 @@ Selection:
   task words because the initial skill list is budgeted and descriptions can be
   shortened.
 
+Catalog budget:
+
+- The documented initial metadata list is capped at 2% of the model context
+  window. If the context window is unknown, the fallback is 8,000 characters.
+  This budget applies to discovery metadata, not to the selected `SKILL.md`
+  body.
+- In the audited core renderer, the token-mode limit is
+  `max(floor(context_window * 2 / 100), 1)`. Metadata cost is estimated as
+  `ceil(UTF-8 bytes / 4)`, not with the model tokenizer. Each description is
+  first normalized to one whitespace-separated line and capped at 1,024
+  characters. Plugin skills are rendered with their qualified
+  `plugin-name:skill-name`, which also consumes budget.
+- If full metadata does not fit but every minimum `name + path` line does,
+  Codex distributes the remaining space across description prefixes one
+  Unicode character at a time. Every skill name stays model-visible in this
+  mode, but implicit matching can lose discriminative terms from later in a
+  description.
+- If the minimum lines do not fit, Codex removes all descriptions and omits
+  whole entries. An omitted entry's name and path are absent from the model's
+  initial discovery list. The enabled host inventory can still resolve an
+  explicit unambiguous `$skill` mention and inject the selected instructions.
+- `agents/openai.yaml` with `policy.allow_implicit_invocation: false` excludes
+  that enabled skill from the implicit catalog while preserving explicit use.
+  This is useful for rare or manually selected skills that should not consume
+  discovery budget.
+- Budget pressure is aggregate. A single description length cannot prove that
+  a skill will be visible: the result also depends on every enabled implicitly
+  invocable skill, locator lengths, aliases, scope ordering, model window, and
+  any tighter host cap.
+
+Use the bundled conservative audit against the broadest concrete enabled
+inventory available:
+
+```bash
+python3 "$PLUGIN_ROOT/scripts/skill/codex_skill_catalog_audit.py" \
+  <skill-roots-or-plugin-roots> --context-window <tokens> --json
+```
+
+The audit mirrors the core budget phases with absolute paths. Codex may choose
+shorter path aliases and preserve more metadata. For a host-wide claim, include
+System, Admin, Repo, and User skills; auditing one plugin proves only that
+plugin's contribution. Pass `--metadata-token-cap` when a known host surface
+sets a tighter ceiling than 2%.
+
 Discovery and scope:
 
+- The audited core recursively scans for exact `SKILL.md` filenames to depth
+  six, skips hidden descendant directories, and bounds each root scan. Finding
+  one `SKILL.md` does not stop descent: a nested example or fixture with that
+  exact filename is another discovered skill. Directory symlink policy varies
+  by scope.
 - Current public Codex docs list repository skills under `.agents/skills` from
   the current working directory up to the repository root, user skills under
   `$HOME/.agents/skills`, admin skills under `/etc/codex/skills`, and bundled
@@ -308,7 +357,8 @@ evidence rather than assumptions:
 
 - A skill validates but does not appear: wrong discovery root, installed copy
   not refreshed, new top-level directory created after session start, disabled
-  skill, or a budgeted listing that dropped descriptions.
+  skill, explicit-only policy, or a budgeted listing that shortened
+  descriptions or omitted whole entries.
 - A skill appears but under-triggers: description lacks evidence-backed trigger
   terms from prompt probes, file types, symptoms, or adjacent skills.
 - A skill over-triggers: description is too generic or lacks negative
@@ -329,6 +379,10 @@ evidence rather than assumptions:
   https://agentskills.io/skill-creation/best-practices
 - OpenAI Codex skills:
   https://developers.openai.com/codex/skills
+- Audited Codex core renderer snapshot:
+  https://github.com/openai/codex/blob/315195492c80fdade38e917c18f9584efd599304/codex-rs/core-skills/src/render.rs
+- Audited Codex explicit skill injection snapshot:
+  https://github.com/openai/codex/blob/315195492c80fdade38e917c18f9584efd599304/codex-rs/core-skills/src/injection.rs
 - OpenAI Codex plugin build guide:
   https://developers.openai.com/codex/plugins/build
 - Claude Code skills:

@@ -40,6 +40,8 @@ Structured quality review for Codex skills or plugins:
 ```bash
 python3 "$PLUGIN_ROOT/scripts/context/token_count.py" <skill-or-plugin-dir> --json --top 20
 python3 "$PLUGIN_ROOT/scripts/context/context_density_audit.py" <skill-or-plugin-dir> --json --top 20
+python3 "$PLUGIN_ROOT/scripts/skill/codex_skill_catalog_audit.py" \
+  <enabled-skill-roots-or-plugin-roots> --context-window <tokens> --json
 ```
 
 Skill validation:
@@ -73,6 +75,7 @@ Always check for:
 - accidental global installation, cache refresh, or MCP config mutation when the request only needed source-repository work.
 - brittle trigger design: descriptions or routing rules that depend on exact user phrasing instead of task context, source evidence, artifacts, failures, or agent decision points.
 - weak trigger metadata: missing information scent, missing local vocabulary/synonyms, no near-miss negative boundary, generic `helper/tools/workflow` naming, or workflow summaries inside `description` that let the agent skip `SKILL.md`.
+- Codex catalog pressure: discriminative trigger terms appear only in truncated description tails, a host-wide inventory was mistaken for an isolated per-skill limit, or minimum `name + path` lines can force whole-entry omission.
 - tool-selection attack surface: untrusted imperative examples, hidden auto-invocation, broad "always use" phrasing, or metadata that bypasses consent, permissions, install scope, or destructive-action gates.
 
 Advisory warnings are usually positive safety signals. Required or hidden risky behavior controls the verdict.

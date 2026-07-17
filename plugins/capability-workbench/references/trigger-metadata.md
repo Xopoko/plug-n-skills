@@ -35,6 +35,45 @@ Avoid:
 - unsupported promises: "always", "guarantees", "perfectly";
 - private examples, local machine paths, credentials, or private names.
 
+## Codex Catalog Budget Pressure
+
+Codex does not reserve a fixed character quota for each skill. Its initial
+`name + description + path` catalog shares a host-wide budget: at most 2% of a
+known model context window, or an 8,000-character fallback when the window is
+unknown. Current core token-mode accounting estimates `ceil(UTF-8 bytes / 4)`.
+
+Design for prefix survival:
+
+1. Put the domain, task, artifact, or failure that distinguishes the skill in
+   the first clause.
+2. Put secondary synonyms and adjacent boundaries after the discriminative
+   trigger terms.
+3. Keep procedure out of metadata even when shortening the description.
+4. Do not treat the 1,024-character per-description ceiling as a safe target;
+   aggregate pressure can leave only a short prefix or omit the whole entry.
+5. Do not claim visibility from an isolated skill audit. Include the broadest
+   concrete enabled inventory and the target model window.
+
+Use this description shape when Codex is a target host:
+
+```yaml
+description: Use when <specific task, artifact, or failure>. <Secondary synonyms and bounded adjacent cases>.
+```
+
+Audit the catalog after material metadata or portfolio changes:
+
+```bash
+python3 "$PLUGIN_ROOT/scripts/skill/codex_skill_catalog_audit.py" \
+  <skill-roots-or-plugin-roots> --context-window <tokens> --json
+```
+
+Interpret `full_metadata_visible`, `descriptions_shortened`, and
+`skills_omitted` as inventory-level states. The audit uses a conservative
+absolute-path model; actual Codex path aliases may preserve more metadata.
+Rare manual skills can use `agents/openai.yaml` with
+`policy.allow_implicit_invocation: false` to leave the implicit catalog while
+remaining explicitly invocable.
+
 ## Failure Repair
 
 If the skill does not trigger:

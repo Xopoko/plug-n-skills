@@ -1,7 +1,7 @@
 {
   "name": "capability-workbench",
-  "version": "0.3.3",
-  "description": "Agent-agnostic capability workbench: discover, synthesize, architect portfolios, design trigger metadata and agent guidance files, vet, repair, install, package, and run imagegen-backed icon workflows for agent skills and plugins.",
+  "version": "0.3.4",
+  "description": "Agent-agnostic capability workbench for discovery, synthesis, portfolio architecture, trigger metadata and Codex catalog-budget audits, agent guidance, vetting, repair, installation, packaging, and imagegen-backed plugin icons.",
   "author": {
     "name": "Xopoko"
   },
@@ -14,6 +14,8 @@
     "marketplace",
     "synthesis",
     "icons",
+    "codex",
+    "trigger-metadata",
     "context-density",
     "validation",
     "repair"
@@ -22,7 +24,7 @@
   "interface": {
     "displayName": "Capability Workbench",
     "shortDescription": "Discover, synthesize, author guidance, vet, install, and package agent capabilities.",
-    "longDescription": "Capability Workbench combines web-first external discovery, skill synthesis, cross-plugin capability portfolio architecture, skill authoring, AGENTS.md and CLAUDE.md guidance file authoring, urgent repair of stale or false capability contracts, global agent skill installation, plugin packaging, imagegen-backed plugin icon workflows, marketplace visibility, safety vetting, and context-density tooling into one capability-acquisition plugin. It can audit whole plugin portfolios for overlap, weak routing, split/merge/delete/move decisions, shared capability extraction, reference extraction, and script extraction. It treats public repositories, marketplaces, research sources, and community implementations as the primary corpus, with local skills as supplementary evidence. It writes artifacts to the validated source surface and installs into the global agent installation only when the user asks for installed/global use.",
+    "longDescription": "Capability Workbench combines web-first external discovery, skill synthesis, cross-plugin capability portfolio architecture, skill authoring, AGENTS.md and CLAUDE.md guidance file authoring, urgent repair of stale or false capability contracts, global agent skill installation, plugin packaging, imagegen-backed plugin icon workflows, marketplace visibility, safety vetting, and context-density tooling into one capability-acquisition plugin. It models Codex's aggregate model-visible skill catalog budget, audits concrete inventories for description shortening or whole-entry omission, and keeps trigger-first metadata distinct from selected SKILL.md bodies. It can audit whole plugin portfolios for overlap, weak routing, split/merge/delete/move decisions, shared capability extraction, reference extraction, and script extraction. It treats public repositories, marketplaces, research sources, and community implementations as the primary corpus, with local skills as supplementary evidence. It writes artifacts to the validated source surface and installs into the global agent installation only when the user asks for installed/global use.",
     "developerName": "Xopoko",
     "category": "Productivity",
     "capabilities": [
@@ -34,6 +36,7 @@
       "AGENTS.md, CLAUDE.md, and Cursor rule guidance authoring",
       "Imagegen-backed bitmap plugin icon prompts, asset checks, and manifest wiring",
       "Skill name and description trigger metadata design",
+      "Codex model-visible skill catalog budget audits",
       "Reality repair for stale or false skill, script, plugin, and MCP contracts",
       "Global agent skill installation with safety vetting",
       "Agent marketplace plugin creation and global visibility validation",
@@ -45,6 +48,7 @@
       "Use Capability Workbench to audit a skill/plugin portfolio across plugins and decide whether capabilities should be kept, split, merged, moved, deleted, routed, moved to references, extracted into shared mechanics, or extracted into scripts.",
       "Use Capability Workbench to create, refresh, audit, or migrate AGENTS.md, CLAUDE.md, and Cursor rule files for coding agents.",
       "Use Capability Workbench to design or debug skill names and descriptions so the host agent loads the right SKILL.md.",
+      "Use Capability Workbench to audit a concrete Codex skill inventory for description shortening, whole-entry omission, and explicit-only recovery under the model-visible metadata budget.",
       "Use Capability Workbench to repair a stale skill, script, plugin, or MCP contract that contradicted live behavior during work.",
       "Use Capability Workbench to generate a coherent imagegen-backed icon for a new marketplace-backed plugin and wire it into the plugin manifest.",
       "Use Capability Workbench to validate and install an agent marketplace plugin so it is visible globally in the host agent."

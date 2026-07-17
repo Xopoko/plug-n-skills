@@ -1,10 +1,10 @@
 ---
 name: skill-trigger-metadata
 description: >-
-  Use when creating, editing, auditing, or debugging skill names, descriptions,
-  SKILL.md frontmatter, plugin skill metadata, discovery triggers, routing
-  phrases, under-triggering, over-triggering, or cases where a relevant skill
-  is not being invoked or read.
+  Audit skill trigger metadata and Codex catalog-budget pressure. Use when
+  creating or debugging names, descriptions, SKILL.md frontmatter, shortened
+  descriptions, model-visible omissions, discovery routing, under-triggering,
+  or over-triggering.
 ---
 
 # Skill Trigger Metadata
@@ -34,6 +34,11 @@ Treat skill selection as tool lookup plus routing:
 - safety: metadata is part of tool selection, so do not include untrusted imperatives, hidden auto-invocation, or examples that bypass consent.
 
 Top-load trigger boundaries and critical constraints so the agent can decide to read the skill before acting.
+
+For Codex targets, top-load the smallest discriminative trigger clause. The
+initial catalog has one aggregate metadata budget, so later description text
+may be shortened and whole entries can disappear under stronger pressure. Do
+not infer visibility from a per-skill character count.
 
 ## Selection Card
 
@@ -71,9 +76,36 @@ Check each prompt against the description:
 - Does any should-trigger prompt lack a key input type, synonym, or failure symptom?
 - Does any should-not-trigger prompt match because the description is too broad?
 - Could the agent complete the workflow from the description alone and skip `SKILL.md`?
+- Would the first surviving description prefix still distinguish this skill?
 - Are likely transitions to adjacent skills explicit enough for a router skill?
 
 Revise until the boundary is clear. If two skills own the same trigger surface, split responsibilities or make the router skill explicit.
+
+## Codex Catalog Audit
+
+When Codex is a target host and metadata or skill count changes materially, run:
+
+```bash
+python3 "$PLUGIN_ROOT/scripts/skill/codex_skill_catalog_audit.py" \
+  <skill-roots-or-plugin-roots> --context-window <tokens> --json
+```
+
+Use the broadest concrete enabled inventory available. A single plugin audit
+measures its contribution but cannot prove host-wide visibility. Read these
+typed states directly:
+
+- `full_metadata_visible`: all modeled names and descriptions fit;
+- `descriptions_shortened`: every modeled name remains, but only description
+  prefixes survive;
+- `skills_omitted`: some modeled names and paths are absent from initial model
+  context.
+
+If a known host surface applies a tighter limit, pass
+`--metadata-token-cap <tokens>`. Treat the output as conservative because Codex
+may select shorter path aliases. For a rare enabled skill that should be manual
+only, consider `agents/openai.yaml` with
+`policy.allow_implicit_invocation: false`; explicit `$skill` use remains the
+recovery path.
 
 ## Failure Diagnosis
 
