@@ -821,7 +821,9 @@ class CodexLogReaderTests(unittest.TestCase):
         )
 
     def test_doctor_does_not_apply_posix_mode_warning_on_windows(self):
-        with mock.patch.object(reader.os, "name", "nt"):
+        with mock.patch.object(
+            reader, "supports_posix_mode_checks", return_value=False
+        ):
             report = json.loads(self.run_cli(["doctor", THREAD_ID, "--json"]))
         self.assertEqual(report[0]["mode"], "")
         self.assertNotIn("world-readable", report[0]["issues"])

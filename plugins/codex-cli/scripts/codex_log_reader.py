@@ -190,6 +190,10 @@ def codex_home(args: argparse.Namespace) -> Path:
     return Path(args.codex_home or os.environ.get("CODEX_HOME", "~/.codex")).expanduser()
 
 
+def supports_posix_mode_checks() -> bool:
+    return os.name != "nt"
+
+
 def _sanitize_structure(value: Any) -> Any:
     if isinstance(value, dict):
         clean: dict[Any, Any] = {}
@@ -1544,7 +1548,7 @@ def cmd_doctor(args: argparse.Namespace) -> int:
                     malformed += 1
         mode = None
         world_readable = False
-        if os.name != "nt":
+        if supports_posix_mode_checks():
             try:
                 mode = stat.S_IMODE(path.stat().st_mode)
                 world_readable = bool(mode & stat.S_IROTH)
