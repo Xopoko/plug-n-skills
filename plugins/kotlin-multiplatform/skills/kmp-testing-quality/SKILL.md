@@ -64,6 +64,9 @@ Favor confidence/speed over coverage vanity:
 - Use stubs for simple fixed responses.
 - Use mocks only when interaction is the tested behavior.
 - Avoid real network/stores/clocks/platform services unless explicitly integration-level.
+- For async ordering/race tests, block controllable fakes at explicit gates or
+  barriers, attach observers, then release completions. Sleeps or delays are
+  not synchronization proof.
 
 ## Refactors/Migrations
 

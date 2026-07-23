@@ -55,6 +55,10 @@ Use Klibs.io and official docs as target-support evidence. Do not put a library 
 - Do not swallow cancellation.
 - Use clocks, dispatchers, and platform services through injectable abstractions when tests need control
 - Make sync idempotent and resilient to duplicate callbacks
+- Make invalidation authoritative for active and late observers: work started
+  before clear/invalidation must not republish stale data after it completes.
+  Use generation/version ownership or an equivalent guard when cancellation
+  alone is insufficient.
 
 ## Testing
 
@@ -64,6 +68,8 @@ Use Klibs.io and official docs as target-support evidence. Do not put a library 
 - Test failure paths, stale data, conflict resolution, and retry boundaries
 - For shared state-contract changes, cover every allowed transition and each
   affected consumer projection
+- Cover late collection after invalidation, pre-invalidation work completing
+  afterward, and the declared initial-to-success/failure emission order
 - With a controlled clock, assert the next-read result after TTL, no observer
   emission from clock advance alone, and the expected emission or non-emission
   for each supported expiry trigger
