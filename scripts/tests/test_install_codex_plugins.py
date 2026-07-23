@@ -1,4 +1,5 @@
 import importlib.util
+import json
 import tempfile
 import tomllib
 import unittest
@@ -14,6 +15,21 @@ spec.loader.exec_module(install_codex_plugins)
 
 
 class CodexInstallerTest(unittest.TestCase):
+    def test_installer_plugin_names_match_repository_and_marketplace(self):
+        repository_names = {
+            path.parent.parent.name
+            for path in (ROOT / "plugins").glob("*/.codex-plugin/plugin.json")
+        }
+        marketplace = json.loads(
+            (ROOT / ".claude-plugin" / "marketplace.json").read_text(
+                encoding="utf-8"
+            )
+        )
+        marketplace_names = {entry["name"] for entry in marketplace["plugins"]}
+
+        self.assertEqual(set(install_codex_plugins.PLUGIN_NAMES), repository_names)
+        self.assertEqual(set(install_codex_plugins.PLUGIN_NAMES), marketplace_names)
+
     def test_marketplace_source_path_is_valid_toml_with_windows_backslashes(self):
         with tempfile.TemporaryDirectory() as tmp:
             config_path = Path(tmp) / "config.toml"

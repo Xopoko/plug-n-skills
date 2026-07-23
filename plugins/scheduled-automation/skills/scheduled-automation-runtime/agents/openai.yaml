@@ -1,0 +1,4 @@
+interface:
+  display_name: "Scheduled Automation Runtime"
+  short_description: "Prove jobs in their real scheduler runtime"
+  default_prompt: "Diagnose this local scheduled job and prove the current run through the real operating-system scheduler."

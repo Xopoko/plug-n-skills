@@ -20,7 +20,7 @@ Use it when you want an agent to handle more than generic code edits:
 - plan scientific research, spec-driven delivery, context compression, and
   agent capability synthesis.
 
-The repository ships 13 installable plugin packs and 150+ focused agent
+The repository ships 14 installable plugin packs and 150+ focused agent
 skills, all plain repository content: manifests, `SKILL.md` files, references,
 validators, and helper scripts. Inspect it, validate it from a fresh clone,
 install only the packs you need, and keep generated local marketplace or cache
@@ -135,6 +135,7 @@ replaced to match the repository source, and repeated runs converge.
 | `capability-workbench` | Capability discovery, synthesis, plugin packaging, agent guidance files, trigger metadata, install-scope decisions, vetting, repair, icon workflows, and visibility checks. |
 | `claude-code` | Claude Code CLI operations, print-mode automation, diagnostics, plugin and MCP lifecycle, hooks, settings, agents, sessions, and worktrees. |
 | `codex-cli` | Codex CLI operations, automation, diagnostics, live thread supervision, controlled skill handoffs and evidence corrections, plugin and MCP lifecycle, normalized session trace audits, and local environment actions. |
+| `scheduled-automation` | Local scheduler diagnostics, real-runtime proof, safe canaries, correlated run receipts, missed-run analysis, and rollback-aware repair. |
 | `context-density` | Context design, long-context placement, research-backed acceptance gates, prompt contracts, skill compression, structural handoff, and validation reporting. |
 | `design-intelligence` | Product framing, interface architecture, interaction design, visual hierarchy, accessibility, and design-system governance. |
 | `game-design-intelligence` | Gameplay loops, systems, progression, economies, motivation, retention, onboarding, difficulty, multiplayer, and live-service critique. |
@@ -161,12 +162,12 @@ instructions.
 
 | Metric | Count | Tokens | Notes |
 | --- | ---: | ---: | --- |
-| Plugin packs | 13 | - | Installable packages under `plugins/`. |
-| Skill entrypoints | 159 | - | `SKILL.md` files exposed through plugin metadata. |
-| Reference files | 54 | - | Longer ledgers, contracts, scorecards, and source notes. |
+| Plugin packs | 14 | - | Installable packages under `plugins/`. |
+| Skill entrypoints | 160 | - | `SKILL.md` files exposed through plugin metadata. |
+| Reference files | 59 | - | Longer ledgers, contracts, scorecards, and source notes. |
 | Helper and validator scripts | 38 | - | Deterministic plugin-local helpers. |
-| Startup metadata | 159 skills | 12,353 | Skill name, description, and file pointer for routing. |
-| On-demand skill bodies | 159 skills | 101,814 | Instruction bodies after frontmatter, loaded only when selected. |
+| Startup metadata | 160 skills | 12,456 | Skill name, description, and file pointer for routing. |
+| On-demand skill bodies | 160 skills | 102,972 | Instruction bodies after frontmatter, loaded only when selected. |
 
 Regenerate the report after skill edits:
 
@@ -190,6 +191,7 @@ Token columns are `startup metadata / on-demand body`.
 | `context-density` | 1 | 0 | 1 | 128 | 2,713 |
 | `capability-workbench` | 10 | 13 | 21 | 942 | 12,040 |
 | `codex-cli` | 7 | 4 | 2 | 619 | 7,491 |
+| `scheduled-automation` | 1 | 5 | 0 | 103 | 1,158 |
 | `claude-code` | 6 | 2 | 1 | 528 | 4,669 |
 | `architecture-intelligence` | 8 | 7 | 2 | 523 | 5,123 |
 | `design-intelligence` | 7 | 2 | 1 | 472 | 5,101 |
@@ -208,6 +210,7 @@ Token columns are `startup metadata / on-demand body`.
 | `context-density` | Context design, prompt-contract optimization, research-backed acceptance gates, compression validation, and structural handoff for agent skills, plugins, prompts, docs, and workflows. |
 | `capability-workbench` | Agent-agnostic capability workbench: discover, synthesize, architect portfolios, design trigger metadata and agent guidance files, vet, repair, install, package, and run imagegen-backed icon workflows for agent skills and plugins. |
 | `codex-cli` | Codex CLI operations, automation, diagnostics, live thread supervision, plugin and MCP lifecycle, session log forensics, and local environment actions. |
+| `scheduled-automation` | Local scheduler diagnostics, real-runtime proof, safe canaries, correlated run receipts, and missed-run analysis for launchd, systemd timers, cron, and Windows Task Scheduler. |
 | `claude-code` | Claude Code CLI operations, print-mode automation, diagnostics, plugin and MCP lifecycle, hooks, settings, agents, sessions, and worktrees. |
 | `architecture-intelligence` | Source-backed software architecture intelligence for codebase audits, ownership topology, runtime topology, architecture conformance and drift checks, structure metrics, module boundaries, dependency flow, ADRs, architecture fitness functions, and incremental refactoring strategy. |
 | `design-intelligence` | Source-backed, technology-agnostic UI/UX judgment: product framing, information architecture, interaction design, usability/accessibility review, visual communication, and design-system governance. Deliberately avoids Figma automation, framework recipes, and CSS recipes. |
@@ -365,6 +368,12 @@ Token cells are shown as `startup/body`.
 | `codex-log-reader` | 93/1,279 | Use when locating, summarizing, auditing, or debugging Codex session rollout JSONL logs by CODEX_THREAD_ID, cwd, query, issue key, project path, child or inherited-history symptoms, malformed or huge log symptoms, permission concerns, or "what happened in this Codex thread" questions. |
 | `codex-plugin-mcp-manager` | 77/895 | Use when managing Codex CLI plugins, plugin marketplaces, local marketplace refreshes, cache visibility, MCP server list/get/add/remove/login/logout, MCP bearer token environment variables, or plugin/MCP installation failures. |
 | `codex-thread-supervisor` | 106/1,457 | Use when watching, monitoring, following, or supervising one or more live Codex tasks or threads by ID, including cursor-based transitions, completion or attention gates, claim checks, compact checkpoints, narrowly authorized skill handoffs or evidence corrections, and privacy-safe capability mining. Not for post-hoc rollout forensics, current-turn subagents, or external job polling. |
+
+#### `scheduled-automation`
+
+| Skill | Tokens | Description |
+| --- | ---: | --- |
+| `scheduled-automation-runtime` | 103/1,158 | Use when a local launchd, systemd timer, cron, or Windows Task Scheduler job works manually but fails or differs under the scheduler, or when registration, runtime context, last-result evidence, missed runs, or a fresh scheduler-originated result needs proof. Not for vendor CLI command construction, architecture inventory, cloud schedulers, or job business logic. |
 
 #### `claude-code`
 

@@ -44,6 +44,11 @@
       "description": "Codex CLI operations, automation, diagnostics, live thread supervision, plugin and MCP lifecycle, session log forensics, and local environment actions."
     },
     {
+      "name": "scheduled-automation",
+      "source": "./plugins/scheduled-automation",
+      "description": "Local scheduler diagnostics, real-runtime proof, safe canaries, correlated run receipts, and missed-run analysis for launchd, systemd timers, cron, and Windows Task Scheduler."
+    },
+    {
       "name": "claude-code",
       "source": "./plugins/claude-code",
       "description": "Claude Code CLI operations, print-mode automation, diagnostics, plugin and MCP lifecycle, hooks, settings, agents, sessions, and worktrees."

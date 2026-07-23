@@ -29,6 +29,7 @@ PLUGIN_LAYOUT_ROWS = [
         "pixijs",
         "design-intelligence",
         "architecture-intelligence",
+        "scheduled-automation",
         "spec-driven-development",
     ],
     [
@@ -51,6 +52,7 @@ PLUGIN_SUMMARIES = {
     "kotlin-multiplatform": "KMP migration, Gradle, Compose UI, tests, and publishing.",
     "pixijs": "PixiJS v8 scenes, assets, rendering, events, and performance.",
     "scientific-research": "Scholarly discovery, deduplication, evidence ledgers, and quality gates.",
+    "scheduled-automation": "Native scheduler proof, safe canaries, receipts, and missed-run analysis.",
     "spec-driven-development": "Specs, plans, tasks, traceable implementation, and proof.",
     "tauri": "Secure Tauri 2 setup, IPC, testing, packaging, and release.",
 }
@@ -198,9 +200,16 @@ def ordered_rows(plugins: dict[str, PluginCard]) -> list[list[PluginCard]]:
     seen = {name for row in PLUGIN_LAYOUT_ROWS for name in row}
     missing = sorted(set(plugins) - seen)
     rows = [[plugins[name] for name in row if name in plugins] for row in PLUGIN_LAYOUT_ROWS]
-    for index in range(0, len(missing), 5):
-        rows.append([plugins[name] for name in missing[index : index + 5]])
-    return [row for row in rows if row]
+    rows = [row for row in rows if row]
+    for name in missing:
+        available = [row for row in rows if len(row) < 5]
+        if not available:
+            raise ValueError(
+                "Dashboard supports at most 15 plugin cards in three rows; "
+                "update the canvas or card layout before adding more."
+            )
+        min(available, key=len).append(plugins[name])
+    return rows
 
 
 def draw_centered_lines(
@@ -322,7 +331,8 @@ def render(background_path: Path, output_path: Path) -> None:
     draw.text((72, 48), title, font=fonts["hero"], fill=(248, 252, 255, 255))
     draw.text((73, 115), subtitle, font=fonts["subtitle"], fill=(218, 236, 255, 238))
 
-    badge_text = "13 plugin packs"
+    plugins = load_plugins()
+    badge_text = f"{len(plugins)} plugin packs"
     badge_width = text_width(draw, badge_text, fonts["eyebrow"]) + 42
     badge_x = SIZE[0] - 72 - badge_width
     draw.rounded_rectangle(
@@ -334,7 +344,6 @@ def render(background_path: Path, output_path: Path) -> None:
     )
     draw.text((badge_x + 21, 73), badge_text, font=fonts["eyebrow"], fill=(238, 249, 255, 244))
 
-    plugins = load_plugins()
     rows = ordered_rows(plugins)
     card_w = 295
     card_h = 212

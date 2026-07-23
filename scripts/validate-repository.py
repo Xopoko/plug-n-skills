@@ -19,6 +19,7 @@ PLUGIN_NAMES = [
     "context-density",
     "capability-workbench",
     "codex-cli",
+    "scheduled-automation",
     "claude-code",
     "architecture-intelligence",
     "design-intelligence",

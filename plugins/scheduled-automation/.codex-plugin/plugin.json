@@ -1,0 +1,40 @@
+{
+  "name": "scheduled-automation",
+  "version": "0.1.0",
+  "description": "Local scheduler diagnostics, real-runtime proof, safe canaries, correlated run receipts, and missed-run analysis for launchd, systemd timers, cron, and Windows Task Scheduler.",
+  "author": {
+    "name": "Xopoko"
+  },
+  "repository": "https://github.com/Xopoko/plug-n-skills/tree/main/plugins/scheduled-automation",
+  "license": "MIT",
+  "keywords": [
+    "automation",
+    "cron",
+    "diagnostics",
+    "launchd",
+    "scheduler",
+    "systemd",
+    "task-scheduler"
+  ],
+  "skills": "./skills/",
+  "interface": {
+    "displayName": "Scheduled Automation",
+    "shortDescription": "Prove local jobs in their real scheduler runtime.",
+    "longDescription": "A cross-agent operations plugin for launchd, systemd timers, cron, and Windows Task Scheduler. It separates definition, registration, demand-run, native-trigger, and functional-effect evidence; diagnoses scheduler-owned runtime differences; and supports bounded canaries and correlated atomic receipts without treating a manual shell run as scheduler proof.",
+    "developerName": "Xopoko",
+    "category": "Coding",
+    "capabilities": [
+      "launchd, systemd timer, cron, and Windows Task Scheduler definition and registration diagnostics",
+      "Scheduler-owned executable, working directory, environment, identity, session, permission, and output comparison",
+      "Demand-run versus configured native-trigger evidence separation",
+      "Fresh scheduler-originated run proof with native event correlation and atomic receipts",
+      "Separate production and canary evidence ledgers with bounded cleanup",
+      "Missed-run, overlap, retry, catch-up, and idempotency analysis",
+      "Rollback-aware scheduler repair with exact-target authority gates"
+    ],
+    "defaultPrompt": "Diagnose this local scheduled job and prove the current run through its real operating-system scheduler.",
+    "brandColor": "#0B3B3A",
+    "composerIcon": "./assets/icon.png",
+    "logo": "./assets/icon.png"
+  }
+}
