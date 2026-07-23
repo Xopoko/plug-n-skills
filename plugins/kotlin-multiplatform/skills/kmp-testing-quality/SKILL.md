@@ -28,6 +28,21 @@ Favor confidence/speed over coverage vanity:
 - Compose Multiplatform UI tests should use current Compose testing API and target-specific setup.
 - Verify source-set/dependency instructions against current docs before editing Gradle files.
 
+## Proof Integrity
+
+- Match each claim to its proof seam. A screenshot or golden proves captured
+  rendering only; use semantics/interaction tests for user behavior,
+  saver/restoration tests for restored state, and state-holder or lifecycle
+  adapter tests for lifecycle-driven effects.
+- Confirm that the exact source set and harness support the required test API.
+  Screenshot capture support does not imply interaction-test support.
+- A green aggregate task is not proof when the relevant leaf task is
+  `SKIPPED`, `NO-SOURCE`, executes zero tests, or produces no inspectable test
+  result. Verify non-empty execution in the task trace and report.
+- For exactly-once event claims, assert cardinality across creation,
+  restoration, resume, and re-collection as applicable. Idempotency alone does
+  not prove exactly-once delivery.
+
 ## Test First
 
 - Business rules.
