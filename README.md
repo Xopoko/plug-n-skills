@@ -169,7 +169,7 @@ instructions.
 | Reference files | 223 | - | Longer ledgers, contracts, scorecards, and source notes. |
 | Helper and validator scripts | 78 | - | Deterministic plugin-local helpers. |
 | Startup metadata | 162 skills | 12,696 | Skill name, description, and file pointer for routing. |
-| On-demand skill bodies | 162 skills | 105,547 | Instruction bodies after frontmatter, loaded only when selected. |
+| On-demand skill bodies | 162 skills | 105,630 | Instruction bodies after frontmatter, loaded only when selected. |
 
 Regenerate the report after skill edits:
 
@@ -197,7 +197,7 @@ Token columns are `startup metadata / on-demand body`.
 | `gitlab-review` | 1 | 3 | 1 | 117 | 1,083 |
 | `stacked-delivery` | 1 | 3 | 1 | 123 | 1,130 |
 | `claude-code` | 6 | 2 | 1 | 528 | 4,669 |
-| `architecture-intelligence` | 8 | 7 | 2 | 523 | 5,123 |
+| `architecture-intelligence` | 8 | 7 | 2 | 523 | 5,206 |
 | `design-intelligence` | 7 | 2 | 1 | 472 | 5,101 |
 | `game-design-intelligence` | 6 | 2 | 1 | 536 | 2,916 |
 | `kotlin-multiplatform` | 14 | 16 | 1 | 1,096 | 9,931 |
@@ -414,7 +414,7 @@ Token cells are shown as `startup/body`.
 | `architecture-intelligence` | 63/1,120 | Use whenever code work has structural consequences: project architecture, module boundaries, dependency direction, runtime topology, ownership, ADRs, fitness functions, or architecture refactoring. |
 | `architecture-ownership-topology` | 66/583 | Use when architecture crosses ownership or review boundaries: CODEOWNERS/OWNERS, module coverage, cross-owned dependencies, socio-technical coordination, and governance paths. |
 | `architecture-refactoring-strategy` | 67/517 | Use when code changes need staged structural design: boundary extraction, modularization, dependency inversion, migrations, anti-corruption layers, tests, rollout gates, and rollback. |
-| `architecture-runtime-topology` | 67/510 | Use when code work touches runtime shape: services, app/CLI/background flows, deployment/IaC, observability, resilience, external integrations, ownership, and runtime coupling. |
+| `architecture-runtime-topology` | 67/593 | Use when code work touches runtime shape: services, app/CLI/background flows, deployment/IaC, observability, resilience, external integrations, ownership, and runtime coupling. |
 | `codebase-architecture-audit` | 73/839 | Use before architecture-significant code work to recover the actual source-backed system shape: modules, dependencies, domain seams, runtime coupling, ownership, quality attributes, tests, docs, and risks. |
 
 #### `design-intelligence`

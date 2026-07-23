@@ -36,6 +36,12 @@ Use `runtime_topology` as evidence inventory. It detects deployment artifacts an
 - Deployment conformance: source boundaries and IaC/deployment boundaries agree or drift.
 - Operability: teams can diagnose, roll back, and safely change runtime dependencies.
 - Ownership: runtime-critical surfaces have source-backed owner or review path.
+- Time-driven state: for caches or observable state shared across consumers or
+  lifecycle boundaries, distinguish next-read staleness from active
+  observer/subscriber invalidation. Elapsed time alone is not an emission
+  trigger: name the timer, refresh, lifecycle, scheduler, or storage signal
+  that re-evaluates state, then validate expected emissions and non-emissions
+  with controlled time.
 - Quality attributes: availability, reliability, latency, scalability, security, cost, operability.
 
 ## Output
