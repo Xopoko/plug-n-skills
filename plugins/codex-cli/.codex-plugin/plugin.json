@@ -1,7 +1,7 @@
 {
   "name": "codex-cli",
-  "version": "0.1.3",
-  "description": "Codex CLI operations, automation, diagnostics, plugin and MCP lifecycle, session log forensics, and local environment actions.",
+  "version": "0.1.4",
+  "description": "Codex CLI operations, automation, diagnostics, live thread supervision, plugin and MCP lifecycle, session log forensics, and local environment actions.",
   "author": {
     "name": "Xopoko"
   },
@@ -14,13 +14,14 @@
     "environments",
     "logs",
     "mcp",
-    "plugins"
+    "plugins",
+    "threads"
   ],
   "skills": "./skills/",
   "interface": {
     "displayName": "Codex CLI",
-    "shortDescription": "Operate, automate, debug, and inspect Codex CLI safely.",
-    "longDescription": "A Codex CLI operations pack for local CLI surface inspection, non-interactive exec and review automation, plugin marketplace and MCP server lifecycle work, doctor/debug/sandbox/app-server diagnostics, redacted session log forensics, and Codex app local environment actions.",
+    "shortDescription": "Operate, automate, supervise, and debug Codex safely.",
+    "longDescription": "A Codex CLI operations pack for local CLI surface inspection, non-interactive exec and review automation, live multi-thread supervision with controlled skill handoffs, plugin marketplace and MCP server lifecycle work, doctor/debug/sandbox/app-server diagnostics, redacted session log forensics, and Codex app local environment actions.",
     "developerName": "Xopoko",
     "category": "Coding",
     "capabilities": [
@@ -30,6 +31,7 @@
       "Codex plugin marketplace visibility, install, removal, and cache-check workflows",
       "Codex MCP server list, get, add, remove, login, logout, stdio, HTTP, bearer-token-env, and OAuth workflows",
       "Codex doctor, debug, feature flag, sandbox denial, app-server, remote-control, and remote connection diagnostics",
+      "Live Codex task and thread supervision with cursor-based transitions, attention gates, controlled skill handoffs, and privacy-safe capability mining",
       "Redacted Codex rollout JSONL discovery, lineage normalization, active-scope views, deterministic trace audits, search, and log health checks",
       "Codex app local environment.toml actions for Run, Test, Preview, dev server, browser, and simulator workflows"
     ],

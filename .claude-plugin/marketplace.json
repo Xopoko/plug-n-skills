@@ -41,7 +41,7 @@
     {
       "name": "codex-cli",
       "source": "./plugins/codex-cli",
-      "description": "Codex CLI operations, automation, diagnostics, plugin and MCP lifecycle, session log forensics, and local environment actions."
+      "description": "Codex CLI operations, automation, diagnostics, live thread supervision, plugin and MCP lifecycle, session log forensics, and local environment actions."
     },
     {
       "name": "claude-code",

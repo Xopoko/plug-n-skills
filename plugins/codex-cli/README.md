@@ -1,12 +1,14 @@
 # Codex CLI Plugin
 
 Codex CLI is an operations pack for working with the local `codex` executable,
-Codex app project environments, and Codex session evidence.
+Codex app project environments, live task supervision, and Codex session
+evidence.
 
 ## Skills
 
 - `codex-cli`: router for local CLI inspection and workflow selection.
 - `codex-exec-automation`: non-interactive `codex exec` and `codex review` runs.
+- `codex-thread-supervisor`: live multi-thread observation, transition waits, gated skill handoffs, and privacy-safe capability mining.
 - `codex-plugin-mcp-manager`: plugin marketplaces, installed plugins, and MCP servers.
 - `codex-doctor-debugger`: `doctor`, `debug`, `sandbox`, feature flags, app-server, and remote-control diagnostics.
 - `codex-log-reader`: redacted rollout JSONL lookup, root/child normalization, active-scope views, deterministic trace audits, searches, and log health checks.

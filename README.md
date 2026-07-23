@@ -134,7 +134,7 @@ replaced to match the repository source, and repeated runs converge.
 | `build-swift-apps` | Building, debugging, profiling, testing, packaging, and releasing Swift apps across iOS and macOS. |
 | `capability-workbench` | Capability discovery, synthesis, plugin packaging, agent guidance files, trigger metadata, install-scope decisions, vetting, repair, icon workflows, and visibility checks. |
 | `claude-code` | Claude Code CLI operations, print-mode automation, diagnostics, plugin and MCP lifecycle, hooks, settings, agents, sessions, and worktrees. |
-| `codex-cli` | Codex CLI operations, automation, diagnostics, plugin and MCP lifecycle, normalized session trace audits, and local environment actions. |
+| `codex-cli` | Codex CLI operations, automation, diagnostics, live thread supervision, controlled skill handoffs, plugin and MCP lifecycle, normalized session trace audits, and local environment actions. |
 | `context-density` | Context design, long-context placement, research-backed acceptance gates, prompt contracts, skill compression, structural handoff, and validation reporting. |
 | `design-intelligence` | Product framing, interface architecture, interaction design, visual hierarchy, accessibility, and design-system governance. |
 | `game-design-intelligence` | Gameplay loops, systems, progression, economies, motivation, retention, onboarding, difficulty, multiplayer, and live-service critique. |
@@ -162,11 +162,11 @@ instructions.
 | Metric | Count | Tokens | Notes |
 | --- | ---: | ---: | --- |
 | Plugin packs | 13 | - | Installable packages under `plugins/`. |
-| Skill entrypoints | 158 | - | `SKILL.md` files exposed through plugin metadata. |
-| Reference files | 53 | - | Longer ledgers, contracts, scorecards, and source notes. |
+| Skill entrypoints | 159 | - | `SKILL.md` files exposed through plugin metadata. |
+| Reference files | 54 | - | Longer ledgers, contracts, scorecards, and source notes. |
 | Helper and validator scripts | 38 | - | Deterministic plugin-local helpers. |
-| Startup metadata | 158 skills | 12,241 | Skill name, description, and file pointer for routing. |
-| On-demand skill bodies | 158 skills | 100,303 | Instruction bodies after frontmatter, loaded only when selected. |
+| Startup metadata | 159 skills | 12,350 | Skill name, description, and file pointer for routing. |
+| On-demand skill bodies | 159 skills | 101,588 | Instruction bodies after frontmatter, loaded only when selected. |
 
 Regenerate the report after skill edits:
 
@@ -189,7 +189,7 @@ Token columns are `startup metadata / on-demand body`.
 | `scientific-research` | 1 | 0 | 0 | 91 | 2,024 |
 | `context-density` | 1 | 0 | 1 | 128 | 2,713 |
 | `capability-workbench` | 10 | 13 | 21 | 942 | 12,040 |
-| `codex-cli` | 6 | 3 | 2 | 507 | 5,980 |
+| `codex-cli` | 7 | 4 | 2 | 616 | 7,265 |
 | `claude-code` | 6 | 2 | 1 | 528 | 4,669 |
 | `architecture-intelligence` | 8 | 7 | 2 | 523 | 5,123 |
 | `design-intelligence` | 7 | 2 | 1 | 472 | 5,101 |
@@ -207,7 +207,7 @@ Token columns are `startup metadata / on-demand body`.
 | `scientific-research` | Disciplined scholarly research workflow: discovery, source routing, DOI dedup, claim ledgers, and evidence quality gates across arXiv/OpenAlex/Crossref/Europe PMC/Semantic Scholar/NCBI/CORE/OpenCitations. |
 | `context-density` | Context design, prompt-contract optimization, research-backed acceptance gates, compression validation, and structural handoff for agent skills, plugins, prompts, docs, and workflows. |
 | `capability-workbench` | Agent-agnostic capability workbench: discover, synthesize, architect portfolios, design trigger metadata and agent guidance files, vet, repair, install, package, and run imagegen-backed icon workflows for agent skills and plugins. |
-| `codex-cli` | Codex CLI operations, automation, diagnostics, plugin and MCP lifecycle, session log forensics, and local environment actions. |
+| `codex-cli` | Codex CLI operations, automation, diagnostics, live thread supervision, plugin and MCP lifecycle, session log forensics, and local environment actions. |
 | `claude-code` | Claude Code CLI operations, print-mode automation, diagnostics, plugin and MCP lifecycle, hooks, settings, agents, sessions, and worktrees. |
 | `architecture-intelligence` | Source-backed software architecture intelligence for codebase audits, ownership topology, runtime topology, architecture conformance and drift checks, structure metrics, module boundaries, dependency flow, ADRs, architecture fitness functions, and incremental refactoring strategy. |
 | `design-intelligence` | Source-backed, technology-agnostic UI/UX judgment: product framing, information architecture, interaction design, usability/accessibility review, visual communication, and design-system governance. Deliberately avoids Figma automation, framework recipes, and CSS recipes. |
@@ -358,12 +358,13 @@ Token cells are shown as `startup/body`.
 
 | Skill | Tokens | Description |
 | --- | ---: | --- |
-| `codex-cli` | 74/954 | Route Codex CLI work across local CLI inspection, non-interactive exec/review automation, plugin and MCP management, doctor/debug/sandbox/app-server diagnostics, session log forensics, and Codex app local environment actions. |
+| `codex-cli` | 80/1,005 | Route Codex CLI work across local CLI inspection, non-interactive exec/review automation, live task and thread supervision, plugin and MCP management, doctor/debug/sandbox/app-server diagnostics, session log forensics, and Codex app local environment actions. |
 | `codex-doctor-debugger` | 82/839 | Use when diagnosing Codex CLI install, config, auth, runtime, feature flags, sandbox denials, debug models, prompt input, app-server, remote-control, remote websocket/unix connections, or local Codex health failures. |
 | `codex-environments` | 84/995 | Create, update, debug, or remove Codex app local project environments and actions, including `.codex/environments/environment.toml`, Run/Test/Preview buttons, startup commands, simulator/browser/dev-server launch actions, environment variables, and repeatable local commands. |
 | `codex-exec-automation` | 97/1,018 | Use when preparing, running, debugging, or reviewing non-interactive Codex CLI automation with `codex exec`, `codex exec resume`, `codex review`, JSONL events, output schemas, last-message files, cwd/profile/config flags, sandbox and approval modes, or CI-style agent runs. |
 | `codex-log-reader` | 93/1,279 | Use when locating, summarizing, auditing, or debugging Codex session rollout JSONL logs by CODEX_THREAD_ID, cwd, query, issue key, project path, child or inherited-history symptoms, malformed or huge log symptoms, permission concerns, or "what happened in this Codex thread" questions. |
 | `codex-plugin-mcp-manager` | 77/895 | Use when managing Codex CLI plugins, plugin marketplaces, local marketplace refreshes, cache visibility, MCP server list/get/add/remove/login/logout, MCP bearer token environment variables, or plugin/MCP installation failures. |
+| `codex-thread-supervisor` | 103/1,234 | Use when watching, monitoring, following, or supervising one or more live Codex tasks or threads by ID, including cursor-based transitions, completion or attention gates, claim checks, compact checkpoints, narrowly authorized skill handoffs, and privacy-safe capability mining. Not for post-hoc rollout forensics, current-turn subagents, or external job polling. |
 
 #### `claude-code`
 
