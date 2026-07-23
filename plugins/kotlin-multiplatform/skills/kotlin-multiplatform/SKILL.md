@@ -37,6 +37,11 @@ For an existing repository, read the local project before answering:
 - Maven publishing, Gradle metadata, XCFramework, SwiftPM export, KMMBridge, CI matrices, artifact signing boundaries, app-store build gates, or release automation: use `kmp-publishing-ci`.
 - AGP 9+, `com.android.kotlin.multiplatform.library`, monolithic `composeApp`, CocoaPods to SwiftPM, cinterop, iOS framework integration, CI, release, publishing, or store builds: use `kmp-migration-release`.
 
+For stale async completion, replay, invalidation, coalescing, memoization, or
+direct caller races, combine `kmp-data-layer` and `kmp-testing-quality` with
+`async-state-consistency` when the Architecture Intelligence plugin is
+available. The KMP skills remain usable on their own.
+
 If several apply, start with diagnosis, then architecture, then implementation, then validation.
 
 ## Operating Rules

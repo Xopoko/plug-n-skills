@@ -30,6 +30,9 @@ Favor confidence/speed over coverage vanity:
 
 ## Proof Integrity
 
+- For async state ownership and race invariants, also use
+  `async-state-consistency` when available. This skill owns KMP source-set,
+  harness, task, and result-proof placement and remains standalone.
 - Match each claim to its proof seam. A screenshot or golden proves captured
   rendering only; use semantics/interaction tests for user behavior,
   saver/restoration tests for restored state, and state-holder or lifecycle

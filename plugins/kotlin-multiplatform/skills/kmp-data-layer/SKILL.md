@@ -14,17 +14,25 @@ Before implementing, identify:
 - behavior: online-only, cache-first, offline-first, or local-only
 - source of truth
 - freshness/invalidation rules
-- distinguish read-time TTL checks from active expiry; document which timer,
-  refresh, lifecycle, or storage signal re-evaluates freshness and emits to
-  existing observers, because elapsed time alone is not an emission trigger
+- read-time TTL versus active expiry, including the signal that re-evaluates
+  state for existing observers; elapsed time alone does not emit without a
+  declared active trigger
 - conflict resolution
 - error model
 - platform storage requirements
 - persistence/network library target support
 - test layer per behavior
-- when absence has lifecycle meaning, model initial, available, and invalidated
-  states explicitly at the shared source of truth; define fail-closed behavior
-  there instead of patching individual consumers
+- explicit initial, available, invalidated, error, and stale/retry meaning where
+  absence or ownership has lifecycle significance
+
+## Async State Consistency Adapter
+
+For invalidation, replay, memoization, coalescing, one-shot results, or
+competing async publishers, also use `async-state-consistency` when the
+Architecture Intelligence plugin is available. This KMP skill remains
+standalone: the minimum KMP contract and proof obligations are below.
+Use `references/data-layer-readiness.md` for the standalone KMP readiness and
+race matrix.
 
 ## Boundaries
 
@@ -59,31 +67,37 @@ Use Klibs.io and official docs as target-support evidence. Do not put a library 
 - Bound retries explicitly
 - Separate recoverable failures from programmer/configuration errors
 - Do not swallow cancellation.
+- Cancellation is not a commit fence. Cancellation-ignoring work still needs
+  ownership and caller-result guards; define how its late failure is observed.
 - Use clocks, dispatchers, and platform services through injectable abstractions when tests need control
 - Make sync idempotent and resilient to duplicate callbacks
-- Make invalidation authoritative for active and late observers, warm-cache
-  reads, and one-shot reads: work started before clear/invalidation must not
-  return, replay, or repopulate stale data after it completes.
-  Use generation/version ownership or an equivalent guard that covers every
-  cache, request-coalescing, or memoization layer able to replay or repopulate
-  data. Scope it to the invalidation domain: a global clear invalidates every
-  key, while key-level invalidation must not suppress valid work for unrelated
-  keys.
-- Keep publication ordering separate from invalidation state. When same-key
-  mutations or fetched snapshots can complete out of order, assign monotonic
-  ownership (revision, sequence, or equivalent) within that key/domain. An older
-  completion must not overwrite, replay, or repopulate a newer published value.
-  Advancing ownership for an ordinary write must not emit `Invalidated`;
-  unrelated keys remain independent unless the operation is explicitly global.
-- Linearize ownership validation with every replayable state or cache commit.
-  The validation and commit it authorizes must be one atomic or serialized
-  transition against clear/invalidation and competing publishers in the same
-  domain (compare-and-set, a serialized owner, or equivalent). A successful
-  check followed by an unguarded assignment is insufficient.
-- A completion rejected by publication ownership must not return its stale
-  snapshot as the current one-shot result: re-read the authoritative state or
-  return a declared stale/retry outcome. Rejection alone must not emit or
-  persist `Error` or `Invalidated` unless the state contract declares it.
+- Keep one authoritative `StateFlow` or project-equivalent lifecycle state and
+  preserve its discriminator through KMP projections; unknown is not
+  `Available(empty)`.
+- Make invalidation authoritative across active and late observers, warm cache,
+  one-shot reads, persistence, memoization, and request coalescing. Use global
+  and keyed/domain generations so unrelated keys remain independent.
+- Keep invalidation generation separate from ordinary publication sequence.
+  Choose latest-start-wins or latest-success-wins for competing work, including
+  the newer operation's failure or cancellation. Ordinary publication must not
+  emit `Invalidated`.
+- With latest-start-wins, reserving B rejects A even if B later fails or is
+  cancelled; compare the reserved publication sequence. With
+  latest-success-wins, B's attempt alone does not reject A; compare committed
+  publication authority plus invalidation generation, so A may commit after B
+  fails when no other authority intervenes.
+- With `Mutex`, an actor, compare-and-set, or an equivalent owner, linearize
+  final ownership validation plus state/cache commit. Also linearize replay
+  candidate read plus authority validation; an empty dependency set still
+  checks the owning-domain generation. Do slow fetches outside the owner.
+- Commit state plus emission intent/revision atomically, but deliver arbitrary
+  callbacks outside the serialized owner. Across a durable persistence and
+  notification boundary, use an ordered, idempotent notification record.
+- Do not let a post-invalidation caller join coalesced work created under
+  revoked ownership. Declare per-caller versus shared-work cancellation.
+- When a completion loses ownership, re-read authoritative state or return a
+  declared stale/retry/cancellation result; never return its candidate as
+  current or invent `Error`/`Invalidated`.
 
 ## Testing
 
@@ -91,27 +105,12 @@ Use Klibs.io and official docs as target-support evidence. Do not put a library 
 - Test repositories with fakes or controlled test doubles
 - Test offline/cache invalidation explicitly
 - Test failure paths, stale data, conflict resolution, and retry boundaries
-- For shared state-contract changes, cover every allowed transition and each
-  affected consumer projection
-- Cover late collection after invalidation, pre-invalidation work completing
-  afterward, and the declared initial-to-success/failure emission order
-- Exercise the same invalidation ownership and domain through observer,
-  warm-cache, and one-shot paths across every replay/repopulation layer; prove
-  key-level invalidation leaves valid unrelated-key work intact
-- With controlled completion order, start same-key A before B, complete B
-  before A, and prove B remains the observable and replayed value after A
-  completes, with no `Invalidated` emission. Exercise every path able to
-  publish, replay, or repopulate state, and prove unrelated-key work completes
-  independently
-- Add a deterministic last-pre-publication race proof: hold A at the final
-  controllable boundary before its atomic or serialized state/cache commit
-  attempt, let same-domain B or clear/invalidation complete and become
-  authoritative, then release A. Prove A cannot publish, replay, or repopulate
-  at any layer. Run both winner variants; changing ownership before A reaches
-  this boundary does not cover the check-to-commit race
-- When A is a rejected one-shot fetch, assert its caller receives re-read B or
-  the declared stale/retry outcome, never A as current. Rejection alone must
-  emit or persist neither `Error` nor `Invalidated` unless declared
-- With a controlled clock, assert the next-read result after TTL, no observer
-  emission from clock advance alone, and the expected emission or non-emission
-  for each supported expiry trigger
+- Put shared behavior in `commonTest` with `kotlin.test` when the harness fits.
+- Use gates or barriers at the final controllable read/commit boundary; sleeps
+  and delays are not synchronization proof.
+- Cover state transitions and projections, late collection, pre-invalidation
+  completion, same-key reverse completion, both final-boundary winners,
+  read-side clear, post-invalidation coalescer join, newer failure under the
+  declared supersession policy, keyed/global invalidation, direct caller
+  outcomes, TTL read versus observer emission, and mutation-notification
+  recovery across every replay/repopulation path.
