@@ -61,6 +61,28 @@ Favor confidence/speed over coverage vanity:
 - Security-sensitive flows: token refresh, logout, stale credentials, redaction, retry-loop guards.
 - Performance-sensitive state reducers/mappers where deterministic tests catch regressions cheaply.
 
+## Screenshot Goldens In CI
+
+When CI records or refreshes screenshot baselines, local rendering is blocked,
+or a baseline arrives as an artifact:
+
+- Discover the project's actual record, compare, and verify tasks; do not invent
+  task names.
+- Treat record as baseline-mutating, compare as diagnostic, and verify as
+  read-only. A mode that verifies and then records is not final proof.
+- Bind candidates to the exact source revision, sanitized rendering inputs,
+  task, target, test filter, payload manifest, and post-upload provider receipt.
+- Import only the expected file set; review additions, modifications, and
+  deletions, and remove generator-only configuration before acceptance.
+- After accepted goldens are committed, rerun non-recording verification on
+  that exact final head and the complete affected target. Retain mismatch and
+  infrastructure diagnostics.
+- Give every baseline writer unique path ownership; serialization alone is not
+  isolation. Never infer cross-platform pixel parity from one renderer.
+
+Use `../../references/screenshot-golden-ci.md` for the full evidence, cleanup,
+failure, filtered-run, and final-head contract.
+
 ## Doubles
 
 - Prefer fakes for repositories/data sources.
