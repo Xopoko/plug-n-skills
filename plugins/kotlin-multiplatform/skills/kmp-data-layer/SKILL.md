@@ -32,6 +32,12 @@ Before implementing, identify:
 - DTOs stay near network boundaries.
 - Database entities stay near persistence boundaries.
 - Keep policy-bearing mapping explicit and tested.
+- Preserve state discriminators through projections: do not encode
+  initial/unknown as a valid domain value such as an empty collection. Keep it
+  distinct from `Available(empty)` so consumers can preserve pending intent.
+- Match projection modality to its inputs: synchronous projections use only
+  synchronously available state; otherwise pre-resolve at an owned asynchronous
+  boundary or expose a suspend contract.
 - Shared code should not depend on Android `Context`, UIKit, file handles, or platform callbacks.
 
 ## Libraries
@@ -55,8 +61,9 @@ Use Klibs.io and official docs as target-support evidence. Do not put a library 
 - Do not swallow cancellation.
 - Use clocks, dispatchers, and platform services through injectable abstractions when tests need control
 - Make sync idempotent and resilient to duplicate callbacks
-- Make invalidation authoritative for active and late observers: work started
-  before clear/invalidation must not republish stale data after it completes.
+- Make invalidation authoritative for active and late observers, warm-cache
+  reads, and one-shot reads: work started before clear/invalidation must not
+  return, replay, or repopulate stale data after it completes.
   Use generation/version ownership or an equivalent guard that covers every
   cache, request-coalescing, or memoization layer able to replay or repopulate
   data. Scope it to the invalidation domain: a global clear invalidates every
@@ -73,8 +80,9 @@ Use Klibs.io and official docs as target-support evidence. Do not put a library 
   affected consumer projection
 - Cover late collection after invalidation, pre-invalidation work completing
   afterward, and the declared initial-to-success/failure emission order
-- Exercise invalidation races through every replay/repopulation layer and prove
-  that key-level invalidation does not discard valid work for unrelated keys
+- Exercise the same invalidation ownership and domain through observer,
+  warm-cache, and one-shot paths across every replay/repopulation layer; prove
+  key-level invalidation leaves valid unrelated-key work intact
 - With a controlled clock, assert the next-read result after TTL, no observer
   emission from clock advance alone, and the expected emission or non-emission
   for each supported expiry trigger
