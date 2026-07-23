@@ -77,12 +77,19 @@ layer, and projection able to bypass the main repository or state holder.
 - Always validate the global or owning-domain revision. An empty dependency
   list must not pass vacuously unless the value is explicitly independent of
   invalidation.
-- Atomically commit state plus an emission revision or intent. Deliver arbitrary
-  subscriber callbacks outside the serialized owner to avoid reentrancy and
-  deadlock. Across durable boundaries, use an equivalent ordered,
+- Atomically commit only owned data plus an owner-local, non-delivering
+  emission revision or intent. The serialized owner must not run subscriber
+  callbacks, user-supplied predicates or factories, or delivery that can
+  synchronously resume or reenter, block, suspend, or apply backpressure. Run
+  those outside the owner and revalidate authority before committing results
+  computed by user code. Across durable boundaries, use an equivalent ordered,
   idempotent notification record.
 - Cancellation is cooperative, not authority. Work that ignores cancellation
   still needs the same commit and caller-result guards.
+- When invalidation wins, atomically detach revoked coalesced work from the
+  current join and wait path. A later caller must neither join nor wait behind
+  that work; it starts or joins current-generation work independently even
+  when revoked work ignores cancellation.
 - A rejected completion must not return its candidate as current to a one-shot
   caller. Reread authority or return the declared stale/retry/cancellation
   outcome.
@@ -107,12 +114,16 @@ At minimum, cover:
 - a one-shot A rejected after B, including A's direct caller result;
 - a replay read held between candidate capture and authority validation while
   clear wins, including the empty-dependency case;
-- a post-invalidation caller that attempts to join pre-invalidation coalesced
-  work, including per-caller versus shared-work cancellation;
+- revoked coalesced A held blocked while post-invalidation B starts and
+  finishes before A is released, including per-caller versus shared-work
+  cancellation;
 - A starts, B starts, B fails or is cancelled, then A completes under both the
   declared latest-start-wins and latest-success-wins policies;
 - keyed invalidation that leaves unrelated-key work valid, plus global clear;
 - TTL next-read behavior separately from active subscriber emissions;
+- blocked delivery followed by reentrant subscriber code, and user-supplied
+  predicate or factory hooks that perform nested mutation before the outer
+  operation revalidates;
 - failure between mutation and notification when those are separate surfaces.
 
 Use `references/async-state-consistency.md` for state, authority, and race

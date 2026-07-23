@@ -32,11 +32,11 @@
     },
     {
       "id": "mutation-notification-gap",
-      "prompt": "State commits but subscriber notification can fail separately, leaving a retained observer behind."
+      "prompt": "State commits but subscriber notification can fail separately, or delivery can reenter user code while the serialized owner is still held."
     },
     {
       "id": "cancellation",
-      "prompt": "A cancelled caller shares coalesced work that ignores cancellation, finishes late, and publishes after invalidation or a newer operation."
+      "prompt": "Coalesced work ignores cancellation after invalidation, and a new caller is forced to wait behind that revoked operation before it can refresh."
     },
     {
       "id": "buried-context",

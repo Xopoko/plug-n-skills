@@ -41,13 +41,26 @@ class AsyncStateAdapterTest(unittest.TestCase):
             "post-invalidation caller",
             "cancellation is not a commit fence",
             "late failure",
-            "callbacks outside the serialized owner",
+            "owner-local, non-delivering",
+            "user-supplied predicates or factories",
+            "backpressure outside the serialized owner",
+            "neither join nor wait behind",
             "ordered, idempotent notification record",
             "direct caller",
             "`commontest`",
             "`kotlin.test`",
         ):
             self.assertIn(invariant, lower)
+        reference = " ".join(DATA_REFERENCE.read_text(encoding="utf-8").split()).lower()
+        for invariant in (
+            "neither join nor wait behind",
+            "finish before releasing a",
+            "owner-local, non-delivering",
+            "callbacks, predicates, factories",
+            "nested mutation",
+            "apply backpressure",
+        ):
+            self.assertIn(invariant, reference)
 
     def test_router_and_test_skill_compose_optionally(self):
         router = ROUTER.read_text(encoding="utf-8")

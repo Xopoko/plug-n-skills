@@ -56,10 +56,10 @@ Audit every row that exists:
 | Late subscriber | Replay container retained a revoked value | Current lifecycle state and generation |
 | Warm cache | Hit bypasses current invalidation state | Atomic candidate-and-authority read |
 | One-shot caller | Shared publish is rejected but the function returns its own value | Explicit caller supersession outcome |
-| Request coalescer | A post-invalidation caller joins work created under revoked ownership | Domain generation plus join and per-caller cancellation policy |
+| Request coalescer | A post-invalidation caller joins or waits behind work created under revoked ownership | Atomic generation-and-entry membership; invalidation detaches revoked work from the current join and wait path |
 | Memoized projection | Candidate is read before dependency or global validation | Stamped complete snapshot or retry |
 | Persistence | Late work writes a value that later startup replays | Ownership checked in the persistent commit |
-| Notification | Mutation commits but subscribers never learn it | Same commit or durable ordered notification |
+| Notification | Mutation commits but subscribers never learn it | Non-delivering intent in the state commit; delivery after release, or durable ordered notification |
 | Projection | Initial or invalidated collapses into a domain default | Preserve state discriminator and modality |
 
 ## Linearization Patterns
@@ -72,9 +72,11 @@ transition:
 1. perform slow work outside the owner;
 2. enter the serialized owner;
 3. compare captured ownership with current authority;
-4. if current, commit state, cache, and notification metadata together;
-5. if rejected, resolve the direct caller with the declared non-current
-   outcome.
+4. if current, commit owned state and cache plus non-delivering caller and
+   notification intents;
+5. if rejected, record only a non-delivering caller-outcome intent;
+6. exit the owner;
+7. deliver the accepted or rejected caller outcome and any notification.
 
 Do not release the owner between validation and commit.
 
@@ -99,18 +101,30 @@ it is current.
 
 ### Mutation and notification
 
-Commit state plus an emission revision or intent in the same transition.
-Publish the immutable snapshot through the state primitive or invoke arbitrary
-subscriber callbacks after releasing the serialized owner; callbacks inside a
-mutex or actor transition can reenter or deadlock. Across a durable boundary,
-use an ordered notification record, make delivery idempotent, and prove
-recovery after a crash or injected boundary failure.
+The serialized owner may validate authority and atomically commit only owned
+data plus an owner-local, non-delivering emission revision or intent. It must
+not invoke subscriber callbacks, user-supplied predicates or factories, or any
+delivery primitive that can synchronously resume or reenter, block, suspend, or
+apply backpressure. Treat an observable primitive write as delivery unless its
+contract proves otherwise. Run delivery and user code after releasing the
+owner; when user code computes a candidate or decision, re-enter and revalidate
+authority before committing it. Across a durable boundary, use an ordered,
+idempotent notification record and prove recovery after an injected boundary
+failure.
 
 ### Cancellation boundary
 
 Cancellation is not a commit fence. Treat caller cancellation, underlying work
 termination, shared-state publication authority, and late failure observation
 as separate contracts.
+
+### Coalesced-work invalidation
+
+Invalidation must atomically advance the owning generation and detach matching
+in-flight entries from the current lookup, join, and wait path. A caller whose
+lookup linearizes afterward neither joins nor waits behind revoked work; it
+starts or joins current-generation work independently. Cancelling revoked work
+is cleanup, not the liveness fence.
 
 ## Deterministic Race Matrix
 
@@ -131,11 +145,15 @@ winners where order is part of the contract.
 | ASC-10 | Advance controlled time past TTL, then read and fire each signal | Clock alone follows declared emission rules; next-read staleness is explicit |
 | ASC-11 | Fail between mutation and notification | No committed value becomes permanently invisible; duplicates are safe if allowed |
 | ASC-12 | Cancel A, let B win, then allow cancellation-ignoring A to finish | A cannot commit or return current; late failure remains observable |
-| ASC-13 | Start shared A, invalidate, then let post-invalidation B attempt to join A | B never joins revoked work; A cannot commit; per-caller cancellation follows the declared shared-work policy |
+| ASC-13 | Start shared A and hold it blocked; invalidate; start B; do not release A until B finishes | B neither joins nor waits behind A and finishes first; A cannot commit; cancellation follows the declared shared-work policy |
 | ASC-14 | Start A, start B, let B fail or cancel, then complete A | Latest-start rejects A; latest-success may accept A; both callers receive the declared outcomes |
+| ASC-15 | Block delivery, commit A, then attempt B; release delivery into subscriber code that synchronously mutates C | B commits before delivery unblocks; C can acquire the owner; delivery and user code follow the declared order outside the owner |
+| ASC-16 | Enter a user-supplied predicate or factory, perform a nested mutation, return, then let the outer operation attempt commit | The hook runs outside the owner; nested mutation finishes first; the outer operation revalidates and cannot overwrite its winner |
 
 Holding A before its last ownership check does not prove the check-to-commit
 boundary. The gate must be immediately before the atomic or serialized attempt.
+For liveness assertions, require B's start and finish progress markers before
+opening A's blocking gate; a timeout is not proof.
 
 ## Review Checklist
 
@@ -152,8 +170,10 @@ boundary. The gate must be immediately before the atomic or serialized attempt.
 - Is the supersession policy explicitly latest-start-wins or
   latest-success-wins, including newer failure and cancellation?
 - What does a rejected direct caller receive?
-- Can a post-invalidation caller join coalesced work created under revoked
-  ownership?
+- Can a post-invalidation caller join or wait behind coalesced work created
+  under revoked ownership?
+- Is every user hook and potentially reentrant, blocking, suspending, or
+  backpressured delivery step outside the serialized owner?
 - Can cancellation-ignoring work still reach a commit surface?
 - Do tests control the final read or commit boundary without sleeps?
 - Are unrelated keys independent unless the operation is explicitly global?

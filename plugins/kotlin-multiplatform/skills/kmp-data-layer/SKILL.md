@@ -90,11 +90,16 @@ Use Klibs.io and official docs as target-support evidence. Do not put a library 
   final ownership validation plus state/cache commit. Also linearize replay
   candidate read plus authority validation; an empty dependency set still
   checks the owning-domain generation. Do slow fetches outside the owner.
-- Commit state plus emission intent/revision atomically, but deliver arbitrary
-  callbacks outside the serialized owner. Across a durable persistence and
-  notification boundary, use an ordered, idempotent notification record.
-- Do not let a post-invalidation caller join coalesced work created under
-  revoked ownership. Declare per-caller versus shared-work cancellation.
+- Commit only owned data plus an owner-local, non-delivering emission
+  intent/revision atomically. Run callbacks, user-supplied predicates or
+  factories, and delivery that can resume, reenter, block, suspend, or apply
+  backpressure outside the serialized owner; revalidate before committing
+  user-computed results. Across a durable persistence and notification
+  boundary, use an ordered, idempotent notification record.
+- Detach revoked coalesced work from the current join and wait path. A
+  post-invalidation caller must neither join nor wait behind it and instead
+  starts or joins current-generation work. Declare per-caller versus
+  shared-work cancellation.
 - When a completion loses ownership, re-read authoritative state or return a
   declared stale/retry/cancellation result; never return its candidate as
   current or invent `Error`/`Invalidated`.
@@ -110,7 +115,8 @@ Use Klibs.io and official docs as target-support evidence. Do not put a library 
   and delays are not synchronization proof.
 - Cover state transitions and projections, late collection, pre-invalidation
   completion, same-key reverse completion, both final-boundary winners,
-  read-side clear, post-invalidation coalescer join, newer failure under the
-  declared supersession policy, keyed/global invalidation, direct caller
-  outcomes, TTL read versus observer emission, and mutation-notification
-  recovery across every replay/repopulation path.
+  read-side clear, post-invalidation coalescer liveness, newer failure under
+  the declared supersession policy, keyed/global invalidation, direct caller
+  outcomes, owner reentry/backpressure, user hooks, TTL read versus observer
+  emission, and mutation-notification recovery across every
+  replay/repopulation path.

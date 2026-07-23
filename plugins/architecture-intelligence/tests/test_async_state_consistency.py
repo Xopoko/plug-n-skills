@@ -94,7 +94,7 @@ class AsyncStateConsistencySkillTest(unittest.TestCase):
             for line in text.splitlines()
             if line.startswith("| ASC-")
         }
-        self.assertEqual(rows, {f"ASC-{index:02d}" for index in range(1, 15)})
+        self.assertEqual(rows, {f"ASC-{index:02d}" for index in range(1, 17)})
         for invariant in (
             "empty dependency vector",
             "Stamped replay read",
@@ -103,8 +103,26 @@ class AsyncStateConsistencySkillTest(unittest.TestCase):
             "Cancellation is not",
             "latest-start-wins",
             "post-invalidation caller",
+            "neither joins nor waits behind",
+            "start and finish progress markers",
+            "user-supplied predicate or factory",
+            "backpressure",
+            "if rejected, record only a non-delivering caller-outcome intent",
+            "delivery after release",
         ):
             self.assertIn(invariant.lower(), text.lower())
+
+    def test_skill_forbids_revoked_waits_and_owner_reentry(self):
+        text = SKILL.read_text(encoding="utf-8").lower()
+        for invariant in (
+            "owner-local, non-delivering",
+            "user-supplied predicates or factories",
+            "synchronously resume or reenter",
+            "backpressure",
+            "neither join nor wait behind",
+            "nested mutation",
+        ):
+            self.assertIn(invariant, text)
 
     def test_router_and_publication_surfaces_expose_the_skill(self):
         router = (ROOT / "skills" / "architecture-intelligence" / "SKILL.md").read_text(

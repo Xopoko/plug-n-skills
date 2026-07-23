@@ -45,10 +45,11 @@ Use `StateFlow` or the project's equivalent without treating initial state as
 | Publication order | A declared latest-start or latest-success policy is separate from invalidation | Complete same-key B before A; then fail/cancel B in a separate schedule |
 | Final commit | `Mutex`, actor, compare-and-set, or transaction owns validation plus state/cache commit | Hold A at final pre-commit while B wins and while clear wins |
 | Replay read | Candidate and authority come from one serialized or stamped snapshot | Clear between candidate capture and validation, including zero dependencies |
-| Coalescing | Post-invalidation callers cannot join work created under revoked ownership | Start shared A, invalidate, then let B attempt to join |
+| Coalescing | Post-invalidation callers neither join nor wait behind work created under revoked ownership | Hold shared A blocked, invalidate, and require B to finish before releasing A |
 | Caller result | Rejected work rereads authority or returns stale/retry/cancellation | Assert A's direct caller never receives A as current |
 | Cancellation | Cancellation is not a commit fence; late failure has an observation policy | Let cancellation-ignoring A finish after B or clear wins |
-| Notification | Commit emission intent/revision with state; invoke callbacks outside the owner | Inject failure at a durable mutation-notification boundary |
+| Owner boundary | Commit only data plus non-delivering emission intent; run user hooks and potentially reentrant, blocking, suspending, or backpressured delivery outside the owner | Block delivery while B commits; let a callback or hook perform nested mutation before the outer path revalidates |
+| Notification | Keep durable mutation and delivery ordered and recoverable | Inject failure at a durable mutation-notification boundary |
 | Key isolation | Key invalidation leaves unrelated keys valid; global clear does not | Run x and y across key clear, then global clear |
 | TTL | Read-time staleness is separate from active observer expiry signals | Advance a controlled clock, read, then fire each declared signal |
 
@@ -57,6 +58,8 @@ cancelled. With latest-success-wins, B's attempt alone does not reject A; only a
 successful newer commit or invalidation fences it.
 
 Across a durable persistence and notification boundary, use an ordered,
-idempotent notification record. For process-local delivery, publish an immutable
-snapshot or emission revision after the serialized commit without invoking
-arbitrary callbacks while holding the owner.
+idempotent notification record. For process-local delivery, atomically commit
+an owner-local, non-delivering intent, then release the owner before invoking
+callbacks, predicates, factories, or a primitive that may resume, reenter,
+block, suspend, or apply backpressure. Revalidate authority before committing
+results computed by user code.
