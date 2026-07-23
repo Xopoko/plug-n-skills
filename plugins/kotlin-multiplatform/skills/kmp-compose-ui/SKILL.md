@@ -1,11 +1,11 @@
 ---
 name: kmp-compose-ui
-description: Build and repair Compose Multiplatform UI, state, navigation, resources, platform entry points, previews, performance, accessibility, and UI tests in Kotlin Multiplatform projects.
+description: Build and repair Compose Multiplatform UI, state, navigation, external URI effects, resources, platform entry points, previews, performance, accessibility, and UI tests in Kotlin Multiplatform projects.
 ---
 
 # Compose Multiplatform UI
 
-Use this skill for Compose Multiplatform screens, shared UI architecture, Android/iOS/Desktop/Web entry points, Compose resources, navigation, state modeling, previews, performance, accessibility, and UI tests.
+Use this skill for Compose Multiplatform screens, shared UI architecture, Android/iOS/Desktop/Web entry points, Compose resources, navigation, external URI effects, state modeling, previews, performance, accessibility, and UI tests.
 
 ## Context First
 
@@ -52,6 +52,22 @@ Do not put Android application packaging or launch configuration inside the shar
 - Derive values instead of storing duplicates when possible.
 - Use one-shot effects for navigation, snackbar, share, permission request, and platform intents.
 - Preserve previous content during refresh unless product requirements say otherwise.
+
+## External URI Effects
+
+- Treat URI opening as a one-shot route/platform effect. Collect it from a
+  stable lifecycle-aware owner; do not open from the composable body or
+  `SideEffect`. Inject a narrow opener; never retain a platform handler in
+  durable state.
+- `LocalUriHandler.openUri` and default `LinkAnnotation.Url` opening are
+  best-effort. Use an app-owned adapter and annotated-link listener when policy,
+  telemetry, fallback, or an explicit outcome matters.
+- Preserve the original URI, including product-supported custom schemes. Apply
+  per-scheme policy at the trust boundary; do not blindly rewrite custom
+  schemes to HTTP(S).
+- Read [External URI Effect Contract](references/external-uri-effects.md) before
+  implementing adapter outcomes, replay behavior, validation, telemetry, or
+  failure tests.
 
 ## Performance And Accessibility
 

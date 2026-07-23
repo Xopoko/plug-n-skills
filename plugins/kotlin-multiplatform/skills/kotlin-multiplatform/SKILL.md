@@ -28,7 +28,7 @@ For an existing repository, read the local project before answering:
 - Production readiness verdicts, readiness scorecards, executive risk summaries, release-blocker triage, or multi-area audits: use `kmp-production-readiness`.
 - Module boundaries, shared logic/shared UI split, domain/data/presentation architecture, source-set hierarchy, library choice, or Swift/Native API boundaries: use `kmp-architecture`.
 - Shared-to-platform bridges, `expect`/`actual`, cinterop, Swift API shape, SKIE, KMP-NativeCoroutines, SwiftPM export, XCFrameworks, KDoctor, or iOS developer experience: use `kmp-interop-bridges`.
-- Compose Multiplatform screens, state, resources, navigation, platform entry points, previews, performance, or accessibility: use `kmp-compose-ui`.
+- Compose Multiplatform screens, state, resources, navigation, external URI effects, platform entry points, previews, performance, or accessibility: use `kmp-compose-ui`.
 - KMP data layers, repositories, source of truth, sync, offline-first, database choice, DTO/domain mapping, cache invalidation, or main-safety: use `kmp-data-layer`.
 - Library/tool/service selection across persistence, networking, DI, navigation, logging, observability, code quality, docs, resources, images, monetization, or reference templates: use `kmp-ecosystem-selection`.
 - KMP test strategy, `commonTest`, `kotlin.test`, Compose UI tests, screenshot tests, test doubles, refactor safety, review gates, or regression harnesses: use `kmp-testing-quality`.
