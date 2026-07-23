@@ -69,6 +69,12 @@ Use Klibs.io and official docs as target-support evidence. Do not put a library 
   data. Scope it to the invalidation domain: a global clear invalidates every
   key, while key-level invalidation must not suppress valid work for unrelated
   keys.
+- Keep publication ordering separate from invalidation state. When same-key
+  mutations or fetched snapshots can complete out of order, assign monotonic
+  ownership (revision, sequence, or equivalent) within that key/domain. An older
+  completion must not overwrite, replay, or repopulate a newer published value.
+  Advancing ownership for an ordinary write must not emit `Invalidated`;
+  unrelated keys remain independent unless the operation is explicitly global.
 
 ## Testing
 
@@ -83,6 +89,11 @@ Use Klibs.io and official docs as target-support evidence. Do not put a library 
 - Exercise the same invalidation ownership and domain through observer,
   warm-cache, and one-shot paths across every replay/repopulation layer; prove
   key-level invalidation leaves valid unrelated-key work intact
+- With controlled completion order, start same-key A before B, complete B
+  before A, and prove B remains the observable and replayed value after A
+  completes, with no `Invalidated` emission. Exercise every path able to
+  publish, replay, or repopulate state, and prove unrelated-key work completes
+  independently
 - With a controlled clock, assert the next-read result after TTL, no observer
   emission from clock advance alone, and the expected emission or non-emission
   for each supported expiry trigger
