@@ -12,6 +12,7 @@ PLUGINS = [
     "capability-workbench",
     "codex-cli",
     "scheduled-automation",
+    "gitlab-review",
     "claude-code",
     "architecture-intelligence",
     "design-intelligence",

@@ -37,6 +37,7 @@ PLUGIN_LAYOUT_ROWS = [
         "context-density",
         "scientific-research",
         "game-design-intelligence",
+        "gitlab-review",
     ],
 ]
 
@@ -49,6 +50,7 @@ PLUGIN_SUMMARIES = {
     "context-density": "Token measurement, compression, provenance, and prompt contracts.",
     "design-intelligence": "Product framing, UI architecture, accessibility, and design systems.",
     "game-design-intelligence": "Loops, progression, economies, onboarding, difficulty, and retention.",
+    "gitlab-review": "Review-thread races, evidence replies, ownership, and exact-head proof.",
     "kotlin-multiplatform": "KMP migration, Gradle, Compose UI, tests, and publishing.",
     "pixijs": "PixiJS v8 scenes, assets, rendering, events, and performance.",
     "scientific-research": "Scholarly discovery, deduplication, evidence ledgers, and quality gates.",

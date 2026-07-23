@@ -1,0 +1,14 @@
+{
+  "schema": "capability_workbench.plugin_icon_prompt.v1",
+  "plugin_name": "gitlab-review",
+  "brandColor": "#29235C",
+  "recommended_asset_path": "assets/icon.png",
+  "imagegen_mode": "built-in",
+  "prompt": "Use case: logo-brand\nAsset type: 1024x1024 marketplace plugin icon\nPrimary request: Create a premium minimal bitmap icon for a cross-agent merge-request review response workflow that safely tracks discussion threads, exact commit provenance, and verified handoff.\nSubject: two bold interlocking review-thread shapes orbiting one centered immutable commit checkpoint, with a small integrated check path; the silhouette should suggest conversation plus exact-head verification, not a generic chat app.\nStyle/medium: polished modern app icon, vector-friendly but rendered as a high-quality bitmap, flat geometric foreground with subtle dimensional polish.\nComposition/framing: centered, one dominant readable silhouette, generous safe area, no small details, readable at 32x32.\nScene/backdrop: full-bleed rounded-square app-icon background built around deep indigo #29235C with a restrained midnight-to-violet gradient.\nColor palette: high-contrast warm coral and pale mint foreground shapes that meet WCAG non-text contrast against the indigo background.\nMaterials/textures: crisp solid shapes, subtle soft highlights, no busy texture, no photo material, no UI screenshot.\nText (verbatim): none.\nConstraints: no visible letters, words, numbers, code, brand logos, fox imagery, mascots, tiny badges, tiny decorative dots, thin-line illustration, product UI, watermark, or private names.\nAvoid: GitLab logo or trademark imitation, GitHub mark, generic speech-bubble-only logo, object collage, complex scene, skeuomorphic clutter, low contrast, text inside the icon.\n",
+  "checks": [
+    "save the selected image into the plugin workspace as assets/icon.png",
+    "inspect the image at 1024, 64, and 32 px",
+    "reject visible text, letters, tiny details, screenshots, photos, watermarks, brand marks, or low contrast",
+    "wire interface.composerIcon, interface.logo, and interface.brandColor after the file exists"
+  ]
+}

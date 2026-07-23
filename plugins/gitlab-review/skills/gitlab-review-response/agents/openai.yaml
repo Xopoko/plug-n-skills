@@ -1,0 +1,4 @@
+interface:
+  display_name: "GitLab Review Response"
+  short_description: "Address GitLab review threads with exact-head proof"
+  default_prompt: "Use $gitlab-review-response to address this GitLab merge request's review threads and reply with exact-head evidence."

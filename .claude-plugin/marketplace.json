@@ -49,6 +49,11 @@
       "description": "Local scheduler diagnostics, real-runtime proof, safe canaries, correlated run receipts, and missed-run analysis for launchd, systemd timers, cron, and Windows Task Scheduler."
     },
     {
+      "name": "gitlab-review",
+      "source": "./plugins/gitlab-review",
+      "description": "Race-safe GitLab merge request review response with complete discussion inventory, reviewer-owned resolution, idempotent replies, and exact-head handoff proof."
+    },
+    {
       "name": "claude-code",
       "source": "./plugins/claude-code",
       "description": "Claude Code CLI operations, print-mode automation, diagnostics, plugin and MCP lifecycle, hooks, settings, agents, sessions, and worktrees."

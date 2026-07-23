@@ -59,6 +59,9 @@ class SpliceTests(unittest.TestCase):
             skill = plugin / "skills" / "demo"
             (plugin / ".codex-plugin").mkdir(parents=True)
             skill.mkdir(parents=True)
+            (plugin / "references").mkdir()
+            (skill / "references").mkdir()
+            (skill / "scripts").mkdir()
             (plugin / ".codex-plugin" / "plugin.json").write_text(
                 '{"description": "Example plugin"}',
                 encoding="utf-8",
@@ -66,14 +69,25 @@ class SpliceTests(unittest.TestCase):
             (skill / "SKILL.md").write_bytes(
                 b"---\r\nname: demo\r\ndescription: Demo skill\r\n---\r\n\r\nBody\r\n"
             )
+            (plugin / "references" / "plugin.md").write_text(
+                "plugin reference", encoding="utf-8"
+            )
+            (skill / "references" / "skill.md").write_text(
+                "skill reference", encoding="utf-8"
+            )
+            (skill / "scripts" / "guard.py").write_text(
+                "print('ok')", encoding="utf-8"
+            )
 
             encoder = FakeEncoder()
-            _plugins, skills = token_report.collect_reports(root, encoder)
+            plugins, skills = token_report.collect_reports(root, encoder)
 
         self.assertEqual(skills[0].path, "plugins/example/skills/demo/SKILL.md")
         self.assertIn("file: plugins/example/skills/demo/SKILL.md\n", encoder.texts[0])
         self.assertNotIn("\\", encoder.texts[0])
         self.assertEqual(encoder.texts[1], "\nBody\n")
+        self.assertEqual(plugins[0].reference_count, 2)
+        self.assertEqual(plugins[0].script_count, 1)
 
     def test_count_tokens_preserves_caller_text(self):
         class FakeEncoder:

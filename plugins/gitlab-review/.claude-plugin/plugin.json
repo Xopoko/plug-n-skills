@@ -1,0 +1,17 @@
+{
+  "name": "gitlab-review",
+  "version": "0.1.0",
+  "description": "Race-safe GitLab merge request review response with complete discussion inventory, reviewer-owned resolution, idempotent replies, and exact-head handoff proof.",
+  "author": {
+    "name": "Xopoko"
+  },
+  "license": "MIT",
+  "keywords": [
+    "code-review",
+    "discussions",
+    "gitlab",
+    "merge-request",
+    "review-comments",
+    "workflow"
+  ]
+}

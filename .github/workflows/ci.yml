@@ -23,6 +23,8 @@ jobs:
         run: python3 -m unittest discover -s plugins/context-density/tests
       - name: codex-cli plugin tests
         run: python3 -m unittest discover -s plugins/codex-cli/tests
+      - name: gitlab-review plugin tests
+        run: python3 -m unittest discover -s plugins/gitlab-review/tests
       - name: capability-workbench smoke tests
         run: python3 plugins/capability-workbench/tests/run_smoke.py
       - name: Install dry-runs

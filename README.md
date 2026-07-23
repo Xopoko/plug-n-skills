@@ -20,7 +20,7 @@ Use it when you want an agent to handle more than generic code edits:
 - plan scientific research, spec-driven delivery, context compression, and
   agent capability synthesis.
 
-The repository ships 14 installable plugin packs and 150+ focused agent
+The repository ships 15 installable plugin packs and 150+ focused agent
 skills, all plain repository content: manifests, `SKILL.md` files, references,
 validators, and helper scripts. Inspect it, validate it from a fresh clone,
 install only the packs you need, and keep generated local marketplace or cache
@@ -136,6 +136,7 @@ replaced to match the repository source, and repeated runs converge.
 | `claude-code` | Claude Code CLI operations, print-mode automation, diagnostics, plugin and MCP lifecycle, hooks, settings, agents, sessions, and worktrees. |
 | `codex-cli` | Codex CLI operations, automation, diagnostics, live thread supervision, controlled skill handoffs and evidence corrections, plugin and MCP lifecycle, normalized session trace audits, and local environment actions. |
 | `scheduled-automation` | Local scheduler diagnostics, real-runtime proof, safe canaries, correlated run receipts, missed-run analysis, and rollback-aware repair. |
+| `gitlab-review` | Race-safe GitLab merge request review response, reviewer-owned resolution, idempotent thread replies, and exact-head handoff proof. |
 | `context-density` | Context design, long-context placement, research-backed acceptance gates, prompt contracts, skill compression, structural handoff, and validation reporting. |
 | `design-intelligence` | Product framing, interface architecture, interaction design, visual hierarchy, accessibility, and design-system governance. |
 | `game-design-intelligence` | Gameplay loops, systems, progression, economies, motivation, retention, onboarding, difficulty, multiplayer, and live-service critique. |
@@ -162,12 +163,12 @@ instructions.
 
 | Metric | Count | Tokens | Notes |
 | --- | ---: | ---: | --- |
-| Plugin packs | 14 | - | Installable packages under `plugins/`. |
-| Skill entrypoints | 160 | - | `SKILL.md` files exposed through plugin metadata. |
-| Reference files | 59 | - | Longer ledgers, contracts, scorecards, and source notes. |
-| Helper and validator scripts | 38 | - | Deterministic plugin-local helpers. |
-| Startup metadata | 160 skills | 12,456 | Skill name, description, and file pointer for routing. |
-| On-demand skill bodies | 160 skills | 102,972 | Instruction bodies after frontmatter, loaded only when selected. |
+| Plugin packs | 15 | - | Installable packages under `plugins/`. |
+| Skill entrypoints | 161 | - | `SKILL.md` files exposed through plugin metadata. |
+| Reference files | 220 | - | Longer ledgers, contracts, scorecards, and source notes. |
+| Helper and validator scripts | 77 | - | Deterministic plugin-local helpers. |
+| Startup metadata | 161 skills | 12,573 | Skill name, description, and file pointer for routing. |
+| On-demand skill bodies | 161 skills | 104,055 | Instruction bodies after frontmatter, loaded only when selected. |
 
 Regenerate the report after skill edits:
 
@@ -184,14 +185,15 @@ Token columns are `startup metadata / on-demand body`.
 
 | Plugin | Skills | Refs | Scripts | Startup | Body |
 | --- | ---: | ---: | ---: | ---: | ---: |
-| `build-swift-apps` | 61 | 8 | 5 | 4,743 | 35,699 |
-| `pixijs` | 26 | 0 | 0 | 1,861 | 7,967 |
+| `build-swift-apps` | 61 | 89 | 36 | 4,743 | 35,699 |
+| `pixijs` | 26 | 64 | 0 | 1,861 | 7,967 |
 | `tauri` | 6 | 0 | 1 | 481 | 3,235 |
-| `scientific-research` | 1 | 0 | 0 | 91 | 2,024 |
-| `context-density` | 1 | 0 | 1 | 128 | 2,713 |
-| `capability-workbench` | 10 | 13 | 21 | 942 | 12,040 |
+| `scientific-research` | 1 | 4 | 1 | 91 | 2,024 |
+| `context-density` | 1 | 8 | 7 | 128 | 2,713 |
+| `capability-workbench` | 10 | 14 | 21 | 942 | 12,040 |
 | `codex-cli` | 7 | 4 | 2 | 619 | 7,491 |
 | `scheduled-automation` | 1 | 5 | 0 | 103 | 1,158 |
+| `gitlab-review` | 1 | 3 | 1 | 117 | 1,083 |
 | `claude-code` | 6 | 2 | 1 | 528 | 4,669 |
 | `architecture-intelligence` | 8 | 7 | 2 | 523 | 5,123 |
 | `design-intelligence` | 7 | 2 | 1 | 472 | 5,101 |
@@ -211,6 +213,7 @@ Token columns are `startup metadata / on-demand body`.
 | `capability-workbench` | Agent-agnostic capability workbench: discover, synthesize, architect portfolios, design trigger metadata and agent guidance files, vet, repair, install, package, and run imagegen-backed icon workflows for agent skills and plugins. |
 | `codex-cli` | Codex CLI operations, automation, diagnostics, live thread supervision, plugin and MCP lifecycle, session log forensics, and local environment actions. |
 | `scheduled-automation` | Local scheduler diagnostics, real-runtime proof, safe canaries, correlated run receipts, and missed-run analysis for launchd, systemd timers, cron, and Windows Task Scheduler. |
+| `gitlab-review` | Race-safe GitLab merge request review response with complete discussion inventory, reviewer-owned resolution, idempotent replies, and exact-head handoff proof. |
 | `claude-code` | Claude Code CLI operations, print-mode automation, diagnostics, plugin and MCP lifecycle, hooks, settings, agents, sessions, and worktrees. |
 | `architecture-intelligence` | Source-backed software architecture intelligence for codebase audits, ownership topology, runtime topology, architecture conformance and drift checks, structure metrics, module boundaries, dependency flow, ADRs, architecture fitness functions, and incremental refactoring strategy. |
 | `design-intelligence` | Source-backed, technology-agnostic UI/UX judgment: product framing, information architecture, interaction design, usability/accessibility review, visual communication, and design-system governance. Deliberately avoids Figma automation, framework recipes, and CSS recipes. |
@@ -374,6 +377,12 @@ Token cells are shown as `startup/body`.
 | Skill | Tokens | Description |
 | --- | ---: | --- |
 | `scheduled-automation-runtime` | 103/1,158 | Use when a local launchd, systemd timer, cron, or Windows Task Scheduler job works manually but fails or differs under the scheduler, or when registration, runtime context, last-result evidence, missed runs, or a fresh scheduler-originated result needs proof. Not for vendor CLI command construction, architecture inventory, cloud schedulers, or job business logic. |
+
+#### `gitlab-review`
+
+| Skill | Tokens | Description |
+| --- | ---: | --- |
+| `gitlab-review-response` | 117/1,083 | Use when addressing existing GitLab merge request review discussions: classify feedback against current code and the latest diff, prepare focused fixes, prove exact source-head and CI provenance, and post idempotent same-thread replies. Supports plan-only, reply-only, and explicitly authorized per-thread resolution through GitLab REST v4 or glab api. Do not use for broad code review, GitHub pull requests, approvals, merges, or bulk resolution. |
 
 #### `claude-code`
 

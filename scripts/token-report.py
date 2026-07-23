@@ -118,10 +118,21 @@ def parse_simple_yaml(text: str) -> dict[str, str]:
     return fields
 
 
-def count_files(path: Path) -> int:
-    if not path.is_dir():
-        return 0
-    return sum(1 for child in path.rglob("*") if child.is_file() and child.suffix != ".pyc")
+def count_named_support_files(plugin_dir: Path, directory_name: str) -> int:
+    """Count files below every support directory, including skill-local ones."""
+
+    files: set[Path] = set()
+    for directory in plugin_dir.rglob(directory_name):
+        if not directory.is_dir() or directory.name != directory_name:
+            continue
+        files.update(
+            child
+            for child in directory.rglob("*")
+            if child.is_file()
+            and child.suffix != ".pyc"
+            and "__pycache__" not in child.parts
+        )
+    return len(files)
 
 
 def collect_reports(root: Path, encoder: Any) -> tuple[list[PluginReport], list[SkillReport]]:
@@ -164,8 +175,10 @@ def collect_reports(root: Path, encoder: Any) -> tuple[list[PluginReport], list[
                 name=plugin_name,
                 description=normalize_text(plugin_description),
                 skill_count=len(plugin_skills),
-                reference_count=count_files(plugin_dir / "references"),
-                script_count=count_files(plugin_dir / "scripts"),
+                reference_count=count_named_support_files(
+                    plugin_dir, "references"
+                ),
+                script_count=count_named_support_files(plugin_dir, "scripts"),
                 startup_tokens=sum(skill.startup_tokens for skill in plugin_skills),
                 body_tokens=sum(skill.body_tokens for skill in plugin_skills),
             )
