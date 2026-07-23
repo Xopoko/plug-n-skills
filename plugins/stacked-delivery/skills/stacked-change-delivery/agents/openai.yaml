@@ -1,0 +1,4 @@
+interface:
+  display_name: "Stacked Change Delivery"
+  short_description: "Keep dependent changes bound to exact parent heads."
+  default_prompt: "Use $stacked-change-delivery to validate this dependent change stack, identify stale descendants, and prepare the next safe handoff."

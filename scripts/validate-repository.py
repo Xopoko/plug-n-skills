@@ -21,6 +21,7 @@ PLUGIN_NAMES = [
     "codex-cli",
     "scheduled-automation",
     "gitlab-review",
+    "stacked-delivery",
     "claude-code",
     "architecture-intelligence",
     "design-intelligence",

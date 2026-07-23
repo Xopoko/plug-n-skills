@@ -38,6 +38,7 @@ PLUGIN_LAYOUT_ROWS = [
         "scientific-research",
         "game-design-intelligence",
         "gitlab-review",
+        "stacked-delivery",
     ],
 ]
 
@@ -56,6 +57,7 @@ PLUGIN_SUMMARIES = {
     "scientific-research": "Scholarly discovery, deduplication, evidence ledgers, and quality gates.",
     "scheduled-automation": "Native scheduler proof, safe canaries, receipts, and missed-run analysis.",
     "spec-driven-development": "Specs, plans, tasks, traceable implementation, and proof.",
+    "stacked-delivery": "Exact parent heads, fresh proof, safe stack landing, and handoff.",
     "tauri": "Secure Tauri 2 setup, IPC, testing, packaging, and release.",
 }
 
@@ -204,10 +206,10 @@ def ordered_rows(plugins: dict[str, PluginCard]) -> list[list[PluginCard]]:
     rows = [[plugins[name] for name in row if name in plugins] for row in PLUGIN_LAYOUT_ROWS]
     rows = [row for row in rows if row]
     for name in missing:
-        available = [row for row in rows if len(row) < 5]
+        available = [row for row in rows if len(row) < 6]
         if not available:
             raise ValueError(
-                "Dashboard supports at most 15 plugin cards in three rows; "
+                "Dashboard supports at most 18 plugin cards in three rows; "
                 "update the canvas or card layout before adding more."
             )
         min(available, key=len).append(plugins[name])
@@ -347,10 +349,10 @@ def render(background_path: Path, output_path: Path) -> None:
     draw.text((badge_x + 21, 73), badge_text, font=fonts["eyebrow"], fill=(238, 249, 255, 244))
 
     rows = ordered_rows(plugins)
-    card_w = 295
+    card_w = 242
     card_h = 212
     row_gap = 24
-    col_gap = 20
+    col_gap = 18
     grid_y = 205
     for row_index, row in enumerate(rows):
         row_width = len(row) * card_w + (len(row) - 1) * col_gap

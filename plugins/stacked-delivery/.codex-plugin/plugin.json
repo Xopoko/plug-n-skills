@@ -1,0 +1,38 @@
+{
+  "name": "stacked-delivery",
+  "version": "0.1.0",
+  "description": "Dependency-safe delivery for stacked pull requests, merge requests, and dependent changes with exact parent-head binding, descendant invalidation, per-node proof, safe landing order, and machine-checkable handoff receipts.",
+  "author": {
+    "name": "Xopoko"
+  },
+  "repository": "https://github.com/Xopoko/plug-n-skills/tree/main/plugins/stacked-delivery",
+  "license": "MIT",
+  "keywords": [
+    "dependent-changes",
+    "merge-requests",
+    "pull-requests",
+    "stacked-changes",
+    "stacked-diffs",
+    "workflow"
+  ],
+  "skills": "./skills/",
+  "interface": {
+    "displayName": "Stacked Delivery",
+    "shortDescription": "Deliver dependent changes without stack drift.",
+    "longDescription": "A cross-agent, cross-forge workflow for freezing a stacked-change chain, proving every child against the exact current parent head, invalidating descendants after ancestor drift, keeping CI evidence node-local, enforcing safe landing prefixes, and handing work between agents with content-addressed receipts.",
+    "developerName": "Xopoko",
+    "category": "Coding",
+    "capabilities": [
+      "Exact base, parent, source-head, and target-branch stack snapshots",
+      "Linear topology, identity, worktree, and writer ownership validation",
+      "Transitive descendant invalidation after ancestor changes",
+      "Node-local proof freshness bound to current dependency composition",
+      "Sequential and feature-probed atomic-prefix landing plans",
+      "Content-addressed cross-agent handoff receipts"
+    ],
+    "defaultPrompt": "Validate this stack of dependent changes, identify stale descendants, and prepare the next safe delivery handoff.",
+    "brandColor": "#174B6D",
+    "composerIcon": "./assets/icon.png",
+    "logo": "./assets/icon.png"
+  }
+}

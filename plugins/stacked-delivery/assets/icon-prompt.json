@@ -1,0 +1,14 @@
+{
+  "schema": "capability_workbench.plugin_icon_prompt.v1",
+  "plugin_name": "stacked-delivery",
+  "brandColor": "#174B6D",
+  "recommended_asset_path": "assets/icon.png",
+  "imagegen_mode": "built-in",
+  "prompt": "Use case: logo-brand\nAsset type: 1024x1024 marketplace plugin icon\nPrimary request: Create a premium minimal bitmap icon for dependency-safe delivery for stacked pull requests, merge requests, and dependent changes.\nSubject: a bold chain of three offset layers connected by one upward path.\nStyle/medium: polished modern app icon, vector-friendly but rendered as a high-quality bitmap, flat geometric foreground with subtle dimensional polish.\nComposition/framing: centered, one dominant readable silhouette, generous safe area, no small details, readable at 32x32.\nScene/backdrop: full-bleed rounded-square app-icon background, a tasteful background built around #174B6D.\nColor palette: foreground uses high-contrast foreground colors that meet WCAG non-text contrast; background may use a smooth restrained gradient.\nMaterials/textures: clean solid shapes, crisp edges, no busy texture, no photo material, no UI screenshot.\nText (verbatim): none.\nConstraints: no visible letters, no words, no numbers, no tiny badges, no tiny decorative dots, no thin-line illustration, no product UI, no watermark, no private names.\nAvoid: generic stock logo, overly literal object collage, mascot, complex scene, skeuomorphic clutter, low contrast, text inside the icon.\n",
+  "checks": [
+    "save the selected image into the plugin workspace as assets/icon.png",
+    "inspect the image at 1024, 64, and 32 px",
+    "reject visible text, letters, tiny details, screenshots, photos, watermarks, or low contrast",
+    "wire interface.composerIcon, interface.logo, and interface.brandColor after the file exists"
+  ]
+}

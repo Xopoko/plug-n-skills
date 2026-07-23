@@ -54,6 +54,11 @@
       "description": "Race-safe GitLab merge request review response with complete discussion inventory, reviewer-owned resolution, idempotent replies, and exact-head handoff proof."
     },
     {
+      "name": "stacked-delivery",
+      "source": "./plugins/stacked-delivery",
+      "description": "Dependency-safe stacked change delivery with exact parent-head binding, descendant invalidation, node-local proof, safe landing order, and content-addressed handoff receipts."
+    },
+    {
       "name": "claude-code",
       "source": "./plugins/claude-code",
       "description": "Claude Code CLI operations, print-mode automation, diagnostics, plugin and MCP lifecycle, hooks, settings, agents, sessions, and worktrees."
