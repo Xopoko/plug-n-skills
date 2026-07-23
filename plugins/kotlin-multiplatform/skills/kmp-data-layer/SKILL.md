@@ -75,6 +75,15 @@ Use Klibs.io and official docs as target-support evidence. Do not put a library 
   completion must not overwrite, replay, or repopulate a newer published value.
   Advancing ownership for an ordinary write must not emit `Invalidated`;
   unrelated keys remain independent unless the operation is explicitly global.
+- Linearize ownership validation with every replayable state or cache commit.
+  The validation and commit it authorizes must be one atomic or serialized
+  transition against clear/invalidation and competing publishers in the same
+  domain (compare-and-set, a serialized owner, or equivalent). A successful
+  check followed by an unguarded assignment is insufficient.
+- A completion rejected by publication ownership must not return its stale
+  snapshot as the current one-shot result: re-read the authoritative state or
+  return a declared stale/retry outcome. Rejection alone must not emit or
+  persist `Error` or `Invalidated` unless the state contract declares it.
 
 ## Testing
 
@@ -94,6 +103,15 @@ Use Klibs.io and official docs as target-support evidence. Do not put a library 
   completes, with no `Invalidated` emission. Exercise every path able to
   publish, replay, or repopulate state, and prove unrelated-key work completes
   independently
+- Add a deterministic last-pre-publication race proof: hold A at the final
+  controllable boundary before its atomic or serialized state/cache commit
+  attempt, let same-domain B or clear/invalidation complete and become
+  authoritative, then release A. Prove A cannot publish, replay, or repopulate
+  at any layer. Run both winner variants; changing ownership before A reaches
+  this boundary does not cover the check-to-commit race
+- When A is a rejected one-shot fetch, assert its caller receives re-read B or
+  the declared stale/retry outcome, never A as current. Rejection alone must
+  emit or persist neither `Error` nor `Invalidated` unless declared
 - With a controlled clock, assert the next-read result after TTL, no observer
   emission from clock advance alone, and the expected emission or non-emission
   for each supported expiry trigger
