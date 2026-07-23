@@ -57,8 +57,11 @@ Use Klibs.io and official docs as target-support evidence. Do not put a library 
 - Make sync idempotent and resilient to duplicate callbacks
 - Make invalidation authoritative for active and late observers: work started
   before clear/invalidation must not republish stale data after it completes.
-  Use generation/version ownership or an equivalent guard when cancellation
-  alone is insufficient.
+  Use generation/version ownership or an equivalent guard that covers every
+  cache, request-coalescing, or memoization layer able to replay or repopulate
+  data. Scope it to the invalidation domain: a global clear invalidates every
+  key, while key-level invalidation must not suppress valid work for unrelated
+  keys.
 
 ## Testing
 
@@ -70,6 +73,8 @@ Use Klibs.io and official docs as target-support evidence. Do not put a library 
   affected consumer projection
 - Cover late collection after invalidation, pre-invalidation work completing
   afterward, and the declared initial-to-success/failure emission order
+- Exercise invalidation races through every replay/repopulation layer and prove
+  that key-level invalidation does not discard valid work for unrelated keys
 - With a controlled clock, assert the next-read result after TTL, no observer
   emission from clock advance alone, and the expected emission or non-emission
   for each supported expiry trigger
