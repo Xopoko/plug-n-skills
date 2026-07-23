@@ -39,6 +39,9 @@ Favor confidence/speed over coverage vanity:
 - A green aggregate task is not proof when the relevant leaf task is
   `SKIPPED`, `NO-SOURCE`, executes zero tests, or produces no inspectable test
   result. Verify non-empty execution in the task trace and report.
+- When changing a fixture or assertion to prove a new claim, inventory the
+  existing regression claims first. Preserve them with explicit pre/post
+  assertions or separate tests; do not trade one proof obligation for another.
 - For exactly-once event claims, assert cardinality across creation,
   restoration, resume, and re-collection as applicable. Idempotency alone does
   not prove exactly-once delivery.
