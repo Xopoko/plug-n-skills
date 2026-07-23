@@ -1,6 +1,6 @@
 ---
 name: codex-thread-supervisor
-description: Use when watching, monitoring, following, or supervising one or more live Codex tasks or threads by ID, including cursor-based transitions, completion or attention gates, claim checks, compact checkpoints, narrowly authorized skill handoffs, and privacy-safe capability mining. Not for post-hoc rollout forensics, current-turn subagents, or external job polling.
+description: Use when watching, monitoring, following, or supervising one or more live Codex tasks or threads by ID, including cursor-based transitions, completion or attention gates, claim checks, compact checkpoints, narrowly authorized skill handoffs or evidence corrections, and privacy-safe capability mining. Not for post-hoc rollout forensics, current-turn subagents, or external job polling.
 ---
 
 # Codex Thread Supervisor
@@ -81,23 +81,41 @@ Send a target-thread message only when every condition holds:
 1. The per-target allowlist includes the selected action, every condition is
    met, the authorization is unexpired, and its remaining limit is positive.
 2. The target is active and not already waiting for the user.
-3. A concrete capability gap affects the target's current next step.
-4. A relevant existing skill is available, and you read its full instructions.
-5. The target is not already applying that skill or equivalent guidance.
+3. A concrete capability or evidence gap affects the target's current next
+   step.
+4. The action has its required source: a relevant existing skill whose full
+   instructions were read, or verified evidence with stable recovery refs.
+5. The target is not already applying the same skill or reconciling the same
+   evidence revision.
 6. The benefit exceeds the interruption and context cost.
 
-For `skill-handoff`, send one compact message containing only:
+Use only the typed actions in the supervision contract. An unlisted message
+type remains prohibited even if the target would probably benefit.
+
+For `send-skill-handoff`, send one compact message containing only:
 
 - the exact skill name;
 - why it applies now;
 - the smallest relevant mechanism or guardrail;
 - a statement that task scope and mutation authority do not expand.
 
+For `send-evidence-delta`, use the versioned envelope and acknowledgement
+states in the supervision contract. For `amends` or `retracts`, send only
+changed or withdrawn claim atoms plus stable evidence refs. A `supersedes`
+delta must include the complete affected claim set required by the contract.
+The delta cannot expand task scope or mutation authority. Target activity is
+not acknowledgement: keep the revision pending until the receiver explicitly
+marks it `applied`, `conflict`, or `stale`.
+
 Do not send generic coaching, status requests, repeated context, model changes,
-or implementation instructions disguised as a skill handoff. After sending,
-decrement the action's remaining limit and fingerprint the handoff in the
-checkpoint. Do not repeat it without both renewed authority and a new state
-transition.
+task directives, or implementation instructions disguised as either action.
+Before sending, atomically reserve the intervention in the checkpoint: persist
+its immutable ID and payload fingerprint, decrement that action's remaining
+limit, and mark it pending. Then send it once. An ambiguous send result stays
+pending and must be disambiguated by one bounded read; never blind-resend it.
+A later intervention requires a new relevant transition, no unresolved pending
+intervention, and positive unexpired authorization. Renew authority only after
+the original allowance is exhausted or expired.
 
 ## Mine Durable Capabilities
 

@@ -8,7 +8,9 @@ evidence.
 
 - `codex-cli`: router for local CLI inspection and workflow selection.
 - `codex-exec-automation`: non-interactive `codex exec` and `codex review` runs.
-- `codex-thread-supervisor`: live multi-thread observation, transition waits, gated skill handoffs, and privacy-safe capability mining.
+- `codex-thread-supervisor`: live multi-thread observation, transition waits,
+  gated skill handoffs or versioned evidence corrections, and privacy-safe
+  capability mining.
 - `codex-plugin-mcp-manager`: plugin marketplaces, installed plugins, and MCP servers.
 - `codex-doctor-debugger`: `doctor`, `debug`, `sandbox`, feature flags, app-server, and remote-control diagnostics.
 - `codex-log-reader`: redacted rollout JSONL lookup, root/child normalization, active-scope views, deterministic trace audits, searches, and log health checks.
