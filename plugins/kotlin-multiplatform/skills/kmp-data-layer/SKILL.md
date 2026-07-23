@@ -19,6 +19,9 @@ Before implementing, identify:
 - platform storage requirements
 - persistence/network library target support
 - test layer per behavior
+- when absence has lifecycle meaning, model initial, available, and invalidated
+  states explicitly at the shared source of truth; define fail-closed behavior
+  there instead of patching individual consumers
 
 ## Boundaries
 
@@ -56,3 +59,5 @@ Use Klibs.io and official docs as target-support evidence. Do not put a library 
 - Test repositories with fakes or controlled test doubles
 - Test offline/cache invalidation explicitly
 - Test failure paths, stale data, conflict resolution, and retry boundaries
+- For shared state-contract changes, cover every allowed transition and each
+  affected consumer projection
