@@ -1,6 +1,6 @@
 ---
 name: architecture-intelligence
-description: "Use whenever code work has structural consequences: project architecture, module boundaries, dependency direction, runtime topology, ownership, ADRs, fitness functions, or architecture refactoring."
+description: "Use whenever code work has structural consequences: project architecture, module boundaries, dependency direction, runtime topology, asynchronous state consistency, ownership, ADRs, fitness functions, or architecture refactoring."
 ---
 
 # Architecture Intelligence
@@ -51,6 +51,7 @@ Use the smallest focused skill set:
 - `architecture-conformance`: intended vs observed rules, drift, erosion.
 - `architecture-ownership-topology`: CODEOWNERS/OWNERS, ownership coverage, cross-owned coordination risk, governance paths.
 - `architecture-runtime-topology`: deployment, runtime calls, observability, resilience, operability.
+- `async-state-consistency`: lifecycle state, invalidation, replay/cache/one-shot authority, async publication ordering, linearization, deterministic race proof.
 - `architecture-decisions`: ADR creation/review, tradeoffs, owner, revisit trigger.
 - `architecture-fitness-functions`: executable guardrails, CI checks, review gates.
 - `architecture-refactoring-strategy`: incremental migration, blast radius, rollback.
@@ -67,6 +68,9 @@ explicit constraint exists. Add `architecture-runtime-topology` when CLI, app
 refresh, background work, deployment, integration, or operability paths change.
 Add `architecture-ownership-topology` when owner files, package ownership, or
 cross-owned dependencies affect the change.
+Add `async-state-consistency` when caches, retained or replayable state,
+memoization, request coalescing, one-shot reads, expiry, invalidation, or
+competing async publishers can expose stale or out-of-order results.
 
 Use adjacent plugins for UI/UX, game design, Kotlin/Tauri specifics, security threat modeling, or non-architecture cleanup.
 

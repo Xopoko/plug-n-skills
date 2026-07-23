@@ -2,13 +2,14 @@
 
 Architecture Intelligence is a source-backed software architecture plugin for
 audits, ADRs, fitness functions, ownership/runtime topology, conformance checks,
-structure metrics, and incremental refactoring.
+structure metrics, async state consistency, and incremental refactoring.
 
 It focuses on architecture qualities in code:
 
 - boundaries, dependency direction, cycles, domain/data ownership;
 - CODEOWNERS/OWNERS coverage and cross-owned coordination risk;
 - runtime topology, deployment, observability, resilience, integration style;
+- async state lifecycle, invalidation, replay, cache, caller outcomes, and race proof;
 - ADRs, documentation drift, fitness functions, CI guardrails;
 - fan-in, fan-out, instability, migration slices, rollout gates, rollback paths.
 
@@ -19,6 +20,7 @@ It focuses on architecture qualities in code:
 - `architecture-conformance`: intended-vs-observed architecture checks.
 - `architecture-ownership-topology`: ownership coverage and coordination risk.
 - `architecture-runtime-topology`: runtime/deployment/operability architecture.
+- `async-state-consistency`: async lifecycle, invalidation, replay, publication, and race consistency.
 - `architecture-decisions`: ADR creation and review.
 - `architecture-fitness-functions`: architecture tests and guardrails.
 - `architecture-refactoring-strategy`: incremental architecture migration plans.

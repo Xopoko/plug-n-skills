@@ -130,7 +130,7 @@ replaced to match the repository source, and repeated runs converge.
 
 | Plugin | Use it for |
 | --- | --- |
-| `architecture-intelligence` | Source-backed architecture audits, ownership and runtime topology, module boundaries, ADRs, fitness functions, conformance checks, and refactoring strategy. |
+| `architecture-intelligence` | Source-backed architecture audits, async state consistency, ownership and runtime topology, module boundaries, ADRs, fitness functions, conformance checks, and refactoring strategy. |
 | `build-swift-apps` | Building, debugging, profiling, testing, packaging, and releasing Swift apps across iOS and macOS. |
 | `capability-workbench` | Capability discovery, synthesis, plugin packaging, agent guidance files, trigger metadata, install-scope decisions, vetting, repair, icon workflows, and visibility checks. |
 | `claude-code` | Claude Code CLI operations, print-mode automation, diagnostics, plugin and MCP lifecycle, hooks, settings, agents, sessions, and worktrees. |
@@ -165,11 +165,11 @@ instructions.
 | Metric | Count | Tokens | Notes |
 | --- | ---: | ---: | --- |
 | Plugin packs | 16 | - | Installable packages under `plugins/`. |
-| Skill entrypoints | 162 | - | `SKILL.md` files exposed through plugin metadata. |
-| Reference files | 223 | - | Longer ledgers, contracts, scorecards, and source notes. |
+| Skill entrypoints | 163 | - | `SKILL.md` files exposed through plugin metadata. |
+| Reference files | 224 | - | Longer ledgers, contracts, scorecards, and source notes. |
 | Helper and validator scripts | 78 | - | Deterministic plugin-local helpers. |
-| Startup metadata | 162 skills | 12,696 | Skill name, description, and file pointer for routing. |
-| On-demand skill bodies | 162 skills | 106,377 | Instruction bodies after frontmatter, loaded only when selected. |
+| Startup metadata | 163 skills | 12,818 | Skill name, description, and file pointer for routing. |
+| On-demand skill bodies | 163 skills | 107,659 | Instruction bodies after frontmatter, loaded only when selected. |
 
 Regenerate the report after skill edits:
 
@@ -197,7 +197,7 @@ Token columns are `startup metadata / on-demand body`.
 | `gitlab-review` | 1 | 3 | 1 | 117 | 1,083 |
 | `stacked-delivery` | 1 | 3 | 1 | 123 | 1,130 |
 | `claude-code` | 6 | 2 | 1 | 528 | 4,669 |
-| `architecture-intelligence` | 8 | 7 | 2 | 523 | 5,206 |
+| `architecture-intelligence` | 9 | 8 | 2 | 645 | 6,488 |
 | `design-intelligence` | 7 | 2 | 1 | 472 | 5,101 |
 | `game-design-intelligence` | 6 | 2 | 1 | 536 | 2,916 |
 | `kotlin-multiplatform` | 14 | 16 | 1 | 1,096 | 10,678 |
@@ -218,7 +218,7 @@ Token columns are `startup metadata / on-demand body`.
 | `gitlab-review` | Race-safe GitLab merge request review response with complete discussion inventory, reviewer-owned resolution, idempotent replies, and exact-head handoff proof. |
 | `stacked-delivery` | Dependency-safe delivery for stacked pull requests, merge requests, and dependent changes with exact parent-head binding, descendant invalidation, per-node proof, safe landing order, and machine-checkable handoff receipts. |
 | `claude-code` | Claude Code CLI operations, print-mode automation, diagnostics, plugin and MCP lifecycle, hooks, settings, agents, sessions, and worktrees. |
-| `architecture-intelligence` | Source-backed software architecture intelligence for codebase audits, ownership topology, runtime topology, architecture conformance and drift checks, structure metrics, module boundaries, dependency flow, ADRs, architecture fitness functions, and incremental refactoring strategy. |
+| `architecture-intelligence` | Source-backed software architecture intelligence for codebase audits, ownership topology, runtime topology, async state consistency, architecture conformance and drift checks, structure metrics, module boundaries, dependency flow, ADRs, fitness functions, and incremental refactoring. |
 | `design-intelligence` | Source-backed, technology-agnostic UI/UX judgment: product framing, information architecture, interaction design, usability/accessibility review, visual communication, and design-system governance. Deliberately avoids Figma automation, framework recipes, and CSS recipes. |
 | `game-design-intelligence` | Source-backed game design judgment: core loops, gameplay systems, progression/economy/balance, motivation/retention, onboarding/difficulty, and multiplayer/live-service dynamics. Avoids engines, graphics, and implementation code. |
 | `kotlin-multiplatform` | Kotlin Multiplatform development, migration, Gradle diagnosis, Compose Multiplatform, interop, testing, data, governance, performance, security, publishing, and production readiness. |
@@ -411,10 +411,11 @@ Token cells are shown as `startup/body`.
 | `architecture-conformance` | 61/546 | Use when intended architecture must be compared with implementation: dependency policies, ADRs, ownership rules, drift, erosion, recovered models, and conformance classifications. |
 | `architecture-decisions` | 59/383 | Use when structural code choices need durable rationale: ADRs, tradeoffs, consequences, reversibility, ownership, review triggers, and validation plans. |
 | `architecture-fitness-functions` | 67/625 | Use when architecture choices need executable guardrails: dependency rules, cycle checks, boundary tests, ownership review gates, ADR compliance, runtime/resilience checks, and CI fitness functions. |
-| `architecture-intelligence` | 63/1,120 | Use whenever code work has structural consequences: project architecture, module boundaries, dependency direction, runtime topology, ownership, ADRs, fitness functions, or architecture refactoring. |
+| `architecture-intelligence` | 67/1,199 | Use whenever code work has structural consequences: project architecture, module boundaries, dependency direction, runtime topology, asynchronous state consistency, ownership, ADRs, fitness functions, or architecture refactoring. |
 | `architecture-ownership-topology` | 66/583 | Use when architecture crosses ownership or review boundaries: CODEOWNERS/OWNERS, module coverage, cross-owned dependencies, socio-technical coordination, and governance paths. |
 | `architecture-refactoring-strategy` | 67/517 | Use when code changes need staged structural design: boundary extraction, modularization, dependency inversion, migrations, anti-corruption layers, tests, rollout gates, and rollback. |
-| `architecture-runtime-topology` | 67/593 | Use when code work touches runtime shape: services, app/CLI/background flows, deployment/IaC, observability, resilience, external integrations, ownership, and runtime coupling. |
+| `architecture-runtime-topology` | 67/579 | Use when code work touches runtime shape: services, app/CLI/background flows, deployment/IaC, observability, resilience, external integrations, ownership, and runtime coupling. |
+| `async-state-consistency` | 118/1,217 | Use when designing, reviewing, debugging, or testing asynchronous state holders, caches, observers, subscriber notifications, memoized or coalesced loads, replay, or one-shot reads where invalidation, late subscribers, stale in-flight completion, read or publish races, out-of-order completion, or keyed/global ownership can expose stale state. Not for UI-only loading presentation, deployment topology, distributed consensus, or unrelated test flakiness. |
 | `codebase-architecture-audit` | 73/839 | Use before architecture-significant code work to recover the actual source-backed system shape: modules, dependencies, domain seams, runtime coupling, ownership, quality attributes, tests, docs, and risks. |
 
 #### `design-intelligence`

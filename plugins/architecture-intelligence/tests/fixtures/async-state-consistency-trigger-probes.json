@@ -1,0 +1,78 @@
+{
+  "schema": "architecture_intelligence.trigger_probes.v1",
+  "skill": "async-state-consistency",
+  "should_trigger": [
+    {
+      "id": "clear-in-flight",
+      "prompt": "A clear wins while a fetch is in flight, but the old response later repopulates the cache."
+    },
+    {
+      "id": "reverse-completion",
+      "prompt": "Two same-key loads finish in reverse order, the older result overwrites the newer publication, and failure of the newer load has no declared supersession policy."
+    },
+    {
+      "id": "late-replay",
+      "prompt": "A late subscriber replays a value that was invalidated before it subscribed."
+    },
+    {
+      "id": "direct-caller",
+      "prompt": "The store rejects a superseded result but the async function still returns that result to its caller as current."
+    },
+    {
+      "id": "state-projection",
+      "prompt": "A projection maps not-yet-loaded state to an empty collection and loses the lifecycle discriminator."
+    },
+    {
+      "id": "ttl-contract",
+      "prompt": "Specify whether crossing TTL changes the next read, existing subscribers, or both, and prove it with controlled time."
+    },
+    {
+      "id": "read-side-race",
+      "prompt": "The memo value is copied before its revision is validated, so clear can win between those steps and an empty dependency set can pass vacuously."
+    },
+    {
+      "id": "mutation-notification-gap",
+      "prompt": "State commits but subscriber notification can fail separately, leaving a retained observer behind."
+    },
+    {
+      "id": "cancellation",
+      "prompt": "A cancelled caller shares coalesced work that ignores cancellation, finishes late, and publishes after invalidation or a newer operation."
+    },
+    {
+      "id": "buried-context",
+      "prompt": "While refactoring a repository and its public API, preserve the existing behavior and also close the stale warm-cache replay that occurs when clear lands between candidate read and ownership validation."
+    }
+  ],
+  "should_not_trigger": [
+    {
+      "id": "async-performance",
+      "prompt": "Profile task scheduling overhead and reduce async allocation cost.",
+      "route": "performance workflow"
+    },
+    {
+      "id": "syntax-help",
+      "prompt": "Show how to launch a coroutine and await two independent calls.",
+      "route": "language or framework guidance"
+    },
+    {
+      "id": "runtime-topology",
+      "prompt": "Map cache services, schedulers, deployment units, and health checks.",
+      "route": "architecture-runtime-topology"
+    },
+    {
+      "id": "library-selection",
+      "prompt": "Choose a persistence library for a multiplatform data layer.",
+      "route": "platform data-layer guidance"
+    },
+    {
+      "id": "ui-state-style",
+      "prompt": "Choose skeleton, spinner, and empty-state presentation for this screen.",
+      "route": "UI or interaction design"
+    },
+    {
+      "id": "sync-state-machine",
+      "prompt": "Model a purely synchronous parser as a finite state machine.",
+      "route": "general design"
+    }
+  ]
+}

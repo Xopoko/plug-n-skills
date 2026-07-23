@@ -66,7 +66,7 @@
     {
       "name": "architecture-intelligence",
       "source": "./plugins/architecture-intelligence",
-      "description": "Source-backed code architecture audits, ownership topology, runtime topology, conformance and drift checks, structure metrics, ADRs, fitness functions, dependency boundaries, and refactoring strategy."
+      "description": "Source-backed code architecture audits, async state consistency, ownership and runtime topology, conformance and drift checks, structure metrics, ADRs, fitness functions, dependency boundaries, and refactoring strategy."
     },
     {
       "name": "design-intelligence",

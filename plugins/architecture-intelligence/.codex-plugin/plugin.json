@@ -1,7 +1,7 @@
 {
   "name": "architecture-intelligence",
-  "version": "0.1.8",
-  "description": "Source-backed software architecture intelligence for codebase audits, ownership topology, runtime topology, architecture conformance and drift checks, structure metrics, module boundaries, dependency flow, ADRs, architecture fitness functions, and incremental refactoring strategy.",
+  "version": "0.1.9",
+  "description": "Source-backed software architecture intelligence for codebase audits, ownership topology, runtime topology, async state consistency, architecture conformance and drift checks, structure metrics, module boundaries, dependency flow, ADRs, fitness functions, and incremental refactoring.",
   "author": {
     "name": "Xopoko"
   },
@@ -22,6 +22,9 @@
     "codeowners",
     "socio-technical",
     "runtime-topology",
+    "async-state",
+    "cache-invalidation",
+    "race-conditions",
     "observability",
     "resilience",
     "structure-metrics",
@@ -32,13 +35,14 @@
   "interface": {
     "displayName": "Architecture Intelligence",
     "shortDescription": "Audit, check, and evolve code architecture from source evidence.",
-    "longDescription": "Architecture Intelligence gives the host agent a source-backed architecture system for audits, ownership/runtime topology, conformance and drift, ADRs, fitness functions, structure metrics, and incremental refactoring. It focuses on boundaries, dependency direction, domain/data seams, CODEOWNERS/OWNERS evidence, cross-owned coordination risk, deployment/runtime signals, quality attributes, documentation drift, policy checks, cycles, fan-in/fan-out, instability, and validation gates rather than style-only review.",
+    "longDescription": "Architecture Intelligence gives the host agent a source-backed architecture system for audits, ownership/runtime topology, async state consistency, conformance and drift, ADRs, fitness functions, structure metrics, and incremental refactoring. It focuses on boundaries, dependency direction, lifecycle state, invalidation, replay and publication authority, domain/data seams, CODEOWNERS/OWNERS evidence, deployment/runtime signals, quality attributes, policy checks, cycles, instability, and validation gates rather than style-only review.",
     "developerName": "Xopoko",
     "category": "Productivity",
     "capabilities": [
       "Source-backed codebase architecture audit",
       "Ownership topology, CODEOWNERS/OWNERS coverage, and cross-owned coordination risk",
       "Runtime topology, deployment, observability, and resilience review",
+      "Async state, invalidation, replay, caller-outcome, and race consistency review",
       "Architecture conformance and drift detection",
       "Structure metrics for coupling, instability, and dependency cycles",
       "Module boundary and dependency-flow review",
@@ -53,6 +57,7 @@
       "Use Architecture Intelligence to audit this codebase architecture from source evidence.",
       "Use Architecture Intelligence to map ownership topology, CODEOWNERS coverage, ownerless areas, and cross-owned dependency risks.",
       "Use Architecture Intelligence to map runtime topology, deployment evidence, observability, and resilience risks.",
+      "Use Architecture Intelligence to audit this async state holder for stale replay, invalidation, publication, and direct caller races.",
       "Use Architecture Intelligence to inspect structure metrics, fan-out, instability, and dependency cycles.",
       "Use Architecture Intelligence to compare the intended architecture policy to the observed source dependencies.",
       "Use Architecture Intelligence to review this architecture decision and produce an ADR-ready recommendation.",
