@@ -86,7 +86,9 @@ No one flag implies the others.
 Restacking rewrites descendants. Do not do it as an incidental repair.
 
 1. Record old base, parent, node, and remote object IDs.
-2. Confirm clean worktrees and exclusive writer ownership.
+2. Confirm each affected worktree is clean, or stop with its dirty state
+   preserved by a bounded patch receipt before any rewrite. Confirm exclusive
+   writer ownership in either case.
 3. Rebind the lowest affected node to the new parent.
 4. Rewrite one node at a time from bottom to top.
 5. Verify ancestry and the node-only delta.

@@ -41,6 +41,38 @@ lands, require the new bottom node to bind the current base head and prove the
 resulting composition. If the forge cascades a rebase, read back every new head
 and invalidate older proofs.
 
+## Dirty Patch Preservation
+
+A topology change can race with owned local edits. Do not reset, clean, rewrite,
+or continue editing the dirty worktree. Preserve the local state in a bounded
+patch receipt that binds:
+
+- public-safe or digested repository, node, change, source-head, worktree, and
+  writer identities;
+- the snapshot digest under which editing began;
+- separate declared coverage for staged, unstaged, untracked, file-mode,
+  submodule, and unsupported state;
+- one opaque digest over canonical receipt metadata and every declared covered
+  content partition; keep patch bytes, machine paths, and personal identifiers
+  local.
+
+Fail closed when required dirty state is unsupported or omitted. After
+refreshing topology, create a rebind record that references the unchanged
+patch-receipt digest, the new snapshot digest, and the exact node, worktree,
+and writer. This proves continuity of the pending work only. It does not make
+the patch dependency-current, proof-current, review-ready, or landable.
+
+If authorized editing resumes after the rebind, any content change supersedes
+that patch receipt. Refresh it before proof, commit, or handoff; do not
+checkpoint every line, and never claim an older digest describes the current
+dirty state.
+
+The current v1 snapshot and handoff schemas bind committed heads, not dirty
+patches. Keep the patch receipt and rebind record as explicit companion
+artifacts; do not add undeclared fields to v1 input. Reconcile the patch into a
+current node head and rerun node-local proof before selecting a rewrite or
+landing action.
+
 ## Handoff Receipt
 
 A portable receipt binds:
@@ -74,5 +106,6 @@ Report:
 - current, stale, landed, and blocked nodes;
 - proof IDs and dependency heads, not raw logs;
 - worktree and writer ownership;
+- any pending patch-receipt digest and its explicit unproven status;
 - the one next safe action or explicit stop condition;
 - any mutation still requiring authorization.

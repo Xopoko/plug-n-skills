@@ -83,7 +83,10 @@ Load only the reference needed:
    and needs explicit authorization; perform it bottom to top, preserve old to
    new object-ID evidence, and rerun proof for every rewritten node. When the
    rewrite will be executed by another task, validate the additive prepared
-   mutation handoff; it does not expand the receiver's authority.
+   mutation handoff; it does not expand the receiver's authority. If an
+   owned worktree is dirty when drift appears, stop edits and preserve its
+   bounded, content-addressed patch receipt before rebinding ownership to the
+   refreshed topology. Rebinding preserves work, not proof.
 7. **Choose the next safe action.** Run `next-action`. Sequential mode may
    select only the lowest current unlanded node. Atomic-prefix mode may select
    only a contiguous proven prefix starting there, and only after live
