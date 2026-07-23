@@ -14,6 +14,9 @@ Before implementing, identify:
 - behavior: online-only, cache-first, offline-first, or local-only
 - source of truth
 - freshness/invalidation rules
+- distinguish read-time TTL checks from active expiry; document which timer,
+  refresh, lifecycle, or storage signal re-evaluates freshness and emits to
+  existing observers, because elapsed time alone is not an emission trigger
 - conflict resolution
 - error model
 - platform storage requirements
@@ -61,3 +64,6 @@ Use Klibs.io and official docs as target-support evidence. Do not put a library 
 - Test failure paths, stale data, conflict resolution, and retry boundaries
 - For shared state-contract changes, cover every allowed transition and each
   affected consumer projection
+- With a controlled clock, assert the next-read result after TTL, no observer
+  emission from clock advance alone, and the expected emission or non-emission
+  for each supported expiry trigger
