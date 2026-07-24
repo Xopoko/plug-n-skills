@@ -1,0 +1,68 @@
+{
+  "schema": "git_worktree_safety.trigger_cases.v1",
+  "should_trigger": [
+    {
+      "id": "missing-expected-worktree",
+      "prompt": "The expected Git worktree directory vanished, but I think the branch still exists. Prove what survived before changing anything."
+    },
+    {
+      "id": "broken-convenience-link",
+      "prompt": "Audit this broken convenience symlink and the replacement worktree, then tell me whether only the pointer can be repaired."
+    },
+    {
+      "id": "stale-worktree-pointer",
+      "prompt": "A stale worktree alias still points at an old path while a registered checkout appears to hold the same branch."
+    },
+    {
+      "id": "reflog-retention",
+      "prompt": "Classify whether the expected commit is branch-reachable, reflog-only, object-only, or missing after a worktree path disappeared."
+    },
+    {
+      "id": "exact-clean-replacement",
+      "prompt": "Verify that this replacement is the unique clean registered worktree for refs/heads/recovery before repointing the alias."
+    },
+    {
+      "id": "cas-link-repair",
+      "prompt": "Repair exactly one dangling symlink only if its raw target and the prior audit fingerprint still match."
+    },
+    {
+      "id": "stale-metadata",
+      "prompt": "The worktree list contains stale or prunable metadata next to a recovered checkout; fail closed and explain the stop condition."
+    },
+    {
+      "id": "buried-recovery-need",
+      "buried_need": true,
+      "prompt": "Finish the handoff notes, but first handle the important anomaly: the old checkout path is gone, its shortcut is dangling, and another registered worktree may preserve the exact branch."
+    }
+  ],
+  "should_not_trigger": [
+    {
+      "id": "ordinary-management",
+      "prompt": "Create a new Git worktree for my feature branch, or remove and prune old worktrees."
+    },
+    {
+      "id": "administrative-worktree-repair",
+      "prompt": "I moved the main or a linked worktree; run git worktree repair to update Git's administrative paths."
+    },
+    {
+      "id": "restore-ref",
+      "prompt": "Restore a deleted branch ref from the reflog."
+    },
+    {
+      "id": "checkout-reset",
+      "prompt": "Reset this checkout and switch it to another branch."
+    },
+    {
+      "id": "restack",
+      "prompt": "Rebase and restack these dependent merge requests."
+    },
+    {
+      "id": "unsaved-content-recovery",
+      "prompt": "A deleted checkout had uncommitted and untracked files but no retained commit or surviving worktree; recover the unsaved file contents."
+    },
+    {
+      "id": "non-git-symlink",
+      "prompt": "Fix this arbitrary broken symlink to a photo directory; there is no Git repository or worktree involved."
+    }
+  ]
+}

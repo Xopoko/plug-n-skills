@@ -1,0 +1,38 @@
+{
+  "name": "git-worktree-safety",
+  "version": "0.1.0",
+  "description": "Host-neutral read-only diagnosis for missing, stale, or broken Git worktrees and convenience symlinks, with ref/reflog retention classification and POSIX-only exact-pointer repair.",
+  "author": {
+    "name": "Xopoko"
+  },
+  "repository": "https://github.com/Xopoko/plug-n-skills/tree/main/plugins/git-worktree-safety",
+  "license": "MIT",
+  "keywords": [
+    "git",
+    "recovery",
+    "reflog",
+    "safety",
+    "symlink",
+    "worktree"
+  ],
+  "skills": "./skills/",
+  "interface": {
+    "displayName": "Git Worktree Safety",
+    "shortDescription": "Recover stale worktree pointers without changing Git state.",
+    "longDescription": "A host-neutral Git audit plugin for diagnosing vanished worktree paths and broken convenience symlinks. It proves live branch identity, classifies ref, reflog-only, object-only, unknown, and missing commit retention, and validates one exact clean registered replacement. Exact compare-and-swap-style symlink repair is available only on POSIX runtimes with proven directory-relative and atomic-replace support; other hosts remain read-only.",
+    "developerName": "Xopoko",
+    "category": "Coding",
+    "capabilities": [
+      "NUL-safe registered worktree inventory and exact branch binding",
+      "Branch-reachable, reflog-only, object-only, and missing commit classification",
+      "Clean symbolic replacement proof bound to the live branch ref",
+      "Broken convenience-symlink inspection with raw paths omitted from JSON",
+      "POSIX-only fingerprint and raw-target guarded exact symlink repair",
+      "Post-repair proof that relevant Git state remained unchanged"
+    ],
+    "defaultPrompt": "Audit this missing Git worktree or broken convenience symlink and determine whether an exact pointer-only repair is safe.",
+    "brandColor": "#143C45",
+    "composerIcon": "./assets/icon.png",
+    "logo": "./assets/icon.png"
+  }
+}

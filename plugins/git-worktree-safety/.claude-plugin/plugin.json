@@ -1,0 +1,17 @@
+{
+  "name": "git-worktree-safety",
+  "version": "0.1.0",
+  "description": "Host-neutral read-only diagnosis for missing, stale, or broken Git worktrees and convenience symlinks, with ref/reflog retention classification and POSIX-only exact-pointer repair.",
+  "author": {
+    "name": "Xopoko"
+  },
+  "license": "MIT",
+  "keywords": [
+    "git",
+    "recovery",
+    "reflog",
+    "safety",
+    "symlink",
+    "worktree"
+  ]
+}

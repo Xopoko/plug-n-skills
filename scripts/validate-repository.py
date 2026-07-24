@@ -22,6 +22,7 @@ PLUGIN_NAMES = [
     "scheduled-automation",
     "gitlab-review",
     "stacked-delivery",
+    "git-worktree-safety",
     "claude-code",
     "architecture-intelligence",
     "design-intelligence",

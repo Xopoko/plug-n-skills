@@ -59,6 +59,11 @@
       "description": "Dependency-safe stacked change delivery with exact parent-head binding, descendant invalidation, node-local proof, safe landing order, and guarded current-state or prepared-mutation handoff receipts."
     },
     {
+      "name": "git-worktree-safety",
+      "source": "./plugins/git-worktree-safety",
+      "description": "Read-only Git worktree recovery audits, ref and reflog retention classification, clean replacement proof, and POSIX-gated exact convenience-symlink repair."
+    },
+    {
       "name": "claude-code",
       "source": "./plugins/claude-code",
       "description": "Claude Code CLI operations, print-mode automation, diagnostics, plugin and MCP lifecycle, hooks, settings, agents, sessions, and worktrees."

@@ -1,0 +1,4 @@
+interface:
+  display_name: "Git Worktree Recovery"
+  short_description: "Recover stale pointers without changing Git state"
+  default_prompt: "Use $git-worktree-recovery to audit this missing worktree or broken convenience symlink and determine whether an exact pointer repair is safe."
