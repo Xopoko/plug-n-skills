@@ -106,9 +106,7 @@ def main() -> None:
         else source_root.resolve()
     )
     marketplace_root = (
-        global_source_root.parent
-        if args.global_source_root
-        else root.resolve()
+        global_source_root.parent if args.global_source_root else root.resolve()
     )
     marketplace_path = (
         Path(args.marketplace_path).expanduser().resolve()
@@ -118,8 +116,22 @@ def main() -> None:
     config_path = Path(args.config_path).expanduser().resolve()
     cache_root = Path(args.cache_root).expanduser().resolve()
 
-    validate_helper = root / "plugins" / "capability-workbench" / "scripts" / "plugin" / "validate_plugin.py"
-    install_helper = root / "plugins" / "capability-workbench" / "scripts" / "plugin" / "ensure_local_plugin_installed.py"
+    validate_helper = (
+        root
+        / "plugins"
+        / "capability-workbench"
+        / "scripts"
+        / "plugin"
+        / "validate_plugin.py"
+    )
+    install_helper = (
+        root
+        / "plugins"
+        / "capability-workbench"
+        / "scripts"
+        / "plugin"
+        / "ensure_local_plugin_installed.py"
+    )
     require_file(validate_helper)
     require_file(install_helper)
 
@@ -132,21 +144,28 @@ def main() -> None:
 
     if args.check_only:
         for name in selected:
+            repository_source = source_root / name
             destination = global_source_root / name
-            run(
-                [
-                    sys.executable,
-                    str(install_helper),
-                    str(destination),
-                    "--marketplace-path",
-                    str(marketplace_path),
-                    "--config-path",
-                    str(config_path),
-                    "--cache-root",
-                    str(cache_root),
-                    "--check-only",
-                ]
-            )
+            command = [
+                sys.executable,
+                str(install_helper),
+                str(destination),
+                "--marketplace-path",
+                str(marketplace_path),
+                "--config-path",
+                str(config_path),
+                "--cache-root",
+                str(cache_root),
+                "--check-only",
+            ]
+            if repository_source.resolve() != destination.resolve():
+                command.extend(
+                    [
+                        "--expected-source-path",
+                        str(repository_source),
+                    ]
+                )
+            run(command)
         print("check-only passed")
         return
 
@@ -169,20 +188,26 @@ def main() -> None:
         if args.dry_run:
             print(f"would install {name}@local from {destination}")
             continue
-        run(
-            [
-                sys.executable,
-                str(install_helper),
-                str(destination),
-                "--marketplace-path",
-                str(marketplace_path),
-                "--config-path",
-                str(config_path),
-                "--cache-root",
-                str(cache_root),
-                "--force-manual",
-            ]
-        )
+        command = [
+            sys.executable,
+            str(install_helper),
+            str(destination),
+            "--marketplace-path",
+            str(marketplace_path),
+            "--config-path",
+            str(config_path),
+            "--cache-root",
+            str(cache_root),
+            "--force-manual",
+        ]
+        if source.resolve() != destination.resolve():
+            command.extend(
+                [
+                    "--expected-source-path",
+                    str(source),
+                ]
+            )
+        run(command)
 
     print("install complete" if not args.dry_run else "dry run complete")
 

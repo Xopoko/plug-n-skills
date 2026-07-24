@@ -10,7 +10,7 @@ Use this reference for capability synthesis, plugin-pack synthesis, and retrospe
 | --- | --- | --- |
 | `new-skill` | One cohesive capability fits in one skill plus optional resources. | Final skill folder, reports, validator proof. |
 | `augment-existing` | User names an existing skill/plugin and wants it improved. | In-place patch on the selected surface or explicit no-patch rationale, reports, validation. |
-| `plugin-pack` | Capability naturally splits into multiple triggerable skills. | Plugin manifest, skills, shared resources, validation, and marketplace visibility proof when installation is required. |
+| `plugin-pack` | Capability naturally splits into multiple triggerable skills. | Plugin manifest, skills, shared resources, validation, install/cache proof when installation is required, and a separate runtime-discovery state. |
 | `source-import` | User wants existing skills mirrored with minimal transformation. | Provenance, safety/import report, delivery proof, and install proof only when required. |
 | `reference-only` | Sources are unsafe, thin, or not inspectable enough. | Reports and recommendation; no fake synthesis claim. |
 
@@ -136,7 +136,7 @@ When external sources are part of synthesis, every adopted mechanism must map to
 - deterministic script or validator;
 - report/ledger field;
 - safety gate;
-- install or visibility proof.
+- install/cache or runtime-discovery proof, kept as separate states.
 
 If the mapping is only "better wording" or "interesting background", mark it `deferred` or `reference-only`. Keep the record/URL in reports instead of importing source prose into the final skill/plugin.
 
@@ -149,4 +149,6 @@ If the mapping is only "better wording" or "interesting background", mark it `de
 - `install-scope.json`: validated target surface and final delivery/install state.
 - `synthesis-changelog.md`: final decisions, validation commands, residual tradeoffs.
 
-For plugin outputs, add plugin validation and install/visibility proof only when `install_required=true`.
+For plugin outputs, add plugin validation and install/cache proof only when
+`install_required=true`; report runtime discovery separately as `verified`,
+`failed`, or `not checked`.

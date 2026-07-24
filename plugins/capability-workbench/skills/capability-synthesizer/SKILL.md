@@ -137,7 +137,7 @@ If no output directory is provided, write reports and ledgers to `./skill-synthe
 - `capability-matrix.md`
 - `distillation-plan.md`
 - `install-scope.json`
-- final skill/plugin/MCP capability path on the selected delivery surface, plus installed/cached proof only when `install_required=true`
+- final skill/plugin/MCP capability path on the selected delivery surface, plus installed/cache-equivalence proof only when `install_required=true` and a separate runtime-discovery state
 - `synthesis-changelog.md`
 
 Use `$PLUGIN_ROOT/references/synthesis-contract.md` and `$PLUGIN_ROOT/references/safety-vetting.md` for required sections.
@@ -157,4 +157,4 @@ Before finalizing:
 9. Confirm the final artifact is delivered to the validated surface and installed only when `install_required=true`.
 10. Run `python3 "$PLUGIN_ROOT/scripts/synthesis/install_scope_gate.py" <output-dir>/install-scope.json --final`.
 11. Run skill validators and resource tests.
-12. For plugin-pack mode, run plugin manifest validation and install/visibility checks with `plugin-factory`.
+12. For plugin-pack mode, run plugin manifest validation and install/cache checks with `plugin-factory`; keep runtime discovery separate.

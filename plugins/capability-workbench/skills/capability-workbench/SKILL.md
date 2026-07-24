@@ -22,12 +22,12 @@ Choose one primary mode before making changes:
 | Create or refactor one skill | `skill-factory` | Skill folder and validation |
 | Design, audit, or debug skill names/descriptions and trigger metadata | `skill-trigger-metadata` | Trigger-ready frontmatter, prompt boundary examples, and Codex catalog-budget audit |
 | Find, vet, install, or update skills | `skill-installer-vetter` | Provenance, vetting, install state |
-| Create, update, install, or publish agent marketplace plugin | `plugin-factory` | Plugin folder, marketplace entry when needed, validation, optional visibility proof |
+| Create, update, install, or publish agent marketplace plugin | `plugin-factory` | Plugin folder, marketplace entry when needed, validation, optional install/cache proof and separate discovery state |
 | Review safety, coverage, validation, token cost, or prompt contracts | `capability-auditor` | Structured audit and fixes or recommendations |
 | Repair a false, stale, or broken skill/script/plugin/MCP contract discovered during work | `capability-reality-repair` | Updated source of truth plus validation proof |
 
 If the request spans modes, sequence them explicitly. Typical full lifecycle:
-`capability-synthesizer` -> optional `capability-portfolio-architect` -> `skill-factory` or `plugin-factory` -> `capability-auditor` -> optional install/visibility gate.
+`capability-synthesizer` -> optional `capability-portfolio-architect` -> `skill-factory` or `plugin-factory` -> `capability-auditor` -> optional install/cache gate and separate runtime-discovery probe.
 
 If context-density work or an audit shows overlap, cross-plugin responsibility duplication, missing boundaries, overloaded skills, stale skills, or repeated deterministic procedures hidden in prose, route through `capability-portfolio-architect` before editing. Token reduction is a signal, not a substitute for a structural decision ledger.
 
@@ -71,12 +71,17 @@ For a plugin source artifact, always validate the manifest:
 python3 "$PLUGIN_ROOT/scripts/plugin/validate_plugin.py" <plugin-dir>
 ```
 
-When `install_required=true`, also run install/visibility proof:
+When `install_required=true`, also run the enabled/config plus exact
+source/cache-equivalence proof:
 
 ```bash
 python3 "$PLUGIN_ROOT/scripts/plugin/ensure_local_plugin_installed.py" <plugin-dir>
 python3 "$PLUGIN_ROOT/scripts/plugin/ensure_local_plugin_installed.py" <plugin-dir> --check-only
 ```
+
+This proves installed cache state, not runtime discovery. Probe the current
+host/session discovery surface only when that lifecycle step is in scope;
+otherwise report `runtime discovery: not checked`.
 
 For complete synthesis outputs, run:
 

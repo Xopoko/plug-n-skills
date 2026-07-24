@@ -1,6 +1,6 @@
 ---
 name: plugin-factory
-description: Use when creating, updating, validating, optionally installing/cache-refreshing, or handing off marketplace-backed agent plugins. Use for plugin manifests, local marketplace entries, plugin-pack synthesis, triggerable skill bundles, install visibility gates, and Codex app deeplinks.
+description: Use when creating, updating, validating, optionally installing/cache-refreshing, or handing off marketplace-backed agent plugins. Use for plugin manifests, local marketplace entries, plugin-pack synthesis, triggerable skill bundles, install/cache gates, separate runtime-discovery state, and Codex app deeplinks.
 ---
 
 # Plugin Factory
@@ -31,9 +31,10 @@ Defaults:
 - policies: `installation=AVAILABLE`, `authentication=ON_INSTALL`
 
 This creates a marketplace-ready source path. It is installed globally as
-`<plugin-name>@local` and cache-backed only after the install/visibility helper
-runs. For repo-local plugin source work, create or update the plugin under that
-repository and skip marketplace/cache mutation unless `install_required=true`.
+`<plugin-name>@local` only after the install helper enables it and verifies an
+equivalent cache copy. That receipt does not prove runtime discovery. For
+repo-local plugin source work, create or update the plugin under that repository
+and skip marketplace/cache mutation unless `install_required=true`.
 
 For new marketplace-facing plugins, generate the icon through the system
 `$imagegen` skill, not through hand-authored SVG templates. Use
@@ -88,6 +89,15 @@ covers the workflow better.
 
 ## Validate And Optionally Install
 
+Track three states independently:
+
+1. `source_validated`: the selected plugin source passes manifest and resource
+   checks; a derived global source also matches its expected repository source.
+2. `install_cache_verified`: the selected marketplace entry is enabled and its
+   filtered cache tree exactly matches the selected source.
+3. `runtime_discovery`: a separate host/session probe reports `verified`,
+   `failed`, or `not checked`.
+
 For every marketplace-backed plugin:
 
 ```bash
@@ -121,11 +131,18 @@ Installed work is incomplete if the plugin is only present in `marketplace.json`
 python3 "$PLUGIN_ROOT/scripts/synthesis/install_scope_gate.py" <output-dir>/install-scope.json --final
 ```
 
+The install helper proves only `install_cache_verified`. Check runtime discovery
+through the current host's actual discovery surface when that lifecycle step is
+in scope; otherwise record `runtime_discovery=not checked` rather than claiming
+visibility.
+
 ## Handoff
 
 When a marketplace entry was created, updated, or installed, finish with:
 
 - validation results;
+- `source_validated`, `install_cache_verified`, and `runtime_discovery` as
+  separate states;
 - installed plugin id, usually `<name>@local`, or `not installed` for source-only work;
 - absolute plugin path;
 - absolute marketplace path when applicable;

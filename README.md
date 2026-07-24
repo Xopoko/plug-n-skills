@@ -132,7 +132,7 @@ replaced to match the repository source, and repeated runs converge.
 | --- | --- |
 | `architecture-intelligence` | Source-backed architecture audits, async state consistency, ownership and runtime topology, module boundaries, ADRs, fitness functions, conformance checks, and refactoring strategy. |
 | `build-swift-apps` | Building, debugging, profiling, testing, packaging, and releasing Swift apps across iOS and macOS. |
-| `capability-workbench` | Capability discovery, synthesis, plugin packaging, agent guidance files, trigger metadata, Codex catalog-budget audits, install-scope decisions, vetting, repair, icon workflows, and visibility checks. |
+| `capability-workbench` | Capability discovery, synthesis, plugin packaging, agent guidance files, trigger metadata, Codex catalog-budget audits, install-scope decisions, vetting, repair, icon workflows, install/cache checks, and separate runtime-discovery checks. |
 | `claude-code` | Claude Code CLI operations, print-mode automation, diagnostics, plugin and MCP lifecycle, hooks, settings, agents, sessions, and worktrees. |
 | `codex-cli` | Codex CLI operations, automation, producer-native deferred completion, diagnostics, live thread supervision, controlled skill handoffs and evidence corrections, plugin and MCP lifecycle, normalized session trace audits, and local environment actions. |
 | `scheduled-automation` | Local scheduler diagnostics, real-runtime proof, safe canaries, correlated run receipts, missed-run analysis, and rollback-aware repair. |
@@ -169,8 +169,8 @@ instructions.
 | Skill entrypoints | 165 | - | `SKILL.md` files exposed through plugin metadata. |
 | Reference files | 228 | - | Longer ledgers, contracts, scorecards, and source notes. |
 | Helper and validator scripts | 80 | - | Deterministic plugin-local helpers. |
-| Startup metadata | 165 skills | 13,057 | Skill name, description, and file pointer for routing. |
-| On-demand skill bodies | 165 skills | 112,234 | Instruction bodies after frontmatter, loaded only when selected. |
+| Startup metadata | 165 skills | 13,063 | Skill name, description, and file pointer for routing. |
+| On-demand skill bodies | 165 skills | 112,525 | Instruction bodies after frontmatter, loaded only when selected. |
 
 Regenerate the report after skill edits:
 
@@ -192,7 +192,7 @@ Token columns are `startup metadata / on-demand body`.
 | `tauri` | 6 | 0 | 1 | 481 | 3,235 |
 | `scientific-research` | 1 | 4 | 1 | 91 | 2,024 |
 | `context-density` | 1 | 8 | 7 | 128 | 2,713 |
-| `capability-workbench` | 10 | 14 | 22 | 935 | 12,534 |
+| `capability-workbench` | 10 | 14 | 22 | 941 | 12,825 |
 | `codex-cli` | 8 | 4 | 2 | 702 | 9,059 |
 | `scheduled-automation` | 1 | 5 | 0 | 103 | 1,158 |
 | `gitlab-review` | 1 | 3 | 1 | 117 | 1,083 |
@@ -356,12 +356,12 @@ Token cells are shown as `startup/body`.
 | Skill | Tokens | Description |
 | --- | ---: | --- |
 | `agent-guidance-factory` | 119/678 | Create, refresh, audit, or migrate repository agent guidance files such as AGENTS.md, AGENTS.override.md, CLAUDE.md, .claude/rules, and Cursor rules. Use when a repo needs durable coding-agent instructions, instruction load-order decisions, nested guidance, or cleanup of bloated or stale agent docs. Do not use for ordinary human README or CONTRIBUTING docs unless they must feed agent guidance. |
-| `capability-auditor` | 97/1,375 | Use when auditing agent skills or plugins for safety, coverage, duplicated logic, token/context cost, prompt-contract risk, validation readiness, marketplace visibility, dependencies, network behavior, or install/update risk. For structural split/merge/move/delete/router decisions across skills or plugins, use capability-portfolio-architect instead. |
-| `capability-portfolio-architect` | 103/937 | Use when auditing agent skill/plugin portfolio architecture for cross-plugin capability overlap, weak routing, duplicated or missing skills, split/merge/delete/move decisions, shared capability extraction, reference/script extraction, or plugin boundary redesign. For safety, coverage, or validation review of a single artifact without boundary changes, use capability-auditor instead. |
-| `capability-reality-repair` | 92/819 | Repair stale or false agent capability instructions immediately. Use when a skill, script, plugin manifest/helper, MCP/tool contract, connector guidance, validator, or bundled reference describes commands, schemas, paths, outputs, install state, dependencies, or behavior that does not match live reality. |
-| `capability-synthesizer` | 126/2,215 | Use when performing broad external-first discovery, vetting, scoring, distillation, or synthesis of agent skills or plugin packs from the public web, GitHub/public repositories, OpenClaw/ClawHub, marketplaces, research sources, community implementations, user references, or local skills. Use for well-vetted capability synthesis, cross-skill comparison, plugin-pack synthesis, global capability acquisition, skill strengthening, and adoption/rejection changelogs. |
-| `capability-workbench` | 74/1,715 | Route and orchestrate agent skill and plugin lifecycle work. Use when work involves agent skills, plugins, marketplace packages, capability acquisition, synthesis, creation, installation, packaging, audit, or context-density optimization. |
-| `plugin-factory` | 82/1,238 | Use when creating, updating, validating, optionally installing/cache-refreshing, or handing off marketplace-backed agent plugins. Use for plugin manifests, local marketplace entries, plugin-pack synthesis, triggerable skill bundles, install visibility gates, and Codex app deeplinks. |
+| `capability-auditor` | 97/1,405 | Use when auditing agent skills or plugins for safety, coverage, duplicated logic, token/context cost, prompt-contract risk, validation readiness, marketplace visibility, dependencies, network behavior, or install/update risk. For structural split/merge/move/delete/router decisions across skills or plugins, use capability-portfolio-architect instead. |
+| `capability-portfolio-architect` | 103/947 | Use when auditing agent skill/plugin portfolio architecture for cross-plugin capability overlap, weak routing, duplicated or missing skills, split/merge/delete/move decisions, shared capability extraction, reference/script extraction, or plugin boundary redesign. For safety, coverage, or validation review of a single artifact without boundary changes, use capability-auditor instead. |
+| `capability-reality-repair` | 92/836 | Repair stale or false agent capability instructions immediately. Use when a skill, script, plugin manifest/helper, MCP/tool contract, connector guidance, validator, or bundled reference describes commands, schemas, paths, outputs, install state, dependencies, or behavior that does not match live reality. |
+| `capability-synthesizer` | 126/2,228 | Use when performing broad external-first discovery, vetting, scoring, distillation, or synthesis of agent skills or plugin packs from the public web, GitHub/public repositories, OpenClaw/ClawHub, marketplaces, research sources, community implementations, user references, or local skills. Use for well-vetted capability synthesis, cross-skill comparison, plugin-pack synthesis, global capability acquisition, skill strengthening, and adoption/rejection changelogs. |
+| `capability-workbench` | 74/1,768 | Route and orchestrate agent skill and plugin lifecycle work. Use when work involves agent skills, plugins, marketplace packages, capability acquisition, synthesis, creation, installation, packaging, audit, or context-density optimization. |
+| `plugin-factory` | 88/1,406 | Use when creating, updating, validating, optionally installing/cache-refreshing, or handing off marketplace-backed agent plugins. Use for plugin manifests, local marketplace entries, plugin-pack synthesis, triggerable skill bundles, install/cache gates, separate runtime-discovery state, and Codex app deeplinks. |
 | `skill-factory` | 82/1,448 | Use when creating, refactoring, splitting, compressing, validating, or packaging agent skills. Use for SKILL.md trigger design, agents/openai.yaml metadata, skill resources, progressive disclosure, token-efficient instructions, quick validation, and plugin-contained skills. |
 | `skill-installer-vetter` | 82/942 | Find, list, vet, install, or update agent skills from curated catalogs, GitHub repo paths, local folders, or user-provided references. Use when installation must be preceded by provenance, safety, dependency, and capability checks. |
 | `skill-trigger-metadata` | 78/1,167 | Audit skill trigger metadata and Codex catalog-budget pressure. Use when creating or debugging names, descriptions, SKILL.md frontmatter, shortened descriptions, model-visible omissions, discovery routing, under-triggering, or over-triggering. |
