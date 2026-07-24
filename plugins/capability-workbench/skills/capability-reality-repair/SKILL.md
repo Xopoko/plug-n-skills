@@ -37,9 +37,9 @@ If deferred, leave a concrete patch plan and exact evidence needed.
 
 1. Identify the bad contract: exact artifact, claim, script behavior, schema, or helper output that contradicted reality.
 2. Prove current reality with direct evidence: `--help`, `--version`, source, generated schema, manifest, installed config, validator output, minimal reproducer, official docs, or live tool output.
-3. Find the editable source of truth, not only a generated cache. For installed plugins, locate the source path, patch source, then refresh cache/visibility when needed.
+3. Find the editable source of truth, not only a generated cache. For installed plugins, locate the source path, patch source, then refresh the install/cache state and probe runtime discovery separately when needed.
 4. Patch every reachable artifact that repeats the false claim: skill text, references, scripts, schemas, manifests, examples, expected outputs, router entries, and validators.
-5. Add recurrence protection: validator, unit test, fixture, schema check, smoke command, cache visibility check, or explicit validation command.
+5. Add recurrence protection: validator, unit test, fixture, schema check, smoke command, install/cache check, runtime-discovery probe, or explicit validation command.
 6. Validate the repaired surface and resume the original task from the corrected contract.
 
 ## Boundaries
@@ -56,7 +56,7 @@ The repair is complete only when:
 
 - the false or broken capability source has been updated;
 - the live behavior or authoritative proof is recorded in work notes or final response;
-- the relevant validator, script test, smoke command, or visibility check passed or the blocker is explicit;
+- the relevant validator, script test, smoke command, install/cache check, or runtime-discovery probe passed or the blocker is explicit;
 - the original task can continue without relying on the stale contract.
 
 Use `$PLUGIN_ROOT/references/reality-repair.md` for source-selection order, repair examples, and defer/rollback details.

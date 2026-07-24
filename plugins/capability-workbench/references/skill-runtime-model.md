@@ -341,8 +341,13 @@ After source edits:
 After installed/global changes:
 
 - Check the active agent's actual discovery surface, not just the source path.
-- For Codex plugin installs, run the installer and `--check-only` visibility
-  proof. Remember the installed cache copy is the user-facing copy.
+- For Codex plugin installs, run the installer and `--check-only` install/cache
+  proof. The check must bind the enabled local marketplace source to an
+  equivalent filtered cache tree. When the marketplace source is a derived
+  global copy, also bind it to the repository source with
+  `--expected-source-path`. The receipt reports runtime discovery as not
+  checked; runtime trigger discovery remains a separate proof. Remember the
+  installed cache copy is the user-facing copy.
 - For direct Codex skills, verify the target root used by the current host
   (`.agents/skills`, configured user root, or legacy `${CODEX_HOME}/skills`).
 - For Claude Code, confirm whether the skill appears in the current session or
@@ -369,7 +374,8 @@ evidence rather than assumptions:
   `SKILL.md` instead of being routed to references.
 - Installed behavior differs from source: the active agent loads a cache copy,
   marketplace copy, or older global skill. Refresh the install state and run a
-  visibility check.
+  source/cache equivalence check against the intended marketplace source, then
+  verify runtime discovery separately.
 
 ## Source Links
 

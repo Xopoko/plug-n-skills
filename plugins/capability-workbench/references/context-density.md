@@ -48,7 +48,7 @@ Adopt external mechanisms only when they map to at least one concrete target sur
 - validator/script;
 - report field or ledger field;
 - safety gate;
-- install/visibility proof.
+- install/cache or runtime-discovery proof, kept as separate states.
 
 Otherwise record the mechanism as `deferred` or `reference-only`; do not import it as prose.
 

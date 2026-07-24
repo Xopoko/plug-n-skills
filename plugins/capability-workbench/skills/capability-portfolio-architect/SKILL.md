@@ -57,7 +57,7 @@ Decisions include keep, split, merge, remove, rename, route, move skills between
    - `shared-capability-review`: repeated workflow mechanics should become a shared script, reference, or Workbench pattern.
 5. For each row, record evidence, intended final surface, preserved invariants, validation scenario, risk, and rollback path.
 6. Sequence edits conservatively: route/metadata fixes first, then reference/script/shared extraction, then move/split/merge/delete only when validation and trigger coverage can be preserved.
-7. Validate with skill/plugin validators, token measurement, trigger probes, and install/visibility checks when activation is required.
+7. Validate with skill/plugin validators, token measurement, trigger probes, install/cache checks when installation is required, and separate runtime-discovery probes when effect validation is required.
 
 ## Decision Rules
 

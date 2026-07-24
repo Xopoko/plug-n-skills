@@ -50,12 +50,15 @@ Skill validation:
 python3 "$PLUGIN_ROOT/scripts/skill/quick_validate.py" <skill-dir>
 ```
 
-Plugin validation and visibility:
+Plugin source plus install/cache validation:
 
 ```bash
 python3 "$PLUGIN_ROOT/scripts/plugin/validate_plugin.py" <plugin-dir>
 python3 "$PLUGIN_ROOT/scripts/plugin/ensure_local_plugin_installed.py" <plugin-dir> --check-only
 ```
+
+Treat runtime discovery as a separate probe and report it as `not checked` when
+the audit scope stops at source or installed cache state.
 
 Install-scope validation:
 
