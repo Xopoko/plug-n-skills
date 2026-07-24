@@ -69,7 +69,12 @@ Load only the reference needed:
    worktree. Run the smallest repository-native proof that covers the node.
    Bind every accepted proof to the node head and the exact base or parent head.
    `skipped`, `neutral`, cancelled, superseded, or head-only results do not
-   establish current dependency proof.
+   establish current dependency proof. If a proof cannot start because an
+   unchanged external gate persists, keep a redacted task-local proof-gap
+   record, keep it out of accepted proofs, and do not retry until relevant
+   code, fixture, configuration, environment, or external state changes. Keep
+   snapshot `proofs` empty while any policy-required surface remains open;
+   partial evidence stays task-local.
 6. **Reconcile drift.** Immediately before any write or handoff, fetch and
    freeze again, then run `compare`. Any ancestor head or topology change
    invalidates the affected descendant closure. Restacking is a history rewrite

@@ -169,7 +169,7 @@ instructions.
 | Reference files | 224 | - | Longer ledgers, contracts, scorecards, and source notes. |
 | Helper and validator scripts | 78 | - | Deterministic plugin-local helpers. |
 | Startup metadata | 163 skills | 12,818 | Skill name, description, and file pointer for routing. |
-| On-demand skill bodies | 163 skills | 108,890 | Instruction bodies after frontmatter, loaded only when selected. |
+| On-demand skill bodies | 163 skills | 108,968 | Instruction bodies after frontmatter, loaded only when selected. |
 
 Regenerate the report after skill edits:
 
@@ -195,7 +195,7 @@ Token columns are `startup metadata / on-demand body`.
 | `codex-cli` | 7 | 4 | 2 | 619 | 7,994 |
 | `scheduled-automation` | 1 | 5 | 0 | 103 | 1,158 |
 | `gitlab-review` | 1 | 3 | 1 | 117 | 1,083 |
-| `stacked-delivery` | 1 | 3 | 1 | 123 | 1,130 |
+| `stacked-delivery` | 1 | 3 | 1 | 123 | 1,208 |
 | `claude-code` | 6 | 2 | 1 | 528 | 4,669 |
 | `architecture-intelligence` | 9 | 8 | 2 | 645 | 6,890 |
 | `design-intelligence` | 7 | 2 | 1 | 472 | 5,101 |
@@ -391,7 +391,7 @@ Token cells are shown as `startup/body`.
 
 | Skill | Tokens | Description |
 | --- | ---: | --- |
-| `stacked-change-delivery` | 123/1,130 | Use when pull requests, merge requests, patch sets, or branch changes form a dependency stack and a child must remain based on an exact parent head. Covers stacked diffs, restacking after ancestor updates, per-node CI proof, safe bottom-up or forge-native atomic-prefix landing, isolated worktrees, and cross-agent handoffs. Do not use for one independent change, ordinary review-thread response, or automatic merge or force-push authorization. |
+| `stacked-change-delivery` | 123/1,208 | Use when pull requests, merge requests, patch sets, or branch changes form a dependency stack and a child must remain based on an exact parent head. Covers stacked diffs, restacking after ancestor updates, per-node CI proof, safe bottom-up or forge-native atomic-prefix landing, isolated worktrees, and cross-agent handoffs. Do not use for one independent change, ordinary review-thread response, or automatic merge or force-push authorization. |
 
 #### `claude-code`
 
