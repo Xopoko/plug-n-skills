@@ -12,6 +12,8 @@ review or merge readiness and fails closed when a lower layer changes.
   content-addressed handoff receipt. It also validates additive prepared
   history-mutation handoffs with exact old/new mappings, equivalence,
   attribution, backup, lease, proof, authority, scope, and action-order gates.
+  The workflow keeps composition, contribution provenance, local writer
+  coordination, and fresh publication authority as separate gates.
 
 The bundled guard consumes already-collected JSON. It is read-only and
 standard-library only: it never invokes Git, contacts a forge, mutates a ref,

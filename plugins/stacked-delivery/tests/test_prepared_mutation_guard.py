@@ -34,7 +34,7 @@ NEW_PARENT = "d" * 40
 NEW_1 = "e" * 40
 NEW_2 = "f" * 40
 OTHER = "1" * 40
-LANDING = "0" * 40
+LANDING = "9" * 40
 DIGEST_A = "2" * 64
 DIGEST_B = "3" * 64
 DIGEST_C = "4" * 64
@@ -408,6 +408,12 @@ class PreparedMutationShapeTests(unittest.TestCase):
                 with self.assertRaises(guard.InputError):
                     guard.parse_prepared_mutation(value)
 
+    def test_all_zero_digest_is_rejected_as_missing_evidence(self):
+        value = prepared_mutation()
+        value["authority"]["evidence_hash"] = "0" * 64
+        with self.assertRaises(guard.InputError):
+            guard.parse_prepared_mutation(value)
+
     def test_rewrite_mapping_binds_old_and_new_heads_and_parents(self):
         cases = (
             ("old_head_sha", OTHER, "prepared_old_head_mismatch"),
@@ -470,6 +476,18 @@ class PreparedMutationShapeTests(unittest.TestCase):
         value = history_only_mutation()
         value["new_predecessor"]["source_ref"] = "refs/heads/other"
         self.assertIn("new_predecessor_ref_mismatch", codes(value))
+
+    def test_new_predecessor_cannot_be_a_rewritten_descendant(self):
+        value = prepared_mutation()
+        cycle_head = value["nodes"][-1]["new_head_sha"]
+        value["new_predecessor"]["head_sha"] = cycle_head
+        value["nodes"][0]["new_parent_head_sha"] = cycle_head
+        for proof in value["nodes"][0]["proofs"]:
+            proof["dependency_head_sha"] = cycle_head
+        for gap in value["nodes"][0]["open_proof_gaps"]:
+            gap["dependency_head_sha"] = cycle_head
+        value["actions"][-1]["expected_new_target_head_sha"] = cycle_head
+        self.assertIn("new_predecessor_creates_cycle", codes(value))
 
     def test_landed_prefix_retarget_uses_current_base_as_predecessor(self):
         value = history_only_mutation()
@@ -1062,14 +1080,14 @@ class PreparedMutationGuidanceTests(unittest.TestCase):
             "`refs/stacked-delivery/backups/`",
             "exact-remote-head",
             "`history_receipts` is an ordered, contiguous prefix",
-            "one immutable transaction digest",
+            "one content-addressed transaction digest",
             "not a watcher cursor",
             "all history actions appear first",
             "metadata actions are optional",
             "metadata update is not composition proof",
             "tags, notes, and remote-tracking refs are rejected",
             "`metadata-ready`",
-            "`metadata_receipt` must bind the immutable transaction digest",
+            "`metadata_receipt` must bind the fixed transaction-scope digest",
             "a `finalize` gap does not block metadata",
             "a higher node's gap does not block the lower next action",
             "`proof_wait_owner_ref` is null when no gap is open",

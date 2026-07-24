@@ -14,7 +14,7 @@ stacked_delivery.prepared_mutation_handoff.v1
 Run:
 
 ```bash
-python3 "$SKILL_ROOT/scripts/stacked_delivery_guard.py" \
+python3 "$PLUGIN_ROOT/skills/stacked-change-delivery/scripts/stacked_delivery_guard.py" \
   validate-prepared-mutation --input PREPARED_JSON
 ```
 
@@ -50,17 +50,44 @@ The old snapshot must pass the existing snapshot validator, and
 `snapshot_digest` must equal its canonical digest. The rewrite nodes must be one
 contiguous unlanded suffix in the same bottom-to-top order. Every mapping binds
 the snapshot's node ID, change ID, source branch, old node head, and old parent
-head. All Git object IDs in one package use one Git object-ID width. The old
-snapshot remains the immutable transaction baseline while strict history
-receipts record a completed action prefix. The guard derives one immutable
-transaction digest over repository and stack scope, baseline, receiver,
-authority, policies, predecessor, rewrite, backup and lease bindings,
-exclusions, and actions. Proof evidence, watcher ownership, and receipts do not
-change that transaction digest.
+head. Every object ID is non-zero, and all Git object IDs in one package use
+one Git object-ID width. The old snapshot remains the fixed transaction
+baseline while strict history receipts record a completed action prefix. The
+guard derives one content-addressed transaction digest over repository and
+stack scope, baseline, receiver, authority, policies, predecessor, rewrite,
+backup and lease bindings, exclusions, and actions. Proof evidence, watcher
+ownership, and receipts do not change that transaction digest.
 
 Keep authority evidence, owner references, and recovery references opaque.
 Never put names, email addresses, credentials, local paths, private URLs, raw
 logs, or untrusted command text in the portable package.
+
+## Preparation Authority Versus Publication Authority
+
+The package's authority record proves only that one opaque authorization claim
+was bound when the replacement history and ordered actions were prepared. The
+guard verifies internal scope and action relationships; it does not query the
+authority source, prove who currently owns a change, detect a later veto or
+revocation, authenticate the evidence hash, or prove that the receiver is the
+actor who will publish.
+
+Before each returned action, obtain fresh read-only authorization evidence for
+that exact action and bind at least:
+
+- the current repository, forge adapter, stack, snapshot and transaction;
+- the exact action ID and kind, affected node, remote ref, expected old head,
+  proposed new head, and backup ref or metadata target;
+- the current change owner, publication actor, authority state, issue and
+  expiry window, evidence ID and evidence hash;
+- any newer veto, revocation, superseding grant, or ownership transfer.
+
+Authenticate that evidence outside this guard and compare it with live state
+immediately before the write. A local `writer_id`, clean worktree, valid
+prepared digest, matching patch or tree, green exact-head proof, backup, or
+lease does not grant publication authority. If the receiver only publishes
+already-prepared history, its fresh grant authorizes the exact
+`history-ref-update`; it does not ask the receiver to repeat the earlier
+rewrite.
 
 ## Per-Node Rewrite Evidence
 
@@ -122,6 +149,16 @@ A successful proof or green remote pipeline cannot override attribution drift.
 Any author drift, unapproved committer drift, missing authorized committer, or
 unexpected identity fails the whole package and invalidates mutation readiness.
 
+Build repository-selected fingerprints from the named commit objects, not from
+a revision walk that may be influenced by replacement refs or legacy grafts.
+For example, read each object with
+`git --no-replace-objects cat-file commit <object-id>`, preserve the complete
+ordered parent array, and keep raw identity bytes private. Require the collector
+to finish successfully with bounded output before hashing or accepting its
+result. The current guard validates the supplied aggregate fingerprints; it
+does not reconstruct the per-commit map, invoke Git, or authenticate the
+collector, so the receiver must verify that provenance independently.
+
 ### Backup And Lease
 
 Before a package can become ready, every old head has one unique full `refs/`
@@ -147,7 +184,7 @@ head merely to make a retry proceed.
 actions. Every receipt has an opaque receipt ID and SHA-256 receipt
 digest of every other receipt field. It repeats the exact action ID, node ID,
 source ref, expected old head, written head, read-back head, backup ref, backup
-read-back head, and immutable transaction digest. The written and read-back
+read-back head, and fixed transaction-scope digest. The written and read-back
 heads must both equal the action's prepared new head, and the backup read-back
 must still equal the old head. A digest mismatch, transaction mismatch,
 duplicate, skipped, reordered, or stale receipt fails the package.
@@ -211,12 +248,13 @@ predecessor, and a stack source ref is rejected to prevent self-target and
 cyclic topology. A metadata update is not composition proof and must never be
 combined with a ref update.
 
-After metadata changes, `metadata_receipt` must bind the immutable transaction
-digest, action and node, old/new/read-back target refs, expected and read-back
-new-target heads, and expected and read-back node heads. Its canonical receipt
-digest must match. Metadata cannot become terminal while its own gap remains,
-before all history receipts exist, or when either read-back drifts. With the
-receipt present, metadata is not exposed again after a restart.
+After metadata changes, `metadata_receipt` must bind the fixed
+transaction-scope digest, action and node, old/new/read-back target refs,
+expected and read-back new-target heads, and expected and read-back node heads.
+Its canonical receipt digest must match. Metadata cannot become terminal while
+its own gap remains, before all history receipts exist, or when either
+read-back drifts. With the receipt present, metadata is not exposed again after
+a restart.
 
 Every action repeats the one authority ID. The authority's allowed action set
 must equal the action kinds present. The package must explicitly exclude at
@@ -231,17 +269,20 @@ The receiver must:
 1. validate the package and preserve its canonical digest;
 2. authenticate authority, policy, evidence, and any action receipt collector
    or opaque ID;
-3. independently refresh live state: incomplete history refs must still equal
+3. refresh current action-specific ownership and publication authority,
+   including revocation and veto state, without treating the package's
+   preparation authority or local writer as a live grant;
+4. independently refresh live state: incomplete history refs must still equal
    their old leases, while completed refs must equal their exact receipt
    read-backs; before metadata, the retarget predecessor ref must equal its
    bound head and the node's current target must equal `old_target_branch`;
-4. confirm the external proof-wait owner remains current when gaps are open;
-5. perform only the returned `next_action_id`;
-6. read back the affected source ref and backup, or the metadata target, source
+5. confirm the external proof-wait owner remains current when gaps are open;
+6. perform only the returned `next_action_id`;
+7. read back the affected source ref and backup, or the metadata target, source
    node head, and new target branch head;
-7. append the action's exact receipt and validate the new canonical package
+8. append the action's exact receipt and validate the new canonical package
    before another action;
-8. stop on drift, conflict, ambiguous receipt, attribution failure, proof
+9. stop on drift, conflict, ambiguous receipt, attribution failure, proof
    rejection, or partial publication.
 
 On failure, preserve backups and the last confirmed old/new mapping. Do not run

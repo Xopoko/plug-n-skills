@@ -192,6 +192,14 @@ class SnapshotShapeTests(unittest.TestCase):
         with self.assertRaises(guard.InputError):
             guard.parse_snapshot(value)
 
+    def test_all_zero_sha_is_rejected(self):
+        for width in (40, 64):
+            with self.subTest(width=width):
+                value = snapshot()
+                value["nodes"][0]["head_sha"] = "0" * width
+                with self.assertRaises(guard.InputError):
+                    guard.parse_snapshot(value)
+
     def test_64_character_sha_is_accepted(self):
         value = snapshot()
         long_sha = "f" * 64

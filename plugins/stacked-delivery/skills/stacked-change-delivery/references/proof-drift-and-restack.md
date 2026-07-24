@@ -81,21 +81,54 @@ Distinguish:
 
 No one flag implies the others.
 
+## Independent Pre-Write Gates
+
+A reconstructed branch or history rewrite needs three independent gates:
+
+1. **Composition equivalence:** ancestry, ordered commit mapping, and the
+   repository-required tree or patch behavior are preserved.
+2. **Contribution provenance:** repository-selected author attribution remains
+   valid for every rewritten commit. Record committer changes separately;
+   creating a replacement commit does not transfer authorship.
+3. **Mutation authority:** fresh read-only evidence binds the current owner,
+   actor, exact action, repository and stack scope, validity window, and any
+   revocation or veto.
+
+Equal trees or patches, a clean worktree, a local writer binding, green
+exact-head proof, an old-to-new object-ID table, or a safe lease cannot
+substitute for the other gates. A prepared handoff records how replacement
+history was produced; the receiver still refreshes action-specific authority
+immediately before publication. If ownership is ambiguous, attribution
+changed, authority expired, or a newer veto revoked or superseded it, stop
+before mutation.
+
+Collect commit topology and attribution without local replacement objects or
+legacy grafts influencing the result. For example, read each named object with
+`git --no-replace-objects cat-file commit <object-id>`, retain the complete
+parent array, and derive public-safe repository-policy fingerprints rather than
+embedding raw identities. Require every collector command to finish
+successfully with bounded output before hashing evidence. The guard checks
+declared digests and relationships; it does not run Git or authenticate the
+collector.
+
 ## Authorized Restack
 
 Restacking rewrites descendants. Do not do it as an incidental repair.
 
 1. Record old base, parent, node, and remote object IDs.
-2. Confirm each affected worktree is clean, or stop with its dirty state
-   preserved by a bounded patch receipt before any rewrite. Confirm exclusive
-   writer ownership in either case.
-3. Rebind the lowest affected node to the new parent.
-4. Rewrite one node at a time from bottom to top.
-5. Verify ancestry and the node-only delta.
-6. Publish only with an explicit expected remote object ID.
-7. Read back the remote head.
-8. Repeat for the next descendant.
-9. Rerun node-local proof and rebuild the snapshot.
+2. Resolve current change ownership and action-specific authority from fresh
+   read-only evidence; a local `writer_id` is not that authority.
+3. Confirm each affected worktree is clean, or stop with its dirty state
+   preserved by a bounded repository-native recovery mechanism before any
+   rewrite. Confirm exclusive writer ownership in either case.
+4. Rebind the lowest affected node to the new parent.
+5. Rewrite one node at a time from bottom to top.
+6. Verify ancestry, ordered contribution provenance, and the node-only delta.
+7. Publish only with an explicit expected remote object ID and current
+   publication authority.
+8. Read back the remote head.
+9. Repeat for the next descendant.
+10. Rerun node-local proof and rebuild the snapshot.
 
 On conflict, remote drift, lease failure, ambiguous state, or partial publish,
 stop and preserve the last confirmed mapping. Do not retry the same rewrite
@@ -112,3 +145,11 @@ The workflow adapts these public mechanisms without depending on their tools:
 
 Tool-specific commands remain optional adapters. Repository policy decides
 which adapter is allowed.
+
+Git keeps author and committer as distinct identities: the author identifies
+the contribution, while the committer records who created the commit object.
+Rebase creates replacement commits and can refresh committer metadata, so do
+not silently recast that change as authorship. See the official
+[`git-var`](https://git-scm.com/docs/git-var),
+[`git-rebase`](https://git-scm.com/docs/git-rebase), and
+[`git-replace`](https://git-scm.com/docs/git-replace) documentation.

@@ -16,9 +16,10 @@ The snapshot must bind:
   lifecycle state, resulting landing head or null, active worktree and writer
   identities or an explicit null pair, and proofs.
 
-Use full lowercase 40- or 64-hex object IDs. A shortened hash is display data,
-not an identity. Keep human titles and free-form bodies outside the validation
-contract.
+Use full lowercase, non-zero 40- or 64-hex object IDs. A shortened hash is
+display data, not an identity; the all-zero deletion or unborn sentinel is not
+an object. One snapshot uses one object-ID width. Keep human titles and
+free-form bodies outside the validation contract.
 
 Repository and forge scope are digest inputs, not display metadata. Use a
 stable public-safe repository identifier or a stable digest when the canonical
@@ -52,6 +53,9 @@ Worktree administration and writer ownership are different concepts.
 
 - Inventory worktrees read-only before assigning a writer.
 - One active writable node maps to one canonical worktree and one writer.
+- `writer_id` coordinates the local editor only. It is not forge change
+  ownership, commit authorship, contribution attribution, or permission to
+  rewrite or publish the source branch.
 - Unassigned nodes use null for both identities. Landed nodes release both
   identities and retain landing provenance through their landing head.
 - One writer may own multiple active nodes only through distinct worktrees.

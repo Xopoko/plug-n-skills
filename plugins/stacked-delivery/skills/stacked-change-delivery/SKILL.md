@@ -14,18 +14,21 @@ description: >-
 Treat a stack as a versioned dependency graph, not a list of branch names.
 Repository policy and the user's mutation scope remain authoritative.
 
-Resolve `$SKILL_ROOT` as the absolute directory containing this `SKILL.md`.
+Bundled commands use `$PLUGIN_ROOT` (`$env:PLUGIN_ROOT` in PowerShell; use the
+same path suffix). Set it once: use the host's plugin-root variable when
+defined (Claude Code: `PLUGIN_ROOT="$CLAUDE_PLUGIN_ROOT"`), otherwise the
+absolute path of this plugin's root directory.
 
 Load only the reference needed:
 
 - Snapshot fields, topology, identity, and ownership:
-  `$SKILL_ROOT/references/stack-snapshot-contract.md`
+  `$PLUGIN_ROOT/skills/stacked-change-delivery/references/stack-snapshot-contract.md`
 - Parent drift, restacking, and proof freshness:
-  `$SKILL_ROOT/references/proof-drift-and-restack.md`
+  `$PLUGIN_ROOT/skills/stacked-change-delivery/references/proof-drift-and-restack.md`
 - Landing modes and handoff receipts:
-  `$SKILL_ROOT/references/landing-and-handoff.md`
+  `$PLUGIN_ROOT/skills/stacked-change-delivery/references/landing-and-handoff.md`
 - A future history rewrite prepared for another task:
-  `$SKILL_ROOT/references/prepared-mutation-handoff.md`
+  `$PLUGIN_ROOT/skills/stacked-change-delivery/references/prepared-mutation-handoff.md`
 
 ## Safety Boundary
 
@@ -40,6 +43,9 @@ Load only the reference needed:
 - Do not treat a worktree lock as writer ownership. Bind each writable node to
   one canonical worktree and one writer identity; use explicit nulls for
   unassigned nodes, release landed ownership, and stop on overlap or ambiguity.
+- Keep composition proof, contribution provenance, and mutation authority
+  separate. Equal trees or patches and green exact-head proof do not establish
+  preserved attribution or permission to replace published history.
 - Keep full raw forge payloads and logs in bounded task-local artifacts. Share
   only public-safe summaries, stable IDs, hashes, transitions, and relevant
   failure tails.
@@ -65,7 +71,7 @@ Load only the reference needed:
    evidence that the composition is current.
 4. **Plan isolated slices.** Give each writable branch one canonical worktree
    and writer. A node may depend on landed or currently bound lower nodes, but
-   its diff and proof remain its own. Record the immutable parent head before
+   its diff and proof remain its own. Record the exact parent head before
    starting a dependent slice.
 5. **Prepare and prove one node.** Make only authorized changes in that node's
    worktree. Run the smallest repository-native proof that covers the node.
@@ -81,12 +87,16 @@ Load only the reference needed:
    freeze again, then run `compare`. Any ancestor head or topology change
    invalidates the affected descendant closure. Restacking is a history rewrite
    and needs explicit authorization; perform it bottom to top, preserve old to
-   new object-ID evidence, and rerun proof for every rewritten node. When the
-   rewrite will be executed by another task, validate the additive prepared
-   mutation handoff; it does not expand the receiver's authority. If an
-   owned worktree is dirty when drift appears, stop edits and preserve its
-   bounded, content-addressed patch receipt before rebinding ownership to the
-   refreshed topology. Rebinding preserves work, not proof.
+   new object-ID evidence and repository-required contribution attribution,
+   then rerun proof for every rewritten node. When another task will publish a
+   prepared rewrite, validate the additive prepared mutation handoff. Treat its
+   authority record as preparation evidence, not automatically fresh
+   publication permission; validation does not expand the receiver's authority.
+   Immediately before the returned action, refresh the current owner, actor,
+   allowed action, scope, validity, remote lease, and any revocation or veto.
+   If an owned worktree is dirty when drift appears, stop edits and preserve it
+   with a bounded repository-native recovery mechanism. Rebinding preserves
+   work, not proof.
 7. **Choose the next safe action.** Run `next-action`. Sequential mode may
    select only the lowest current unlanded node. Atomic-prefix mode may select
    only a contiguous proven prefix starting there, and only after live
@@ -100,13 +110,14 @@ Load only the reference needed:
    digest, exact node heads, accepted proof IDs, worktree and writer ownership,
    and receiver. Run `validate-handoff`, preserve its handoff digest, and pair
    the receipt with a fresh `next-action` result. Call the receipt
-   content-addressed or tamper-evident unless a trusted signature or
-   append-only attestation system independently makes it immutable.
+   content-addressed and tamper-evident. Do not call it immutable unless a
+   trusted signature or append-only attestation system independently records
+   the same digest.
 
 Use the deterministic guard for local gates:
 
 ```bash
-python3 "$SKILL_ROOT/scripts/stacked_delivery_guard.py" --help
+python3 "$PLUGIN_ROOT/skills/stacked-change-delivery/scripts/stacked_delivery_guard.py" --help
 ```
 
 Exit `0` means the requested read-only gate passed, `2` means drift or a gate

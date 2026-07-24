@@ -484,14 +484,22 @@ def _git_head_ref(value: Any, label: str) -> str:
 
 
 def _git_sha(value: Any, label: str) -> str:
-    if not isinstance(value, str) or not GIT_SHA_RE.fullmatch(value):
-        raise InputError(f"{label} must be an exact lowercase Git SHA")
+    if (
+        not isinstance(value, str)
+        or not GIT_SHA_RE.fullmatch(value)
+        or set(value) == {"0"}
+    ):
+        raise InputError(f"{label} must be a non-zero exact lowercase Git SHA")
     return value
 
 
 def _sha256(value: Any, label: str) -> str:
-    if not isinstance(value, str) or not SHA256_RE.fullmatch(value):
-        raise InputError(f"{label} must be a lowercase SHA-256 digest")
+    if (
+        not isinstance(value, str)
+        or not SHA256_RE.fullmatch(value)
+        or set(value) == {"0"}
+    ):
+        raise InputError(f"{label} must be a non-zero lowercase SHA-256 digest")
     return value
 
 
@@ -1928,7 +1936,7 @@ def _receipt_payload(receipt: dict[str, Any]) -> dict[str, Any]:
 
 
 def prepared_transaction_digest(prepared: dict[str, Any]) -> str:
-    """Digest immutable mutation scope while proof evidence and receipts advance."""
+    """Digest fixed mutation scope while proof evidence and receipts advance."""
 
     transaction = {
         "schema": prepared["schema"],
@@ -2069,6 +2077,9 @@ def prepared_mutation_issues(prepared: dict[str, Any]) -> list[dict[str, Any]]:
             "first_new_parent_predecessor_head_mismatch",
             node_id=nodes[0]["node_id"],
         )
+    prepared_new_heads = {node["new_head_sha"] for node in nodes}
+    if predecessor["head_sha"] in prepared_new_heads:
+        _issue(issues, "new_predecessor_creates_cycle")
 
     unique_sets: tuple[tuple[str, str], ...] = (
         ("change_id", "duplicate_prepared_change_id"),
