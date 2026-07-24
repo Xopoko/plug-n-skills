@@ -41,37 +41,43 @@ lands, require the new bottom node to bind the current base head and prove the
 resulting composition. If the forge cascades a rebase, read back every new head
 and invalidate older proofs.
 
-## Dirty Patch Preservation
+## Dirty Work Preservation
 
 A topology change can race with owned local edits. Do not reset, clean, rewrite,
-or continue editing the dirty worktree. Preserve the local state in a bounded
-patch receipt that binds:
+or continue editing the dirty worktree. Use a repository-native recovery
+mechanism that explicitly covers every relevant state partition: staged,
+unstaged, untracked, file mode, submodule, and any unsupported state. Keep raw
+patch bytes, machine paths, and personal identifiers local.
+
+Fail closed when the repository has no bounded recovery mechanism or when any
+required partition is unsupported or omitted. In that case, preserve the
+worktree in place and hand off the stop condition; do not rebind, rewrite, or
+claim a portable receipt.
+
+The current plugin does not define or validate a cross-repository dirty-work
+receipt. A repository-native tool may call its artifact content-addressed only
+when it specifies canonical bytes, partition order, bounds, and a validator.
+Otherwise record it merely as a local recovery artifact with:
 
 - public-safe or digested repository, node, change, source-head, worktree, and
   writer identities;
 - the snapshot digest under which editing began;
-- separate declared coverage for staged, unstaged, untracked, file-mode,
-  submodule, and unsupported state;
-- one opaque digest over canonical receipt metadata and every declared covered
-  content partition; keep patch bytes, machine paths, and personal identifiers
-  local.
+- declared covered and unsupported partitions;
+- the native tool and validation result, when available;
+- a local digest labeled as unverified by this plugin.
 
-Fail closed when required dirty state is unsupported or omitted. After
-refreshing topology, create a rebind record that references the unchanged
-patch-receipt digest, the new snapshot digest, and the exact node, worktree,
-and writer. This proves continuity of the pending work only. It does not make
-the patch dependency-current, proof-current, review-ready, or landable.
+After refreshing topology, a companion rebind note may reference the unchanged
+artifact digest, the new snapshot digest, and the exact node, worktree, and
+writer. This records recovery continuity only. It does not make the work
+dependency-current, proof-current, review-ready, or landable, and the v1 guard
+does not validate that note.
 
-If authorized editing resumes after the rebind, any content change supersedes
-that patch receipt. Refresh it before proof, commit, or handoff; do not
-checkpoint every line, and never claim an older digest describes the current
-dirty state.
-
-The current v1 snapshot and handoff schemas bind committed heads, not dirty
-patches. Keep the patch receipt and rebind record as explicit companion
-artifacts; do not add undeclared fields to v1 input. Reconcile the patch into a
-current node head and rerun node-local proof before selecting a rewrite or
-landing action.
+If authorized editing resumes, any content change supersedes the earlier
+artifact. Refresh it with the same repository-native coverage and validation
+before proof, commit, or handoff; never claim an older digest describes current
+dirty state. The v1 snapshot and handoff schemas bind committed heads only, so
+do not add undeclared dirty-work fields. Reconcile the work into a current node
+head and rerun node-local proof before selecting a rewrite or landing action.
 
 ## Handoff Receipt
 
@@ -106,6 +112,7 @@ Report:
 - current, stale, landed, and blocked nodes;
 - proof IDs and dependency heads, not raw logs;
 - worktree and writer ownership;
-- any pending patch-receipt digest and its explicit unproven status;
+- any pending dirty-work recovery artifact, its coverage, validator status, and
+  explicit unproven status;
 - the one next safe action or explicit stop condition;
 - any mutation still requiring authorization.

@@ -14,6 +14,27 @@ REFERENCE = (
     / "references"
     / "proof-drift-and-restack.md"
 )
+PREPARED_REFERENCE = (
+    ROOT
+    / "skills"
+    / "stacked-change-delivery"
+    / "references"
+    / "prepared-mutation-handoff.md"
+)
+HANDOFF_REFERENCE = (
+    ROOT
+    / "skills"
+    / "stacked-change-delivery"
+    / "references"
+    / "landing-and-handoff.md"
+)
+SNAPSHOT_REFERENCE = (
+    ROOT
+    / "skills"
+    / "stacked-change-delivery"
+    / "references"
+    / "stack-snapshot-contract.md"
+)
 GUARD_PATH = (
     ROOT
     / "skills"
@@ -130,6 +151,62 @@ class StackedDeliveryGuidanceTests(unittest.TestCase):
         ):
             self.assertIn(invariant, reference)
 
+    def test_pre_write_gates_do_not_conflate_proof_provenance_and_authority(self):
+        skill = compact(SKILL)
+        restack = compact(REFERENCE)
+        prepared = compact(PREPARED_REFERENCE)
+        for invariant in (
+            "keep composition proof, contribution provenance, and mutation "
+            "authority separate",
+            "do not establish preserved attribution or permission to replace "
+            "published history",
+            "treat its authority record as preparation evidence, not "
+            "automatically fresh publication permission",
+        ):
+            self.assertIn(invariant, skill)
+        for invariant in (
+            "composition equivalence",
+            "contribution provenance",
+            "mutation authority",
+            "local `writer_id` is not that authority",
+            "current publication authority",
+        ):
+            self.assertIn(invariant, restack)
+        for invariant in (
+            "preparation authority versus publication authority",
+            "does not grant publication authority",
+            "fresh grant authorizes the exact `history-ref-update`",
+            "does not ask the receiver to repeat the earlier rewrite",
+            "revocation and veto state",
+        ):
+            self.assertIn(invariant, prepared)
+
+    def test_paths_and_dirty_work_contract_are_portable_and_bounded(self):
+        skill = compact(SKILL)
+        handoff = compact(HANDOFF_REFERENCE)
+        snapshot = compact(SNAPSHOT_REFERENCE)
+        self.assertIn("bundled commands use `$plugin_root`", skill)
+        self.assertIn(
+            "$plugin_root/skills/stacked-change-delivery/scripts/"
+            "stacked_delivery_guard.py",
+            skill,
+        )
+        for invariant in (
+            "does not define or validate a cross-repository dirty-work receipt",
+            "repository-native recovery mechanism",
+            "preserve the worktree in place",
+            "local digest labeled as unverified by this plugin",
+            "v1 guard does not validate that note",
+        ):
+            self.assertIn(invariant, handoff)
+        for invariant in (
+            "full lowercase, non-zero 40- or 64-hex object ids",
+            "all-zero deletion or unborn sentinel is not an object",
+            "`writer_id` coordinates the local editor only",
+            "not forge change ownership",
+        ):
+            self.assertIn(invariant, snapshot)
+
     def test_guidance_is_public_safe(self):
         reference = compact(REFERENCE)
         for invariant in (
@@ -142,7 +219,13 @@ class StackedDeliveryGuidanceTests(unittest.TestCase):
             "identities, or private project names",
         ):
             self.assertIn(invariant, reference)
-        for path in (SKILL, REFERENCE):
+        for path in (
+            SKILL,
+            REFERENCE,
+            PREPARED_REFERENCE,
+            HANDOFF_REFERENCE,
+            SNAPSHOT_REFERENCE,
+        ):
             text = path.read_text(encoding="utf-8")
             self.assertTrue(text.isascii(), str(path))
             for forbidden in (
