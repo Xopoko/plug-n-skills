@@ -89,12 +89,13 @@ class AsyncStateConsistencySkillTest(unittest.TestCase):
 
     def test_reference_covers_required_race_schedules(self):
         text = REFERENCE.read_text(encoding="utf-8")
+        compact = " ".join(text.split()).lower()
         rows = {
             line.split("|")[1].strip()
             for line in text.splitlines()
             if line.startswith("| ASC-")
         }
-        self.assertEqual(rows, {f"ASC-{index:02d}" for index in range(1, 17)})
+        self.assertEqual(rows, {f"ASC-{index:02d}" for index in range(1, 18)})
         for invariant in (
             "empty dependency vector",
             "Stamped replay read",
@@ -104,16 +105,57 @@ class AsyncStateConsistencySkillTest(unittest.TestCase):
             "latest-start-wins",
             "post-invalidation caller",
             "neither joins nor waits behind",
-            "start and finish progress markers",
+            "start and finish markers",
             "user-supplied predicate or factory",
             "backpressure",
             "if rejected, record only a non-delivering caller-outcome intent",
             "delivery after release",
+            "every outer and inner coordination layer",
+            "inner-layer completion or unit proof is insufficient",
+            "admission to shared work must linearize against invalidation",
+            "later mutate the in-flight registry",
+            "bypass is generation-scoped",
+            "same-generation admission policy",
         ):
-            self.assertIn(invariant.lower(), text.lower())
+            self.assertIn(invariant.lower(), compact)
+        asc_13 = next(
+            line.lower()
+            for line in text.splitlines()
+            if line.startswith("| ASC-13 ")
+        )
+        for invariant in (
+            "layer-locally",
+            "public entry point",
+            "authoritative publication",
+            "before a is released",
+            "every coordination layer",
+            "a cannot commit",
+        ):
+            self.assertIn(invariant, asc_13)
+        asc_17 = next(
+            line.lower()
+            for line in text.splitlines()
+            if line.startswith("| ASC-17 ")
+        )
+        for invariant in (
+            "whole atomic admission attempt",
+            "invalidation-first",
+            "admission-first",
+            "current generation",
+            "subsequently detached or revoked",
+            "later callers neither join nor wait",
+            "late commit is rejected",
+            "speculative snapshot",
+            "combined generation-and-membership snapshot",
+            "expected generation while installing membership",
+            "mismatched cas retries",
+            "same-generation pair",
+            "declared admission and publication-order policies",
+        ):
+            self.assertIn(invariant, asc_17)
 
     def test_skill_forbids_revoked_waits_and_owner_reentry(self):
-        text = SKILL.read_text(encoding="utf-8").lower()
+        text = " ".join(SKILL.read_text(encoding="utf-8").split()).lower()
         for invariant in (
             "owner-local, non-delivering",
             "user-supplied predicates or factories",
@@ -121,6 +163,19 @@ class AsyncStateConsistencySkillTest(unittest.TestCase):
             "backpressure",
             "neither join nor wait behind",
             "nested mutation",
+            "every outer and inner coordination layer",
+            "public entry point",
+            "authoritative publication",
+            "inner-layer unit proof alone is insufficient",
+            "shared-work admission must linearize against invalidation",
+            "mutate the in-flight registry",
+            "bypass generation-scoped",
+            "same-generation join, queue, serialization, coalescing",
+            "separate same-generation admission policy",
+            "immediately before the whole atomic admission attempt",
+            "cas the combined generation-and-membership snapshot",
+            "expected generation while installing membership",
+            "combined shared-work admission",
         ):
             self.assertIn(invariant, text)
 

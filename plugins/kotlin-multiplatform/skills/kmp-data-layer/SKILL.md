@@ -18,6 +18,8 @@ Before implementing, identify:
   state for existing observers; elapsed time alone does not emit without a
   declared active trigger
 - conflict resolution
+- same-generation shared-work admission: join/coalesce, queue/serialize, or
+  independent attempts
 - error model
 - platform storage requirements
 - persistence/network library target support
@@ -96,10 +98,17 @@ Use Klibs.io and official docs as target-support evidence. Do not put a library 
   backpressure outside the serialized owner; revalidate before committing
   user-computed results. Across a durable persistence and notification
   boundary, use an ordered, idempotent notification record.
-- Detach revoked coalesced work from the current join and wait path. A
-  post-invalidation caller must neither join nor wait behind it and instead
-  starts or joins current-generation work. Declare per-caller versus
-  shared-work cancellation.
+- Linearize shared-work admission against invalidation: atomically read the
+  current owning generation and join a matching entry or install the new
+  entry. Never validate authority, release ownership, then mutate the
+  in-flight registry.
+- Apply invalidation liveness at every outer and inner coordination layer on
+  the public data-layer path. Each mutex, actor, queue, single-flight, or
+  coalescer detaches revoked work or permits current-generation progress. A
+  post-invalidation caller must neither join nor wait behind it. Declare
+  per-caller versus shared-work cancellation. Keep the bypass
+  generation-scoped and preserve declared same-generation join, queue,
+  serialization, coalescing, and publication-order policies.
 - When a completion loses ownership, re-read authoritative state or return a
   declared stale/retry/cancellation result; never return its candidate as
   current or invent `Error`/`Invalidated`.
@@ -120,3 +129,11 @@ Use Klibs.io and official docs as target-support evidence. Do not put a library 
   outcomes, owner reentry/backpressure, user hooks, TTL read versus observer
   emission, and mutation-notification recovery across every
   replay/repopulation path.
+- Prove revoked-work liveness both layer-locally and through the public
+  data-layer entry: B reaches authoritative publication before blocked A is
+  released. An inner-layer unit proof alone is insufficient.
+- Gate immediately before the whole atomic shared-work admission attempt; run
+  invalidation-first, admission-first, and a same-generation policy regression.
+  For compare-and-set, CAS the combined generation-and-membership snapshot:
+  require the expected generation while installing membership, then retry on
+  mismatch.

@@ -169,7 +169,7 @@ instructions.
 | Reference files | 224 | - | Longer ledgers, contracts, scorecards, and source notes. |
 | Helper and validator scripts | 78 | - | Deterministic plugin-local helpers. |
 | Startup metadata | 163 skills | 12,818 | Skill name, description, and file pointer for routing. |
-| On-demand skill bodies | 163 skills | 107,908 | Instruction bodies after frontmatter, loaded only when selected. |
+| On-demand skill bodies | 163 skills | 108,387 | Instruction bodies after frontmatter, loaded only when selected. |
 
 Regenerate the report after skill edits:
 
@@ -197,10 +197,10 @@ Token columns are `startup metadata / on-demand body`.
 | `gitlab-review` | 1 | 3 | 1 | 117 | 1,083 |
 | `stacked-delivery` | 1 | 3 | 1 | 123 | 1,130 |
 | `claude-code` | 6 | 2 | 1 | 528 | 4,669 |
-| `architecture-intelligence` | 9 | 8 | 2 | 645 | 6,634 |
+| `architecture-intelligence` | 9 | 8 | 2 | 645 | 6,890 |
 | `design-intelligence` | 7 | 2 | 1 | 472 | 5,101 |
 | `game-design-intelligence` | 6 | 2 | 1 | 536 | 2,916 |
-| `kotlin-multiplatform` | 14 | 16 | 1 | 1,096 | 10,781 |
+| `kotlin-multiplatform` | 14 | 16 | 1 | 1,096 | 11,004 |
 | `spec-driven-development` | 6 | 0 | 2 | 333 | 3,267 |
 
 ### Plugin Focus
@@ -415,7 +415,7 @@ Token cells are shown as `startup/body`.
 | `architecture-ownership-topology` | 66/583 | Use when architecture crosses ownership or review boundaries: CODEOWNERS/OWNERS, module coverage, cross-owned dependencies, socio-technical coordination, and governance paths. |
 | `architecture-refactoring-strategy` | 67/517 | Use when code changes need staged structural design: boundary extraction, modularization, dependency inversion, migrations, anti-corruption layers, tests, rollout gates, and rollback. |
 | `architecture-runtime-topology` | 67/579 | Use when code work touches runtime shape: services, app/CLI/background flows, deployment/IaC, observability, resilience, external integrations, ownership, and runtime coupling. |
-| `async-state-consistency` | 118/1,363 | Use when designing, reviewing, debugging, or testing asynchronous state holders, caches, observers, subscriber notifications, memoized or coalesced loads, replay, or one-shot reads where invalidation, late subscribers, stale in-flight completion, read or publish races, out-of-order completion, or keyed/global ownership can expose stale state. Not for UI-only loading presentation, deployment topology, distributed consensus, or unrelated test flakiness. |
+| `async-state-consistency` | 118/1,619 | Use when designing, reviewing, debugging, or testing asynchronous state holders, caches, observers, subscriber notifications, memoized or coalesced loads, replay, or one-shot reads where invalidation, late subscribers, stale in-flight completion, read or publish races, out-of-order completion, or keyed/global ownership can expose stale state. Not for UI-only loading presentation, deployment topology, distributed consensus, or unrelated test flakiness. |
 | `codebase-architecture-audit` | 73/839 | Use before architecture-significant code work to recover the actual source-backed system shape: modules, dependencies, domain seams, runtime coupling, ownership, quality attributes, tests, docs, and risks. |
 
 #### `design-intelligence`
@@ -447,7 +447,7 @@ Token cells are shown as `startup/body`.
 | --- | ---: | --- |
 | `kmp-architecture` | 68/932 | Design or refactor Kotlin Multiplatform module boundaries, source-set hierarchy, shared logic/shared UI split, platform APIs, interop boundaries, and cross-platform library choices. |
 | `kmp-compose-ui` | 69/842 | Build and repair Compose Multiplatform UI, state, navigation, resources, platform entry points, previews, performance, accessibility, and UI tests in Kotlin Multiplatform projects. |
-| `kmp-data-layer` | 71/1,261 | Design and review KMP data layers, repositories, source-of-truth, DTO/domain mapping, sync, offline-first behavior, persistence choices, error handling, threading, and API exposure. |
+| `kmp-data-layer` | 71/1,484 | Design and review KMP data layers, repositories, source-of-truth, DTO/domain mapping, sync, offline-first behavior, persistence choices, error handling, threading, and API exposure. |
 | `kmp-ecosystem-selection` | 85/400 | Select Kotlin Multiplatform ecosystem libraries, services, and tools for persistence, networking, DI, navigation, logging, observability, testing, code quality, resources, images, docs, payments, and reference templates without forcing a stack. |
 | `kmp-gradle-doctor` | 74/1,176 | Diagnose and fix Kotlin Multiplatform Gradle, source-set, dependency, Android target, Compose plugin, KGP/AGP, testing, static-analysis, and CI issues. |
 | `kmp-interop-bridges` | 89/581 | Design and review KMP platform bridges, source-set placement, expect/actual, entry-point wiring, cinterop, Swift API readiness, SKIE, KMP-NativeCoroutines, KDoctor, XCFrameworks, and SwiftPM export. |

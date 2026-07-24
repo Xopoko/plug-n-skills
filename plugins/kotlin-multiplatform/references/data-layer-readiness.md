@@ -39,13 +39,17 @@ Keep one authoritative lifecycle state and preserve it through KMP projections.
 Use `StateFlow` or the project's equivalent without treating initial state as
 `Available(empty)`.
 
+Declare same-generation shared-work admission separately from publication
+order: join/coalesce, queue/serialize, or independent attempts.
+
 | Concern | KMP contract | Deterministic proof |
 | --- | --- | --- |
 | Invalidation | Global and keyed/domain generations cover observers, cache, one-shot, persistence, memo, and coalescer paths | Start A, invalidate, complete A; attach a late collector |
 | Publication order | A declared latest-start or latest-success policy is separate from invalidation | Complete same-key B before A; then fail/cancel B in a separate schedule |
 | Final commit | `Mutex`, actor, compare-and-set, or transaction owns validation plus state/cache commit | Hold A at final pre-commit while B wins and while clear wins |
 | Replay read | Candidate and authority come from one serialized or stamped snapshot | Clear between candidate capture and validation, including zero dependencies |
-| Coalescing | Post-invalidation callers neither join nor wait behind work created under revoked ownership | Hold shared A blocked, invalidate, and require B to finish before releasing A |
+| Coordination composition | Every outer and inner mutex, actor, queue, single-flight, or coalescer layer detaches revoked work or permits current-generation progress; later callers neither join nor wait behind it | Run the blocked-A/B schedule layer-locally, then through the public data-layer entry require B to reach authoritative publication before releasing A; an inner-layer unit proof alone is insufficient |
+| Shared-work admission | Current owning generation and matching registry membership become authoritative in one transition; cross-generation bypass preserves declared same-generation admission and publication policies | Gate immediately before the whole atomic admission attempt and run invalidation-first and admission-first; for CAS, require the expected generation while atomically installing membership in the combined snapshot and retry on mismatch; then run a same-generation policy pair |
 | Caller result | Rejected work rereads authority or returns stale/retry/cancellation | Assert A's direct caller never receives A as current |
 | Cancellation | Cancellation is not a commit fence; late failure has an observation policy | Let cancellation-ignoring A finish after B or clear wins |
 | Owner boundary | Commit only data plus non-delivering emission intent; run user hooks and potentially reentrant, blocking, suspending, or backpressured delivery outside the owner | Block delivery while B commits; let a callback or hook perform nested mutation before the outer path revalidates |

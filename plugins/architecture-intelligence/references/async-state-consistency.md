@@ -46,6 +46,15 @@ and invalidation generation; B's attempt identity alone does not reject A.
 
 Do not infer this choice from whichever callback happens to finish first.
 
+Choose a separate same-generation admission policy per operation family:
+
+- join or coalesce callers onto one shared operation;
+- queue or serialize distinct attempts;
+- run attempts independently.
+
+Cross-generation liveness repairs must preserve that policy. Admission policy
+and latest-start/latest-success publication policy are separate decisions.
+
 ## Path Inventory
 
 Audit every row that exists:
@@ -56,7 +65,7 @@ Audit every row that exists:
 | Late subscriber | Replay container retained a revoked value | Current lifecycle state and generation |
 | Warm cache | Hit bypasses current invalidation state | Atomic candidate-and-authority read |
 | One-shot caller | Shared publish is rejected but the function returns its own value | Explicit caller supersession outcome |
-| Request coalescer | A post-invalidation caller joins or waits behind work created under revoked ownership | Atomic generation-and-entry membership; invalidation detaches revoked work from the current join and wait path |
+| Coordination stack | An outer mutex, actor, queue, single-flight, or coalescer still makes a post-invalidation caller join or wait behind revoked work | Where a layer admits or joins shared work, generation and entry membership change atomically; every layer detaches revoked work or permits current-generation progress |
 | Memoized projection | Candidate is read before dependency or global validation | Stamped complete snapshot or retry |
 | Persistence | Late work writes a value that later startup replays | Ownership checked in the persistent commit |
 | Notification | Mutation commits but subscribers never learn it | Non-delivering intent in the state commit; delivery after release, or durable ordered notification |
@@ -120,11 +129,23 @@ as separate contracts.
 
 ### Coalesced-work invalidation
 
+Admission to shared work must linearize against invalidation. In one atomic or
+serialized transition, read the current owning generation and either join a
+matching current-generation entry or install the new entry. Do not validate an
+ownership token, release ownership, and later mutate the in-flight registry.
+
 Invalidation must atomically advance the owning generation and detach matching
 in-flight entries from the current lookup, join, and wait path. A caller whose
 lookup linearizes afterward neither joins nor waits behind revoked work; it
-starts or joins current-generation work independently. Cancelling revoked work
-is cleanup, not the liveness fence.
+starts or joins current-generation work independently. This bypass is
+generation-scoped: preserve the declared same-generation join, queue,
+serialization, coalescing, and publication-order policies. Cancelling revoked
+work is cleanup, not the liveness fence.
+
+Apply the rule at every outer and inner coordination layer on the component's
+public path: mutex, actor, queue, single-flight, or coalescer. Inner-layer
+correctness does not compensate for an outer layer that still serializes B
+behind blocked A.
 
 ## Deterministic Race Matrix
 
@@ -145,15 +166,18 @@ winners where order is part of the contract.
 | ASC-10 | Advance controlled time past TTL, then read and fire each signal | Clock alone follows declared emission rules; next-read staleness is explicit |
 | ASC-11 | Fail between mutation and notification | No committed value becomes permanently invisible; duplicates are safe if allowed |
 | ASC-12 | Cancel A, let B win, then allow cancellation-ignoring A to finish | A cannot commit or return current; late failure remains observable |
-| ASC-13 | Start shared A and hold it blocked; invalidate; start B; do not release A until B finishes | B neither joins nor waits behind A and finishes first; A cannot commit; cancellation follows the declared shared-work policy |
+| ASC-13 | Run the blocked-A/B schedule layer-locally; then through the component's public entry point start shared A and hold it blocked, invalidate, start B, and keep A blocked until B reaches authoritative publication | Every coordination layer detaches revoked A or permits current-generation B to progress; B becomes authoritative before A is released; A cannot commit; cancellation follows the declared shared-work policy |
 | ASC-14 | Start A, start B, let B fail or cancel, then complete A | Latest-start rejects A; latest-success may accept A; both callers receive the declared outcomes |
 | ASC-15 | Block delivery, commit A, then attempt B; release delivery into subscriber code that synchronously mutates C | B commits before delivery unblocks; C can acquire the owner; delivery and user code follow the declared order outside the owner |
 | ASC-16 | Enter a user-supplied predicate or factory, perform a nested mutation, return, then let the outer operation attempt commit | The hook runs outside the owner; nested mutation finishes first; the outer operation revalidates and cannot overwrite its winner |
+| ASC-17 | Gate immediately before B's whole atomic admission attempt; run invalidation-first and admission-first, then a same-generation pair; for CAS, allow an earlier speculative snapshot, then CAS the combined generation-and-membership snapshot by requiring the expected generation while installing membership | Invalidation-first admits B only under the current generation; admission-first is subsequently detached or revoked, later callers neither join nor wait behind it, and its late commit is rejected; a mismatched CAS retries; the same-generation pair preserves the declared admission and publication-order policies |
 
 Holding A before its last ownership check does not prove the check-to-commit
 boundary. The gate must be immediately before the atomic or serialized attempt.
-For liveness assertions, require B's start and finish progress markers before
-opening A's blocking gate; a timeout is not proof.
+For ASC-13, require B's start and finish markers in the layer-local proof, then
+public-entry and authoritative-publication markers in the composed proof,
+before opening A's blocking gate. An inner-layer completion or unit proof is
+insufficient, and a timeout is not proof.
 
 ## Review Checklist
 
@@ -170,8 +194,12 @@ opening A's blocking gate; a timeout is not proof.
 - Is the supersession policy explicitly latest-start-wins or
   latest-success-wins, including newer failure and cancellation?
 - What does a rejected direct caller receive?
-- Can a post-invalidation caller join or wait behind coalesced work created
-  under revoked ownership?
+- Can any outer or inner coordination layer make a post-invalidation caller
+  join or wait behind work created under revoked ownership?
+- Do current generation and shared-work membership become authoritative in one
+  admission transition, without split validate-then-registry mutation?
+- Does cross-generation progress preserve the declared same-generation
+  coordination and publication-order policies?
 - Is every user hook and potentially reentrant, blocking, suspending, or
   backpressured delivery step outside the serialized owner?
 - Can cancellation-ignoring work still reach a commit surface?

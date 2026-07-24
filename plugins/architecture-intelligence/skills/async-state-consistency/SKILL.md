@@ -31,9 +31,11 @@ Before proposing a repair:
 4. Choose and name the supersession policy for competing work:
    latest-start-wins or latest-success-wins. Define what happens to older work
    when a newer attempt fails or is cancelled.
-5. Define the direct caller outcome when its work is rejected: authoritative
+5. Choose a separate same-generation admission policy: join/coalesce one
+   shared operation, queue/serialize distinct attempts, or run independently.
+6. Define the direct caller outcome when its work is rejected: authoritative
    reread, declared stale/retry/cancellation, or another explicit result.
-6. Separate read-time freshness from active expiry. Elapsed time alone is not
+7. Separate read-time freshness from active expiry. Elapsed time alone is not
    an observer emission trigger; name the timer, refresh, lifecycle, scheduler,
    or storage signal that re-evaluates state.
 
@@ -57,8 +59,9 @@ path | candidate value | ownership evidence | invalidation domain |
 linearization point | caller/subscriber outcome
 ```
 
-Include every cache, memo, coalescer, retained observer state, persistence
-layer, and projection able to bypass the main repository or state holder.
+Include every outer and inner coordination layer on the public
+entry-to-publication path: mutex, actor, queue, single-flight, coalescer, cache,
+memo, retained observer state, persistence layer, and projection.
 
 ## Order And Linearize
 
@@ -86,18 +89,25 @@ layer, and projection able to bypass the main repository or state holder.
   idempotent notification record.
 - Cancellation is cooperative, not authority. Work that ignores cancellation
   still needs the same commit and caller-result guards.
-- When invalidation wins, atomically detach revoked coalesced work from the
-  current join and wait path. A later caller must neither join nor wait behind
-  that work; it starts or joins current-generation work independently even
-  when revoked work ignores cancellation.
+- Shared-work admission must linearize against invalidation. In one atomic or
+  serialized transition, read the current owning generation and either join a
+  matching entry or install the new entry. Do not validate authority, release
+  ownership, then mutate the in-flight registry.
+- When invalidation wins, apply the liveness rule at every outer and inner
+  coordination layer on the component's public path. Each mutex, actor, queue,
+  single-flight, or coalescer must detach revoked work or otherwise allow
+  current-generation progress. A later caller must neither join nor wait behind
+  revoked work even when it ignores cancellation. Keep this bypass
+  generation-scoped: preserve the declared same-generation join, queue,
+  serialization, coalescing, and publication-order policies.
 - A rejected completion must not return its candidate as current to a one-shot
   caller. Reread authority or return the declared stale/retry/cancellation
   outcome.
 - Ownership rejection alone must not emit or persist `Error` or `Invalidated`.
 
 Do not hold a lock across remote or slow work merely to gain consistency.
-Usually only token capture, snapshot acceptance, and the final commit need a
-linearization point.
+Usually only authority capture, snapshot acceptance, combined shared-work
+admission, and the final commit need a linearization point.
 
 ## Deterministic Proof
 
@@ -114,9 +124,17 @@ At minimum, cover:
 - a one-shot A rejected after B, including A's direct caller result;
 - a replay read held between candidate capture and authority validation while
   clear wins, including the empty-dependency case;
-- revoked coalesced A held blocked while post-invalidation B starts and
-  finishes before A is released, including per-caller versus shared-work
+- revoked A held blocked while post-invalidation B first passes a layer-local
+  gate, then separately runs through the component's public entry point and
+  reaches authoritative publication before A is released; an inner-layer unit
+  proof alone is insufficient; cover per-caller versus shared-work
   cancellation;
+- both shared-work admission winners by gating immediately before the whole
+  atomic admission attempt; for compare-and-set, a speculative snapshot may be
+  captured first, then CAS the combined generation-and-membership snapshot by
+  requiring the expected generation while installing membership; retry on
+  mismatch; also run a same-generation pair that preserves the declared
+  admission policy;
 - A starts, B starts, B fails or is cancelled, then A completes under both the
   declared latest-start-wins and latest-success-wins policies;
 - keyed invalidation that leaves unrelated-key work valid, plus global clear;
