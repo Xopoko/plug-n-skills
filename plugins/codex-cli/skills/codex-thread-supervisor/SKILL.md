@@ -27,6 +27,7 @@ produce reusable capability changes.
 
 Record:
 
+- exact supervisor task ID and host ID;
 - exact thread ID and host ID for every target;
 - the user's goal, terminal condition, and reporting cadence;
 - a per-target authorization allowlist, conditions, limits, and expiry;
@@ -73,6 +74,44 @@ expanding a live snapshot.
 
 Report transitions, not elapsed time. A useful update states what changed, the
 evidence class, the remaining gate, and whether observer action is allowed.
+
+## Continue An Ongoing Watch
+
+When the user requests a nonterminal ongoing watch, keep exactly one native
+continuation owner for the supervisor task:
+
+- Prefer an already active native goal continuation. Record it as the owner and
+  do not add a heartbeat while it remains active; switching owners requires a
+  verified handoff that retires or defers the prior continuation.
+- If no goal continuation owns the watch, inspect existing native wakeups
+  before any create. Resolve the stored heartbeat ID first, then fall back to
+  the supervisor task and host plus stable logical key. The definition
+  fingerprint is mutable configuration, not heartbeat identity.
+- Before creating, persist `create-pending`, the stable logical key, and the
+  desired definition fingerprint. If the result is ambiguous, persist
+  `result-unknown`, perform one read-only reinspection, and never blind retry.
+  With multiple or ambiguous matches, create nothing until exact IDs are
+  reconciled.
+- Before updating the one exact match, persist `update-pending`. An ambiguous
+  update becomes `result-unknown` and permits one read-only reinspection, not a
+  replacement create or blind update retry.
+- Attach the heartbeat to the supervisor task, never a target task or an OS
+  scheduler. Store its opaque ID, owner task and host, cadence, and definition
+  fingerprint in the checkpoint.
+- Each goal continuation or heartbeat wake loads the checkpoint, passes saved
+  cursors unchanged, performs one bounded wait, persists every returned cursor
+  and the checkpoint, then reports a material transition or yields silently.
+
+Continuation cadence controls observer re-entry; reporting remains
+transition-only. An unchanged wait confirms only that the supervisor heartbeat
+ran, not target health or progress, and must not mark the supervision goal
+blocked. A completed latest turn is `idle`, not `terminal`, until the bound
+terminal condition is proven.
+
+Never use goal `blocked` as a pause, yield, or no-change outcome. It requires a
+genuine external impasse and every strict precondition of the active goal
+runtime. If native recurring wakeups are unavailable, record that capability
+gate; do not emulate them with cron or another monitoring service.
 
 ## Gate Interventions
 
@@ -145,7 +184,10 @@ watch.
 ## Completion
 
 Close the supervision run only when the user stops it, every target reaches the
-bound terminal state, or a genuine external blocker requires user action.
+bound terminal state, or a genuine external blocker prevents further
+observation. Retire only the heartbeat recorded in the checkpoint; do not scan
+or remove unrelated wakeups. When the continuation owner is the goal runtime,
+change its status only through that runtime's goal contract.
 Report target states, verified claims, residual gates, interventions made, and
 capability changes produced. Distinguish source commits from installation or
 cache visibility.

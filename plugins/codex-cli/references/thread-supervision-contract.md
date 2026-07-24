@@ -13,6 +13,23 @@ Keep the checkpoint compact and machine-readable when possible:
   "goal": "bound supervision goal",
   "terminal_condition": "evidence-backed stop condition",
   "reporting_cadence": "transition-only or user-selected cadence",
+  "supervisor_task_id": "opaque-supervisor-task-id",
+  "supervisor_host_id": "opaque-supervisor-host-id",
+  "continuation_owner": {
+    "kind": "goal-runtime|heartbeat",
+    "id": "opaque-native-heartbeat-id-or-null",
+    "owner_task_id": "opaque-supervisor-task-id",
+    "owner_host_id": "opaque-supervisor-host-id"
+  },
+  "heartbeat": {
+    "id": "opaque-native-heartbeat-id-or-null",
+    "owner_task_id": "opaque-supervisor-task-id",
+    "owner_host_id": "opaque-supervisor-host-id",
+    "logical_key": "stable-supervision-heartbeat-key",
+    "definition_fingerprint": "stable-public-safe-fingerprint",
+    "cadence": "user-bound-host-supported-cadence",
+    "state": "create-pending|active|update-pending|result-unknown|retiring"
+  },
   "private_data_boundary": [
     "data classes that stay ephemeral"
   ],
@@ -35,7 +52,7 @@ Keep the checkpoint compact and machine-readable when possible:
         ],
         "expires_at": null
       },
-      "state": "progressing|attention|terminal|failed|ambiguous",
+      "state": "progressing|idle|attention|terminal|failed|ambiguous",
       "active_turn_id": "opaque-turn-id-or-null",
       "last_transition": "short factual transition",
       "verified_claims": [],
@@ -58,6 +75,24 @@ Keep the checkpoint compact and machine-readable when possible:
 
 Do not reconstruct a cursor, exact revision, approval state, or unresolved gate
 from prose after compaction. Revalidate only drift-prone fields.
+
+`continuation_owner` and `heartbeat` are `null` for a bounded current-turn
+watch. An ongoing watch has exactly one continuation owner. When an active goal
+runtime owns continuation, `continuation_owner.kind` is `goal-runtime` and
+`heartbeat` is `null`. When a heartbeat owns continuation, its ID and owner
+task and host must match `continuation_owner`, `supervisor_task_id`, and
+`supervisor_host_id`. Keep exact IDs and the checkpoint recovery reference
+ephemeral. The native heartbeat definition should load the checkpoint rather
+than copy target IDs, private goal text, or evidence.
+
+The heartbeat `logical_key` is stable for the life of the supervision run and
+scoped to `supervisor_task_id` on `supervisor_host_id`. It is the fallback
+identity when the stored native ID is absent or cannot be resolved. The
+definition fingerprint records mutable desired configuration and must never be
+used as heartbeat identity. During `create-pending` or `result-unknown`, the
+heartbeat ID may be `null`; the owner, host, and logical key still reserve the
+single continuation slot, so a second create is prohibited until the pending
+result is reconciled.
 
 Keep only current claims, gates, and evidence needed for the next decision.
 Limit each inline list to eight entries and keep at most five active capability
@@ -84,12 +119,63 @@ message formed against different authority.
 | State | Evidence | Observer action |
 | --- | --- | --- |
 | `progressing` | Active turn or new tool/activity marker | Update changed claims, then wait once |
+| `idle` | No active turn, no attention or failure signal, and the bound terminal condition is unproven | Preserve gates and the single continuation owner; wait at the next wake |
 | `attention` | Approval, user-input request, or explicit needs-attention signal | Surface it to the user; do not answer or approve |
-| `terminal` | Completed latest turn and final task output | Verify bound completion claims once |
+| `terminal` | The bound terminal condition itself is verified | Verify bound completion claims once, then retire the stored heartbeat |
 | `failed` | System error or terminal failure | Record exact failure class and smallest recovery owner |
 | `ambiguous` | Missing host, unloaded state, or conflicting snapshot | Perform one bounded read-only disambiguation |
 
-An unchanged timeout is not a transition.
+Classify `attention` and `failed` before `idle`. A completed latest turn or no
+active turn is `idle` only when no approval, input, explicit attention, system
+error, or terminal failure signal exists.
+
+An unchanged timeout is not a transition and preserves the prior state. It does
+not itself imply `idle`, `terminal`, healthy, progressing, or blocked. A
+completed latest turn alone is `idle`, not `terminal`, and does not retire a
+long-lived watch.
+
+## Recurring Wake Contract
+
+Use this only when the user requested ongoing supervision:
+
+1. Resolve the existing native continuation owner. An active goal continuation
+   takes precedence: record `goal-runtime`, keep `heartbeat` null, and create no
+   heartbeat unless a verified handoff retires or defers the goal continuation.
+2. Only when no goal continuation owns the watch, inspect existing wakeups.
+   Resolve the stored heartbeat ID first. If it is absent or unresolved, match
+   the exact `supervisor_host_id`, `supervisor_task_id`, and `logical_key`;
+   never use the mutable definition fingerprint as identity.
+3. With zero matches, persist `create-pending`, the logical key, and desired
+   definition fingerprint before creating one heartbeat. On confirmed success,
+   store its exact ID and mark it `active`. On an ambiguous result, persist
+   `result-unknown` and perform one read-only reinspection by returned ID when
+   present, otherwise by owner plus logical key. Never blind-retry create.
+4. With one match, reuse that exact ID. Persist `update-pending` before an
+   update; an ambiguous update becomes `result-unknown` and permits one
+   read-only reinspection, never a blind update retry or create. With multiple
+   or ambiguous matches, create nothing and reconcile exact IDs before
+   mutation.
+5. Bind the heartbeat only to the supervisor task. Its definition loads this
+   checkpoint; it does not embed private target or evidence content.
+6. On each goal continuation or heartbeat wake, validate the stored owner and
+   any definition fingerprint, load the saved opaque cursors, perform exactly
+   one bounded wait, and persist every returned cursor plus the checkpoint
+   before reporting or yielding.
+7. If the wait is unchanged, update no claims, emit no report, and yield. This
+   proves only that the supervisor wake ran; it proves nothing about target
+   health or progress.
+
+Timeout, unchanged state, continued work, and `idle` are not by themselves goal
+blockers. Goal `blocked` is a status report, not a pause or polling control.
+Use it only for a genuine external impasse after every strict precondition of
+the active goal runtime is satisfied. If neither goal continuation nor native
+recurring wakeups are available, record a capability gate instead of emulating
+recurrence with cron, an OS scheduler, a watcher subagent, or repeated polling.
+
+On user stop, verified terminal state for every target, or a genuine blocker
+that prevents further observation, retire only the stored heartbeat ID when
+`continuation_owner.kind` is `heartbeat`. Change goal-runtime state only
+through its own goal contract.
 
 ## Intervention Decision
 
@@ -312,17 +398,22 @@ After compaction or a later wake:
 2. Confirm the goal, terminal condition, reporting cadence, and private-data
    boundary.
 3. Confirm target, host, and per-target authorization fields, including expiry.
-4. Pass the saved cursor unchanged to the next wait.
-5. Replace every returned target's cursor before reporting any transition.
-6. Revalidate only current status and drift-prone external claims.
-7. Preserve each target's last intervention and last-reported transition
+4. Confirm the single continuation owner. When it is a heartbeat, confirm its
+   owner task and host, cadence, definition fingerprint, and stored ID; when it
+   is the goal runtime, confirm `heartbeat` remains null.
+5. Pass the saved cursor unchanged to the next wait.
+6. Replace every returned target's cursor before reporting any transition.
+7. Revalidate only current status and drift-prone external claims.
+8. Preserve each target's last intervention and last-reported transition
    fingerprints.
-8. Preserve the protected-contract fingerprint and any pending intervention
+9. Preserve the protected-contract fingerprint and any pending intervention
    delivery or acknowledgement state; never infer acknowledgement from target
    activity.
-9. After emitting a transition, advance that target's report fingerprint.
-10. Resume the single recorded next action.
+10. After emitting a transition, advance that target's report fingerprint.
+11. Resume the single recorded next action.
 
-If the checkpoint is missing a target, cursor, authorization, or open gate,
-perform one bounded read to repair that field. Do not replay the entire
-supervision history.
+If the checkpoint is missing the supervisor task or host, a target, cursor,
+authorization, open gate, continuation owner, heartbeat logical key, or
+heartbeat lifecycle state, perform one bounded read to repair that field. Do
+not replay the entire supervision history. While heartbeat identity or
+lifecycle is ambiguous, do not create, update, or retire a wakeup.

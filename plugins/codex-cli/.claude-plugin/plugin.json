@@ -1,6 +1,6 @@
 {
   "name": "codex-cli",
-  "version": "0.1.5",
+  "version": "0.1.6",
   "description": "Codex CLI operations, automation, diagnostics, live thread supervision, plugin and MCP lifecycle, session log forensics, and local environment actions.",
   "author": {
     "name": "Xopoko"

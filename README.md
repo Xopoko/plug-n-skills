@@ -169,7 +169,7 @@ instructions.
 | Reference files | 224 | - | Longer ledgers, contracts, scorecards, and source notes. |
 | Helper and validator scripts | 78 | - | Deterministic plugin-local helpers. |
 | Startup metadata | 163 skills | 12,818 | Skill name, description, and file pointer for routing. |
-| On-demand skill bodies | 163 skills | 108,387 | Instruction bodies after frontmatter, loaded only when selected. |
+| On-demand skill bodies | 163 skills | 108,890 | Instruction bodies after frontmatter, loaded only when selected. |
 
 Regenerate the report after skill edits:
 
@@ -192,7 +192,7 @@ Token columns are `startup metadata / on-demand body`.
 | `scientific-research` | 1 | 4 | 1 | 91 | 2,024 |
 | `context-density` | 1 | 8 | 7 | 128 | 2,713 |
 | `capability-workbench` | 10 | 14 | 21 | 942 | 12,040 |
-| `codex-cli` | 7 | 4 | 2 | 619 | 7,491 |
+| `codex-cli` | 7 | 4 | 2 | 619 | 7,994 |
 | `scheduled-automation` | 1 | 5 | 0 | 103 | 1,158 |
 | `gitlab-review` | 1 | 3 | 1 | 117 | 1,083 |
 | `stacked-delivery` | 1 | 3 | 1 | 123 | 1,130 |
@@ -373,7 +373,7 @@ Token cells are shown as `startup/body`.
 | `codex-exec-automation` | 97/1,018 | Use when preparing, running, debugging, or reviewing non-interactive Codex CLI automation with `codex exec`, `codex exec resume`, `codex review`, JSONL events, output schemas, last-message files, cwd/profile/config flags, sandbox and approval modes, or CI-style agent runs. |
 | `codex-log-reader` | 93/1,279 | Use when locating, summarizing, auditing, or debugging Codex session rollout JSONL logs by CODEX_THREAD_ID, cwd, query, issue key, project path, child or inherited-history symptoms, malformed or huge log symptoms, permission concerns, or "what happened in this Codex thread" questions. |
 | `codex-plugin-mcp-manager` | 77/895 | Use when managing Codex CLI plugins, plugin marketplaces, local marketplace refreshes, cache visibility, MCP server list/get/add/remove/login/logout, MCP bearer token environment variables, or plugin/MCP installation failures. |
-| `codex-thread-supervisor` | 106/1,457 | Use when watching, monitoring, following, or supervising one or more live Codex tasks or threads by ID, including cursor-based transitions, completion or attention gates, claim checks, compact checkpoints, narrowly authorized skill handoffs or evidence corrections, and privacy-safe capability mining. Not for post-hoc rollout forensics, current-turn subagents, or external job polling. |
+| `codex-thread-supervisor` | 106/1,960 | Use when watching, monitoring, following, or supervising one or more live Codex tasks or threads by ID, including cursor-based transitions, completion or attention gates, claim checks, compact checkpoints, narrowly authorized skill handoffs or evidence corrections, and privacy-safe capability mining. Not for post-hoc rollout forensics, current-turn subagents, or external job polling. |
 
 #### `scheduled-automation`
 
