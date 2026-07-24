@@ -1,7 +1,7 @@
 {
   "name": "stacked-delivery",
-  "version": "0.1.1",
-  "description": "Dependency-safe delivery for stacked pull requests, merge requests, and dependent changes with exact parent-head binding, descendant invalidation, per-node proof, safe landing order, and machine-checkable handoff receipts.",
+  "version": "0.1.2",
+  "description": "Dependency-safe delivery for stacked pull requests, merge requests, and dependent changes with exact parent-head binding, descendant invalidation, per-node proof, safe landing order, and guarded current-state or prepared-mutation handoff receipts.",
   "author": {
     "name": "Xopoko"
   },
@@ -19,7 +19,7 @@
   "interface": {
     "displayName": "Stacked Delivery",
     "shortDescription": "Deliver dependent changes without stack drift.",
-    "longDescription": "A cross-agent, cross-forge workflow for freezing a stacked-change chain, proving every child against the exact current parent head, invalidating descendants after ancestor drift, keeping CI evidence node-local, enforcing safe landing prefixes, and handing work between agents with content-addressed receipts.",
+    "longDescription": "A cross-agent, cross-forge workflow for freezing a stacked-change chain, proving every child against the exact current parent head, invalidating descendants after ancestor drift, keeping CI evidence node-local, enforcing safe landing prefixes, and handing off current state or prepared history mutations with guarded receipts.",
     "developerName": "Xopoko",
     "category": "Coding",
     "capabilities": [
@@ -28,7 +28,8 @@
       "Transitive descendant invalidation after ancestor changes",
       "Node-local proof freshness bound to current dependency composition",
       "Sequential and feature-probed atomic-prefix landing plans",
-      "Content-addressed cross-agent handoff receipts"
+      "Content-addressed current-state cross-agent handoff receipts",
+      "Prepared history-mutation handoffs with equivalence, attribution, backup, lease, phase-local proof, and exact readback gates"
     ],
     "defaultPrompt": "Validate this stack of dependent changes, identify stale descendants, and prepare the next safe delivery handoff.",
     "brandColor": "#174B6D",

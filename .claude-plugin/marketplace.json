@@ -56,7 +56,7 @@
     {
       "name": "stacked-delivery",
       "source": "./plugins/stacked-delivery",
-      "description": "Dependency-safe stacked change delivery with exact parent-head binding, descendant invalidation, node-local proof, safe landing order, and content-addressed handoff receipts."
+      "description": "Dependency-safe stacked change delivery with exact parent-head binding, descendant invalidation, node-local proof, safe landing order, and guarded current-state or prepared-mutation handoff receipts."
     },
     {
       "name": "claude-code",

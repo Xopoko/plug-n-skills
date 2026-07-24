@@ -24,6 +24,8 @@ Load only the reference needed:
   `$SKILL_ROOT/references/proof-drift-and-restack.md`
 - Landing modes and handoff receipts:
   `$SKILL_ROOT/references/landing-and-handoff.md`
+- A future history rewrite prepared for another task:
+  `$SKILL_ROOT/references/prepared-mutation-handoff.md`
 
 ## Safety Boundary
 
@@ -79,7 +81,9 @@ Load only the reference needed:
    freeze again, then run `compare`. Any ancestor head or topology change
    invalidates the affected descendant closure. Restacking is a history rewrite
    and needs explicit authorization; perform it bottom to top, preserve old to
-   new object-ID evidence, and rerun proof for every rewritten node.
+   new object-ID evidence, and rerun proof for every rewritten node. When the
+   rewrite will be executed by another task, validate the additive prepared
+   mutation handoff; it does not expand the receiver's authority.
 7. **Choose the next safe action.** Run `next-action`. Sequential mode may
    select only the lowest current unlanded node. Atomic-prefix mode may select
    only a contiguous proven prefix starting there, and only after live

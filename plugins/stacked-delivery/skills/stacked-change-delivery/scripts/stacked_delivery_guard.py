@@ -15,20 +15,51 @@ from typing import Any, NoReturn, Sequence
 
 SNAPSHOT_SCHEMA = "stacked_delivery.snapshot.v1"
 HANDOFF_SCHEMA = "stacked_delivery.handoff.v1"
+PREPARED_MUTATION_SCHEMA = "stacked_delivery.prepared_mutation_handoff.v1"
 VALIDATION_SCHEMA = "stacked_delivery.validation.v1"
 COMPARE_SCHEMA = "stacked_delivery.compare.v1"
 NEXT_ACTION_SCHEMA = "stacked_delivery.next_action.v1"
 HANDOFF_VALIDATION_SCHEMA = "stacked_delivery.handoff_validation.v1"
+PREPARED_MUTATION_VALIDATION_SCHEMA = (
+    "stacked_delivery.prepared_mutation_validation.v1"
+)
 ERROR_SCHEMA = "stacked_delivery.error.v1"
 
 FORGE_MODES = {"sequential", "atomic-prefix"}
 NODE_STATES = {"unlanded", "landed", "retargeted"}
 PROOF_STATUSES = {"success", "failure", "running", "cancelled", "skipped"}
+PREPARED_ACTION_KINDS = {"history-ref-update", "metadata-update"}
+AUTHORITY_SOURCES = {"repository-policy", "user"}
+LEASE_MODES = {"exact-remote-head"}
+PATCH_EQUIVALENCE_METHODS = {"canonical-diff", "stable-patch-id"}
+TREE_EQUIVALENCE_METHODS = {"canonical-tree-delta", "tree-object"}
+TREE_EQUIVALENCE_PAIRS = {
+    ("canonical-tree-delta", "node-delta"),
+    ("tree-object", "result-tree"),
+}
+ATTRIBUTION_RELATIONS = {
+    "preserve-author-and-committer",
+    "preserve-author-allow-authorized-committer",
+}
+NEW_PREDECESSOR_KINDS = {"base", "node", "retarget"}
+PROOF_GAP_BLOCKS = PREPARED_ACTION_KINDS | {"finalize"}
+BACKUP_REF_PREFIX = "refs/stacked-delivery/backups/"
+REQUIRED_EXCLUDED_ACTIONS = {
+    "approve",
+    "commit-content-edit",
+    "delete-backup",
+    "delete-source-ref",
+    "merge",
+    "resolve-review",
+    "unrelated-ref-update",
+}
 
 MAX_INPUT_BYTES = 1024 * 1024
 MAX_NODES = 64
 MAX_PROOFS_PER_NODE = 32
 MAX_TOTAL_PROOFS = 512
+MAX_ACTIONS = MAX_NODES * 2
+MAX_SCOPE_ACTIONS = 32
 MAX_ISSUES = 128
 MAX_IDENTIFIER_LENGTH = 128
 MAX_BRANCH_LENGTH = 255
@@ -77,6 +108,141 @@ HANDOFF_KEYS = {
     "snapshot_digest",
     "snapshot",
     "bindings",
+}
+PREPARED_MUTATION_KEYS = {
+    "schema",
+    "receiver_id",
+    "snapshot_digest",
+    "snapshot",
+    "new_predecessor",
+    "proof_wait_owner_ref",
+    "authority",
+    "attribution_policy",
+    "proof_policy",
+    "excluded_actions",
+    "nodes",
+    "actions",
+    "history_receipts",
+    "metadata_receipt",
+}
+PREPARED_AUTHORITY_KEYS = {
+    "authority_id",
+    "source",
+    "evidence_id",
+    "evidence_hash",
+    "allowed_actions",
+}
+POLICY_KEYS = {"policy_id", "policy_hash"}
+NEW_PREDECESSOR_KEYS = {
+    "kind",
+    "node_id",
+    "source_ref",
+    "head_sha",
+    "evidence_id",
+}
+PREPARED_NODE_KEYS = {
+    "node_id",
+    "change_id",
+    "source_branch",
+    "old_head_sha",
+    "new_head_sha",
+    "old_parent_head_sha",
+    "new_parent_head_sha",
+    "patch_equivalence",
+    "tree_equivalence",
+    "attribution",
+    "backup",
+    "lease",
+    "required_proof_surfaces",
+    "proofs",
+    "open_proof_gaps",
+}
+EQUIVALENCE_KEYS = {
+    "method",
+    "scope",
+    "old_digest",
+    "new_digest",
+    "evidence_id",
+    "equivalent",
+}
+ATTRIBUTION_KEYS = {
+    "relation",
+    "old_author_fingerprint",
+    "new_author_fingerprint",
+    "old_committer_fingerprint",
+    "new_committer_fingerprint",
+    "authorized_committer_fingerprint",
+}
+BACKUP_KEYS = {
+    "ref",
+    "expected_head_sha",
+    "readback_head_sha",
+    "confirmed",
+}
+LEASE_KEYS = {"remote_ref", "expected_remote_head_sha", "mode"}
+PREPARED_PROOF_KEYS = {
+    "proof_id",
+    "surface_id",
+    "node_head_sha",
+    "dependency_head_sha",
+    "status",
+    "terminal",
+    "superseded",
+    "execution_nonempty",
+}
+OPEN_PROOF_GAP_KEYS = {
+    "surface_id",
+    "node_head_sha",
+    "dependency_head_sha",
+    "blocks_action",
+    "evidence_id",
+}
+HISTORY_ACTION_KEYS = {
+    "action_id",
+    "kind",
+    "node_id",
+    "authority_id",
+    "remote_ref",
+    "expected_remote_head_sha",
+    "new_head_sha",
+    "backup_ref",
+}
+METADATA_ACTION_KEYS = {
+    "action_id",
+    "kind",
+    "node_id",
+    "authority_id",
+    "old_target_branch",
+    "new_target_branch",
+    "expected_new_target_head_sha",
+    "expected_node_head_sha",
+}
+HISTORY_RECEIPT_KEYS = {
+    "receipt_id",
+    "receipt_hash",
+    "transaction_digest",
+    "action_id",
+    "node_id",
+    "remote_ref",
+    "expected_old_head_sha",
+    "written_head_sha",
+    "readback_head_sha",
+    "backup_ref",
+    "backup_readback_head_sha",
+}
+METADATA_RECEIPT_KEYS = {
+    "receipt_id",
+    "receipt_hash",
+    "transaction_digest",
+    "action_id",
+    "node_id",
+    "old_target_ref",
+    "new_target_ref",
+    "readback_target_ref",
+    "expected_new_target_head_sha",
+    "readback_new_target_head_sha",
+    "expected_node_head_sha",
+    "readback_node_head_sha",
 }
 BINDING_KEYS = {
     "node_id",
@@ -136,6 +302,15 @@ Handoff schema ({HANDOFF_SCHEMA}):
       "receiver_id": "receiver-1"
     }}, ...]
   }}
+
+Prepared mutation handoff schema ({PREPARED_MUTATION_SCHEMA}) is an additive
+strict companion to the current-state handoff. It binds the old snapshot,
+receiver, explicit predecessor, nullable external proof-wait owner, authority
+and exclusions, opaque proof and attribution policy bindings, per-node old/new
+history plus equivalence, attribution, backup, lease, proof or gap evidence,
+separate ordered history-ref and optional metadata actions, and a bounded
+content-addressed history-receipt prefix. See
+references/prepared-mutation-handoff.md for the exact field contract.
 
 The program reads only the named input files. It never invokes a forge, git,
 network command, subprocess, or file-writing operation. Output is bounded JSON.
@@ -287,6 +462,27 @@ def _branch(value: Any, label: str) -> str:
     return value
 
 
+def _git_ref(value: Any, label: str) -> str:
+    ref = _branch(value, label)
+    if not ref.startswith("refs/"):
+        raise InputError(f"{label} must be a full refs/ Git ref")
+    return ref
+
+
+def _head_branch(value: Any, label: str) -> str:
+    branch = _branch(value, label)
+    if branch.startswith("refs/") and not branch.startswith("refs/heads/"):
+        raise InputError(f"{label} must name a Git branch head")
+    return branch
+
+
+def _git_head_ref(value: Any, label: str) -> str:
+    ref = _git_ref(value, label)
+    if not ref.startswith("refs/heads/"):
+        raise InputError(f"{label} must be a full refs/heads/ Git ref")
+    return ref
+
+
 def _git_sha(value: Any, label: str) -> str:
     if not isinstance(value, str) or not GIT_SHA_RE.fullmatch(value):
         raise InputError(f"{label} must be an exact lowercase Git SHA")
@@ -311,6 +507,24 @@ def _array(value: Any, label: str, limit: int) -> list[Any]:
     if len(value) > limit:
         raise InputError(f"{label} exceeds its collection limit")
     return value
+
+
+def _identifier_array(
+    value: Any,
+    label: str,
+    limit: int,
+    *,
+    nonempty: bool = False,
+) -> list[str]:
+    raw = _array(value, label, limit)
+    result = [
+        _identifier(item, f"{label}[{index}]") for index, item in enumerate(raw)
+    ]
+    if nonempty and not result:
+        raise InputError(f"{label} must not be empty")
+    if result != sorted(set(result)):
+        raise InputError(f"{label} must be sorted and unique")
+    return result
 
 
 def _parse_proof(value: Any, node_index: int, proof_index: int) -> dict[str, Any]:
@@ -405,6 +619,8 @@ def _issue(
     *,
     node_id: str | None = None,
     proof_id: str | None = None,
+    action_id: str | None = None,
+    surface_id: str | None = None,
     field: str | None = None,
 ) -> None:
     if len(issues) >= MAX_ISSUES:
@@ -414,6 +630,10 @@ def _issue(
         item["node_id"] = node_id
     if proof_id is not None:
         item["proof_id"] = proof_id
+    if action_id is not None:
+        item["action_id"] = action_id
+    if surface_id is not None:
+        item["surface_id"] = surface_id
     if field is not None:
         item["field"] = field
     issues.append(item)
@@ -1176,6 +1396,1433 @@ def validate_handoff_data(
     return handoff, result
 
 
+def _parse_prepared_authority(value: Any) -> dict[str, Any]:
+    raw = _expect_object(value, PREPARED_AUTHORITY_KEYS, "authority")
+    source = raw["source"]
+    if not isinstance(source, str) or source not in AUTHORITY_SOURCES:
+        raise InputError("authority.source is unsupported")
+    allowed_actions = _identifier_array(
+        raw["allowed_actions"],
+        "authority.allowed_actions",
+        len(PREPARED_ACTION_KINDS),
+        nonempty=True,
+    )
+    if any(action not in PREPARED_ACTION_KINDS for action in allowed_actions):
+        raise InputError("authority.allowed_actions contains an unsupported action")
+    return {
+        "authority_id": _identifier(raw["authority_id"], "authority.authority_id"),
+        "source": source,
+        "evidence_id": _identifier(raw["evidence_id"], "authority.evidence_id"),
+        "evidence_hash": _sha256(raw["evidence_hash"], "authority.evidence_hash"),
+        "allowed_actions": allowed_actions,
+    }
+
+
+def _parse_policy(value: Any, label: str) -> dict[str, Any]:
+    raw = _expect_object(value, POLICY_KEYS, label)
+    return {
+        "policy_id": _identifier(raw["policy_id"], f"{label}.policy_id"),
+        "policy_hash": _sha256(raw["policy_hash"], f"{label}.policy_hash"),
+    }
+
+
+def _parse_new_predecessor(value: Any) -> dict[str, Any]:
+    label = "prepared.new_predecessor"
+    raw = _expect_object(value, NEW_PREDECESSOR_KEYS, label)
+    kind = raw["kind"]
+    if not isinstance(kind, str) or kind not in NEW_PREDECESSOR_KINDS:
+        raise InputError(f"{label}.kind is unsupported")
+    return {
+        "kind": kind,
+        "node_id": _optional_identifier(raw["node_id"], f"{label}.node_id"),
+        "source_ref": _git_head_ref(raw["source_ref"], f"{label}.source_ref"),
+        "head_sha": _git_sha(raw["head_sha"], f"{label}.head_sha"),
+        "evidence_id": _identifier(raw["evidence_id"], f"{label}.evidence_id"),
+    }
+
+
+def _parse_equivalence(
+    value: Any,
+    label: str,
+    methods: set[str],
+    scopes: set[str],
+    allowed_pairs: set[tuple[str, str]],
+) -> dict[str, Any]:
+    raw = _expect_object(value, EQUIVALENCE_KEYS, label)
+    method = raw["method"]
+    scope = raw["scope"]
+    if not isinstance(method, str) or method not in methods:
+        raise InputError(f"{label}.method is unsupported")
+    if not isinstance(scope, str) or scope not in scopes:
+        raise InputError(f"{label}.scope is unsupported")
+    if (method, scope) not in allowed_pairs:
+        raise InputError(f"{label} method and scope are incompatible")
+    return {
+        "method": method,
+        "scope": scope,
+        "old_digest": _sha256(raw["old_digest"], f"{label}.old_digest"),
+        "new_digest": _sha256(raw["new_digest"], f"{label}.new_digest"),
+        "evidence_id": _identifier(raw["evidence_id"], f"{label}.evidence_id"),
+        "equivalent": _boolean(raw["equivalent"], f"{label}.equivalent"),
+    }
+
+
+def _parse_attribution(value: Any, label: str) -> dict[str, Any]:
+    raw = _expect_object(value, ATTRIBUTION_KEYS, label)
+    relation = raw["relation"]
+    if (
+        not isinstance(relation, str)
+        or relation not in ATTRIBUTION_RELATIONS
+    ):
+        raise InputError(f"{label}.relation is unsupported")
+    authorized_committer = raw["authorized_committer_fingerprint"]
+    if authorized_committer is not None:
+        authorized_committer = _sha256(
+            authorized_committer,
+            f"{label}.authorized_committer_fingerprint",
+        )
+    return {
+        "relation": relation,
+        "old_author_fingerprint": _sha256(
+            raw["old_author_fingerprint"],
+            f"{label}.old_author_fingerprint",
+        ),
+        "new_author_fingerprint": _sha256(
+            raw["new_author_fingerprint"],
+            f"{label}.new_author_fingerprint",
+        ),
+        "old_committer_fingerprint": _sha256(
+            raw["old_committer_fingerprint"],
+            f"{label}.old_committer_fingerprint",
+        ),
+        "new_committer_fingerprint": _sha256(
+            raw["new_committer_fingerprint"],
+            f"{label}.new_committer_fingerprint",
+        ),
+        "authorized_committer_fingerprint": authorized_committer,
+    }
+
+
+def _parse_backup(value: Any, label: str) -> dict[str, Any]:
+    raw = _expect_object(value, BACKUP_KEYS, label)
+    return {
+        "ref": _git_ref(raw["ref"], f"{label}.ref"),
+        "expected_head_sha": _git_sha(
+            raw["expected_head_sha"],
+            f"{label}.expected_head_sha",
+        ),
+        "readback_head_sha": _git_sha(
+            raw["readback_head_sha"],
+            f"{label}.readback_head_sha",
+        ),
+        "confirmed": _boolean(raw["confirmed"], f"{label}.confirmed"),
+    }
+
+
+def _parse_lease(value: Any, label: str) -> dict[str, Any]:
+    raw = _expect_object(value, LEASE_KEYS, label)
+    mode = raw["mode"]
+    if not isinstance(mode, str) or mode not in LEASE_MODES:
+        raise InputError(f"{label}.mode is unsupported")
+    return {
+        "remote_ref": _head_branch(raw["remote_ref"], f"{label}.remote_ref"),
+        "expected_remote_head_sha": _git_sha(
+            raw["expected_remote_head_sha"],
+            f"{label}.expected_remote_head_sha",
+        ),
+        "mode": mode,
+    }
+
+
+def _parse_prepared_proof(
+    value: Any,
+    node_index: int,
+    proof_index: int,
+) -> dict[str, Any]:
+    label = f"prepared.nodes[{node_index}].proofs[{proof_index}]"
+    raw = _expect_object(value, PREPARED_PROOF_KEYS, label)
+    status = raw["status"]
+    if not isinstance(status, str) or status not in PROOF_STATUSES:
+        raise InputError(f"{label}.status is unsupported")
+    return {
+        "proof_id": _identifier(raw["proof_id"], f"{label}.proof_id"),
+        "surface_id": _identifier(raw["surface_id"], f"{label}.surface_id"),
+        "node_head_sha": _git_sha(raw["node_head_sha"], f"{label}.node_head_sha"),
+        "dependency_head_sha": _git_sha(
+            raw["dependency_head_sha"],
+            f"{label}.dependency_head_sha",
+        ),
+        "status": status,
+        "terminal": _boolean(raw["terminal"], f"{label}.terminal"),
+        "superseded": _boolean(raw["superseded"], f"{label}.superseded"),
+        "execution_nonempty": _boolean(
+            raw["execution_nonempty"],
+            f"{label}.execution_nonempty",
+        ),
+    }
+
+
+def _parse_open_proof_gap(
+    value: Any,
+    node_index: int,
+    gap_index: int,
+) -> dict[str, Any]:
+    label = f"prepared.nodes[{node_index}].open_proof_gaps[{gap_index}]"
+    raw = _expect_object(value, OPEN_PROOF_GAP_KEYS, label)
+    blocks_action = raw["blocks_action"]
+    if (
+        not isinstance(blocks_action, str)
+        or blocks_action not in PROOF_GAP_BLOCKS
+    ):
+        raise InputError(f"{label}.blocks_action is unsupported")
+    return {
+        "surface_id": _identifier(raw["surface_id"], f"{label}.surface_id"),
+        "node_head_sha": _git_sha(
+            raw["node_head_sha"],
+            f"{label}.node_head_sha",
+        ),
+        "dependency_head_sha": _git_sha(
+            raw["dependency_head_sha"],
+            f"{label}.dependency_head_sha",
+        ),
+        "blocks_action": blocks_action,
+        "evidence_id": _identifier(raw["evidence_id"], f"{label}.evidence_id"),
+    }
+
+
+def _parse_prepared_node(value: Any, index: int) -> dict[str, Any]:
+    label = f"prepared.nodes[{index}]"
+    raw = _expect_object(value, PREPARED_NODE_KEYS, label)
+    raw_proofs = _array(
+        raw["proofs"],
+        f"{label}.proofs",
+        MAX_PROOFS_PER_NODE,
+    )
+    raw_gaps = _array(
+        raw["open_proof_gaps"],
+        f"{label}.open_proof_gaps",
+        MAX_PROOFS_PER_NODE,
+    )
+    if len(raw_proofs) + len(raw_gaps) > MAX_PROOFS_PER_NODE:
+        raise InputError(f"{label} proof evidence exceeds the collection limit")
+    return {
+        "node_id": _identifier(raw["node_id"], f"{label}.node_id"),
+        "change_id": _identifier(raw["change_id"], f"{label}.change_id"),
+        "source_branch": _head_branch(
+            raw["source_branch"],
+            f"{label}.source_branch",
+        ),
+        "old_head_sha": _git_sha(raw["old_head_sha"], f"{label}.old_head_sha"),
+        "new_head_sha": _git_sha(raw["new_head_sha"], f"{label}.new_head_sha"),
+        "old_parent_head_sha": _git_sha(
+            raw["old_parent_head_sha"],
+            f"{label}.old_parent_head_sha",
+        ),
+        "new_parent_head_sha": _git_sha(
+            raw["new_parent_head_sha"],
+            f"{label}.new_parent_head_sha",
+        ),
+        "patch_equivalence": _parse_equivalence(
+            raw["patch_equivalence"],
+            f"{label}.patch_equivalence",
+            PATCH_EQUIVALENCE_METHODS,
+            {"node-delta"},
+            {
+                ("canonical-diff", "node-delta"),
+                ("stable-patch-id", "node-delta"),
+            },
+        ),
+        "tree_equivalence": _parse_equivalence(
+            raw["tree_equivalence"],
+            f"{label}.tree_equivalence",
+            TREE_EQUIVALENCE_METHODS,
+            {"node-delta", "result-tree"},
+            TREE_EQUIVALENCE_PAIRS,
+        ),
+        "attribution": _parse_attribution(
+            raw["attribution"],
+            f"{label}.attribution",
+        ),
+        "backup": _parse_backup(raw["backup"], f"{label}.backup"),
+        "lease": _parse_lease(raw["lease"], f"{label}.lease"),
+        "required_proof_surfaces": _identifier_array(
+            raw["required_proof_surfaces"],
+            f"{label}.required_proof_surfaces",
+            MAX_PROOFS_PER_NODE,
+            nonempty=True,
+        ),
+        "proofs": [
+            _parse_prepared_proof(proof, index, proof_index)
+            for proof_index, proof in enumerate(raw_proofs)
+        ],
+        "open_proof_gaps": [
+            _parse_open_proof_gap(gap, index, gap_index)
+            for gap_index, gap in enumerate(raw_gaps)
+        ],
+    }
+
+
+def _parse_prepared_action(value: Any, index: int) -> dict[str, Any]:
+    label = f"prepared.actions[{index}]"
+    if not isinstance(value, dict):
+        raise InputError(f"{label} must be an object")
+    kind = value.get("kind")
+    if kind == "history-ref-update":
+        raw = _expect_object(value, HISTORY_ACTION_KEYS, label)
+        return {
+            "action_id": _identifier(raw["action_id"], f"{label}.action_id"),
+            "kind": kind,
+            "node_id": _identifier(raw["node_id"], f"{label}.node_id"),
+            "authority_id": _identifier(
+                raw["authority_id"],
+                f"{label}.authority_id",
+            ),
+            "remote_ref": _head_branch(
+                raw["remote_ref"],
+                f"{label}.remote_ref",
+            ),
+            "expected_remote_head_sha": _git_sha(
+                raw["expected_remote_head_sha"],
+                f"{label}.expected_remote_head_sha",
+            ),
+            "new_head_sha": _git_sha(
+                raw["new_head_sha"],
+                f"{label}.new_head_sha",
+            ),
+            "backup_ref": _git_ref(raw["backup_ref"], f"{label}.backup_ref"),
+        }
+    if kind == "metadata-update":
+        raw = _expect_object(value, METADATA_ACTION_KEYS, label)
+        return {
+            "action_id": _identifier(raw["action_id"], f"{label}.action_id"),
+            "kind": kind,
+            "node_id": _identifier(raw["node_id"], f"{label}.node_id"),
+            "authority_id": _identifier(
+                raw["authority_id"],
+                f"{label}.authority_id",
+            ),
+            "old_target_branch": _head_branch(
+                raw["old_target_branch"],
+                f"{label}.old_target_branch",
+            ),
+            "new_target_branch": _head_branch(
+                raw["new_target_branch"],
+                f"{label}.new_target_branch",
+            ),
+            "expected_new_target_head_sha": _git_sha(
+                raw["expected_new_target_head_sha"],
+                f"{label}.expected_new_target_head_sha",
+            ),
+            "expected_node_head_sha": _git_sha(
+                raw["expected_node_head_sha"],
+                f"{label}.expected_node_head_sha",
+            ),
+        }
+    raise InputError(f"{label}.kind is unsupported")
+
+
+def _parse_history_receipt(value: Any, index: int) -> dict[str, Any]:
+    label = f"prepared.history_receipts[{index}]"
+    raw = _expect_object(value, HISTORY_RECEIPT_KEYS, label)
+    return {
+        "receipt_id": _identifier(raw["receipt_id"], f"{label}.receipt_id"),
+        "receipt_hash": _sha256(raw["receipt_hash"], f"{label}.receipt_hash"),
+        "transaction_digest": _sha256(
+            raw["transaction_digest"],
+            f"{label}.transaction_digest",
+        ),
+        "action_id": _identifier(raw["action_id"], f"{label}.action_id"),
+        "node_id": _identifier(raw["node_id"], f"{label}.node_id"),
+        "remote_ref": _head_branch(raw["remote_ref"], f"{label}.remote_ref"),
+        "expected_old_head_sha": _git_sha(
+            raw["expected_old_head_sha"],
+            f"{label}.expected_old_head_sha",
+        ),
+        "written_head_sha": _git_sha(
+            raw["written_head_sha"],
+            f"{label}.written_head_sha",
+        ),
+        "readback_head_sha": _git_sha(
+            raw["readback_head_sha"],
+            f"{label}.readback_head_sha",
+        ),
+        "backup_ref": _git_ref(raw["backup_ref"], f"{label}.backup_ref"),
+        "backup_readback_head_sha": _git_sha(
+            raw["backup_readback_head_sha"],
+            f"{label}.backup_readback_head_sha",
+        ),
+    }
+
+
+def _parse_metadata_receipt(value: Any) -> dict[str, Any] | None:
+    if value is None:
+        return None
+    label = "prepared.metadata_receipt"
+    raw = _expect_object(value, METADATA_RECEIPT_KEYS, label)
+    return {
+        "receipt_id": _identifier(raw["receipt_id"], f"{label}.receipt_id"),
+        "receipt_hash": _sha256(raw["receipt_hash"], f"{label}.receipt_hash"),
+        "transaction_digest": _sha256(
+            raw["transaction_digest"],
+            f"{label}.transaction_digest",
+        ),
+        "action_id": _identifier(raw["action_id"], f"{label}.action_id"),
+        "node_id": _identifier(raw["node_id"], f"{label}.node_id"),
+        "old_target_ref": _git_head_ref(
+            raw["old_target_ref"],
+            f"{label}.old_target_ref",
+        ),
+        "new_target_ref": _git_head_ref(
+            raw["new_target_ref"],
+            f"{label}.new_target_ref",
+        ),
+        "readback_target_ref": _git_head_ref(
+            raw["readback_target_ref"],
+            f"{label}.readback_target_ref",
+        ),
+        "expected_new_target_head_sha": _git_sha(
+            raw["expected_new_target_head_sha"],
+            f"{label}.expected_new_target_head_sha",
+        ),
+        "readback_new_target_head_sha": _git_sha(
+            raw["readback_new_target_head_sha"],
+            f"{label}.readback_new_target_head_sha",
+        ),
+        "expected_node_head_sha": _git_sha(
+            raw["expected_node_head_sha"],
+            f"{label}.expected_node_head_sha",
+        ),
+        "readback_node_head_sha": _git_sha(
+            raw["readback_node_head_sha"],
+            f"{label}.readback_node_head_sha",
+        ),
+    }
+
+
+def parse_prepared_mutation(value: Any) -> dict[str, Any]:
+    """Parse the exact prepared history-mutation handoff shape."""
+
+    raw = _expect_object(value, PREPARED_MUTATION_KEYS, "prepared")
+    if raw["schema"] != PREPARED_MUTATION_SCHEMA:
+        raise InputError("prepared mutation schema is unsupported")
+    raw_nodes = _array(raw["nodes"], "prepared.nodes", MAX_NODES)
+    if not raw_nodes:
+        raise InputError("prepared.nodes must not be empty")
+    nodes = [_parse_prepared_node(node, index) for index, node in enumerate(raw_nodes)]
+    proof_evidence_count = sum(
+        len(node["proofs"]) + len(node["open_proof_gaps"])
+        for node in nodes
+    )
+    if proof_evidence_count > MAX_TOTAL_PROOFS:
+        raise InputError("prepared proof evidence exceeds the collection limit")
+    raw_actions = _array(raw["actions"], "prepared.actions", MAX_ACTIONS)
+    if not raw_actions:
+        raise InputError("prepared.actions must not be empty")
+    raw_receipts = _array(
+        raw["history_receipts"],
+        "prepared.history_receipts",
+        MAX_NODES,
+    )
+    return {
+        "schema": PREPARED_MUTATION_SCHEMA,
+        "receiver_id": _identifier(raw["receiver_id"], "prepared.receiver_id"),
+        "snapshot_digest": _sha256(
+            raw["snapshot_digest"],
+            "prepared.snapshot_digest",
+        ),
+        "snapshot": parse_snapshot(raw["snapshot"]),
+        "new_predecessor": _parse_new_predecessor(raw["new_predecessor"]),
+        "proof_wait_owner_ref": _optional_identifier(
+            raw["proof_wait_owner_ref"],
+            "prepared.proof_wait_owner_ref",
+        ),
+        "authority": _parse_prepared_authority(raw["authority"]),
+        "attribution_policy": _parse_policy(
+            raw["attribution_policy"],
+            "attribution_policy",
+        ),
+        "proof_policy": _parse_policy(raw["proof_policy"], "proof_policy"),
+        "excluded_actions": _identifier_array(
+            raw["excluded_actions"],
+            "prepared.excluded_actions",
+            MAX_SCOPE_ACTIONS,
+            nonempty=True,
+        ),
+        "nodes": nodes,
+        "actions": [
+            _parse_prepared_action(action, index)
+            for index, action in enumerate(raw_actions)
+        ],
+        "history_receipts": [
+            _parse_history_receipt(receipt, index)
+            for index, receipt in enumerate(raw_receipts)
+        ],
+        "metadata_receipt": _parse_metadata_receipt(raw["metadata_receipt"]),
+    }
+
+
+def _prepared_equivalence_issues(
+    issues: list[dict[str, Any]],
+    node: dict[str, Any],
+    field: str,
+) -> None:
+    evidence = node[field]
+    if evidence["equivalent"] is not True:
+        _issue(
+            issues,
+            f"{field}_not_equivalent",
+            node_id=node["node_id"],
+        )
+    if evidence["old_digest"] != evidence["new_digest"]:
+        _issue(
+            issues,
+            f"{field}_digest_mismatch",
+            node_id=node["node_id"],
+        )
+
+
+def _prepared_attribution_issues(
+    issues: list[dict[str, Any]],
+    node: dict[str, Any],
+) -> None:
+    attribution = node["attribution"]
+    node_id = node["node_id"]
+    if (
+        attribution["old_author_fingerprint"]
+        != attribution["new_author_fingerprint"]
+    ):
+        _issue(issues, "author_attribution_drift", node_id=node_id)
+
+    old_committer = attribution["old_committer_fingerprint"]
+    new_committer = attribution["new_committer_fingerprint"]
+    authorized_committer = attribution["authorized_committer_fingerprint"]
+    if attribution["relation"] == "preserve-author-and-committer":
+        if authorized_committer is not None:
+            _issue(
+                issues,
+                "unexpected_authorized_committer",
+                node_id=node_id,
+            )
+        if old_committer != new_committer:
+            _issue(issues, "committer_attribution_drift", node_id=node_id)
+        return
+
+    if authorized_committer is None:
+        _issue(issues, "authorized_committer_missing", node_id=node_id)
+    elif new_committer != authorized_committer:
+        _issue(issues, "unauthorized_committer_identity", node_id=node_id)
+    if old_committer == new_committer:
+        _issue(issues, "intentional_committer_change_missing", node_id=node_id)
+
+
+def _full_head_ref(branch: str) -> str:
+    return branch if branch.startswith("refs/") else f"refs/heads/{branch}"
+
+
+def _receipt_payload(receipt: dict[str, Any]) -> dict[str, Any]:
+    return {
+        key: value
+        for key, value in receipt.items()
+        if key != "receipt_hash"
+    }
+
+
+def prepared_transaction_digest(prepared: dict[str, Any]) -> str:
+    """Digest immutable mutation scope while proof evidence and receipts advance."""
+
+    transaction = {
+        "schema": prepared["schema"],
+        "receiver_id": prepared["receiver_id"],
+        "snapshot_digest": prepared["snapshot_digest"],
+        "snapshot": prepared["snapshot"],
+        "new_predecessor": prepared["new_predecessor"],
+        "authority": prepared["authority"],
+        "attribution_policy": prepared["attribution_policy"],
+        "proof_policy": prepared["proof_policy"],
+        "excluded_actions": prepared["excluded_actions"],
+        "nodes": [
+            {
+                key: value
+                for key, value in node.items()
+                if key not in {"proofs", "open_proof_gaps"}
+            }
+            for node in prepared["nodes"]
+        ],
+        "actions": prepared["actions"],
+    }
+    return stable_digest(transaction)
+
+
+def _prepared_git_object_ids(prepared: dict[str, Any]) -> list[str]:
+    snapshot = prepared["snapshot"]
+    values = [snapshot["base"]["head_sha"], prepared["new_predecessor"]["head_sha"]]
+    for node in snapshot["nodes"]:
+        values.extend((node["head_sha"], node["expected_parent_head_sha"]))
+        if node["landing_head_sha"] is not None:
+            values.append(node["landing_head_sha"])
+        for proof in node["proofs"]:
+            values.extend(
+                (proof["node_head_sha"], proof["dependency_head_sha"])
+            )
+    for node in prepared["nodes"]:
+        values.extend(
+            (
+                node["old_head_sha"],
+                node["new_head_sha"],
+                node["old_parent_head_sha"],
+                node["new_parent_head_sha"],
+                node["backup"]["expected_head_sha"],
+                node["backup"]["readback_head_sha"],
+                node["lease"]["expected_remote_head_sha"],
+            )
+        )
+        for proof in node["proofs"]:
+            values.extend(
+                (proof["node_head_sha"], proof["dependency_head_sha"])
+            )
+        for gap in node["open_proof_gaps"]:
+            values.extend(
+                (gap["node_head_sha"], gap["dependency_head_sha"])
+            )
+    for action in prepared["actions"]:
+        if action["kind"] == "history-ref-update":
+            values.extend(
+                (
+                    action["expected_remote_head_sha"],
+                    action["new_head_sha"],
+                )
+            )
+        else:
+            values.extend(
+                (
+                    action["expected_new_target_head_sha"],
+                    action["expected_node_head_sha"],
+                )
+            )
+    for receipt in prepared["history_receipts"]:
+        values.extend(
+            (
+                receipt["expected_old_head_sha"],
+                receipt["written_head_sha"],
+                receipt["readback_head_sha"],
+                receipt["backup_readback_head_sha"],
+            )
+        )
+    metadata_receipt = prepared["metadata_receipt"]
+    if metadata_receipt is not None:
+        values.extend(
+            (
+                metadata_receipt["expected_new_target_head_sha"],
+                metadata_receipt["readback_new_target_head_sha"],
+                metadata_receipt["expected_node_head_sha"],
+                metadata_receipt["readback_node_head_sha"],
+            )
+        )
+    return values
+
+
+def prepared_mutation_issues(prepared: dict[str, Any]) -> list[dict[str, Any]]:
+    """Return bounded safety failures for a parsed prepared mutation."""
+
+    issues = snapshot_issues(prepared["snapshot"])
+    snapshot = prepared["snapshot"]
+    nodes = prepared["nodes"]
+    actions = prepared["actions"]
+    authority = prepared["authority"]
+    transaction_digest = prepared_transaction_digest(prepared)
+
+    if prepared["snapshot_digest"] != stable_digest(snapshot):
+        _issue(issues, "stale_prepared_snapshot_digest")
+    if len({len(value) for value in _prepared_git_object_ids(prepared)}) != 1:
+        _issue(issues, "mixed_git_object_id_width")
+
+    allowed_actions = set(authority["allowed_actions"])
+    excluded_actions = set(prepared["excluded_actions"])
+    missing_exclusions = REQUIRED_EXCLUDED_ACTIONS - excluded_actions
+    if missing_exclusions:
+        _issue(issues, "required_exclusions_missing", field="excluded_actions")
+    if allowed_actions & excluded_actions:
+        _issue(issues, "allowed_action_is_excluded", field="excluded_actions")
+
+    snapshot_nodes = snapshot["nodes"]
+    snapshot_by_id = {node["node_id"]: node for node in snapshot_nodes}
+    snapshot_ids = [node["node_id"] for node in snapshot_nodes]
+    mapped_ids = [node["node_id"] for node in nodes]
+    first_index: int | None = None
+    if len(set(mapped_ids)) != len(mapped_ids):
+        _issue(issues, "duplicate_prepared_node_id")
+    if mapped_ids and mapped_ids[0] in snapshot_by_id:
+        first_index = snapshot_ids.index(mapped_ids[0])
+        if mapped_ids != snapshot_ids[first_index:]:
+            _issue(issues, "rewrite_nodes_not_contiguous_suffix")
+    else:
+        _issue(issues, "unknown_prepared_node")
+
+    predecessor = prepared["new_predecessor"]
+    if predecessor["kind"] == "node" and predecessor["node_id"] is None:
+        _issue(issues, "new_predecessor_node_id_missing")
+    if predecessor["kind"] != "node" and predecessor["node_id"] is not None:
+        _issue(issues, "new_predecessor_node_id_unexpected")
+    if nodes and nodes[0]["new_parent_head_sha"] != predecessor["head_sha"]:
+        _issue(
+            issues,
+            "first_new_parent_predecessor_head_mismatch",
+            node_id=nodes[0]["node_id"],
+        )
+
+    unique_sets: tuple[tuple[str, str], ...] = (
+        ("change_id", "duplicate_prepared_change_id"),
+        ("source_branch", "duplicate_prepared_source_branch"),
+        ("new_head_sha", "duplicate_prepared_new_head"),
+    )
+    for field, code in unique_sets:
+        seen: set[str] = set()
+        for node in nodes:
+            value = node[field]
+            if value in seen:
+                _issue(issues, code, node_id=node["node_id"], field=field)
+            seen.add(value)
+
+    snapshot_heads = {node["head_sha"] for node in snapshot_nodes}
+    protected_old_heads = snapshot_heads | {snapshot["base"]["head_sha"]}
+    protected_old_heads.update(
+        node["landing_head_sha"]
+        for node in snapshot_nodes
+        if node["landing_head_sha"] is not None
+    )
+    live_refs = {_full_head_ref(snapshot["base"]["branch"])}
+    for snapshot_node in snapshot_nodes:
+        live_refs.add(_full_head_ref(snapshot_node["source_branch"]))
+        live_refs.add(_full_head_ref(snapshot_node["target_branch"]))
+    live_refs.add(predecessor["source_ref"])
+    for action in actions:
+        if action["kind"] == "history-ref-update":
+            live_refs.add(_full_head_ref(action["remote_ref"]))
+        else:
+            live_refs.add(_full_head_ref(action["old_target_branch"]))
+            live_refs.add(_full_head_ref(action["new_target_branch"]))
+
+    backup_refs: set[str] = set()
+    equivalence_evidence_ids: set[str] = set()
+    snapshot_proof_ids = {
+        proof["proof_id"]
+        for snapshot_node in snapshot_nodes
+        for proof in snapshot_node["proofs"]
+    }
+    proof_ids: set[str] = set()
+    gap_evidence_ids: set[str] = set()
+    declared_action_kinds = {action["kind"] for action in actions}
+    open_gap_count = 0
+    for index, node in enumerate(nodes):
+        node_id = node["node_id"]
+        snapshot_node = snapshot_by_id.get(node_id)
+        if snapshot_node is None:
+            _issue(issues, "unknown_prepared_node", node_id=node_id)
+        else:
+            for prepared_field, snapshot_field, code in (
+                ("change_id", "change_id", "prepared_change_mismatch"),
+                ("source_branch", "source_branch", "prepared_source_mismatch"),
+                ("old_head_sha", "head_sha", "prepared_old_head_mismatch"),
+                (
+                    "old_parent_head_sha",
+                    "expected_parent_head_sha",
+                    "prepared_old_parent_mismatch",
+                ),
+            ):
+                if node[prepared_field] != snapshot_node[snapshot_field]:
+                    _issue(
+                        issues,
+                        code,
+                        node_id=node_id,
+                        field=prepared_field,
+                    )
+            if snapshot_node["state"] == "landed":
+                _issue(issues, "landed_node_cannot_be_rewritten", node_id=node_id)
+
+        if node["old_head_sha"] == node["new_head_sha"]:
+            _issue(issues, "prepared_head_not_rewritten", node_id=node_id)
+        if node["new_head_sha"] in protected_old_heads:
+            _issue(issues, "prepared_new_head_reuses_old_head", node_id=node_id)
+        if node["new_head_sha"] == node["new_parent_head_sha"]:
+            _issue(issues, "prepared_new_head_equals_parent", node_id=node_id)
+        if index and node["new_parent_head_sha"] != nodes[index - 1]["new_head_sha"]:
+            _issue(issues, "prepared_new_parent_chain_mismatch", node_id=node_id)
+
+        for field in ("patch_equivalence", "tree_equivalence"):
+            _prepared_equivalence_issues(issues, node, field)
+            evidence_id = node[field]["evidence_id"]
+            if evidence_id in equivalence_evidence_ids:
+                _issue(
+                    issues,
+                    "duplicate_equivalence_evidence_id",
+                    node_id=node_id,
+                    field=field,
+                )
+            equivalence_evidence_ids.add(evidence_id)
+
+        _prepared_attribution_issues(issues, node)
+
+        backup = node["backup"]
+        if backup["ref"] in backup_refs:
+            _issue(issues, "duplicate_backup_ref", node_id=node_id)
+        backup_refs.add(backup["ref"])
+        if not backup["ref"].startswith(BACKUP_REF_PREFIX):
+            _issue(issues, "backup_ref_outside_recovery_namespace", node_id=node_id)
+        if backup["ref"] in live_refs:
+            _issue(issues, "backup_ref_conflicts_live_ref", node_id=node_id)
+        if backup["confirmed"] is not True:
+            _issue(issues, "backup_not_confirmed", node_id=node_id)
+        if backup["expected_head_sha"] != node["old_head_sha"]:
+            _issue(issues, "backup_expected_head_mismatch", node_id=node_id)
+        if backup["readback_head_sha"] != node["old_head_sha"]:
+            _issue(issues, "backup_readback_head_mismatch", node_id=node_id)
+
+        lease = node["lease"]
+        if lease["remote_ref"] != node["source_branch"]:
+            _issue(issues, "lease_ref_mismatch", node_id=node_id)
+        if lease["expected_remote_head_sha"] != node["old_head_sha"]:
+            _issue(issues, "lease_expected_head_mismatch", node_id=node_id)
+
+        required_surfaces = set(node["required_proof_surfaces"])
+        observed_surfaces: set[str] = set()
+        for proof in node["proofs"]:
+            proof_id = proof["proof_id"]
+            surface_id = proof["surface_id"]
+            if proof_id in snapshot_proof_ids:
+                _issue(
+                    issues,
+                    "prepared_proof_id_reuses_snapshot_receipt",
+                    node_id=node_id,
+                    proof_id=proof_id,
+                )
+            if proof_id in proof_ids:
+                _issue(
+                    issues,
+                    "duplicate_prepared_proof_id",
+                    node_id=node_id,
+                    proof_id=proof_id,
+                )
+            proof_ids.add(proof_id)
+            if surface_id in observed_surfaces:
+                _issue(
+                    issues,
+                    "duplicate_proof_surface",
+                    node_id=node_id,
+                    proof_id=proof_id,
+                    surface_id=surface_id,
+                )
+            observed_surfaces.add(surface_id)
+            if surface_id not in required_surfaces:
+                _issue(
+                    issues,
+                    "unexpected_proof_surface",
+                    node_id=node_id,
+                    proof_id=proof_id,
+                    surface_id=surface_id,
+                )
+            if proof["node_head_sha"] != node["new_head_sha"]:
+                _issue(
+                    issues,
+                    "prepared_proof_node_head_stale",
+                    node_id=node_id,
+                    proof_id=proof_id,
+                )
+            if proof["dependency_head_sha"] != node["new_parent_head_sha"]:
+                _issue(
+                    issues,
+                    "prepared_proof_dependency_head_stale",
+                    node_id=node_id,
+                    proof_id=proof_id,
+                )
+            if proof["status"] != "success":
+                _issue(
+                    issues,
+                    "prepared_proof_not_successful",
+                    node_id=node_id,
+                    proof_id=proof_id,
+                )
+            if proof["terminal"] is not True:
+                _issue(
+                    issues,
+                    "prepared_proof_not_terminal",
+                    node_id=node_id,
+                    proof_id=proof_id,
+                )
+            if proof["superseded"] is not False:
+                _issue(
+                    issues,
+                    "prepared_proof_superseded",
+                    node_id=node_id,
+                    proof_id=proof_id,
+                )
+            if proof["execution_nonempty"] is not True:
+                _issue(
+                    issues,
+                    "prepared_proof_execution_empty",
+                    node_id=node_id,
+                    proof_id=proof_id,
+                )
+        for gap in node["open_proof_gaps"]:
+            surface_id = gap["surface_id"]
+            evidence_id = gap["evidence_id"]
+            open_gap_count += 1
+            if surface_id in observed_surfaces:
+                _issue(
+                    issues,
+                    "duplicate_proof_surface",
+                    node_id=node_id,
+                    surface_id=surface_id,
+                )
+            observed_surfaces.add(surface_id)
+            if surface_id not in required_surfaces:
+                _issue(
+                    issues,
+                    "unexpected_proof_surface",
+                    node_id=node_id,
+                    surface_id=surface_id,
+                )
+            if evidence_id in gap_evidence_ids:
+                _issue(
+                    issues,
+                    "duplicate_proof_gap_evidence_id",
+                    node_id=node_id,
+                    surface_id=surface_id,
+                )
+            gap_evidence_ids.add(evidence_id)
+            if gap["node_head_sha"] != node["new_head_sha"]:
+                _issue(
+                    issues,
+                    "proof_gap_node_head_stale",
+                    node_id=node_id,
+                    surface_id=surface_id,
+                )
+            if gap["dependency_head_sha"] != node["new_parent_head_sha"]:
+                _issue(
+                    issues,
+                    "proof_gap_dependency_head_stale",
+                    node_id=node_id,
+                    surface_id=surface_id,
+                )
+            if (
+                gap["blocks_action"] != "finalize"
+                and gap["blocks_action"] not in declared_action_kinds
+            ):
+                _issue(
+                    issues,
+                    "proof_gap_blocks_absent_action",
+                    node_id=node_id,
+                    surface_id=surface_id,
+                )
+        for missing_surface in sorted(required_surfaces - observed_surfaces):
+            _issue(
+                issues,
+                "required_proof_surface_missing",
+                node_id=node_id,
+                surface_id=missing_surface,
+            )
+
+    if open_gap_count and prepared["proof_wait_owner_ref"] is None:
+        _issue(issues, "proof_wait_owner_missing")
+    if not open_gap_count and prepared["proof_wait_owner_ref"] is not None:
+        _issue(issues, "unexpected_proof_wait_owner")
+
+    action_ids: set[str] = set()
+    action_kinds: set[str] = set()
+    metadata_seen = False
+    history_actions: list[dict[str, Any]] = []
+    metadata_actions: list[dict[str, Any]] = []
+    for action in actions:
+        action_id = action["action_id"]
+        if action_id in action_ids:
+            _issue(issues, "duplicate_action_id", action_id=action_id)
+        action_ids.add(action_id)
+        action_kinds.add(action["kind"])
+        if action["authority_id"] != authority["authority_id"]:
+            _issue(
+                issues,
+                "action_authority_mismatch",
+                action_id=action_id,
+            )
+        if action["kind"] == "history-ref-update":
+            history_actions.append(action)
+            if metadata_seen:
+                _issue(
+                    issues,
+                    "history_action_after_metadata",
+                    action_id=action_id,
+                )
+        else:
+            metadata_seen = True
+            metadata_actions.append(action)
+
+    if not history_actions:
+        _issue(issues, "history_actions_missing")
+    if action_kinds != allowed_actions:
+        _issue(issues, "action_kinds_not_exactly_authorized")
+
+    if [action["node_id"] for action in history_actions] != mapped_ids:
+        _issue(issues, "history_actions_do_not_match_rewrite_nodes")
+    prepared_by_id = {node["node_id"]: node for node in nodes}
+    for action in history_actions:
+        action_id = action["action_id"]
+        node = prepared_by_id.get(action["node_id"])
+        if node is None:
+            _issue(
+                issues,
+                "history_action_unknown_node",
+                action_id=action_id,
+            )
+            continue
+        for action_field, node_value, code in (
+            ("remote_ref", node["lease"]["remote_ref"], "history_remote_ref_mismatch"),
+            (
+                "expected_remote_head_sha",
+                node["old_head_sha"],
+                "history_lease_head_mismatch",
+            ),
+            ("new_head_sha", node["new_head_sha"], "history_new_head_mismatch"),
+            ("backup_ref", node["backup"]["ref"], "history_backup_ref_mismatch"),
+        ):
+            if action[action_field] != node_value:
+                _issue(
+                    issues,
+                    code,
+                    node_id=node["node_id"],
+                    action_id=action_id,
+                    field=action_field,
+                )
+
+    receipts = prepared["history_receipts"]
+    if len(receipts) > len(history_actions):
+        _issue(issues, "too_many_history_receipts")
+    receipt_ids: set[str] = set()
+    receipt_hashes: set[str] = set()
+    for index, receipt in enumerate(receipts):
+        if receipt["receipt_hash"] != stable_digest(
+            _receipt_payload(receipt)
+        ):
+            _issue(
+                issues,
+                "history_receipt_digest_mismatch",
+                action_id=receipt["action_id"],
+            )
+        if receipt["transaction_digest"] != transaction_digest:
+            _issue(
+                issues,
+                "history_receipt_transaction_mismatch",
+                action_id=receipt["action_id"],
+            )
+        if receipt["receipt_id"] in receipt_ids:
+            _issue(
+                issues,
+                "duplicate_history_receipt_id",
+                action_id=receipt["action_id"],
+            )
+        receipt_ids.add(receipt["receipt_id"])
+        if receipt["receipt_hash"] in receipt_hashes:
+            _issue(
+                issues,
+                "duplicate_history_receipt_hash",
+                action_id=receipt["action_id"],
+            )
+        receipt_hashes.add(receipt["receipt_hash"])
+        if index >= len(history_actions):
+            continue
+        action = history_actions[index]
+        for receipt_field, action_field, code in (
+            ("action_id", "action_id", "history_receipt_action_order_mismatch"),
+            ("node_id", "node_id", "history_receipt_node_mismatch"),
+            ("remote_ref", "remote_ref", "history_receipt_ref_mismatch"),
+            (
+                "expected_old_head_sha",
+                "expected_remote_head_sha",
+                "history_receipt_old_head_mismatch",
+            ),
+            (
+                "written_head_sha",
+                "new_head_sha",
+                "history_receipt_written_head_mismatch",
+            ),
+            (
+                "backup_ref",
+                "backup_ref",
+                "history_receipt_backup_ref_mismatch",
+            ),
+        ):
+            if receipt[receipt_field] != action[action_field]:
+                _issue(
+                    issues,
+                    code,
+                    node_id=action["node_id"],
+                    action_id=action["action_id"],
+                    field=receipt_field,
+                )
+        if receipt["readback_head_sha"] != action["new_head_sha"]:
+            _issue(
+                issues,
+                "history_receipt_readback_mismatch",
+                node_id=action["node_id"],
+                action_id=action["action_id"],
+            )
+        if (
+            receipt["backup_readback_head_sha"]
+            != action["expected_remote_head_sha"]
+        ):
+            _issue(
+                issues,
+                "history_receipt_backup_readback_mismatch",
+                node_id=action["node_id"],
+                action_id=action["action_id"],
+            )
+        node = prepared_by_id.get(action["node_id"])
+        if node is not None and any(
+            gap["blocks_action"] == "history-ref-update"
+            for gap in node["open_proof_gaps"]
+        ):
+            _issue(
+                issues,
+                "history_receipt_bypasses_open_gate",
+                node_id=action["node_id"],
+                action_id=action["action_id"],
+            )
+
+    if len(metadata_actions) > 1:
+        _issue(issues, "multiple_metadata_actions")
+    if metadata_actions and (
+        not mapped_ids or metadata_actions[0]["node_id"] != mapped_ids[0]
+    ):
+        _issue(issues, "metadata_action_not_first_rewritten_node")
+
+    logical_predecessor: tuple[str, str | None, str, str] | None = None
+    if first_index is not None:
+        first_snapshot_node = snapshot_nodes[first_index]
+        target_ref = _full_head_ref(first_snapshot_node["target_branch"])
+        dependency_head = first_snapshot_node["expected_parent_head_sha"]
+        if (
+            target_ref == _full_head_ref(snapshot["base"]["branch"])
+            and dependency_head == snapshot["base"]["head_sha"]
+        ):
+            logical_predecessor = (
+                "base",
+                None,
+                target_ref,
+                dependency_head,
+            )
+        else:
+            predecessor_node = next(
+                (
+                    candidate
+                    for candidate in snapshot_nodes[:first_index]
+                    if (
+                        _full_head_ref(candidate["source_branch"]) == target_ref
+                        and candidate["head_sha"] == dependency_head
+                    )
+                ),
+                None,
+            )
+            if predecessor_node is not None:
+                logical_predecessor = (
+                    "node",
+                    predecessor_node["node_id"],
+                    target_ref,
+                    dependency_head,
+                )
+            else:
+                _issue(issues, "snapshot_predecessor_binding_missing")
+
+    if metadata_actions:
+        if predecessor["kind"] != "retarget":
+            _issue(issues, "metadata_requires_retarget_predecessor")
+    elif logical_predecessor is not None:
+        expected_kind, expected_node_id, expected_ref, expected_head = (
+            logical_predecessor
+        )
+        if predecessor["kind"] != expected_kind:
+            _issue(issues, "new_predecessor_kind_mismatch")
+        if predecessor["node_id"] != expected_node_id:
+            _issue(issues, "new_predecessor_node_mismatch")
+        if predecessor["source_ref"] != expected_ref:
+            _issue(issues, "new_predecessor_ref_mismatch")
+        if predecessor["head_sha"] != expected_head:
+            _issue(issues, "new_predecessor_head_mismatch")
+
+    source_refs = {
+        _full_head_ref(snapshot_node["source_branch"])
+        for snapshot_node in snapshot_nodes
+    }
+    for action in metadata_actions:
+        action_id = action["action_id"]
+        node = prepared_by_id.get(action["node_id"])
+        snapshot_node = snapshot_by_id.get(action["node_id"])
+        if node is None or snapshot_node is None:
+            _issue(
+                issues,
+                "metadata_action_unknown_node",
+                action_id=action_id,
+            )
+            continue
+        if action["old_target_branch"] != snapshot_node["target_branch"]:
+            _issue(
+                issues,
+                "metadata_old_target_mismatch",
+                node_id=node["node_id"],
+                action_id=action_id,
+            )
+        if (
+            _full_head_ref(action["new_target_branch"])
+            == _full_head_ref(action["old_target_branch"])
+        ):
+            _issue(
+                issues,
+                "metadata_target_not_changed",
+                node_id=node["node_id"],
+                action_id=action_id,
+            )
+        if _full_head_ref(action["new_target_branch"]) in source_refs:
+            _issue(
+                issues,
+                "metadata_target_topology_conflict",
+                node_id=node["node_id"],
+                action_id=action_id,
+            )
+        if (
+            _full_head_ref(action["new_target_branch"])
+            != predecessor["source_ref"]
+        ):
+            _issue(
+                issues,
+                "metadata_new_target_predecessor_ref_mismatch",
+                node_id=node["node_id"],
+                action_id=action_id,
+            )
+        if (
+            action["expected_new_target_head_sha"]
+            != predecessor["head_sha"]
+        ):
+            _issue(
+                issues,
+                "metadata_new_target_head_mismatch",
+                node_id=node["node_id"],
+                action_id=action_id,
+            )
+        if action["expected_node_head_sha"] != node["new_head_sha"]:
+            _issue(
+                issues,
+                "metadata_expected_head_mismatch",
+                node_id=node["node_id"],
+                action_id=action_id,
+            )
+
+    metadata_receipt = prepared["metadata_receipt"]
+    if metadata_receipt is not None:
+        receipt = metadata_receipt
+        if receipt["receipt_hash"] != stable_digest(_receipt_payload(receipt)):
+            _issue(
+                issues,
+                "metadata_receipt_digest_mismatch",
+                action_id=receipt["action_id"],
+            )
+        if receipt["transaction_digest"] != transaction_digest:
+            _issue(
+                issues,
+                "metadata_receipt_transaction_mismatch",
+                action_id=receipt["action_id"],
+            )
+        if receipt["receipt_id"] in receipt_ids:
+            _issue(
+                issues,
+                "duplicate_action_receipt_id",
+                action_id=receipt["action_id"],
+            )
+        if receipt["receipt_hash"] in receipt_hashes:
+            _issue(
+                issues,
+                "duplicate_action_receipt_hash",
+                action_id=receipt["action_id"],
+            )
+        if not metadata_actions:
+            _issue(
+                issues,
+                "metadata_receipt_without_action",
+                action_id=receipt["action_id"],
+            )
+        else:
+            action = metadata_actions[0]
+            expected_bindings = (
+                (
+                    "action_id",
+                    action["action_id"],
+                    "metadata_receipt_action_mismatch",
+                ),
+                (
+                    "node_id",
+                    action["node_id"],
+                    "metadata_receipt_node_mismatch",
+                ),
+                (
+                    "old_target_ref",
+                    _full_head_ref(action["old_target_branch"]),
+                    "metadata_receipt_old_target_mismatch",
+                ),
+                (
+                    "new_target_ref",
+                    _full_head_ref(action["new_target_branch"]),
+                    "metadata_receipt_new_target_mismatch",
+                ),
+                (
+                    "readback_target_ref",
+                    _full_head_ref(action["new_target_branch"]),
+                    "metadata_receipt_target_readback_mismatch",
+                ),
+                (
+                    "expected_new_target_head_sha",
+                    action["expected_new_target_head_sha"],
+                    "metadata_receipt_target_head_mismatch",
+                ),
+                (
+                    "readback_new_target_head_sha",
+                    action["expected_new_target_head_sha"],
+                    "metadata_receipt_target_head_readback_mismatch",
+                ),
+                (
+                    "expected_node_head_sha",
+                    action["expected_node_head_sha"],
+                    "metadata_receipt_node_head_mismatch",
+                ),
+                (
+                    "readback_node_head_sha",
+                    action["expected_node_head_sha"],
+                    "metadata_receipt_node_readback_mismatch",
+                ),
+            )
+            for receipt_field, expected_value, code in expected_bindings:
+                if receipt[receipt_field] != expected_value:
+                    _issue(
+                        issues,
+                        code,
+                        node_id=action["node_id"],
+                        action_id=action["action_id"],
+                        field=receipt_field,
+                    )
+            if len(receipts) != len(history_actions):
+                _issue(
+                    issues,
+                    "metadata_receipt_before_history_complete",
+                    node_id=action["node_id"],
+                    action_id=action["action_id"],
+                )
+            if any(
+                gap["blocks_action"] == "metadata-update"
+                for node in nodes
+                for gap in node["open_proof_gaps"]
+            ):
+                _issue(
+                    issues,
+                    "metadata_receipt_bypasses_open_gate",
+                    node_id=action["node_id"],
+                    action_id=action["action_id"],
+                )
+    return issues[:MAX_ISSUES]
+
+
+def validate_prepared_mutation_data(
+    value: Any,
+) -> tuple[dict[str, Any], dict[str, Any]]:
+    """Parse and validate a future stacked-history mutation handoff."""
+
+    prepared = parse_prepared_mutation(value)
+    issues = prepared_mutation_issues(prepared)
+    proof_count = sum(len(node["proofs"]) for node in prepared["nodes"])
+    gaps = [
+        gap
+        for node in prepared["nodes"]
+        for gap in node["open_proof_gaps"]
+    ]
+    proof_surface_count = sum(
+        len(node["required_proof_surfaces"]) for node in prepared["nodes"]
+    )
+    history_actions = [
+        action
+        for action in prepared["actions"]
+        if action["kind"] == "history-ref-update"
+    ]
+    metadata_actions = [
+        action
+        for action in prepared["actions"]
+        if action["kind"] == "metadata-update"
+    ]
+    completed_history_count = len(prepared["history_receipts"])
+    if issues:
+        status = "fail"
+        readiness = "blocked"
+        next_action_id = None
+    elif completed_history_count < len(history_actions):
+        next_history = history_actions[completed_history_count]
+        next_node = next(
+            node
+            for node in prepared["nodes"]
+            if node["node_id"] == next_history["node_id"]
+        )
+        next_history_blocked = any(
+            gap["blocks_action"] == "history-ref-update"
+            for gap in next_node["open_proof_gaps"]
+        )
+        if next_history_blocked:
+            status = "blocked"
+            readiness = "blocked"
+            next_action_id = None
+        else:
+            status = "ready"
+            readiness = "history-ready" if gaps else "mutation-ready"
+            next_action_id = next_history["action_id"]
+    else:
+        metadata_gap_open = any(
+            gap["blocks_action"] == "metadata-update" for gap in gaps
+        )
+        if metadata_actions and prepared["metadata_receipt"] is None:
+            if metadata_gap_open:
+                status = "blocked"
+                readiness = "proof-wait"
+                next_action_id = None
+            else:
+                status = "ready"
+                readiness = "metadata-ready"
+                next_action_id = metadata_actions[0]["action_id"]
+        elif gaps:
+            status = "blocked"
+            readiness = "proof-wait"
+            next_action_id = None
+        else:
+            status = "complete"
+            readiness = "complete"
+            next_action_id = None
+    result = {
+        "schema": PREPARED_MUTATION_VALIDATION_SCHEMA,
+        "status": status,
+        "readiness": readiness,
+        "next_action_id": next_action_id,
+        "repository_id": prepared["snapshot"]["repository_id"],
+        "forge_adapter": prepared["snapshot"]["forge_adapter"],
+        "stack_id": prepared["snapshot"]["stack_id"],
+        "receiver_id": prepared["receiver_id"],
+        "proof_wait_owner_ref": prepared["proof_wait_owner_ref"],
+        "attribution_policy_id": prepared["attribution_policy"]["policy_id"],
+        "proof_policy_id": prepared["proof_policy"]["policy_id"],
+        "snapshot_digest": stable_digest(prepared["snapshot"]),
+        "transaction_digest": prepared_transaction_digest(prepared),
+        "prepared_mutation_digest": stable_digest(prepared),
+        "node_count": len(prepared["nodes"]),
+        "action_count": len(prepared["actions"]),
+        "completed_history_count": completed_history_count,
+        "metadata_completed": prepared["metadata_receipt"] is not None,
+        "proof_surface_count": proof_surface_count,
+        "proof_count": proof_count,
+        "open_proof_gap_count": len(gaps),
+        "violations": issues,
+    }
+    return prepared, result
+
+
 def build_parser() -> JsonArgumentParser:
     parser = JsonArgumentParser(
         prog="stacked_delivery_guard.py",
@@ -1213,6 +2860,16 @@ def build_parser() -> JsonArgumentParser:
         description="Validate snapshot digest and exact receipt bindings.",
     )
     handoff.add_argument("--input", required=True, metavar="FILE")
+
+    prepared = subparsers.add_parser(
+        "validate-prepared-mutation",
+        help="validate a prepared stacked-history mutation handoff",
+        description=(
+            "Validate exact rewrite, equivalence, attribution, backup, lease, "
+            "proof, authority and action bindings."
+        ),
+    )
+    prepared.add_argument("--input", required=True, metavar="FILE")
     return parser
 
 
@@ -1234,6 +2891,8 @@ def main(argv: Sequence[str] | None = None) -> int:
             _, result = next_action_data(load_json_file(args.input))
         elif args.command == "validate-handoff":
             _, result = validate_handoff_data(load_json_file(args.input))
+        elif args.command == "validate-prepared-mutation":
+            _, result = validate_prepared_mutation_data(load_json_file(args.input))
         else:
             raise InputError("unsupported command")
     except InputError as exc:
