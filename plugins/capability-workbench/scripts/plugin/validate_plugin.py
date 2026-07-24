@@ -186,16 +186,18 @@ def validate_manifest_shape(
 
     validate_optional_contract_path(manifest, "skills", "skills", errors)
     validate_optional_contract_path(manifest, "apps", ".app.json", errors)
-    validate_optional_contract_path(manifest, "mcpServers", ".mcp.json", errors)
+    mcp_manifest_path = validate_optional_mcp_contract_path(
+        plugin_root, manifest, errors
+    )
 
     if manifest.get("apps") is not None:
         validate_app_manifest(
             plugin_root / ".app.json",
             errors,
         )
-    if manifest.get("mcpServers") is not None:
+    if mcp_manifest_path is not None:
         validate_mcp_manifest(
-            plugin_root / ".mcp.json",
+            mcp_manifest_path,
             errors,
         )
     validate_skill_manifests(plugin_root, errors)
@@ -354,6 +356,36 @@ def normalize_contract_path(raw_path: str) -> str | None:
     return normalized or None
 
 
+def validate_optional_mcp_contract_path(
+    plugin_root: Path,
+    payload: dict[str, Any],
+    errors: list[str],
+) -> Path | None:
+    value = payload.get("mcpServers")
+    if value is None:
+        return None
+    normalized = normalize_contract_path(value) if isinstance(value, str) else None
+    allowed = {".mcp.json", ".codex-mcp.json"}
+    if normalized not in allowed:
+        errors.append(
+            "plugin.json field `mcpServers` must resolve to `.mcp.json` or "
+            "`.codex-mcp.json`"
+        )
+        return None
+    path = plugin_root / normalized
+    if path.is_symlink():
+        errors.append(
+            "plugin.json field `mcpServers` must not resolve through a symlink"
+        )
+        return None
+    try:
+        path.resolve(strict=False).relative_to(plugin_root.resolve())
+    except ValueError:
+        errors.append("plugin.json field `mcpServers` escapes the plugin root")
+        return None
+    return path
+
+
 def validate_app_manifest(path: Path, errors: list[str]) -> None:
     payload = load_companion_json_object(path, "`.app.json`", errors)
     if payload is None:
@@ -374,19 +406,20 @@ def validate_app_manifest(path: Path, errors: list[str]) -> None:
 
 
 def validate_mcp_manifest(path: Path, errors: list[str]) -> None:
-    payload = load_companion_json_object(path, "`.mcp.json`", errors)
+    label = f"`{path.name}`"
+    payload = load_companion_json_object(path, label, errors)
     if payload is None:
         return
-    reject_companion_unknown_fields(payload, {"mcpServers"}, "`.mcp.json`", errors)
+    reject_companion_unknown_fields(payload, {"mcpServers"}, label, errors)
     servers = payload.get("mcpServers")
     if not isinstance(servers, dict):
-        errors.append("`.mcp.json` field `mcpServers` must be an object")
+        errors.append(f"{label} field `mcpServers` must be an object")
         return
     for key, value in servers.items():
         if not isinstance(key, str) or not key.strip():
-            errors.append("`.mcp.json` server names must be non-empty strings")
+            errors.append(f"{label} server names must be non-empty strings")
         if not isinstance(value, dict):
-            errors.append(f"`.mcp.json` server `{key}` must be an object")
+            errors.append(f"{label} server `{key}` must be an object")
 
 
 def load_companion_json_object(

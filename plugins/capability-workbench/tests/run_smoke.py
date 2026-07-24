@@ -85,6 +85,30 @@ def test_validate_plugin() -> None:
         result = run([script, str(plugin)])
         check("validate_plugin: minimal codex-only fixture passes", result.returncode == 0, result.stdout)
 
+        manifest["mcpServers"] = "./.codex-mcp.json"
+        (plugin / ".codex-plugin" / "plugin.json").write_text(json.dumps(manifest))
+        (plugin / ".codex-mcp.json").write_text(
+            json.dumps({"mcpServers": {"fixture": {"command": "python3"}}})
+        )
+        result = run([script, str(plugin)])
+        check(
+            "validate_plugin: alternate codex MCP manifest passes",
+            result.returncode == 0,
+            result.stdout + result.stderr,
+        )
+
+        manifest["mcpServers"] = "../outside.json"
+        (plugin / ".codex-plugin" / "plugin.json").write_text(json.dumps(manifest))
+        result = run([script, str(plugin)])
+        output = result.stdout + result.stderr
+        check(
+            "validate_plugin: MCP manifest escape fails",
+            result.returncode != 0 and "mcpServers" in output,
+            output,
+        )
+        manifest.pop("mcpServers")
+        (plugin / ".codex-plugin" / "plugin.json").write_text(json.dumps(manifest))
+
         # Diverging claude manifest must fail the consistency check.
         (plugin / ".claude-plugin").mkdir()
         claude = {

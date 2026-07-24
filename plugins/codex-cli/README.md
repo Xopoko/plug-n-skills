@@ -8,6 +8,7 @@ evidence.
 
 - `codex-cli`: router for local CLI inspection and workflow selection.
 - `codex-exec-automation`: non-interactive `codex exec` and `codex review` runs.
+- `codex-deferred-completion`: one validated producer-native terminal receipt without model-driven polling.
 - `codex-thread-supervisor`: live multi-thread observation, transition waits,
   gated skill handoffs or versioned evidence corrections, and privacy-safe
   capability mining.
@@ -31,6 +32,20 @@ session.
 `~/.codex`, redacts likely secrets, separates active child work from inherited
 history, and produces compact views and evidence-ledger audits before any raw
 log line is opened.
+
+## Deferred completion
+
+The bundled POSIX MCP server exposes `reserve_completion_receipt` and
+`await_completion_receipt`. It creates a private result path, validates a
+producer-owned atomic JSON envelope plus exact identity assertions, and returns
+only a fixed terminal projection. It never accepts or executes a command.
+
+Start the real producer directly through native Codex exec, pass the reserved
+path through the producer's own result flag, then await the handle once. This
+preserves the native command sandbox and approval boundary while removing
+repeated model turns around unchanged process or remote-status checks. The
+coordination receipt is consumed after validation; producer-native workspace
+artifacts remain the durable proof.
 
 ## Validation
 

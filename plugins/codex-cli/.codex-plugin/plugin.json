@@ -1,7 +1,7 @@
 {
   "name": "codex-cli",
-  "version": "0.1.6",
-  "description": "Codex CLI operations, automation, diagnostics, live thread supervision, plugin and MCP lifecycle, session log forensics, and local environment actions.",
+  "version": "0.2.0",
+  "description": "Codex CLI operations, automation, producer-native deferred completion, diagnostics, live thread supervision, plugin and MCP lifecycle, normalized session trace audits, and local environment actions.",
   "author": {
     "name": "Xopoko"
   },
@@ -18,16 +18,18 @@
     "threads"
   ],
   "skills": "./skills/",
+  "mcpServers": "./.codex-mcp.json",
   "interface": {
     "displayName": "Codex CLI",
     "shortDescription": "Operate, automate, supervise, and debug Codex safely.",
-    "longDescription": "A Codex CLI operations pack for local CLI surface inspection, non-interactive exec and review automation, live multi-thread supervision with controlled skill handoffs and versioned evidence corrections, plugin marketplace and MCP server lifecycle work, doctor/debug/sandbox/app-server diagnostics, redacted session log forensics, and Codex app local environment actions.",
+    "longDescription": "A Codex CLI operations pack for local CLI surface inspection, non-interactive exec and review automation, one-shot producer-native receipt completion without model polling, live multi-thread supervision with controlled skill handoffs and versioned evidence corrections, plugin marketplace and MCP server lifecycle work, doctor/debug/sandbox/app-server diagnostics, redacted session log forensics, and Codex app local environment actions.",
     "developerName": "Xopoko",
     "category": "Coding",
     "capabilities": [
       "Local Codex CLI version, help, command, flag, and safety inspection",
       "Non-interactive codex exec automation with cwd, sandbox, approval, JSONL, output schema, and last-message handling",
       "Codex review commands for uncommitted changes, base-branch diffs, and commit review",
+      "Schema-, path-, and identity-validated producer-native terminal receipts without repeated model polling",
       "Codex plugin marketplace visibility, install, removal, and cache-check workflows",
       "Codex MCP server list, get, add, remove, login, logout, stdio, HTTP, bearer-token-env, and OAuth workflows",
       "Codex doctor, debug, feature flag, sandbox denial, app-server, remote-control, and remote connection diagnostics",

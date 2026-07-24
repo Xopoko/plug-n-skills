@@ -1,6 +1,6 @@
 ---
 name: codex-cli
-description: Route Codex CLI work across local CLI inspection, non-interactive exec/review automation, live task and thread supervision, plugin and MCP management, doctor/debug/sandbox/app-server diagnostics, session log forensics, and Codex app local environment actions.
+description: Route Codex CLI work across local CLI inspection, non-interactive exec/review automation, deferred completion without polling, live task and thread supervision, plugin and MCP management, doctor/debug/sandbox/app-server diagnostics, session log forensics, and Codex app local environment actions.
 ---
 
 # Codex CLI Router
@@ -35,6 +35,7 @@ runtime arguments instead.
 ## Routing
 
 - Non-interactive tasks, CI-style runs, JSONL output, output schemas, last-message files, `codex exec resume`, or code review commands: use `codex-exec-automation`.
+- Long-running executables with an existing producer-native atomic JSON terminal receipt that would otherwise require repeated process or remote-status polling: use `codex-deferred-completion`.
 - Installed plugin marketplaces, plugin add/list/remove, local marketplace refresh, MCP server list/get/add/remove/login/logout: use `codex-plugin-mcp-manager`.
 - Installation health, config/auth/runtime issues, feature flags, sandbox denials, debug models, app-server, remote control, or experimental server transports: use `codex-doctor-debugger`.
 - Live Codex task or thread watching by ID, including cursor-based transition waits, completion or attention gates, claims in the actively supervised task, narrowly authorized skill handoffs or evidence corrections, or capability mining from that live watch: use `codex-thread-supervisor`.
