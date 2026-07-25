@@ -1,13 +1,30 @@
 ---
 name: kmp-gradle-doctor
-description: Diagnose and fix Kotlin Multiplatform Gradle, source-set, dependency, Android target, Compose plugin, KGP/AGP, testing, static-analysis, and CI issues.
+description: Diagnose and fix Kotlin Multiplatform Gradle, source-set, dependency, private dependency resolution or consumption failures, Android target, Compose plugin, KGP/AGP, testing, static-analysis, and CI issues.
 ---
 
 # KMP Gradle Doctor
 
 Set `$PLUGIN_ROOT` (`$env:PLUGIN_ROOT` in PowerShell; same path suffix) once: host plugin-root variable when defined (Claude Code: `PLUGIN_ROOT="$CLAUDE_PLUGIN_ROOT"`), else this plugin root's absolute path. Bundled commands use it.
 
-Use for KMP build failures; Gradle DSL changes; plugin version alignment; target declarations; source-set hierarchy; Android-KMP plugin migration; dependency placement; KSP/KAPT; detekt/ktlint; Compose compiler; CI; test task selection.
+Use for KMP build failures; Gradle DSL changes; plugin version alignment; target declarations; source-set hierarchy; Android-KMP plugin migration; dependency placement; private Gradle/Maven dependency resolution or consumption failures; KSP/KAPT; detekt/ktlint; Compose compiler; CI; test task selection.
+
+## Private Dependency Resolution
+
+For a private dependency resolution or consumption failure, do not open
+`gradle.properties` or run the generic inspection flow first. Go directly to
+[`../../references/environment-readiness.md`](../../references/environment-readiness.md)
+and check only credential-binding presence plus allowlisted non-secret settings.
+Use at most one narrow, artifact-consuming wrapper task. Keep cache availability
+separate from effective remote access; an access request, credential binding,
+approval record, offline hit, or `404` alone does not prove access. Never print
+credential values or private endpoints, and do not configure authentication,
+clear shared caches, run `clean`, publish, or retry until relevant code,
+credentials, or external state changes.
+
+Do not use this route for publishing-repository configuration, creating or
+rotating credentials, or broad repository administration. Use the owning
+publishing or security workflow instead.
 
 ## Diagnosis Flow
 
@@ -15,12 +32,14 @@ Use for KMP build failures; Gradle DSL changes; plugin version alignment; target
    - `settings.gradle(.kts)`
    - root/module `build.gradle(.kts)`
    - `gradle/libs.versions.toml`
-   - `gradle.properties`
    - `gradle/wrapper/gradle-wrapper.properties`
 2. Run:
    ```bash
    python3 "$PLUGIN_ROOT/scripts/kmp_inspector.py" --root <project-root>
    ```
+   Inspector report schema v2 exposes only allowlisted Gradle property names
+   and presence; it does not serialize values, arbitrary property names, or
+   local absolute project paths.
 3. Classify modules:
    - KMP library
    - Android app shell

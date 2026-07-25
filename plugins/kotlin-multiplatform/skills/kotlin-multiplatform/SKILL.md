@@ -1,6 +1,6 @@
 ---
 name: kotlin-multiplatform
-description: Route and execute Kotlin Multiplatform tasks across architecture, Gradle diagnosis, Compose Multiplatform UI, Android-KMP migration, iOS interop, CocoaPods or SwiftPM migration, testing, performance, security, CI, publishing, and production readiness.
+description: Route and execute Kotlin Multiplatform tasks across architecture, Gradle and private dependency diagnosis, Compose Multiplatform UI, Android-KMP migration, iOS interop, CocoaPods or SwiftPM migration, testing, performance, security, CI, publishing, and production readiness.
 ---
 
 # Kotlin Multiplatform Router
@@ -11,9 +11,13 @@ Use this skill when the task mentions Kotlin Multiplatform, KMP, KMM, Compose Mu
 
 ## First Move
 
+For a private dependency resolution or consumption failure, skip this generic
+first move and route immediately to `kmp-gradle-doctor` > Private Dependency
+Resolution. Do not open `gradle.properties` or run the inspector first.
+
 For an existing repository, read the local project before answering:
 
-1. Inspect `settings.gradle(.kts)`, root `build.gradle(.kts)`, module build files, `gradle/libs.versions.toml`, `gradle.properties`, and `gradle/wrapper/gradle-wrapper.properties`.
+1. Inspect `settings.gradle(.kts)`, root `build.gradle(.kts)`, module build files, `gradle/libs.versions.toml`, and `gradle/wrapper/gradle-wrapper.properties`.
 2. Run the offline inspector when available:
    ```bash
    python3 "$PLUGIN_ROOT/scripts/kmp_inspector.py" --root <project-root> --json
@@ -23,7 +27,7 @@ For an existing repository, read the local project before answering:
 
 ## Routing
 
-- Build failure, Gradle DSL, source sets, Android target, KGP/AGP/Compose plugin, dependency placement, static analysis, or CI: use `kmp-gradle-doctor`.
+- Build failure, Gradle DSL, source sets, Android target, KGP/AGP/Compose plugin, dependency placement, private dependency resolution or consumption failure, static analysis, or CI: use `kmp-gradle-doctor`.
 - Build governance, convention plugins, build logic, version catalogs, repository policy, module dependency hygiene, library release readiness, ABI, Klibs, or production adoption risk: use `kmp-production-governance`.
 - Production readiness verdicts, readiness scorecards, executive risk summaries, release-blocker triage, or multi-area audits: use `kmp-production-readiness`.
 - Module boundaries, shared logic/shared UI split, domain/data/presentation architecture, source-set hierarchy, library choice, or Swift/Native API boundaries: use `kmp-architecture`.

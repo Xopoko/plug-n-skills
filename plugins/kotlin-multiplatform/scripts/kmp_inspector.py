@@ -17,6 +17,16 @@ from typing import Iterable
 
 BUILD_FILE_NAMES = ("build.gradle.kts", "build.gradle")
 SETTINGS_FILE_NAMES = ("settings.gradle.kts", "settings.gradle")
+REPORT_SCHEMA_VERSION = 2
+INSPECTED_GRADLE_PROPERTY_KEYS = frozenset(
+    {
+        "org.gradle.caching",
+        "org.gradle.configuration-cache",
+        "kotlin.incremental.native",
+        "kotlin.native.binary.gc",
+    }
+)
+INSPECTED_GRADLE_PROPERTY_PREFIXES = ("kotlin.native.binary.gc.",)
 
 
 @dataclass
@@ -50,12 +60,20 @@ class ReadinessArea:
 
 
 @dataclass
+class GradlePropertyInspection:
+    file_present: bool
+    values: dict[str, str]
+
+
+@dataclass
 class ProjectReport:
+    schema_version: int
     root: str
     settings_files: list[str]
     gradle_wrapper_version: str | None
     version_catalog: str | None
-    gradle_properties: dict[str, str]
+    gradle_properties_present: bool
+    gradle_property_keys: list[str]
     catalog_versions: dict[str, str]
     catalog_plugins: dict[str, str]
     modules: list[ModuleReport]
@@ -122,21 +140,25 @@ def parse_version_catalog(root: Path) -> tuple[str | None, dict[str, str], dict[
             match = re.match(r"([A-Za-z0-9_.-]+)\s*=\s*\{[^}]*id\s*=\s*\"([^\"]+)\"", line)
             if match:
                 plugins[match.group(1)] = match.group(2)
-    return str(catalog), versions, plugins
+    return rel(root, catalog), versions, plugins
 
 
-def parse_gradle_properties(root: Path) -> dict[str, str]:
+def parse_gradle_properties(root: Path) -> GradlePropertyInspection:
     path = root / "gradle.properties"
     if not path.is_file():
-        return {}
+        return GradlePropertyInspection(False, {})
     values: dict[str, str] = {}
     for raw_line in read_text(path).splitlines():
         line = raw_line.strip()
         if not line or line.startswith("#") or "=" not in line:
             continue
         key, value = line.split("=", 1)
-        values[key.strip()] = value.strip()
-    return values
+        key = key.strip()
+        if key in INSPECTED_GRADLE_PROPERTY_KEYS or key.startswith(
+            INSPECTED_GRADLE_PROPERTY_PREFIXES
+        ):
+            values[key] = value.strip()
+    return GradlePropertyInspection(True, values)
 
 
 def find_build_files(root: Path) -> list[Path]:
@@ -364,7 +386,12 @@ def diagnose_module(root: Path, build_file: Path, catalog_plugins: dict[str, str
     )
 
 
-def diagnose_project_governance(root: Path, build_files: list[Path], modules: list[ModuleReport], gradle_properties: dict[str, str]) -> list[Diagnostic]:
+def diagnose_project_governance(
+    root: Path,
+    build_files: list[Path],
+    modules: list[ModuleReport],
+    gradle_properties: GradlePropertyInspection,
+) -> list[Diagnostic]:
     diagnostics: list[Diagnostic] = []
     settings_text = "\n".join(read_text(root / name) for name in SETTINGS_FILE_NAMES if (root / name).is_file())
     root_build_text = "\n".join(read_text(root / name) for name in BUILD_FILE_NAMES if (root / name).is_file())
@@ -399,15 +426,15 @@ def diagnose_project_governance(root: Path, build_files: list[Path], modules: li
         if (root / module.build_file).is_file()
     )
     has_compose = any("compose-multiplatform" in module.classification for module in modules)
-    if has_kmp and not gradle_properties:
+    if has_kmp and not gradle_properties.file_present:
         diagnostics.append(Diagnostic("info", "missing_gradle_properties", "No gradle.properties found; verify Gradle/Kotlin/Native performance settings are not only local machine state.", None))
-    if has_kmp and gradle_properties.get("org.gradle.caching") != "true":
-        diagnostics.append(Diagnostic("info", "gradle_build_cache_not_enabled", "org.gradle.caching=true was not detected; verify build cache policy for CI and local KMP builds.", "gradle.properties" if gradle_properties else None))
-    if has_kmp and gradle_properties.get("org.gradle.configuration-cache") != "true":
-        diagnostics.append(Diagnostic("info", "gradle_configuration_cache_not_enabled", "org.gradle.configuration-cache=true was not detected; verify whether the project can use configuration cache.", "gradle.properties" if gradle_properties else None))
-    if has_native and gradle_properties.get("kotlin.incremental.native") != "true":
-        diagnostics.append(Diagnostic("info", "native_incremental_not_enabled", "kotlin.incremental.native=true was not detected for a Native-targeting KMP project.", "gradle.properties" if gradle_properties else None))
-    if has_native and any(value == "noop" for key, value in gradle_properties.items() if key.startswith("kotlin.native.binary.gc")):
+    if has_kmp and gradle_properties.values.get("org.gradle.caching") != "true":
+        diagnostics.append(Diagnostic("info", "gradle_build_cache_not_enabled", "org.gradle.caching=true was not detected; verify build cache policy for CI and local KMP builds.", "gradle.properties" if gradle_properties.file_present else None))
+    if has_kmp and gradle_properties.values.get("org.gradle.configuration-cache") != "true":
+        diagnostics.append(Diagnostic("info", "gradle_configuration_cache_not_enabled", "org.gradle.configuration-cache=true was not detected; verify whether the project can use configuration cache.", "gradle.properties" if gradle_properties.file_present else None))
+    if has_native and gradle_properties.values.get("kotlin.incremental.native") != "true":
+        diagnostics.append(Diagnostic("info", "native_incremental_not_enabled", "kotlin.incremental.native=true was not detected for a Native-targeting KMP project.", "gradle.properties" if gradle_properties.file_present else None))
+    if has_native and any(value == "noop" for key, value in gradle_properties.values.items() if key.startswith("kotlin.native.binary.gc")):
         diagnostics.append(Diagnostic("warning", "native_gc_disabled", "Kotlin/Native GC appears disabled; this can increase memory consumption and should be limited to controlled diagnostics.", "gradle.properties"))
     if has_compose and not any("baselineprofile" in module.plugins or "androidx.baselineprofile" in module.plugins for module in modules):
         diagnostics.append(Diagnostic("info", "baseline_profile_not_detected", "Compose app/performance surface detected without baseline profile plugin evidence; measure release startup before optimizing.", None))
@@ -449,7 +476,7 @@ def score_area(name: str, max_score: int, diagnostics: list[Diagnostic], penalti
 def score_readiness(
     settings: list[str],
     catalog_path: str | None,
-    gradle_properties: dict[str, str],
+    gradle_properties: GradlePropertyInspection,
     modules: list[ModuleReport],
     diagnostics: list[Diagnostic],
 ) -> list[ReadinessArea]:
@@ -464,7 +491,7 @@ def score_readiness(
         evidence_common.append("settings=present")
     if catalog_path:
         evidence_common.append("version_catalog=present")
-    if gradle_properties:
+    if gradle_properties.file_present:
         evidence_common.append("gradle_properties=present")
 
     structure = score_area(
@@ -585,11 +612,17 @@ def inspect_project(root: Path) -> ProjectReport:
     if not modules:
         diagnostics.append(Diagnostic("warning", "no_build_files", "No Gradle build files found.", None))
     return ProjectReport(
-        root=str(root),
+        schema_version=REPORT_SCHEMA_VERSION,
+        root=".",
         settings_files=settings,
         gradle_wrapper_version=parse_wrapper_version(root),
         version_catalog=catalog_path,
-        gradle_properties=gradle_properties,
+        gradle_properties_present=gradle_properties.file_present,
+        gradle_property_keys=sorted(
+            key
+            for key in gradle_properties.values
+            if key in INSPECTED_GRADLE_PROPERTY_KEYS
+        ),
         catalog_versions=catalog_versions,
         catalog_plugins=catalog_plugins,
         modules=modules,
