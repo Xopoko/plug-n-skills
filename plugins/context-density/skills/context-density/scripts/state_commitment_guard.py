@@ -19,6 +19,7 @@ import os
 import re
 import stat
 import sys
+import unicodedata
 from datetime import datetime, timezone
 from pathlib import Path, PurePosixPath
 from typing import Any
@@ -26,6 +27,9 @@ from typing import Any
 STATE_SCHEMA = "context_density.state_commitment.v2"
 VALIDATION_SCHEMA = "context_density.state_commitment_validation.v1"
 ERROR_SCHEMA = "context_density.state_commitment_error.v1"
+UNICODE_DB = unicodedata.ucd_3_2_0
+UNICODE_VERSION = UNICODE_DB.unidata_version
+ASCII_WHITESPACE = " \t\n\r\v\f"
 
 MAX_INPUT_BYTES = 1_048_576
 MAX_COMPANION_BYTES = 1_048_576
@@ -108,6 +112,7 @@ IDENTITY_STATUSES = {"current", "superseded"}
 STOP_STATUSES = {"active", "inactive"}
 INPUT_ERROR_CODES = {
     "array_too_large",
+    "blank_identity_value",
     "blank_source_location",
     "duplicate_companion_path",
     "duplicate_companion_target",
@@ -119,13 +124,16 @@ INPUT_ERROR_CODES = {
     "invalid_enum",
     "invalid_execution_count",
     "invalid_id",
+    "invalid_identity_value_character",
     "invalid_identity_kind",
     "invalid_sha256",
+    "invalid_source_location_character",
     "invalid_state_version",
     "invalid_type",
     "invalid_utc_timestamp",
     "missing_field",
     "nesting_too_deep",
+    "noncanonical_identity_value",
     "object_too_large",
     "string_too_long",
     "unknown_field",
@@ -229,6 +237,20 @@ class BoundedReadProblem(Exception):
 
 def _same_file(left: os.stat_result, right: os.stat_result) -> bool:
     return (left.st_dev, left.st_ino) == (right.st_dev, right.st_ino)
+
+
+def _same_snapshot(left: os.stat_result, right: os.stat_result) -> bool:
+    """Compare identity plus metadata that changes when a regular file mutates."""
+    return (
+        _same_file(left, right)
+        and left.st_mode == right.st_mode
+        and left.st_nlink == right.st_nlink
+        and left.st_uid == right.st_uid
+        and left.st_gid == right.st_gid
+        and left.st_size == right.st_size
+        and left.st_mtime_ns == right.st_mtime_ns
+        and left.st_ctime_ns == right.st_ctime_ns
+    )
 
 
 def _safe_relative_io_supported() -> bool:
@@ -368,7 +390,7 @@ def _read_regular_at(
         opened = os.fstat(descriptor)
         if not stat.S_ISREG(opened.st_mode):
             raise BoundedReadProblem("not_regular")
-        if not _same_file(before, opened):
+        if not _same_snapshot(before, opened):
             raise BoundedReadProblem("changed")
         if opened.st_size > max_bytes:
             raise BoundedReadProblem("too_large")
@@ -384,10 +406,7 @@ def _read_regular_at(
         if len(raw) > max_bytes:
             raise BoundedReadProblem("too_large")
         after_opened = os.fstat(descriptor)
-        if (
-            not _same_file(opened, after_opened)
-            or opened.st_size != after_opened.st_size
-        ):
+        if not _same_snapshot(opened, after_opened):
             raise BoundedReadProblem("changed")
         if after_opened.st_size > max_bytes:
             raise BoundedReadProblem("too_large")
@@ -399,7 +418,7 @@ def _read_regular_at(
             )
         except OSError:
             raise BoundedReadProblem("changed") from None
-        if not _same_file(opened, after) or after_opened.st_size != after.st_size:
+        if not _same_snapshot(after_opened, after):
             raise BoundedReadProblem("changed")
         return raw, opened
     finally:
@@ -426,6 +445,12 @@ def _read_regular_beneath(
 
 
 def _load_input(path_text: str) -> tuple[dict[str, Any], int]:
+    if "\x00" in path_text:
+        raise InputProblem(
+            "input_unsafe_path",
+            "$",
+            "input path must not contain an embedded NUL",
+        )
     path = Path(os.path.abspath(path_text))
     base: int | None = None
     try:
@@ -549,6 +574,26 @@ def _check_bounds(value: Any, path: str, depth: int) -> None:
 
 def _contains_surrogate(value: str) -> bool:
     return any("\ud800" <= character <= "\udfff" for character in value)
+
+
+def _strip_ascii_whitespace(value: str) -> str:
+    return value.strip(ASCII_WHITESPACE)
+
+
+def _contains_disallowed_text_character(value: str) -> bool:
+    for character in value:
+        category = UNICODE_DB.category(character)
+        if category.startswith("C"):
+            return True
+        if category.startswith("Z") and character != " ":
+            return True
+    return False
+
+
+def _has_visible_character(value: str) -> bool:
+    return any(
+        UNICODE_DB.category(character)[0] in {"L", "N", "P", "S"} for character in value
+    )
 
 
 def _schema_object(
@@ -782,15 +827,36 @@ def _validate_source_refs(
         origin_id = _identifier(ref.get("origin_id"), f"{path}.origin_id", errors)
         kind = _enum(ref.get("kind"), SOURCE_KINDS, f"{path}.kind", errors)
         location = _string(ref.get("location"), f"{path}.location", errors)
-        if location is not None and not location.strip():
-            _add(
-                errors,
-                "blank_source_location",
-                f"{path}.location",
-                "source location must contain non-whitespace text",
-            )
-        if location is not None and location.strip() and origin_id is not None:
-            location_key = location.strip()
+        location_valid = location is not None
+        if location is not None:
+            trimmed_location = _strip_ascii_whitespace(location)
+            if not trimmed_location:
+                _add(
+                    errors,
+                    "blank_source_location",
+                    f"{path}.location",
+                    "source location must contain visible text",
+                )
+                location_valid = False
+            elif _contains_disallowed_text_character(location):
+                _add(
+                    errors,
+                    "invalid_source_location_character",
+                    f"{path}.location",
+                    "source location must not contain control, format, surrogate, "
+                    "private-use, unassigned, or non-ASCII separator characters",
+                )
+                location_valid = False
+            elif not _has_visible_character(location):
+                _add(
+                    errors,
+                    "blank_source_location",
+                    f"{path}.location",
+                    "source location must contain visible text",
+                )
+                location_valid = False
+        if location_valid and location is not None and origin_id is not None:
+            location_key = _strip_ascii_whitespace(location)
             prior_origin = location_origins.get(location_key)
             if prior_origin is not None and prior_origin != origin_id:
                 _add(
@@ -839,6 +905,41 @@ def _validate_identity(
             "must be a portable lower-case kind",
         )
     value = _string(identity.get("value"), f"{path}.value", errors)
+    if value is not None:
+        trimmed_value = _strip_ascii_whitespace(value)
+        if not trimmed_value:
+            _add(
+                errors,
+                "blank_identity_value",
+                f"{path}.value",
+                "identity value must contain visible text",
+            )
+            value = None
+        elif _contains_disallowed_text_character(value):
+            _add(
+                errors,
+                "invalid_identity_value_character",
+                f"{path}.value",
+                "identity value must not contain control, format, surrogate, "
+                "private-use, unassigned, or non-ASCII separator characters",
+            )
+            value = None
+        elif not _has_visible_character(value):
+            _add(
+                errors,
+                "blank_identity_value",
+                f"{path}.value",
+                "identity value must contain visible text",
+            )
+            value = None
+        elif value != trimmed_value:
+            _add(
+                errors,
+                "noncanonical_identity_value",
+                f"{path}.value",
+                "identity value must not have outer whitespace",
+            )
+            value = None
     status_value = _enum(
         identity.get("status"), IDENTITY_STATUSES, f"{path}.status", errors
     )
@@ -1153,6 +1254,7 @@ def _validate_entities(
 ) -> tuple[dict[str, dict[str, Any]], list[dict[str, Any]]]:
     entities: dict[str, dict[str, Any]] = {}
     ordered: list[dict[str, Any]] = []
+    current_identity_owners: dict[tuple[str, str], str] = {}
     for entity_index, raw in enumerate(
         _array(raw_entities, "$.entities", errors, nonempty=True)
     ):
@@ -1202,7 +1304,7 @@ def _validate_entities(
                 "must equal the identities whose status is current",
             )
         current_kinds: dict[str, str] = {}
-        for identity_id in current_ids:
+        for current_index, identity_id in enumerate(current_ids):
             identity = by_id.get(identity_id)
             if identity is None:
                 _add(
@@ -1222,6 +1324,22 @@ def _validate_entities(
                 )
             elif kind is not None:
                 current_kinds[kind] = identity_id
+            value = identity["value"]
+            if kind is not None and value is not None:
+                identity_key = (kind, value)
+                prior_path = current_identity_owners.get(identity_key)
+                if prior_path is not None:
+                    _add(
+                        errors,
+                        "duplicate_current_identity",
+                        f"{path}.current_identity_ids[{current_index}]",
+                        "current (kind, value) pair already belongs to "
+                        f"{prior_path}",
+                    )
+                else:
+                    current_identity_owners[identity_key] = (
+                        f"{path}.current_identity_ids[{current_index}]"
+                    )
 
         for identity_index, identity in enumerate(identities):
             identity_path = f"{path}.identities[{identity_index}]"
@@ -1437,6 +1555,12 @@ def _safe_companion_parts(path_text: str, path: str) -> tuple[str, ...]:
             "unsafe_companion_path",
             path,
             "companion path must use portable forward slashes",
+        )
+    if _contains_disallowed_text_character(path_text):
+        raise InputProblem(
+            "unsafe_companion_path",
+            path,
+            "companion path contains a disallowed or non-portable character",
         )
     relative = PurePosixPath(path_text)
     if relative.is_absolute() or not relative.parts:
@@ -1823,7 +1947,7 @@ def main(argv: list[str] | None = None) -> int:
     except InputProblem as problem:
         payload = _error_payload(problem)
         exit_code = 1
-    except (OSError, RecursionError):
+    except (OSError, RecursionError, ValueError):
         payload = _error_payload(
             InputProblem("input_error", "$", "input validation could not complete")
         )

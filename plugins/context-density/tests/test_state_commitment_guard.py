@@ -391,6 +391,56 @@ class IdentityAndEvidenceTests(BundleCase):
         )
         self.assert_error_code(bundle, "current_identity_mismatch")
 
+    def test_current_identity_pair_cannot_span_entities(self):
+        bundle = valid_bundle()
+        clone = copy.deepcopy(bundle["entities"][0])
+        clone["id"] = "entity.clone"
+        identity_ids = {}
+        for item in clone["identities"]:
+            original_id = item["id"]
+            cloned_id = f"{original_id}.clone"
+            identity_ids[original_id] = cloned_id
+            item["id"] = cloned_id
+        for item in clone["identities"]:
+            if item["superseded_by"] is not None:
+                item["superseded_by"] = identity_ids[item["superseded_by"]]
+        clone["current_identity_ids"] = [
+            identity_ids[item] for item in clone["current_identity_ids"]
+        ]
+        clone["source_review"]["identity_ids"] = [
+            identity_ids[item] for item in clone["source_review"]["identity_ids"]
+        ]
+        clone["executable_proof"]["identity_ids"] = [
+            identity_ids[item] for item in clone["executable_proof"]["identity_ids"]
+        ]
+        next(
+            item
+            for item in clone["identities"]
+            if item["kind"] == "revision" and item["status"] == "current"
+        )["value"] = "def456"
+        bundle["entities"].append(clone)
+
+        payload = self.assert_error_code(bundle, "duplicate_current_identity")
+        for entity in payload["entities"]:
+            self.assertFalse(entity["has_effective_authority"])
+            self.assertEqual(entity["effective_actions"], [])
+
+    def test_identity_values_must_be_visible_and_canonical(self):
+        for value, code in [
+            ("   ", "blank_identity_value"),
+            ("\x00", "invalid_identity_value_character"),
+            ("\u200b", "invalid_identity_value_character"),
+            ("\u00a0", "invalid_identity_value_character"),
+            ("\ue000", "invalid_identity_value_character"),
+            ("\u0378", "invalid_identity_value_character"),
+            ("\U00011f02", "invalid_identity_value_character"),
+            (" work-item-7", "noncanonical_identity_value"),
+            ("work-item-7 ", "noncanonical_identity_value"),
+        ]:
+            bundle = valid_bundle()
+            bundle["entities"][0]["identities"][1]["value"] = value
+            self.assert_error_code(bundle, code, expected_exit=1)
+
     def test_superseded_identity_must_target_current_same_kind(self):
         bundle = valid_bundle()
         bundle["entities"][0]["identities"][0]["superseded_by"] = (
@@ -501,10 +551,36 @@ class IdentityAndEvidenceTests(BundleCase):
         )
         self.assertNotIn("entities", payload)
 
+    def test_source_location_rejects_invisible_characters(self):
+        for value in [
+            "\x00",
+            "\u200b",
+            "\u00a0",
+            "\ue000",
+            "\u0378",
+            "\U00011f02",
+            "evidence/\u200bauthority.json",
+        ]:
+            bundle = valid_bundle()
+            authority_ref = next(
+                ref for ref in bundle["source_refs"] if ref["id"] == "ref.authority.one"
+            )
+            authority_ref["location"] = value
+            payload = self.assert_error_code(
+                bundle,
+                "invalid_source_location_character",
+                expected_exit=1,
+            )
+            self.assertNotIn("entities", payload)
+
     def test_cutoff_is_strict_utc(self):
         bundle = valid_bundle()
         bundle["cutoff_utc"] = "2026-07-24T12:30:00+02:00"
         self.assert_error_code(bundle, "invalid_utc_timestamp", expected_exit=1)
+
+    def test_unicode_classification_uses_frozen_database(self):
+        self.assertEqual(guard.UNICODE_VERSION, "3.2.0")
+        self.assertEqual(guard.UNICODE_DB.category("\U00011f02"), "Cn")
 
 
 class ReviewProofAuthorityStopTests(BundleCase):
@@ -620,6 +696,7 @@ class CompanionTests(BundleCase):
             "./summary.md",
             "nested//summary.md",
             "summary.txt",
+            "bad\x00.md",
         ]:
             bundle = self.materialize()
             bundle["companions"][0]["path"] = unsafe
@@ -729,6 +806,41 @@ class CompanionTests(BundleCase):
         self.assertEqual(exit_code, 0, payload)
         self.assertTrue(payload["valid"])
 
+    def test_same_size_companion_mutation_during_read_is_rejected(self):
+        self.materialize(names=["summary.md"])
+        target = self.root / "summary.md"
+        original = target.read_bytes()
+        changed = b"!" + original[1:]
+        self.assertNotEqual(changed, original)
+        inode = target.stat().st_ino
+        real_read = os.read
+        mutated = False
+
+        def racing_read(descriptor, count):
+            nonlocal mutated
+            chunk = real_read(descriptor, count)
+            if chunk and os.fstat(descriptor).st_ino == inode and not mutated:
+                prior = target.stat()
+                target.write_bytes(changed)
+                os.utime(
+                    target,
+                    ns=(prior.st_atime_ns, prior.st_mtime_ns + 1_000_000_000),
+                )
+                mutated = True
+            return chunk
+
+        stdout = io.StringIO()
+        with (
+            patch.object(guard.os, "read", side_effect=racing_read),
+            redirect_stdout(stdout),
+        ):
+            exit_code = guard.main(["validate", "--input", str(self.input)])
+        payload = json.loads(stdout.getvalue())
+        self.assertTrue(mutated)
+        self.assertEqual(len(changed), len(original))
+        self.assertEqual(exit_code, 1, payload)
+        self.assertEqual(payload["error"]["code"], "unsafe_companion_changed")
+
     def test_missing_safe_relative_io_primitives_fail_closed(self):
         self.materialize()
         stdout = io.StringIO()
@@ -805,6 +917,40 @@ class MalformedInputTests(BundleCase):
         self.assertEqual(exit_code, 1, payload)
         self.assertEqual(payload["error"]["code"], "input_unsafe_path")
 
+    def test_same_size_input_mutation_during_read_is_rejected(self):
+        self.materialize(names=["summary.md"])
+        original = self.input.read_bytes()
+        changed = original.replace(b'"state_version": 3', b'"state_version": 4', 1)
+        self.assertNotEqual(changed, original)
+        inode = self.input.stat().st_ino
+        real_read = os.read
+        mutated = False
+
+        def racing_read(descriptor, count):
+            nonlocal mutated
+            chunk = real_read(descriptor, count)
+            if chunk and os.fstat(descriptor).st_ino == inode and not mutated:
+                prior = self.input.stat()
+                self.input.write_bytes(changed)
+                os.utime(
+                    self.input,
+                    ns=(prior.st_atime_ns, prior.st_mtime_ns + 1_000_000_000),
+                )
+                mutated = True
+            return chunk
+
+        stdout = io.StringIO()
+        with (
+            patch.object(guard.os, "read", side_effect=racing_read),
+            redirect_stdout(stdout),
+        ):
+            exit_code = guard.main(["validate", "--input", str(self.input)])
+        payload = json.loads(stdout.getvalue())
+        self.assertTrue(mutated)
+        self.assertEqual(len(changed), len(original))
+        self.assertEqual(exit_code, 1, payload)
+        self.assertEqual(payload["error"]["code"], "input_changed")
+
     def test_duplicate_keys_are_exit_one_json_error(self):
         self.input.write_text('{"schema":"a","schema":"b"}', encoding="utf-8")
         exit_code, _, payload = self.run_cli()
@@ -860,6 +1006,15 @@ class MalformedInputTests(BundleCase):
         self.assertEqual(exit_code, 1)
         self.assertEqual(payload["schema"], guard.ERROR_SCHEMA)
         self.assertEqual(payload["error"]["code"], "invalid_arguments")
+
+    def test_embedded_nul_input_path_is_json_error(self):
+        stdout = io.StringIO()
+        with redirect_stdout(stdout):
+            exit_code = guard.main(["validate", "--input", "bad\x00.json"])
+        payload = json.loads(stdout.getvalue())
+        self.assertEqual(exit_code, 1, payload)
+        self.assertEqual(payload["schema"], guard.ERROR_SCHEMA)
+        self.assertEqual(payload["error"]["code"], "input_unsafe_path")
 
 
 if __name__ == "__main__":

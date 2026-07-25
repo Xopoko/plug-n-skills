@@ -113,6 +113,13 @@ Status-dependent cardinality:
 
 - Every identity kind in an entity has exactly one `current` identity.
   `current_identity_ids` must equal the set marked current.
+- One current `(kind, value)` pair belongs to exactly one entity. Combine
+  aliases and shared state in that entity; use an entity-scoped identity kind
+  when a contextual value such as a revision may legitimately repeat.
+- Identity values have canonical ASCII outer whitespace, contain at least one
+  visible letter, number, punctuation mark, or symbol, and contain no Unicode
+  control, format, surrogate, private-use, unassigned, or non-ASCII separator
+  character.
 - A current identity has `superseded_by: null`. A superseded identity points to
   a current identity of the same kind.
 - Review and proof bindings reference only current identities in their entity.
@@ -122,14 +129,19 @@ Status-dependent cardinality:
 - Identity, review, proof, authority, confidence, conflict, and stop evidence
   may reference only matching source kinds. Every referenced source exists and
   was observed no later than `cutoff_utc`.
+- Source locations contain visible text and no Unicode control, format,
+  surrogate, private-use, unassigned, or non-ASCII separator character.
+- Those Unicode-category checks use the frozen Unicode 3.2 database exposed by
+  Python as `unicodedata.ucd_3_2_0`; code points unassigned there reject even
+  when a newer host Unicode database assigns them.
 - `origin_id` is a portable, producer-attested identifier shared by
   role-specific source refs declared to derive from the same underlying
   artifact, execution, review event, or evidence-producing source. It is
   intentionally reusable across refs, unlike globally unique record `id`.
   Declared review and executable-proof origins for one entity must be disjoint.
   One location cannot declare multiple origins when its strings are equal after
-  outer whitespace is trimmed; comparison remains case-sensitive and performs
-  no URI, filesystem, or service-specific alias resolution.
+  ASCII outer whitespace is trimmed; comparison remains case-sensitive and
+  performs no URI, filesystem, or service-specific alias resolution.
 - `passed` and `failed` proof have a positive `execution_count`; `not_run` has
   zero. A passed proof has current identity bindings and proof evidence.
 - `read_only` and `unknown` authority carry no actions. `scoped_write` carries
@@ -156,6 +168,9 @@ The guard lexically normalizes the input to an absolute path, opens every
 parent component without following symlinks, and pins the sidecar's parent
 directory while reading the input. It then opens every companion directory and
 leaf relative to that descriptor and never reopens a multi-component pathname.
+For every regular-file read it compares identity, size, mode, ownership, link
+count, modification time, and change time before and after the read, so an
+observed same-size in-place mutation also fails closed.
 The input path must therefore use its canonical, symlink-free host spelling;
 resolve trusted host aliases before invocation. Platforms without
 descriptor-relative no-follow traversal reject with exit `1` instead of using
@@ -163,7 +178,8 @@ a pathname fallback.
 
 Every companion:
 
-1. is a unique, safe relative `.md` path below the sidecar directory;
+1. is a unique, safe relative `.md` path below the sidecar directory, with no
+   embedded NUL, frozen-Unicode `C*`, or non-ASCII separator character;
 2. resolves to a bounded regular file without traversal or symlink escape;
 3. matches the exact SHA-256 of its file bytes; and
 4. contains exactly one marker with the core digest:
@@ -181,10 +197,16 @@ Pin this value when a consumer must detect companion addition, removal,
 or path/hash substitution independently of the sidecar location. Manifest order
 does not change this seal.
 
-The marker and byte hash prove that the reviewed snapshot did not drift. They
-do not prove that prose was initially mapped to typed state correctly. Review
-that mapping once before sealing the bundle; re-seal after any semantic or
-companion edit.
+The marker and byte hash prove that the exact bytes read by one successful
+validation match the hashes and core digest declared by that bundle.
+Equivalence to a previously reviewed snapshot additionally requires an
+independently pinned seal or immutable storage. Validation is not a filesystem
+lock: a later writer can still change a file after the guarded read completes,
+and immediate revalidation only narrows that window. A strict action-time
+consumer must use immutable storage or consume the validated bytes or
+descriptors within the same trusted operation. The seal also does not prove
+that prose was initially mapped to typed state correctly. Review that mapping
+once before sealing the bundle; re-seal after any semantic or companion edit.
 
 ## Deliberate Boundaries
 
@@ -197,6 +219,11 @@ The guard cannot independently establish that two different `origin_id` or
 `location` spellings refer to different real sources. Producers must assign
 canonical origins honestly; consumers that require external provenance proof
 must verify it before sealing.
+
+Current identity ownership is compared by exact, case-sensitive `(kind, value)`
+pairs. The guard cannot infer that different spellings or kinds are real-world
+aliases. Producers must assign canonical, entity-scoped identities; consumers
+that require external identity proof must verify it before sealing.
 
 The guard does not compare a prior `state_version`, enforce a maximum snapshot
 age, or re-fetch source locations. Monotonicity and live freshness are consumer
