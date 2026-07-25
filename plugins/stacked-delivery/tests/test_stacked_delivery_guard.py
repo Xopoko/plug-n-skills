@@ -32,6 +32,7 @@ OTHER = "e" * 40
 LAND_1 = "1" * 40
 LAND_2 = "2" * 40
 LAND_3 = "3" * 40
+EVIDENCE_HASH = "4" * 64
 
 
 def proof(index, node_head, dependency_head, **overrides):
@@ -69,7 +70,7 @@ def node(index, head, parent, target, dependency, **overrides):
 
 def snapshot(mode="sequential"):
     return {
-        "schema": guard.SNAPSHOT_SCHEMA,
+        "schema": guard.SNAPSHOT_SCHEMA_V1,
         "repository_id": "repository-1",
         "forge_adapter": "generic-v1",
         "stack_id": "stack-1",
@@ -81,6 +82,38 @@ def snapshot(mode="sequential"):
             node(3, HEAD_3, "node-2", "stack/change-2", HEAD_2),
         ],
     }
+
+
+def add_metadata_inventory(value, records=None):
+    value["schema"] = guard.SNAPSHOT_SCHEMA_V2
+    composition_digest = guard.snapshot_composition_digest(value)
+    if records is None:
+        records = [
+            {
+                "record_id": f"record-{index}",
+                "kind": kind,
+                "evidence_id": f"evidence-{index}",
+                "evidence_hash": EVIDENCE_HASH,
+                "binding": {"composition_digest": composition_digest},
+            }
+            for index, kind in enumerate(sorted(guard.METADATA_RECORD_KINDS), 1)
+        ]
+    inventory = {
+        "audit_id": "metadata-audit-1",
+        "audit_digest": EVIDENCE_HASH,
+        "audited_kinds": sorted(guard.METADATA_RECORD_KINDS),
+        "complete": True,
+        "composition_digest": composition_digest,
+        "evidence_id": "metadata-audit-evidence-1",
+        "records": records,
+    }
+    inventory["audit_digest"] = guard.metadata_audit_digest(inventory)
+    value["metadata_inventory"] = inventory
+    return value
+
+
+def current_snapshot(mode="sequential"):
+    return add_metadata_inventory(snapshot(mode))
 
 
 def landed_snapshot():
@@ -117,10 +150,13 @@ def all_landed_snapshot(mode="sequential"):
 
 def handoff(value=None, receiver="receiver-1"):
     value = copy.deepcopy(value or snapshot())
-    return {
+    if "metadata_inventory" not in value:
+        add_metadata_inventory(value)
+    receipt = {
         "schema": guard.HANDOFF_SCHEMA,
         "receiver_id": receiver,
         "snapshot_digest": guard.stable_digest(value),
+        "metadata_inventory_digest": guard.metadata_inventory_digest(value),
         "snapshot": value,
         "bindings": [
             {
@@ -135,6 +171,7 @@ def handoff(value=None, receiver="receiver-1"):
             for item in value["nodes"]
         ],
     }
+    return receipt
 
 
 def codes(result):
@@ -391,6 +428,176 @@ class ProofTests(unittest.TestCase):
         self.assertEqual(validate(value)["status"], "pass")
 
 
+class MetadataInventoryTests(unittest.TestCase):
+    def test_v1_rejects_v2_inventory_field(self):
+        value = snapshot()
+        value["metadata_inventory"] = {}
+        with self.assertRaises(guard.InputError):
+            guard.parse_snapshot(value)
+
+    def test_v2_requires_inventory_field(self):
+        value = snapshot()
+        value["schema"] = guard.SNAPSHOT_SCHEMA_V2
+        with self.assertRaises(guard.InputError):
+            guard.parse_snapshot(value)
+
+    def test_exact_v1_snapshot_remains_structurally_valid_but_cannot_land(self):
+        value = snapshot()
+        parsed, validation = guard.validate_snapshot_data(value)
+        self.assertEqual(validation["status"], "pass")
+        self.assertEqual(validation["schema"], guard.VALIDATION_SCHEMA_V1)
+        self.assertEqual(parsed, value)
+        self.assertEqual(validation["snapshot_digest"], guard.stable_digest(value))
+        self.assertEqual(
+            set(validation),
+            {
+                "schema",
+                "status",
+                "snapshot_digest",
+                "repository_id",
+                "forge_adapter",
+                "stack_id",
+                "node_count",
+                "proof_count",
+                "violations",
+            },
+        )
+
+        _, result = guard.next_action_data(value)
+        self.assertEqual(result["status"], "blocked")
+        self.assertEqual(result["schema"], guard.NEXT_ACTION_SCHEMA_V1)
+        self.assertEqual(
+            set(result),
+            {
+                "schema",
+                "repository_id",
+                "forge_adapter",
+                "stack_id",
+                "forge_mode",
+                "snapshot_digest",
+                "status",
+                "action",
+                "nodes",
+                "reasons",
+                "violations",
+            },
+        )
+        self.assertEqual(
+            result["reasons"],
+            ["legacy_snapshot_requires_v2_metadata"],
+        )
+        self.assertIn("legacy_snapshot_metadata_gate", codes(result))
+
+    def test_complete_current_inventory_allows_next_action(self):
+        value = current_snapshot()
+        validation = validate(value)
+        self.assertEqual(validation["schema"], guard.VALIDATION_SCHEMA_V2)
+        self.assertEqual(validation["metadata"]["status"], "metadata-current")
+        _, result = guard.next_action_data(value)
+        self.assertEqual(result["status"], "ready")
+        self.assertEqual(result["schema"], guard.NEXT_ACTION_SCHEMA_V2)
+        self.assertEqual(result["metadata"]["status"], "metadata-current")
+        self.assertEqual(
+            {record["kind"] for record in result["metadata"]["records"]},
+            guard.METADATA_RECORD_KINDS,
+        )
+
+    def test_incomplete_inventory_fails_closed(self):
+        value = current_snapshot()
+        inventory = value["metadata_inventory"]
+        inventory["complete"] = False
+        inventory["audit_digest"] = guard.metadata_audit_digest(inventory)
+        _, result = guard.next_action_data(value)
+        self.assertEqual(result["metadata"]["status"], "metadata-unverified")
+        self.assertIn("metadata_inventory_incomplete", codes(result))
+
+    def test_incomplete_surface_coverage_fails_closed(self):
+        value = current_snapshot()
+        inventory = value["metadata_inventory"]
+        inventory["audited_kinds"].remove("status-summary")
+        inventory["audit_digest"] = guard.metadata_audit_digest(inventory)
+        _, result = guard.next_action_data(value)
+        self.assertEqual(result["metadata"]["status"], "metadata-unverified")
+        self.assertIn(
+            "metadata_inventory_surface_coverage_incomplete",
+            codes(result),
+        )
+
+    def test_unverified_audit_dominates_stale_binding(self):
+        value = current_snapshot()
+        inventory = value["metadata_inventory"]
+        inventory["complete"] = False
+        inventory["records"][0]["binding"]["composition_digest"] = "5" * 64
+        inventory["audit_digest"] = guard.metadata_audit_digest(inventory)
+        _, result = guard.next_action_data(value)
+        self.assertEqual(result["metadata"]["status"], "metadata-unverified")
+        self.assertEqual(
+            result["metadata"]["blocking_statuses"],
+            ["metadata-unverified", "metadata-stale"],
+        )
+        self.assertIn("metadata_inventory_incomplete", codes(result))
+        self.assertIn("metadata_record_stale", codes(result))
+
+    def test_metadata_records_require_canonical_kind_and_identity_order(self):
+        value = current_snapshot()
+        inventory = value["metadata_inventory"]
+        inventory["records"].reverse()
+        inventory["audit_digest"] = guard.metadata_audit_digest(inventory)
+        _, result = guard.next_action_data(value)
+        self.assertEqual(result["metadata"]["status"], "metadata-unverified")
+        self.assertIn("metadata_records_not_canonical_order", codes(result))
+
+    def test_unbound_record_is_metadata_unverified(self):
+        value = current_snapshot()
+        inventory = value["metadata_inventory"]
+        inventory["records"][0]["binding"] = None
+        inventory["audit_digest"] = guard.metadata_audit_digest(inventory)
+        _, result = guard.next_action_data(value)
+        self.assertEqual(result["metadata"]["status"], "metadata-unverified")
+        self.assertIn("metadata_record_unverified", codes(result))
+
+    def test_old_record_binding_is_metadata_stale(self):
+        value = current_snapshot()
+        inventory = value["metadata_inventory"]
+        inventory["records"][0]["binding"]["composition_digest"] = "5" * 64
+        inventory["audit_digest"] = guard.metadata_audit_digest(inventory)
+        _, result = guard.next_action_data(value)
+        self.assertEqual(result["metadata"]["status"], "metadata-stale")
+        self.assertIn("metadata_record_stale", codes(result))
+
+    def test_old_inventory_composition_is_metadata_stale(self):
+        value = current_snapshot()
+        inventory = value["metadata_inventory"]
+        inventory["composition_digest"] = "5" * 64
+        inventory["audit_digest"] = guard.metadata_audit_digest(inventory)
+        _, result = guard.next_action_data(value)
+        self.assertEqual(result["metadata"]["status"], "metadata-stale")
+        self.assertIn("metadata_inventory_composition_stale", codes(result))
+
+    def test_inventory_audit_digest_binds_the_exact_record_list(self):
+        value = current_snapshot()
+        value["metadata_inventory"]["records"][0]["evidence_id"] = "readback-new"
+        _, result = guard.next_action_data(value)
+        self.assertEqual(result["metadata"]["status"], "metadata-unverified")
+        self.assertIn("metadata_inventory_audit_digest_mismatch", codes(result))
+
+    def test_duplicate_record_identity_fails_closed(self):
+        value = current_snapshot()
+        inventory = value["metadata_inventory"]
+        inventory["records"][1]["record_id"] = inventory["records"][0]["record_id"]
+        inventory["audit_digest"] = guard.metadata_audit_digest(inventory)
+        _, result = guard.next_action_data(value)
+        self.assertIn("duplicate_metadata_record_id", codes(result))
+
+    def test_unknown_metadata_field_is_rejected(self):
+        value = current_snapshot()
+        value["metadata_inventory"]["records"][0]["claimed_status"] = (
+            "metadata-current"
+        )
+        with self.assertRaises(guard.InputError):
+            guard.parse_snapshot(value)
+
+
 class StateAndActionTests(unittest.TestCase):
     def test_out_of_order_landing_fails(self):
         value = snapshot()
@@ -432,37 +639,40 @@ class StateAndActionTests(unittest.TestCase):
         self.assertEqual(validate(landed_snapshot())["status"], "pass")
 
     def test_sequential_returns_only_lowest_unlanded_node(self):
-        _, result = guard.next_action_data(snapshot())
+        _, result = guard.next_action_data(current_snapshot())
         self.assertEqual(result["status"], "ready")
+        self.assertEqual(result["metadata"]["status"], "metadata-current")
         self.assertEqual([item["node_id"] for item in result["nodes"]], ["node-1"])
         self.assertEqual(result["nodes"][0]["expected_parent_head_sha"], BASE)
 
     def test_atomic_prefix_returns_contiguous_proven_prefix(self):
-        _, result = guard.next_action_data(snapshot("atomic-prefix"))
+        _, result = guard.next_action_data(current_snapshot("atomic-prefix"))
         self.assertEqual(
             [item["node_id"] for item in result["nodes"]],
             ["node-1", "node-2", "node-3"],
         )
 
     def test_atomic_prefix_stops_at_first_missing_proof(self):
-        value = snapshot("atomic-prefix")
+        value = current_snapshot("atomic-prefix")
         value["nodes"][1]["proofs"] = []
+        add_metadata_inventory(value)
         _, result = guard.next_action_data(value)
         self.assertEqual([item["node_id"] for item in result["nodes"]], ["node-1"])
 
     def test_atomic_prefix_never_skips_unproven_bottom(self):
-        value = snapshot("atomic-prefix")
+        value = current_snapshot("atomic-prefix")
         value["nodes"][0]["proofs"] = []
+        add_metadata_inventory(value)
         _, result = guard.next_action_data(value)
         self.assertEqual(result["status"], "blocked")
         self.assertEqual(result["nodes"], [])
 
     def test_next_action_after_landing_is_retargeted_node(self):
-        _, result = guard.next_action_data(landed_snapshot())
+        _, result = guard.next_action_data(add_metadata_inventory(landed_snapshot()))
         self.assertEqual(result["nodes"][0]["node_id"], "node-2")
 
     def test_all_landed_is_complete(self):
-        value = all_landed_snapshot()
+        value = add_metadata_inventory(all_landed_snapshot())
         _, result = guard.next_action_data(value)
         self.assertEqual(result["status"], "complete")
         self.assertEqual(result["nodes"], [])
@@ -486,7 +696,79 @@ class CompareTests(unittest.TestCase):
     def test_identical_snapshots_pass(self):
         _, _, result = guard.compare_snapshot_data(snapshot(), snapshot())
         self.assertEqual(result["status"], "pass")
+        self.assertEqual(result["schema"], guard.COMPARE_SCHEMA_V1)
+        self.assertEqual(
+            set(result),
+            {
+                "schema",
+                "status",
+                "repository_id",
+                "forge_adapter",
+                "stack_id",
+                "before_digest",
+                "after_digest",
+                "topology_changes",
+                "branch_drift",
+                "head_drift",
+                "changed_ancestors",
+                "invalidated_descendants",
+                "state_changes",
+                "proof_changes",
+                "violations",
+            },
+        )
         self.assertEqual(result["invalidated_descendants"], [])
+
+    def test_identical_v2_snapshots_bind_equal_metadata_inventory(self):
+        _, _, result = guard.compare_snapshot_data(
+            current_snapshot(),
+            current_snapshot(),
+        )
+        self.assertEqual(result["status"], "pass")
+        self.assertEqual(result["schema"], guard.COMPARE_SCHEMA_V2)
+        self.assertEqual(result["metadata_changes"], [])
+        self.assertEqual(
+            result["before_metadata_inventory_digest"],
+            result["after_metadata_inventory_digest"],
+        )
+
+    def test_v2_metadata_inventory_drift_fails_comparison_without_erasing_proof(self):
+        before = current_snapshot()
+        after = current_snapshot()
+        inventory = after["metadata_inventory"]
+        inventory["records"][0]["evidence_id"] = "evidence-refresh"
+        inventory["audit_digest"] = guard.metadata_audit_digest(inventory)
+        _, _, result = guard.compare_snapshot_data(before, after)
+        self.assertEqual(result["status"], "fail")
+        self.assertEqual(result["schema"], guard.COMPARE_SCHEMA_V2)
+        self.assertEqual(
+            result["metadata_changes"][0]["field"],
+            "metadata_inventory_digest",
+        )
+        self.assertNotEqual(
+            result["before_metadata_inventory_digest"],
+            result["after_metadata_inventory_digest"],
+        )
+        self.assertEqual(result["invalidated_descendants"], [])
+        self.assertEqual(result["proof_changes"], [])
+
+    def test_schema_upgrade_is_explicit_comparison_drift(self):
+        _, _, result = guard.compare_snapshot_data(snapshot(), current_snapshot())
+        self.assertEqual(result["status"], "fail")
+        self.assertEqual(result["schema"], guard.COMPARE_SCHEMA_V2)
+        self.assertEqual(result["topology_changes"][0]["field"], "schema")
+        self.assertEqual(
+            result["metadata_changes"][0]["field"],
+            "metadata_inventory_digest",
+        )
+        self.assertEqual(
+            result["topology_changes"][0]["before"],
+            guard.SNAPSHOT_SCHEMA_V1,
+        )
+        self.assertEqual(
+            result["topology_changes"][0]["after"],
+            guard.SNAPSHOT_SCHEMA_V2,
+        )
 
     def test_ancestor_head_drift_invalidates_every_descendant(self):
         before = snapshot()
@@ -609,7 +891,102 @@ class HandoffTests(unittest.TestCase):
         value = handoff()
         _, result = guard.validate_handoff_data(value)
         self.assertEqual(result["status"], "pass")
+        self.assertEqual(result["schema"], guard.HANDOFF_VALIDATION_SCHEMA_V2)
         self.assertEqual(result["handoff_digest"], guard.stable_digest(value))
+        self.assertEqual(result["metadata"]["status"], "metadata-current")
+
+    def test_exact_v1_handoff_remains_parseable_but_fails_closed(self):
+        value = handoff()
+        value["schema"] = guard.HANDOFF_SCHEMA_V1
+        del value["metadata_inventory_digest"]
+        value["snapshot"]["schema"] = guard.SNAPSHOT_SCHEMA_V1
+        del value["snapshot"]["metadata_inventory"]
+        value["snapshot_digest"] = guard.stable_digest(value["snapshot"])
+        parsed, result = guard.validate_handoff_data(value)
+        self.assertNotIn("metadata_inventory_digest", parsed)
+        self.assertEqual(result["status"], "fail")
+        self.assertEqual(result["schema"], guard.HANDOFF_VALIDATION_SCHEMA_V1)
+        self.assertEqual(
+            set(result),
+            {
+                "schema",
+                "status",
+                "repository_id",
+                "forge_adapter",
+                "stack_id",
+                "receiver_id",
+                "snapshot_digest",
+                "handoff_digest",
+                "node_count",
+                "violations",
+            },
+        )
+        self.assertIn("legacy_snapshot_metadata_gate", codes(result))
+        self.assertIn("legacy_handoff_metadata_gate", codes(result))
+
+    def test_v1_handoff_rejects_v2_inventory_digest_field(self):
+        value = handoff()
+        value["schema"] = guard.HANDOFF_SCHEMA_V1
+        value["snapshot"]["schema"] = guard.SNAPSHOT_SCHEMA_V1
+        del value["snapshot"]["metadata_inventory"]
+        value["snapshot_digest"] = guard.stable_digest(value["snapshot"])
+        with self.assertRaises(guard.InputError):
+            guard.parse_handoff(value)
+
+    def test_v2_handoff_requires_inventory_digest_field(self):
+        value = handoff()
+        del value["metadata_inventory_digest"]
+        with self.assertRaises(guard.InputError):
+            guard.parse_handoff(value)
+
+    def test_handoff_and_snapshot_versions_must_match(self):
+        value = handoff()
+        value["snapshot"]["schema"] = guard.SNAPSHOT_SCHEMA_V1
+        del value["snapshot"]["metadata_inventory"]
+        value["snapshot_digest"] = guard.stable_digest(value["snapshot"])
+        with self.assertRaises(guard.InputError):
+            guard.parse_handoff(value)
+
+    def test_stale_handoff_inventory_digest_fails(self):
+        value = handoff()
+        value["metadata_inventory_digest"] = "5" * 64
+        _, result = guard.validate_handoff_data(value)
+        self.assertIn("stale_metadata_inventory_digest", codes(result))
+
+    def test_stale_metadata_record_blocks_handoff(self):
+        value = handoff()
+        inventory = value["snapshot"]["metadata_inventory"]
+        inventory["records"][0]["binding"]["composition_digest"] = "5" * 64
+        inventory["audit_digest"] = guard.metadata_audit_digest(inventory)
+        value["snapshot_digest"] = guard.stable_digest(value["snapshot"])
+        value["metadata_inventory_digest"] = guard.metadata_inventory_digest(
+            value["snapshot"]
+        )
+        _, result = guard.validate_handoff_data(value)
+        self.assertEqual(result["metadata"]["status"], "metadata-stale")
+        self.assertIn("metadata_record_stale", codes(result))
+
+    def test_metadata_readback_changes_snapshot_and_handoff_digests(self):
+        first = handoff()
+        second = handoff()
+        inventory = second["snapshot"]["metadata_inventory"]
+        inventory["records"][0]["evidence_id"] = "evidence-refresh"
+        inventory["audit_digest"] = guard.metadata_audit_digest(inventory)
+        second["snapshot_digest"] = guard.stable_digest(second["snapshot"])
+        second["metadata_inventory_digest"] = guard.metadata_inventory_digest(
+            second["snapshot"]
+        )
+        _, first_result = guard.validate_handoff_data(first)
+        _, second_result = guard.validate_handoff_data(second)
+        self.assertEqual(second_result["status"], "pass")
+        self.assertNotEqual(
+            first_result["snapshot_digest"],
+            second_result["snapshot_digest"],
+        )
+        self.assertNotEqual(
+            first_result["handoff_digest"],
+            second_result["handoff_digest"],
+        )
 
     def test_receiver_change_creates_a_new_handoff_digest(self):
         first = handoff(receiver="receiver-1")
@@ -786,6 +1163,43 @@ class CliAndSafetyTests(unittest.TestCase):
             status, output = self.run_main(["validate-snapshot", "--input", str(path)])
         self.assertEqual(status, 2)
         self.assertEqual(output["status"], "fail")
+
+    def test_legacy_next_action_exits_two_with_version_gate(self):
+        with tempfile.TemporaryDirectory() as directory:
+            path = Path(directory) / "snapshot-v1.json"
+            path.write_text(json.dumps(snapshot()), encoding="utf-8")
+            status, output = self.run_main(["next-action", "--input", str(path)])
+        self.assertEqual(status, 2)
+        self.assertEqual(output["status"], "blocked")
+        self.assertEqual(
+            output["reasons"],
+            ["legacy_snapshot_requires_v2_metadata"],
+        )
+        self.assertIn(
+            "legacy_snapshot_metadata_gate",
+            {item["code"] for item in output["violations"]},
+        )
+
+    def test_legacy_handoff_exits_two_with_version_gates(self):
+        value = handoff()
+        value["schema"] = guard.HANDOFF_SCHEMA_V1
+        del value["metadata_inventory_digest"]
+        value["snapshot"]["schema"] = guard.SNAPSHOT_SCHEMA_V1
+        del value["snapshot"]["metadata_inventory"]
+        value["snapshot_digest"] = guard.stable_digest(value["snapshot"])
+        with tempfile.TemporaryDirectory() as directory:
+            path = Path(directory) / "handoff-v1.json"
+            path.write_text(json.dumps(value), encoding="utf-8")
+            status, output = self.run_main(
+                ["validate-handoff", "--input", str(path)]
+            )
+        self.assertEqual(status, 2)
+        self.assertEqual(output["status"], "fail")
+        self.assertEqual(output["schema"], guard.HANDOFF_VALIDATION_SCHEMA_V1)
+        self.assertIn(
+            "legacy_handoff_metadata_gate",
+            {item["code"] for item in output["violations"]},
+        )
 
     def test_pass_exits_zero(self):
         with tempfile.TemporaryDirectory() as directory:
