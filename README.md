@@ -168,9 +168,9 @@ instructions.
 | Plugin packs | 17 | - | Installable packages under `plugins/`. |
 | Skill entrypoints | 166 | - | `SKILL.md` files exposed through plugin metadata. |
 | Reference files | 232 | - | Longer ledgers, contracts, scorecards, and source notes. |
-| Helper and validator scripts | 83 | - | Deterministic plugin-local helpers. |
+| Helper and validator scripts | 84 | - | Deterministic plugin-local helpers. |
 | Startup metadata | 166 skills | 13,336 | Skill name, description, and file pointer for routing. |
-| On-demand skill bodies | 166 skills | 116,967 | Instruction bodies after frontmatter, loaded only when selected. |
+| On-demand skill bodies | 166 skills | 117,061 | Instruction bodies after frontmatter, loaded only when selected. |
 
 Regenerate the report after skill edits:
 
@@ -202,7 +202,7 @@ Token columns are `startup metadata / on-demand body`.
 | `architecture-intelligence` | 9 | 8 | 2 | 645 | 7,585 |
 | `design-intelligence` | 7 | 2 | 1 | 472 | 5,101 |
 | `game-design-intelligence` | 6 | 2 | 1 | 536 | 2,916 |
-| `kotlin-multiplatform` | 14 | 19 | 1 | 1,124 | 12,676 |
+| `kotlin-multiplatform` | 14 | 19 | 2 | 1,124 | 12,770 |
 | `spec-driven-development` | 6 | 0 | 2 | 333 | 3,267 |
 
 ### Plugin Focus
@@ -468,7 +468,7 @@ Token cells are shown as `startup/body`.
 | `kmp-production-readiness` | 77/416 | Audit Kotlin Multiplatform production readiness with explicit scorecards, release blockers, risk ownership, validation commands, and deferred checks across architecture, build, testing, interop, security, performance, and publishing. |
 | `kmp-publishing-ci` | 80/510 | Design and verify Kotlin Multiplatform CI and publishing workflows for Maven publications, Gradle metadata, ABI validation, XCFramework, SwiftPM export, KMMBridge, artifact hosting, signing boundaries, and app release gates. |
 | `kmp-security-privacy` | 75/326 | Review Kotlin Multiplatform security and privacy across secure storage, tokens, Ktor auth, TLS, certificate pinning, logging redaction, runtime protection, platform APIs, and commonMain boundaries. |
-| `kmp-testing-quality` | 76/1,026 | Design and review KMP testing strategy, commonTest, kotlin.test, platform tests, Compose Multiplatform UI tests, screenshot tests, test doubles, refactor safety, code review gates, and regression validation. |
+| `kmp-testing-quality` | 76/1,120 | Design and review KMP testing strategy, commonTest, kotlin.test, platform tests, Compose Multiplatform UI tests, screenshot tests, test doubles, refactor safety, code review gates, and regression validation. |
 | `kotlin-multiplatform` | 93/1,726 | Route and execute Kotlin Multiplatform tasks across architecture, Gradle and private dependency diagnosis, Compose Multiplatform UI, Android-KMP migration, iOS interop, CocoaPods or SwiftPM migration, testing, performance, security, CI, publishing, and production readiness. |
 
 #### `spec-driven-development`

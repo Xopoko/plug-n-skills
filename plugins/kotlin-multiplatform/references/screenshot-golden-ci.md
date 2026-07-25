@@ -52,6 +52,50 @@ If local generation is blocked, report the exact blocker and mark local proof
 unavailable. CI may become the generator only when it satisfies the same
 contract.
 
+## Generator Routing And Review-Object State
+
+Before publishing a generator revision, inspect the provider's actual workflow
+and job rules. Determine whether an open review object suppresses the required
+branch pipeline, changes its rule variables, or routes it to a different job.
+Do not infer routing from a workflow filename or from an earlier run.
+
+When the provider requires a branch-only generator:
+
+- Use a dedicated authorized ref with no open review object only when that
+  state is part of the declared generation procedure.
+- Do not create, close, retarget, or mutate a review object merely to trigger a
+  pipeline without separate authority for that state change.
+- Treat the branch-only generator result as proof of generation and artifact
+  provenance for its exact revision only. It does not prove review, approval,
+  mergeability, landing, or the final accepted revision.
+- Keep a temporary generator revision diagnostic and non-deliverable. A failed
+  or corrected generator revision remains historical evidence; do not blindly
+  retry it. A relevant source, fixture, workflow, or environment change must
+  produce a new immutable revision and run.
+
+Fetch the artifact by immutable job or run identifier and verify that the
+provider receipt binds that identifier to the exact generator revision. A
+mutable latest-by-ref lookup is discovery, not acceptance proof.
+
+Before extraction, validate the downloaded ZIP and exact newline-delimited PNG
+allowlist with the bundled guard:
+
+```sh
+python3 "$PLUGIN_ROOT/scripts/golden_artifact_guard.py" \
+  --archive "$artifact_zip" \
+  --allowlist "$expected_goldens" \
+  --expected-archive-sha256 "$provider_archive_sha256" > "$guard_receipt"
+```
+
+Require exit status zero and a `status: accepted` receipt. Retain that receipt
+with the provider receipt and payload manifest. The guard validates bounded ZIP
+and PNG structure, exact paths, digests, and resource limits; it does not
+extract files, establish trusted authorship, or authorize a visual change.
+Acceptance is intentionally narrow: single-disk non-ZIP64 archives and 8-bit
+truecolor or truecolor-with-alpha PNGs with portable metadata only. Normalize
+other valid encodings in the trusted generator rather than weakening the
+artifact boundary during review.
+
 ## Review And Cleanup
 
 - Inspect archive entries before extraction. Reject absolute or parent paths,
