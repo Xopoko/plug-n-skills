@@ -111,6 +111,11 @@ Report:
 - repository and forge scope, current base, and stack digest;
 - current, stale, landed, and blocked nodes;
 - proof IDs and dependency heads, not raw logs;
+- exact identity and evidence references for each active proof-bearing
+  description, status, checkpoint, and handoff summary, plus whether it is
+  `metadata-current`, `metadata-stale`, or `metadata-unverified`; only
+  `metadata-current` supports the handoff, with old identities retained only
+  as clearly historical or superseded non-proof;
 - worktree and writer ownership;
 - any pending dirty-work recovery artifact, its coverage, validator status, and
   explicit unproven status;

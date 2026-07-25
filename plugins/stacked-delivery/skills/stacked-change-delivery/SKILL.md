@@ -106,6 +106,16 @@ Load only the reference needed:
    landing, refetch the base and full stack. Confirm server-side heads and
    targets, then rebuild and revalidate the snapshot. A lower landing normally
    changes the composition above it; automatic retargeting alone is not proof.
+   Reconcile every active proof-bearing mutable record, including change
+   descriptions, status or check summaries, checkpoints, and handoff summaries,
+   against the refreshed base, parent, node-head, and proof identities. Treat a
+   record bound to an old identity as `metadata-stale`; it cannot support a
+   readiness claim, evidence reply, or handoff until it is updated under fresh
+   authority for that exact surface and action, or refreshed by its authoritative
+   producer, then read back. If its active bindings cannot be compared, use the
+   same fail-closed rule as `metadata-unverified`. An old identity may remain
+   only when explicitly historical and excluded from current proof. Do not
+   rewrite immutable provenance, lease, or old-to-new mappings.
 9. **Hand off by receipt.** Build a canonical receipt containing the snapshot
    digest, exact node heads, accepted proof IDs, worktree and writer ownership,
    and receiver. Run `validate-handoff`, preserve its handoff digest, and pair

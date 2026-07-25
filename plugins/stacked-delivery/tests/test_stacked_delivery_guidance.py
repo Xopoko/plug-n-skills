@@ -181,6 +181,58 @@ class StackedDeliveryGuidanceTests(unittest.TestCase):
         ):
             self.assertIn(invariant, prepared)
 
+    def test_post_rewrite_proof_bearing_records_are_rebound(self):
+        skill = compact(SKILL)
+        restack = compact(REFERENCE)
+        handoff = compact(HANDOFF_REFERENCE)
+        for invariant in (
+            "reconcile every active proof-bearing mutable record",
+            "change descriptions, status or check summaries, checkpoints, "
+            "and handoff summaries",
+            "treat a record bound to an old identity as `metadata-stale`",
+            "readiness claim, evidence reply, or handoff",
+            "fresh authority for that exact surface and action",
+            "refreshed by its authoritative producer",
+            "same fail-closed rule as `metadata-unverified`",
+            "explicitly historical and excluded from current proof",
+            "do not rewrite immutable provenance, lease, or old-to-new mappings",
+        ):
+            self.assertIn(invariant, skill)
+        for invariant in (
+            "post-rewrite evidence binding",
+            "restack, non-fast-forward rewrite, or retarget",
+            "`metadata-current`",
+            "counts, labels such as \"latest\", a green badge, or a receipt "
+            "that is internally self-consistent do not establish live freshness",
+            "classify that record as `metadata-stale`",
+            "pending proof may be recorded as pending",
+            "`metadata-stale` and `metadata-unverified` block a readiness "
+            "claim, evidence reply, or handoff",
+            "authority to push, restack, retarget, reply, or edit another "
+            "surface does not imply authority",
+            "update an agent-maintained record only through its authorized owner",
+            "producer-owned check or status through its authoritative producer",
+            "without that authority or producer path",
+            "old-to-new mappings, append-only discussion history",
+            "explicitly labelled historical or superseded",
+            "do not parse arbitrary generated prose",
+            "classify the record as `metadata-unverified`",
+            "do not silently infer missing bindings",
+            "does not fetch, parse, or authenticate forge descriptions, "
+            "checkpoints, or status text",
+            "internal receipt validation does not prove that a live public "
+            "record is current",
+        ):
+            self.assertIn(invariant, restack)
+        for invariant in (
+            "exact identity and evidence references for each active "
+            "proof-bearing description, status, checkpoint, and handoff summary",
+            "`metadata-current`, `metadata-stale`, or `metadata-unverified`",
+            "only `metadata-current` supports the handoff",
+            "historical or superseded non-proof",
+        ):
+            self.assertIn(invariant, handoff)
+
     def test_paths_and_dirty_work_contract_are_portable_and_bounded(self):
         skill = compact(SKILL)
         handoff = compact(HANDOFF_REFERENCE)

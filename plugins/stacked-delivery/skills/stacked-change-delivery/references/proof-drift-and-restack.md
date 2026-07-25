@@ -76,10 +76,69 @@ Distinguish:
 
 - `dependency-current`: parent and target bindings are exact;
 - `proof-current`: accepted proof matches the current composition;
+- `metadata-current`: every active proof-bearing mutable record matches the
+  current composition and proof identities;
+- `metadata-stale`: an active record contradicts the current identity tuple;
+- `metadata-unverified`: an active record cannot be completely compared with
+  the current tuple;
 - `review-ready`: forge review requirements currently pass;
 - `landable`: policy and delivery-mode requirements currently pass.
 
 No one flag implies the others.
+
+## Post-Rewrite Evidence Binding
+
+Run one binding audit after a restack, non-fast-forward rewrite, or retarget
+changes a base, parent, node head, target, pipeline, or accepted proof identity.
+Complete it before any readiness claim, evidence reply, or handoff.
+
+Freeze the refreshed current tuple from read-only live evidence:
+
+- stable change and node identities;
+- exact base or parent head and exact node head;
+- source and target refs;
+- each accepted proof ID, proof head, dependency head, and terminal status.
+
+Then inventory every active mutable record that presents proof or current
+delivery state. This includes a change description, status or check summary,
+durable checkpoint, and handoff summary. Preserve its exact identity and
+evidence references while comparing active bindings with the refreshed tuple.
+Counts, labels such as "latest", a green badge, or a receipt that is internally
+self-consistent do not establish live freshness.
+
+If any active binding still names an old base, parent, head, target, pipeline,
+or proof, classify that record as `metadata-stale`. Do not use it to support
+`proof-current`, `review-ready`, or `landable`. A pending proof may be recorded
+as pending, but it cannot replace terminal exact-composition proof. If an
+active record cannot be completely compared with the refreshed tuple, classify
+it as `metadata-unverified`. Both `metadata-stale` and `metadata-unverified`
+block a readiness claim, evidence reply, or handoff; neither erases otherwise
+current underlying proof.
+
+Obtain fresh authority for the exact record and update action before changing a
+mutable record. Authority to push, restack, retarget, reply, or edit another
+surface does not imply authority to edit a change description, checkpoint, or
+status. Update an agent-maintained record only through its authorized owner.
+Refresh a producer-owned check or status through its authoritative producer;
+do not manually rewrite its result. Once the new proof state is known and the
+surface-specific action is authorized, update or refresh the record, read back
+the same surface, and compare again. Without that authority or producer path,
+leave the record unchanged, report the blocking state, and keep readiness
+blocked.
+
+Old identities remain valid in immutable provenance, lease guards,
+old-to-new mappings, append-only discussion history, or receipts explicitly
+labelled historical or superseded and excluded from current proof. Do not erase
+or relabel those records merely because they differ from the live tuple.
+
+Do not parse arbitrary generated prose, trust a raw string search, or treat a
+Markdown rewrite as semantic proof. Prefer repository-defined structured
+fields or a canonical receipt block when one exists. Otherwise classify the
+record as `metadata-unverified`; do not silently infer missing bindings. The
+bundled guard validates supplied snapshots and receipts; it does not fetch,
+parse, or authenticate forge descriptions, checkpoints, or status text, and an
+internal receipt validation does not prove that a live public record is
+current.
 
 ## Independent Pre-Write Gates
 
