@@ -1,7 +1,7 @@
 {
   "name": "capability-workbench",
-  "version": "0.3.5",
-  "description": "Agent-agnostic capability workbench for discovery, synthesis, portfolio architecture, trigger metadata and Codex catalog-budget audits, agent guidance, vetting, repair, installation, packaging, and imagegen-backed plugin icons.",
+  "version": "0.3.6",
+  "description": "Agent-agnostic capability workbench for discovery, synthesis, portfolio architecture, trigger metadata, Codex catalog-budget and evidence-coverage audits, agent guidance, vetting, repair, installation, packaging, and imagegen-backed plugin icons.",
   "author": {
     "name": "Xopoko"
   },
@@ -16,6 +16,7 @@
     "codex",
     "trigger-metadata",
     "context-density",
+    "evidence-coverage",
     "validation",
     "repair"
   ]
