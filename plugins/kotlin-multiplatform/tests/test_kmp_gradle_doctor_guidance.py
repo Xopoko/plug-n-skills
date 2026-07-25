@@ -66,6 +66,12 @@ class KmpGradleDoctorGuidanceTest(unittest.TestCase):
             "do not open `gradle.properties` or run the generic inspection flow first",
             skill,
         )
+        for safe_field in (
+            "`gradle_properties_present`",
+            "`gradle_property_keys`",
+            "from schema-v2 inspector output",
+        ):
+            self.assertIn(safe_field, skill)
         self.assertNotIn(
             "- `gradle.properties`",
             GRADLE_DOCTOR.read_text(encoding="utf-8"),

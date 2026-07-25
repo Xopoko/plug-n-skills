@@ -26,7 +26,6 @@ INSPECTED_GRADLE_PROPERTY_KEYS = frozenset(
         "kotlin.native.binary.gc",
     }
 )
-INSPECTED_GRADLE_PROPERTY_PREFIXES = ("kotlin.native.binary.gc.",)
 
 
 @dataclass
@@ -154,9 +153,7 @@ def parse_gradle_properties(root: Path) -> GradlePropertyInspection:
             continue
         key, value = line.split("=", 1)
         key = key.strip()
-        if key in INSPECTED_GRADLE_PROPERTY_KEYS or key.startswith(
-            INSPECTED_GRADLE_PROPERTY_PREFIXES
-        ):
+        if key in INSPECTED_GRADLE_PROPERTY_KEYS:
             values[key] = value.strip()
     return GradlePropertyInspection(True, values)
 
@@ -434,7 +431,7 @@ def diagnose_project_governance(
         diagnostics.append(Diagnostic("info", "gradle_configuration_cache_not_enabled", "org.gradle.configuration-cache=true was not detected; verify whether the project can use configuration cache.", "gradle.properties" if gradle_properties.file_present else None))
     if has_native and gradle_properties.values.get("kotlin.incremental.native") != "true":
         diagnostics.append(Diagnostic("info", "native_incremental_not_enabled", "kotlin.incremental.native=true was not detected for a Native-targeting KMP project.", "gradle.properties" if gradle_properties.file_present else None))
-    if has_native and any(value == "noop" for key, value in gradle_properties.values.items() if key.startswith("kotlin.native.binary.gc")):
+    if has_native and gradle_properties.values.get("kotlin.native.binary.gc") == "noop":
         diagnostics.append(Diagnostic("warning", "native_gc_disabled", "Kotlin/Native GC appears disabled; this can increase memory consumption and should be limited to controlled diagnostics.", "gradle.properties"))
     if has_compose and not any("baselineprofile" in module.plugins or "androidx.baselineprofile" in module.plugins for module in modules):
         diagnostics.append(Diagnostic("info", "baseline_profile_not_detected", "Compose app/performance surface detected without baseline profile plugin evidence; measure release startup before optimizing.", None))

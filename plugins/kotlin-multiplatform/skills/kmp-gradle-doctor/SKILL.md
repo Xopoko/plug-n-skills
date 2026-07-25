@@ -14,7 +14,11 @@ Use for KMP build failures; Gradle DSL changes; plugin version alignment; target
 For a private dependency resolution or consumption failure, do not open
 `gradle.properties` or run the generic inspection flow first. Go directly to
 [`../../references/environment-readiness.md`](../../references/environment-readiness.md)
-and check only credential-binding presence plus allowlisted non-secret settings.
+and check only whether the expected credential binding is present. If ordinary
+non-secret Gradle-setting diagnosis is later needed, consume only
+`gradle_properties_present`, `gradle_property_keys`, and relevant diagnostics
+from schema-v2 inspector output; never read the raw property file into a
+model-visible surface.
 Use at most one narrow, artifact-consuming wrapper task. Keep cache availability
 separate from effective remote access; an access request, credential binding,
 approval record, offline hit, or `404` alone does not prove access. Never print
