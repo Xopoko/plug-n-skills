@@ -23,7 +23,7 @@ from datetime import datetime, timezone
 from pathlib import Path, PurePosixPath
 from typing import Any
 
-STATE_SCHEMA = "context_density.state_commitment.v1"
+STATE_SCHEMA = "context_density.state_commitment.v2"
 VALIDATION_SCHEMA = "context_density.state_commitment_validation.v1"
 ERROR_SCHEMA = "context_density.state_commitment_error.v1"
 
@@ -78,7 +78,7 @@ PROOF_FIELDS = {"status", "identity_ids", "source_ref_ids", "execution_count"}
 AUTHORITY_FIELDS = {"mode", "actions", "source_ref_ids"}
 CONFIDENCE_FIELDS = {"level", "source_ref_ids"}
 CONFLICT_FIELDS = {"status", "fallback", "source_ref_ids"}
-SOURCE_REF_FIELDS = {"id", "kind", "location", "observed_at_utc"}
+SOURCE_REF_FIELDS = {"id", "origin_id", "kind", "location", "observed_at_utc"}
 STOP_FIELDS = {"id", "status", "entity_ids", "actions", "source_ref_ids"}
 COMPANION_FIELDS = {"path", "sha256"}
 
@@ -231,13 +231,119 @@ def _same_file(left: os.stat_result, right: os.stat_result) -> bool:
     return (left.st_dev, left.st_ino) == (right.st_dev, right.st_ino)
 
 
-def _read_regular_nofollow(
-    path: Path,
+def _safe_relative_io_supported() -> bool:
+    return (
+        bool(getattr(os, "O_NOFOLLOW", 0))
+        and bool(getattr(os, "O_DIRECTORY", 0))
+        and os.open in os.supports_dir_fd
+        and os.stat in os.supports_dir_fd
+        and os.stat in os.supports_follow_symlinks
+    )
+
+
+def _directory_flags() -> int:
+    return (
+        os.O_RDONLY
+        | getattr(os, "O_CLOEXEC", 0)
+        | getattr(os, "O_NOFOLLOW", 0)
+        | getattr(os, "O_DIRECTORY", 0)
+    )
+
+
+def _file_flags() -> int:
+    return (
+        os.O_RDONLY
+        | getattr(os, "O_CLOEXEC", 0)
+        | getattr(os, "O_NOFOLLOW", 0)
+        | getattr(os, "O_BINARY", 0)
+    )
+
+
+def _open_pinned_directory(path: Path) -> int:
+    """Open every component of one absolute directory without following links."""
+    if not _safe_relative_io_supported():
+        raise BoundedReadProblem("unsupported")
+    if not path.is_absolute() or not path.anchor:
+        raise BoundedReadProblem("unsafe_path")
+    try:
+        descriptor = os.open(path.anchor, _directory_flags())
+    except FileNotFoundError:
+        raise BoundedReadProblem("missing") from None
+    except OSError as exc:
+        if exc.errno in {errno.ELOOP, errno.ENOTDIR}:
+            raise BoundedReadProblem("unsafe_path") from None
+        raise BoundedReadProblem("unreadable") from None
+    try:
+        opened = os.fstat(descriptor)
+        if not stat.S_ISDIR(opened.st_mode):
+            raise BoundedReadProblem("unsafe_path")
+        for part in path.parts[1:]:
+            try:
+                child = _open_child_directory(descriptor, part)
+            except BoundedReadProblem as problem:
+                if problem.kind == "symlink":
+                    raise BoundedReadProblem("unsafe_path") from None
+                raise
+            os.close(descriptor)
+            descriptor = child
+        return descriptor
+    except BaseException:
+        os.close(descriptor)
+        raise
+
+
+def _open_child_directory(parent_descriptor: int, name: str) -> int:
+    """Open and pin one already-validated relative directory component."""
+    try:
+        before = os.stat(
+            name,
+            dir_fd=parent_descriptor,
+            follow_symlinks=False,
+        )
+    except FileNotFoundError:
+        raise BoundedReadProblem("missing") from None
+    except OSError:
+        raise BoundedReadProblem("unreadable") from None
+    if stat.S_ISLNK(before.st_mode):
+        raise BoundedReadProblem("symlink")
+    if not stat.S_ISDIR(before.st_mode):
+        raise BoundedReadProblem("unsafe_path")
+    try:
+        descriptor = os.open(
+            name,
+            _directory_flags(),
+            dir_fd=parent_descriptor,
+        )
+    except FileNotFoundError:
+        raise BoundedReadProblem("changed") from None
+    except OSError as exc:
+        if exc.errno in {errno.ELOOP, errno.ENOTDIR}:
+            raise BoundedReadProblem("symlink") from None
+        raise BoundedReadProblem("unreadable") from None
+    try:
+        opened = os.fstat(descriptor)
+        if not stat.S_ISDIR(opened.st_mode):
+            raise BoundedReadProblem("unsafe_path")
+        if not _same_file(before, opened):
+            raise BoundedReadProblem("changed")
+        return descriptor
+    except BaseException:
+        os.close(descriptor)
+        raise
+
+
+def _read_regular_at(
+    parent_descriptor: int,
+    name: str,
     max_bytes: int,
 ) -> tuple[bytes, os.stat_result]:
-    """Read at most max_bytes + 1 through a stable regular-file descriptor."""
+    """Read one regular leaf relative to a pinned parent directory."""
     try:
-        before = path.lstat()
+        before = os.stat(
+            name,
+            dir_fd=parent_descriptor,
+            follow_symlinks=False,
+        )
     except FileNotFoundError:
         raise BoundedReadProblem("missing") from None
     except OSError:
@@ -246,15 +352,14 @@ def _read_regular_nofollow(
         raise BoundedReadProblem("symlink")
     if not stat.S_ISREG(before.st_mode):
         raise BoundedReadProblem("not_regular")
-
-    flags = os.O_RDONLY
-    flags |= getattr(os, "O_CLOEXEC", 0)
-    flags |= getattr(os, "O_NOFOLLOW", 0)
-    flags |= getattr(os, "O_BINARY", 0)
     try:
-        descriptor = os.open(path, flags)
+        descriptor = os.open(
+            name,
+            _file_flags(),
+            dir_fd=parent_descriptor,
+        )
     except FileNotFoundError:
-        raise BoundedReadProblem("missing") from None
+        raise BoundedReadProblem("changed") from None
     except OSError as exc:
         if exc.errno == errno.ELOOP:
             raise BoundedReadProblem("symlink") from None
@@ -287,7 +392,11 @@ def _read_regular_nofollow(
         if after_opened.st_size > max_bytes:
             raise BoundedReadProblem("too_large")
         try:
-            after = path.lstat()
+            after = os.stat(
+                name,
+                dir_fd=parent_descriptor,
+                follow_symlinks=False,
+            )
         except OSError:
             raise BoundedReadProblem("changed") from None
         if not _same_file(opened, after) or after_opened.st_size != after.st_size:
@@ -297,11 +406,34 @@ def _read_regular_nofollow(
         os.close(descriptor)
 
 
-def _load_input(path_text: str) -> tuple[dict[str, Any], Path]:
-    path = Path(path_text)
+def _read_regular_beneath(
+    base_descriptor: int,
+    parts: tuple[str, ...],
+    max_bytes: int,
+) -> tuple[bytes, os.stat_result]:
+    """Traverse validated components without reopening a multi-component path."""
+    if not _safe_relative_io_supported():
+        raise BoundedReadProblem("unsupported")
+    current = os.dup(base_descriptor)
     try:
-        raw, _ = _read_regular_nofollow(path, MAX_INPUT_BYTES)
+        for part in parts[:-1]:
+            child = _open_child_directory(current, part)
+            os.close(current)
+            current = child
+        return _read_regular_at(current, parts[-1], max_bytes)
+    finally:
+        os.close(current)
+
+
+def _load_input(path_text: str) -> tuple[dict[str, Any], int]:
+    path = Path(os.path.abspath(path_text))
+    base: int | None = None
+    try:
+        base = _open_pinned_directory(path.parent)
+        raw, _ = _read_regular_at(base, path.name, MAX_INPUT_BYTES)
     except BoundedReadProblem as problem:
+        if base is not None:
+            os.close(base)
         if problem.kind == "too_large":
             raise InputProblem(
                 "input_too_large", "$", f"input exceeds {MAX_INPUT_BYTES} bytes"
@@ -314,6 +446,18 @@ def _load_input(path_text: str) -> tuple[dict[str, Any], Path]:
             raise InputProblem(
                 "input_symlink", "$", "input must not be a symlink"
             ) from None
+        if problem.kind == "unsupported":
+            raise InputProblem(
+                "safe_traversal_unavailable",
+                "$",
+                "safe descriptor-relative input traversal is unavailable",
+            ) from None
+        if problem.kind == "unsafe_path":
+            raise InputProblem(
+                "input_unsafe_path",
+                "$",
+                "input parent must be a safely opened directory",
+            ) from None
         if problem.kind == "changed":
             raise InputProblem(
                 "input_changed", "$", "input changed while it was read"
@@ -322,6 +466,7 @@ def _load_input(path_text: str) -> tuple[dict[str, Any], Path]:
     try:
         text = raw.decode("utf-8", errors="strict")
     except UnicodeDecodeError:
+        os.close(base)
         raise InputProblem("invalid_utf8", "$", "input is not valid UTF-8") from None
     try:
         data = json.loads(
@@ -330,19 +475,26 @@ def _load_input(path_text: str) -> tuple[dict[str, Any], Path]:
             parse_constant=_reject_constant,
         )
     except DuplicateKey:
+        os.close(base)
         raise InputProblem(
             "duplicate_key", "$", "input contains a duplicate object key"
         ) from None
     except (ValueError, RecursionError):
+        os.close(base)
         raise InputProblem(
             "malformed_json", "$", "input is not valid strict JSON"
         ) from None
     if not isinstance(data, dict):
+        os.close(base)
         raise InputProblem(
             "invalid_type", "$", "top-level JSON value must be an object"
         )
-    _check_bounds(data, "$", 0)
-    return data, path.absolute().parent.resolve(strict=False)
+    try:
+        _check_bounds(data, "$", 0)
+    except BaseException:
+        os.close(base)
+        raise
+    return data, base
 
 
 def _check_bounds(value: Any, path: str, depth: int) -> None:
@@ -617,6 +769,7 @@ def _validate_source_refs(
     errors: list[dict[str, str]],
 ) -> dict[str, dict[str, Any]]:
     refs: dict[str, dict[str, Any]] = {}
+    location_origins: dict[str, str] = {}
     for index, raw in enumerate(
         _array(raw_refs, "$.source_refs", errors, nonempty=True)
     ):
@@ -626,6 +779,7 @@ def _validate_source_refs(
             continue
         ref_id = _identifier(ref.get("id"), f"{path}.id", errors)
         _unique_id(ref_id, f"{path}.id", all_ids, errors)
+        origin_id = _identifier(ref.get("origin_id"), f"{path}.origin_id", errors)
         kind = _enum(ref.get("kind"), SOURCE_KINDS, f"{path}.kind", errors)
         location = _string(ref.get("location"), f"{path}.location", errors)
         if location is not None and not location.strip():
@@ -635,6 +789,18 @@ def _validate_source_refs(
                 f"{path}.location",
                 "source location must contain non-whitespace text",
             )
+        if location is not None and location.strip() and origin_id is not None:
+            location_key = location.strip()
+            prior_origin = location_origins.get(location_key)
+            if prior_origin is not None and prior_origin != origin_id:
+                _add(
+                    errors,
+                    "source_location_origin_conflict",
+                    f"{path}.origin_id",
+                    "one source location must not declare multiple origins",
+                )
+            else:
+                location_origins[location_key] = origin_id
         observed = _utc(ref.get("observed_at_utc"), f"{path}.observed_at_utc", errors)
         if observed is not None and cutoff is not None and observed > cutoff:
             _add(
@@ -645,6 +811,7 @@ def _validate_source_refs(
             )
         if ref_id is not None and ref_id not in refs:
             refs[ref_id] = {
+                "origin_id": origin_id,
                 "kind": kind,
                 "location": location,
                 "observed_at_utc": observed,
@@ -1146,13 +1313,22 @@ def _validate_entities(
             source_refs,
             errors,
         )
-        overlap = sorted(set(review["source_ref_ids"]) & set(proof["source_ref_ids"]))
-        if overlap:
+        review_origins = {
+            source_refs[ref_id]["origin_id"]
+            for ref_id in review["source_ref_ids"]
+            if ref_id in source_refs and source_refs[ref_id]["origin_id"] is not None
+        }
+        proof_origins = {
+            source_refs[ref_id]["origin_id"]
+            for ref_id in proof["source_ref_ids"]
+            if ref_id in source_refs and source_refs[ref_id]["origin_id"] is not None
+        }
+        if review_origins & proof_origins:
             _add(
                 errors,
                 "review_proof_not_independent",
                 path,
-                "source review and executable proof evidence must be disjoint",
+                "source review and executable proof origins must be disjoint",
             )
 
         parsed = {
@@ -1255,7 +1431,7 @@ def _validate_stops(
     return stops
 
 
-def _safe_companion_target(base: Path, path_text: str, path: str) -> Path:
+def _safe_companion_parts(path_text: str, path: str) -> tuple[str, ...]:
     if "\\" in path_text:
         raise InputProblem(
             "unsafe_companion_path",
@@ -1287,32 +1463,12 @@ def _safe_companion_target(base: Path, path_text: str, path: str) -> Path:
             path,
             "companion path must name a Markdown file",
         )
-    target = base.joinpath(*relative.parts)
-    cursor = base
-    for part in relative.parts:
-        cursor = cursor / part
-        try:
-            info = cursor.lstat()
-        except FileNotFoundError:
-            return target
-        except OSError:
-            raise InputProblem(
-                "unsafe_companion_path",
-                path,
-                "companion path could not be inspected",
-            ) from None
-        if stat.S_ISLNK(info.st_mode):
-            raise InputProblem(
-                "unsafe_companion_symlink",
-                path,
-                "companion path must not traverse symlinks",
-            )
-    return target
+    return relative.parts
 
 
 def _validate_companions(
     raw_companions: Any,
-    base: Path,
+    base_descriptor: int,
     digest: str | None,
     errors: list[dict[str, str]],
 ) -> None:
@@ -1344,9 +1500,13 @@ def _validate_companions(
                 "companion paths must be unique",
             )
         seen_paths.add(path_text)
-        target = _safe_companion_target(base, path_text, f"{path}.path")
+        parts = _safe_companion_parts(path_text, f"{path}.path")
         try:
-            raw_bytes, opened = _read_regular_nofollow(target, MAX_COMPANION_BYTES)
+            raw_bytes, opened = _read_regular_beneath(
+                base_descriptor,
+                parts,
+                MAX_COMPANION_BYTES,
+            )
         except BoundedReadProblem as problem:
             if problem.kind == "symlink":
                 raise InputProblem(
@@ -1359,6 +1519,18 @@ def _validate_companions(
                     "unsafe_companion_changed",
                     f"{path}.path",
                     "companion changed while it was read",
+                ) from None
+            if problem.kind == "unsupported":
+                raise InputProblem(
+                    "safe_traversal_unavailable",
+                    f"{path}.path",
+                    "safe descriptor-relative companion traversal is unavailable",
+                ) from None
+            if problem.kind == "unsafe_path":
+                raise InputProblem(
+                    "unsafe_companion_path",
+                    f"{path}.path",
+                    "companion path must traverse directories only",
                 ) from None
             if problem.kind == "missing":
                 _add(
@@ -1504,7 +1676,7 @@ def _entity_results(
 
 def validate_bundle(
     bundle: dict[str, Any],
-    companion_base: Path,
+    companion_base_descriptor: int,
 ) -> tuple[dict[str, Any], int]:
     """Validate a decoded bundle and return a deterministic result and exit."""
     errors: list[dict[str, str]] = []
@@ -1563,7 +1735,10 @@ def validate_bundle(
             "commitment_digest does not match canonical core",
         )
     _validate_companions(
-        bundle.get("companions"), companion_base, declared_digest, errors
+        bundle.get("companions"),
+        companion_base_descriptor,
+        declared_digest,
+        errors,
     )
     input_errors = [error for error in errors if error["code"] in INPUT_ERROR_CODES]
     if input_errors:
@@ -1640,10 +1815,11 @@ def _parse_cli(argv: list[str]) -> str:
 
 def main(argv: list[str] | None = None) -> int:
     args = list(sys.argv[1:] if argv is None else argv)
+    companion_base_descriptor: int | None = None
     try:
         input_path = _parse_cli(args)
-        bundle, companion_base = _load_input(input_path)
-        payload, exit_code = validate_bundle(bundle, companion_base)
+        bundle, companion_base_descriptor = _load_input(input_path)
+        payload, exit_code = validate_bundle(bundle, companion_base_descriptor)
     except InputProblem as problem:
         payload = _error_payload(problem)
         exit_code = 1
@@ -1652,6 +1828,9 @@ def main(argv: list[str] | None = None) -> int:
             InputProblem("input_error", "$", "input validation could not complete")
         )
         exit_code = 1
+    finally:
+        if companion_base_descriptor is not None:
+            os.close(companion_base_descriptor)
     sys.stdout.write(_json_line(payload) + "\n")
     return exit_code
 

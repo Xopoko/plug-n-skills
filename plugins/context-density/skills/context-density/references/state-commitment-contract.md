@@ -32,7 +32,7 @@ The top-level object has exactly these fields:
 
 | Field | Type | Meaning |
 | --- | --- | --- |
-| `schema` | string | Must be `context_density.state_commitment.v1`. |
+| `schema` | string | Must be `context_density.state_commitment.v2`. |
 | `state_version` | positive integer | Producer-assigned snapshot version. |
 | `cutoff_utc` | UTC timestamp | Latest observation admitted to this snapshot. |
 | `entities` | non-empty array | Typed current state records. |
@@ -43,6 +43,13 @@ The top-level object has exactly these fields:
 
 Unknown or missing fields, duplicate JSON keys, duplicate IDs, unsafe IDs,
 unsupported enums, invalid timestamps, and wrong JSON types reject.
+
+The unpublished draft `context_density.state_commitment.v1` did not require
+source `origin_id` and cannot prove declared review/proof origin separation.
+Migrate a draft-v1 bundle by adding producer-attested origins, setting schema
+`v2`, recomputing `commitment_digest`, and resealing every companion hash and
+marker. The guard intentionally rejects draft-v1 input instead of silently
+weakening the v2 invariant.
 
 Each entity has exactly:
 
@@ -68,7 +75,7 @@ Nested records use these closed shapes:
 | confidence | `level`, `source_ref_ids` |
 | conflict | `status`, `fallback`, `source_ref_ids` |
 | stop scope | `id`, `status`, `entity_ids`, `actions`, `source_ref_ids` |
-| source ref | `id`, `kind`, `location`, `observed_at_utc` |
+| source ref | `id`, `origin_id`, `kind`, `location`, `observed_at_utc` |
 | companion | `path`, `sha256` |
 
 Closed enums:
@@ -115,6 +122,14 @@ Status-dependent cardinality:
 - Identity, review, proof, authority, confidence, conflict, and stop evidence
   may reference only matching source kinds. Every referenced source exists and
   was observed no later than `cutoff_utc`.
+- `origin_id` is a portable, producer-attested identifier shared by
+  role-specific source refs declared to derive from the same underlying
+  artifact, execution, review event, or evidence-producing source. It is
+  intentionally reusable across refs, unlike globally unique record `id`.
+  Declared review and executable-proof origins for one entity must be disjoint.
+  One location cannot declare multiple origins when its strings are equal after
+  outer whitespace is trimmed; comparison remains case-sensitive and performs
+  no URI, filesystem, or service-specific alias resolution.
 - `passed` and `failed` proof have a positive `execution_count`; `not_run` has
   zero. A passed proof has current identity bindings and proof evidence.
 - `read_only` and `unknown` authority carry no actions. `scoped_write` carries
@@ -136,6 +151,15 @@ Status-dependent cardinality:
 Compute `commitment_digest` as SHA-256 over UTF-8 JSON for the top-level object
 with `commitment_digest` and `companions` removed, serialized with sorted keys,
 no insignificant whitespace, and unescaped Unicode.
+
+The guard lexically normalizes the input to an absolute path, opens every
+parent component without following symlinks, and pins the sidecar's parent
+directory while reading the input. It then opens every companion directory and
+leaf relative to that descriptor and never reopens a multi-component pathname.
+The input path must therefore use its canonical, symlink-free host spelling;
+resolve trusted host aliases before invocation. Platforms without
+descriptor-relative no-follow traversal reject with exit `1` instead of using
+a pathname fallback.
 
 Every companion:
 
@@ -168,6 +192,11 @@ The guard does not parse Markdown prose, fetch live state, generate sidecars,
 repair conflicts, authorize actions, or replace task-specific proof. It
 validates the producer's explicit snapshot and fails closed on contradictions,
 digest mismatch, or companion drift.
+
+The guard cannot independently establish that two different `origin_id` or
+`location` spellings refer to different real sources. Producers must assign
+canonical origins honestly; consumers that require external provenance proof
+must verify it before sealing.
 
 The guard does not compare a prior `state_version`, enforce a maximum snapshot
 age, or re-fetch source locations. Monotonicity and live freshness are consumer

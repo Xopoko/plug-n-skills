@@ -9,6 +9,7 @@ import tempfile
 import unittest
 from contextlib import redirect_stdout
 from pathlib import Path
+from unittest.mock import patch
 
 SKILL_DIR = Path(__file__).resolve().parents[1] / "skills" / "context-density"
 SCRIPT = SKILL_DIR / "scripts" / "state_commitment_guard.py"
@@ -17,9 +18,10 @@ sys.path.insert(0, str(SCRIPT.parent))
 import state_commitment_guard as guard  # noqa: E402
 
 
-def source(ref_id, kind, observed="2026-07-24T10:00:00Z"):
+def source(ref_id, kind, observed="2026-07-24T10:00:00Z", *, origin_id=None):
     return {
         "id": ref_id,
+        "origin_id": origin_id or f"origin.{ref_id}",
         "kind": kind,
         "location": f"evidence/{ref_id}.json",
         "observed_at_utc": observed,
@@ -179,7 +181,7 @@ def valid_bundle():
 class BundleCase(unittest.TestCase):
     def setUp(self):
         self.tmp = tempfile.TemporaryDirectory()
-        self.root = Path(self.tmp.name)
+        self.root = Path(self.tmp.name).resolve(strict=True)
         self.input = self.root / "state.json"
 
     def tearDown(self):
@@ -438,12 +440,48 @@ class IdentityAndEvidenceTests(BundleCase):
 
     def test_review_and_proof_evidence_are_independent(self):
         bundle = valid_bundle()
-        bundle["entities"][0]["executable_proof"]["source_ref_ids"] = ["ref.review.one"]
-        payload = self.assert_error_code(bundle, "review_proof_not_independent")
-        self.assertIn(
-            "wrong_source_ref_kind",
-            {item["code"] for item in payload["errors"]},
+        review_ref = next(
+            ref for ref in bundle["source_refs"] if ref["id"] == "ref.review.one"
         )
+        proof_ref = next(
+            ref for ref in bundle["source_refs"] if ref["id"] == "ref.proof.one"
+        )
+        proof_ref["origin_id"] = "origin.ref.review.one"
+        proof_ref["location"] = review_ref["location"]
+        self.assert_error_code(bundle, "review_proof_not_independent")
+
+    def test_review_and_proof_independence_is_not_location_based(self):
+        bundle = valid_bundle()
+        proof_ref = next(
+            ref for ref in bundle["source_refs"] if ref["id"] == "ref.proof.one"
+        )
+        proof_ref["origin_id"] = "origin.ref.review.one"
+        proof_ref["location"] = "evidence/derived-proof.json"
+        self.assert_error_code(bundle, "review_proof_not_independent")
+
+    def test_one_source_location_cannot_declare_multiple_origins(self):
+        bundle = valid_bundle()
+        review_ref = next(
+            ref for ref in bundle["source_refs"] if ref["id"] == "ref.review.one"
+        )
+        proof_ref = next(
+            ref for ref in bundle["source_refs"] if ref["id"] == "ref.proof.one"
+        )
+        proof_ref["location"] = review_ref["location"]
+        self.assert_error_code(bundle, "source_location_origin_conflict")
+
+    def test_source_origin_id_is_required_and_portable(self):
+        for value, code in [
+            (None, "invalid_type"),
+            ("", "empty_string"),
+            ("contains spaces", "invalid_id"),
+        ]:
+            bundle = valid_bundle()
+            if value is None:
+                del bundle["source_refs"][0]["origin_id"]
+            else:
+                bundle["source_refs"][0]["origin_id"] = value
+            self.assert_error_code(bundle, code, expected_exit=1)
 
     def test_source_observation_cannot_exceed_cutoff(self):
         bundle = valid_bundle()
@@ -610,8 +648,163 @@ class CompanionTests(BundleCase):
         self.write_bundle(bundle)
         self.assert_error_code_from_disk("unsafe_companion_symlink", expected_exit=1)
 
+    @unittest.skipIf(os.name == "nt", "symlink semantics differ on Windows")
+    def test_intermediate_companion_symlink_is_unsafe(self):
+        bundle = self.materialize(names=["nested/summary.md"])
+        nested = self.root / "nested"
+        outside = self.root / "outside"
+        outside.mkdir()
+        (outside / "summary.md").write_bytes((nested / "summary.md").read_bytes())
+        for child in nested.iterdir():
+            child.unlink()
+        nested.rmdir()
+        nested.symlink_to(outside, target_is_directory=True)
+        self.write_bundle(bundle)
+        self.assert_error_code_from_disk("unsafe_companion_symlink", expected_exit=1)
+
+    @unittest.skipIf(os.name == "nt", "dir_fd traversal is unavailable on Windows")
+    def test_intermediate_swap_before_open_is_rejected(self):
+        self.materialize(names=["nested/summary.md"])
+        nested = self.root / "nested"
+        original = self.root / "nested-original"
+        outside = self.root / "outside"
+        outside.mkdir()
+        (outside / "summary.md").write_bytes((nested / "summary.md").read_bytes())
+        real_open = os.open
+        swapped = False
+
+        def racing_open(path, flags, mode=0o777, *, dir_fd=None):
+            nonlocal swapped
+            if path == "nested" and dir_fd is not None and not swapped:
+                nested.rename(original)
+                nested.symlink_to(outside, target_is_directory=True)
+                swapped = True
+            if dir_fd is None:
+                return real_open(path, flags, mode)
+            return real_open(path, flags, mode, dir_fd=dir_fd)
+
+        stdout = io.StringIO()
+        with (
+            patch.object(guard.os, "open", side_effect=racing_open),
+            patch.object(guard, "_safe_relative_io_supported", return_value=True),
+            redirect_stdout(stdout),
+        ):
+            exit_code = guard.main(["validate", "--input", str(self.input)])
+        payload = json.loads(stdout.getvalue())
+        self.assertTrue(swapped)
+        self.assertEqual(exit_code, 1, payload)
+        self.assertEqual(payload["error"]["code"], "unsafe_companion_symlink")
+
+    @unittest.skipIf(os.name == "nt", "dir_fd traversal is unavailable on Windows")
+    def test_intermediate_swap_after_open_stays_on_pinned_directory(self):
+        self.materialize(names=["nested/summary.md"])
+        nested = self.root / "nested"
+        original = self.root / "nested-original"
+        outside = self.root / "outside"
+        outside.mkdir()
+        (outside / "summary.md").write_text("outside", encoding="utf-8")
+        real_open = os.open
+        swapped = False
+
+        def racing_open(path, flags, mode=0o777, *, dir_fd=None):
+            nonlocal swapped
+            if dir_fd is None:
+                return real_open(path, flags, mode)
+            descriptor = real_open(path, flags, mode, dir_fd=dir_fd)
+            if path == "nested" and not swapped:
+                nested.rename(original)
+                nested.symlink_to(outside, target_is_directory=True)
+                swapped = True
+            return descriptor
+
+        stdout = io.StringIO()
+        with (
+            patch.object(guard.os, "open", side_effect=racing_open),
+            patch.object(guard, "_safe_relative_io_supported", return_value=True),
+            redirect_stdout(stdout),
+        ):
+            exit_code = guard.main(["validate", "--input", str(self.input)])
+        payload = json.loads(stdout.getvalue())
+        self.assertTrue(swapped)
+        self.assertEqual(exit_code, 0, payload)
+        self.assertTrue(payload["valid"])
+
+    def test_missing_safe_relative_io_primitives_fail_closed(self):
+        self.materialize()
+        stdout = io.StringIO()
+        with (
+            patch.object(guard, "_safe_relative_io_supported", return_value=False),
+            redirect_stdout(stdout),
+        ):
+            exit_code = guard.main(["validate", "--input", str(self.input)])
+        payload = json.loads(stdout.getvalue())
+        self.assertEqual(exit_code, 1, payload)
+        self.assertEqual(payload["error"]["code"], "safe_traversal_unavailable")
+
 
 class MalformedInputTests(BundleCase):
+    @unittest.skipIf(os.name == "nt", "symlink semantics differ on Windows")
+    def test_input_parent_symlink_is_unsafe(self):
+        self.materialize(names=["summary.md"])
+        actual = self.root / "actual"
+        actual.mkdir()
+        self.input.rename(actual / "state.json")
+        (self.root / "summary.md").rename(actual / "summary.md")
+        alias = self.root / "alias"
+        alias.symlink_to(actual, target_is_directory=True)
+        completed = subprocess.run(
+            [
+                sys.executable,
+                str(SCRIPT),
+                "validate",
+                "--input",
+                str(alias / "state.json"),
+            ],
+            check=False,
+            capture_output=True,
+            text=True,
+        )
+        payload = json.loads(completed.stdout)
+        self.assertEqual(completed.returncode, 1, payload)
+        self.assertEqual(payload["error"]["code"], "input_unsafe_path")
+
+    @unittest.skipIf(os.name == "nt", "dir_fd traversal is unavailable on Windows")
+    def test_input_parent_swap_before_open_is_rejected(self):
+        self.materialize(names=["summary.md"])
+        parent = self.root / "input-parent"
+        parent.mkdir()
+        self.input.rename(parent / "state.json")
+        (self.root / "summary.md").rename(parent / "summary.md")
+        original = self.root / "input-parent-original"
+        outside = self.root / "outside-input"
+        outside.mkdir()
+        (outside / "state.json").write_bytes((parent / "state.json").read_bytes())
+        (outside / "summary.md").write_bytes((parent / "summary.md").read_bytes())
+        real_open = os.open
+        swapped = False
+
+        def racing_open(path, flags, mode=0o777, *, dir_fd=None):
+            nonlocal swapped
+            if path == "input-parent" and dir_fd is not None and not swapped:
+                parent.rename(original)
+                parent.symlink_to(outside, target_is_directory=True)
+                swapped = True
+            if dir_fd is None:
+                return real_open(path, flags, mode)
+            return real_open(path, flags, mode, dir_fd=dir_fd)
+
+        stdout = io.StringIO()
+        with (
+            patch.object(guard.os, "open", side_effect=racing_open),
+            patch.object(guard, "_safe_relative_io_supported", return_value=True),
+            redirect_stdout(stdout),
+        ):
+            exit_code = guard.main(["validate", "--input", str(parent / "state.json")])
+        payload = json.loads(stdout.getvalue())
+        self.assertTrue(swapped)
+        self.assertEqual(exit_code, 1, payload)
+        self.assertEqual(payload["error"]["code"], "input_unsafe_path")
+
     def test_duplicate_keys_are_exit_one_json_error(self):
         self.input.write_text('{"schema":"a","schema":"b"}', encoding="utf-8")
         exit_code, _, payload = self.run_cli()

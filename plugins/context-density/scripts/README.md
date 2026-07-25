@@ -11,7 +11,7 @@ Bundled helpers:
 - `context_density_audit.py`: report token hotspots and prompt/context risks in
   deterministic source files.
 - `state_commitment_guard.py`: fail-closed validation for typed current
-  identities, independent review and executable-proof state, authority and stop
+  identities, disjoint declared review/proof origin IDs, authority and stop
   scope, source provenance, and exact companion snapshots.
 - `agent_context_report.py`: CLI-compatible, read-only runtime context report
   for Codex and Claude Code: installed skills, plugin manifests, project
