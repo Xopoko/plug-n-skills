@@ -7,6 +7,10 @@ description: Design and review KMP testing strategy, commonTest, kotlin.test, pl
 
 Use for KMP test strategy/review: `commonTest`, `kotlin.test`, platform tests, Compose Multiplatform UI tests, screenshot tests, test doubles, refactor safety, code review gates, regression validation.
 
+Bundled commands use `$PLUGIN_ROOT` (`$env:PLUGIN_ROOT` in PowerShell; same
+path suffix). Set it once from the host's plugin-root variable when available,
+or to this plugin's absolute root path.
+
 ## Strategy
 
 Favor confidence/speed over coverage vanity:
@@ -72,6 +76,9 @@ or a baseline arrives as an artifact:
   read-only. A mode that verifies and then records is not final proof.
 - Bind candidates to the exact source revision, sanitized rendering inputs,
   task, target, test filter, payload manifest, and post-upload provider receipt.
+- Before opening an artifact, run the bundled `golden_artifact_guard.py`
+  against its exact PNG allowlist and require an `accepted` receipt. The guard
+  does not download, extract, or authorize a visual change.
 - Import only the expected file set; review additions, modifications, and
   deletions, and remove generator-only configuration before acceptance.
 - After accepted goldens are committed, rerun non-recording verification on
