@@ -49,8 +49,8 @@ Before proposing a repair:
 - Make late-subscriber replay semantics explicit. A cleared value cannot remain
   current merely because a replay container retained it.
 - Do not encode a required authority transition only as a transient value in an
-  equality-conflating observable. If invalidate followed by an equal-payload
-  replacement must restart or fence consumers, include a monotonic authority
+  equality-conflating observable. If an invalidation followed by an
+  equal-payload replacement must restart or fence consumers, include a monotonic
   epoch in the retained snapshot or provide an equivalent lossless revision
   receipt at the decision boundary. Payload equality is not authority equality.
 - Treat a source-issued ownership token as opaque authority evidence. Carry the

@@ -286,8 +286,9 @@ insufficient, and a timeout is not proof.
   acknowledgement of every controlled output queue?
 - Does a permitted control schedule prove that the observer and receipts are
   connected?
-- Can invalidate followed by an equal-payload replacement be distinguished by
-  authority epoch without relying on delivery of an intermediate value?
+- Can an invalidation followed by an equal-payload replacement be
+  distinguished by authority epoch without relying on delivery of an
+  intermediate value?
 - Does every projection and commit fence preserve the complete source-issued
   authority token instead of rebuilding it from visible fields?
 - Are unrelated keys independent unless the operation is explicitly global?
