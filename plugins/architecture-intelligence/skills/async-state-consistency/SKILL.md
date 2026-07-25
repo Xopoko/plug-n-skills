@@ -53,6 +53,10 @@ Before proposing a repair:
   replacement must restart or fence consumers, include a monotonic authority
   epoch in the retained snapshot or provide an equivalent lossless revision
   receipt at the decision boundary. Payload equality is not authority equality.
+- Treat a source-issued ownership token as opaque authority evidence. Carry the
+  exact token value, or a lossless wrapper around it, through projections and
+  commit fences. Do not reconstruct it from exposed counters or a synthetic
+  owner; that can erase identity and fields added by the authority source.
 
 ## Map Authority
 
@@ -164,6 +168,10 @@ At minimum, cover:
 - invalidate and immediately replace with an equal payload without draining an
   equality-conflating observer; the authority epoch still changes and revoked
   work remains fenced;
+- carry a source-issued authority token through every projection and fence;
+  tokens that share exposed counters but differ in source-defined authority or
+  identity fields are compared by the source token contract, without
+  consumer-side reconstruction;
 - TTL next-read behavior separately from active subscriber emissions;
 - blocked delivery followed by reentrant subscriber code, and user-supplied
   predicate or factory hooks that perform nested mutation before the outer

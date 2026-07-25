@@ -46,6 +46,25 @@ that publishes derived state must validate the current epoch at its commit
 surface even when the payload compares equal. Payload equality is not authority
 equality.
 
+### Authority token preservation
+
+A source-issued ownership token is authority evidence, not a consumer DTO.
+Carry the exact token value through caches, projections, retained snapshots,
+and commit fences, or wrap it without decomposing it. Do not synthesize a new
+token from currently exposed generations, counters, or a consumer-chosen owner.
+Reconstruction can collapse distinct owners and silently discard fields added
+later by the authority source.
+
+When a boundary cannot transport the token representation directly, define a
+versioned lossless encoding owned by the authority contract. Its
+authority-owned decoder must produce a complete valid token under the source
+contract or reject the input. Fail closed on an unsupported version and on a
+supported-version envelope that is malformed, truncated, noncanonical, or
+missing an authority-bearing field. Preserve the complete token value; only the
+source contract decides which fields participate in identity. Domain state may
+pair its own payload with the source token, but comparisons and validation
+still use the source-issued token contract.
+
 Choose one supersession policy per operation family:
 
 - latest-start-wins: reserving B immediately supersedes A. If B later fails or
@@ -226,6 +245,7 @@ winners where order is part of the contract.
 | ASC-16 | Enter a user-supplied predicate or factory, perform a nested mutation, return, then let the outer operation attempt commit | The hook runs outside the owner; nested mutation finishes first; the outer operation revalidates and cannot overwrite its winner |
 | ASC-17 | Gate immediately before B's whole atomic admission attempt; run invalidation-first and admission-first, then a same-generation pair; for CAS, allow an earlier speculative snapshot, then CAS the combined generation-and-membership snapshot by requiring the expected generation while installing membership | Invalidation-first admits B only under the current generation; admission-first is subsequently detached or revoked, later callers neither join nor wait behind it, and its late commit is rejected; a mismatched CAS retries; the same-generation pair preserves the declared admission and publication-order policies |
 | ASC-18 | Publish V, invalidate, then immediately publish equal-payload V again without draining an equality-conflating observer | The retained authority epoch advances and is observable at every decision boundary; revoked work remains fenced; no consumer depends on delivery of the intermediate invalidated value |
+| ASC-19 | Carry source-issued token A through a projection, then issue token B with the same exposed counters but a different source-defined owner or authority field; also present malformed, truncated, noncanonical, and incomplete supported-version encodings | Every layer preserves the complete source token and compares through the source contract; genuine B survives the same path and authorizes B's commit; A and consumer-reconstructed tokens are rejected; every invalid encoding and unsupported version fails closed |
 
 Holding A before its last ownership check does not prove the check-to-commit
 boundary. The gate must be immediately before the atomic or serialized attempt.
@@ -268,5 +288,7 @@ insufficient, and a timeout is not proof.
   connected?
 - Can invalidate followed by an equal-payload replacement be distinguished by
   authority epoch without relying on delivery of an intermediate value?
+- Does every projection and commit fence preserve the complete source-issued
+  authority token instead of rebuilding it from visible fields?
 - Are unrelated keys independent unless the operation is explicitly global?
 - Are TTL next-read and active-emission semantics tested separately?

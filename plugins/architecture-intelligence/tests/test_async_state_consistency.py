@@ -95,7 +95,7 @@ class AsyncStateConsistencySkillTest(unittest.TestCase):
             for line in text.splitlines()
             if line.startswith("| ASC-")
         }
-        self.assertEqual(rows, {f"ASC-{index:02d}" for index in range(1, 19)})
+        self.assertEqual(rows, {f"ASC-{index:02d}" for index in range(1, 20)})
         for invariant in (
             "empty dependency vector",
             "Stamped replay read",
@@ -118,6 +118,10 @@ class AsyncStateConsistencySkillTest(unittest.TestCase):
             "same-generation admission policy",
             "equality-conflating observers",
             "payload equality is not authority equality",
+            "authority token preservation",
+            "source-issued ownership token is authority evidence",
+            "do not synthesize a new token",
+            "versioned lossless encoding",
         ):
             self.assertIn(invariant.lower(), compact)
         asc_13 = next(
@@ -198,6 +202,12 @@ class AsyncStateConsistencySkillTest(unittest.TestCase):
             "cannot pass vacuously",
             "proof boundary",
             "claims over all possible races",
+            "source-issued ownership token as opaque authority evidence",
+            "exact token value",
+            "lossless wrapper",
+            "do not reconstruct it",
+            "synthetic owner",
+            "fields added by the authority source",
         ):
             self.assertIn(invariant, skill)
 
@@ -234,6 +244,25 @@ class AsyncStateConsistencySkillTest(unittest.TestCase):
             "intermediate invalidated value",
         ):
             self.assertIn(invariant, asc_18)
+
+        asc_19 = next(
+            line.lower()
+            for line in REFERENCE.read_text(encoding="utf-8").splitlines()
+            if line.startswith("| ASC-19 ")
+        )
+        for invariant in (
+            "source-issued token",
+            "same exposed counters",
+            "different source-defined owner or authority field",
+            "complete source token",
+            "compares through the source contract",
+            "genuine b survives the same path",
+            "authorizes b's commit",
+            "consumer-reconstructed tokens are rejected",
+            "malformed, truncated, noncanonical, and incomplete",
+            "invalid encoding and unsupported version fails closed",
+        ):
+            self.assertIn(invariant, asc_19)
 
     def test_router_and_publication_surfaces_expose_the_skill(self):
         router = (ROOT / "skills" / "architecture-intelligence" / "SKILL.md").read_text(
