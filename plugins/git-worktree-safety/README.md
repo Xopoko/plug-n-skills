@@ -5,7 +5,7 @@ classes: missing worktree pointers and failed ordinary SSH commit signing.
 Both skills preserve refs, index, configuration, and worktree content, emit
 redacted evidence, and keep mutation authority explicit.
 
-## Skill
+## Skills
 
 - `git-worktree-recovery`: classify commit retention, validate one exact clean
   registered replacement, inspect a convenience symlink with raw paths omitted

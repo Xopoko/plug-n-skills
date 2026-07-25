@@ -29,6 +29,8 @@ jobs:
         run: python3 -m unittest discover -s plugins/gitlab-review/tests
       - name: stacked-delivery plugin tests
         run: python3 -m unittest discover -s plugins/stacked-delivery/tests
+      - name: git-worktree-safety plugin tests
+        run: python3 -m unittest discover -s plugins/git-worktree-safety/tests
       - name: capability-workbench smoke tests
         run: python3 plugins/capability-workbench/tests/run_smoke.py
       - name: Install dry-runs

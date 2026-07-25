@@ -10,9 +10,12 @@ import json
 import os
 import re
 import secrets
+import selectors
+import signal
 import stat
 import subprocess
 import sys
+import time
 from pathlib import Path
 from typing import Any, Iterable, Sequence
 
@@ -235,35 +238,135 @@ def run_git(
     git = system_executable("git")
     if git is None:
         raise EvidenceError("system_git_unavailable")
+    command = [
+        os.fspath(git),
+        "--no-replace-objects",
+        "-c",
+        "core.fsmonitor=false",
+        "-c",
+        "core.untrackedCache=false",
+        "-c",
+        "maintenance.auto=false",
+        "-C",
+        os.fspath(repo),
+        *arguments,
+    ]
+    process: subprocess.Popen[bytes] | None = None
+    selector: selectors.BaseSelector | None = None
+
+    def kill_group_and_reap() -> None:
+        if process is None:
+            return
+        try:
+            os.killpg(process.pid, signal.SIGKILL)
+        except ProcessLookupError:
+            pass
+        except OSError:
+            try:
+                process.kill()
+            except OSError:
+                pass
+        try:
+            process.wait(timeout=1)
+        except (OSError, subprocess.TimeoutExpired):
+            try:
+                process.kill()
+            except OSError:
+                pass
+            try:
+                process.wait(timeout=1)
+            except (OSError, subprocess.TimeoutExpired):
+                pass
+
     try:
-        result = subprocess.run(
-            [
-                os.fspath(git),
-                "--no-replace-objects",
-                "-c",
-                "core.fsmonitor=false",
-                "-c",
-                "core.untrackedCache=false",
-                "-c",
-                "maintenance.auto=false",
-                "-C",
-                os.fspath(repo),
-                *arguments,
-            ],
+        process = subprocess.Popen(
+            command,
             stdin=subprocess.DEVNULL,
             stdout=subprocess.PIPE,
             stderr=subprocess.PIPE,
             env=safe_git_environment(),
-            timeout=COMMAND_TIMEOUT_SECONDS,
-            check=False,
+            start_new_session=True,
         )
-    except (OSError, subprocess.SubprocessError) as exc:
+        assert process.stdout is not None
+        assert process.stderr is not None
+
+        selector = selectors.DefaultSelector()
+        outputs = {
+            "stdout": bytearray(),
+            "stderr": bytearray(),
+        }
+        for name, stream in (
+            ("stdout", process.stdout),
+            ("stderr", process.stderr),
+        ):
+            os.set_blocking(stream.fileno(), False)
+            selector.register(stream, selectors.EVENT_READ, name)
+
+        deadline = time.monotonic() + COMMAND_TIMEOUT_SECONDS
+        while selector.get_map():
+            remaining_time = deadline - time.monotonic()
+            if remaining_time <= 0:
+                raise subprocess.TimeoutExpired(
+                    command,
+                    COMMAND_TIMEOUT_SECONDS,
+                )
+            events = selector.select(remaining_time)
+            if not events:
+                raise subprocess.TimeoutExpired(
+                    command,
+                    COMMAND_TIMEOUT_SECONDS,
+                )
+            for key, _ in events:
+                stream = key.fileobj
+                descriptor = stream.fileno()
+                output = outputs[key.data]
+                remaining_bytes = MAX_COMMAND_BYTES + 1 - len(output)
+                if remaining_bytes <= 0:
+                    raise EvidenceError("git_probe_output_too_large")
+                try:
+                    chunk = os.read(
+                        descriptor,
+                        min(64 * 1024, remaining_bytes),
+                    )
+                except BlockingIOError:
+                    continue
+                if not chunk:
+                    selector.unregister(stream)
+                    stream.close()
+                    continue
+                output.extend(chunk)
+                if len(output) > MAX_COMMAND_BYTES:
+                    raise EvidenceError("git_probe_output_too_large")
+
+        remaining_time = deadline - time.monotonic()
+        if remaining_time <= 0:
+            raise subprocess.TimeoutExpired(
+                command,
+                COMMAND_TIMEOUT_SECONDS,
+            )
+        process.wait(timeout=remaining_time)
+        result = subprocess.CompletedProcess(
+            command,
+            process.returncode,
+            bytes(outputs["stdout"]),
+            bytes(outputs["stderr"]),
+        )
+    except EvidenceError:
+        kill_group_and_reap()
+        raise
+    except Exception as exc:
+        kill_group_and_reap()
         raise EvidenceError("git_probe_unavailable") from exc
-    if (
-        len(result.stdout) > MAX_COMMAND_BYTES
-        or len(result.stderr) > MAX_COMMAND_BYTES
-    ):
-        raise EvidenceError("git_probe_output_too_large")
+    except BaseException:
+        kill_group_and_reap()
+        raise
+    finally:
+        if selector is not None:
+            selector.close()
+        if process is not None:
+            for stream in (process.stdout, process.stderr):
+                if stream is not None and not stream.closed:
+                    stream.close()
     if result.returncode not in set(accepted):
         raise EvidenceError("git_probe_failed")
     return result

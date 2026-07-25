@@ -5,9 +5,12 @@ import concurrent.futures
 import importlib.util
 import json
 import os
+import signal
 import stat
 import subprocess
+import sys
 import tempfile
+import time
 import unittest
 from pathlib import Path
 from unittest import mock
@@ -625,12 +628,18 @@ class GitCommitSigningGuardTests(unittest.TestCase):
         self.assertFalse(marker.exists())
 
     def test_git_probes_force_object_substitution_off(self):
-        observed: list[tuple[list[str], dict[str, str]]] = []
-        real_run = subprocess.run
+        observed: list[tuple[list[str], dict[str, str], bool]] = []
+        real_popen = subprocess.Popen
 
         def capture(*args, **kwargs):
-            observed.append((list(args[0]), dict(kwargs["env"])))
-            return real_run(*args, **kwargs)
+            observed.append(
+                (
+                    list(args[0]),
+                    dict(kwargs["env"]),
+                    kwargs["start_new_session"],
+                )
+            )
+            return real_popen(*args, **kwargs)
 
         with mock.patch.dict(
             os.environ,
@@ -639,15 +648,374 @@ class GitCommitSigningGuardTests(unittest.TestCase):
                 "GIT_GRAFT_FILE": str(self.root / "hostile-grafts"),
                 "GIT_REPLACE_REF_BASE": "refs/hostile/",
             },
-        ), mock.patch.object(guard.subprocess, "run", side_effect=capture):
+        ), mock.patch.object(guard.subprocess, "Popen", side_effect=capture):
             guard.run_git(self.repo, ["rev-parse", "--verify", "HEAD"])
 
         self.assertEqual(len(observed), 1)
-        argv, environment = observed[0]
+        argv, environment, start_new_session = observed[0]
         self.assertIn("--no-replace-objects", argv)
+        self.assertTrue(start_new_session)
         self.assertEqual(environment["GIT_NO_REPLACE_OBJECTS"], "1")
         self.assertEqual(environment["GIT_GRAFT_FILE"], os.devnull)
         self.assertNotIn("GIT_REPLACE_REF_BASE", environment)
+
+    def test_git_probe_capture_is_bounded_per_stream(self):
+        real_popen = subprocess.Popen
+        maximum = 4096
+
+        for descriptor in (1, 2):
+            with self.subTest(descriptor=descriptor):
+                processes: list[subprocess.Popen[bytes]] = []
+
+                def oversized_process(_command, **kwargs):
+                    process = real_popen(
+                        [
+                            sys.executable,
+                            "-c",
+                            (
+                                "import os,time;"
+                                f"os.write({descriptor},b'x'*{maximum + 1});"
+                                "time.sleep(30)"
+                            ),
+                        ],
+                        **kwargs,
+                    )
+                    processes.append(process)
+                    return process
+
+                started = time.monotonic()
+                with (
+                    mock.patch.object(
+                        guard,
+                        "MAX_COMMAND_BYTES",
+                        maximum,
+                    ),
+                    mock.patch.object(
+                        guard,
+                        "COMMAND_TIMEOUT_SECONDS",
+                        2,
+                    ),
+                    mock.patch.object(
+                        guard.subprocess,
+                        "Popen",
+                        side_effect=oversized_process,
+                    ),
+                    self.assertRaisesRegex(
+                        guard.EvidenceError,
+                        "git_probe_output_too_large",
+                    ),
+                ):
+                    guard.run_git(
+                        self.repo,
+                        ["rev-parse", "--verify", "HEAD"],
+                    )
+                self.assertLess(time.monotonic() - started, 2)
+                self.assertEqual(len(processes), 1)
+                self.assertIsNotNone(processes[0].returncode)
+
+    def test_git_probe_capture_accepts_exact_limit_on_both_streams(self):
+        real_popen = subprocess.Popen
+        maximum = 256 * 1024
+
+        def exact_process(_command, **kwargs):
+            return real_popen(
+                [
+                    sys.executable,
+                    "-c",
+                    (
+                        "import os;"
+                        f"os.write(2,b'e'*{maximum});"
+                        f"os.write(1,b'o'*{maximum})"
+                    ),
+                ],
+                **kwargs,
+            )
+
+        with (
+            mock.patch.object(guard, "MAX_COMMAND_BYTES", maximum),
+            mock.patch.object(guard, "COMMAND_TIMEOUT_SECONDS", 2),
+            mock.patch.object(
+                guard.subprocess,
+                "Popen",
+                side_effect=exact_process,
+            ),
+        ):
+            result = guard.run_git(
+                self.repo,
+                ["rev-parse", "--verify", "HEAD"],
+            )
+
+        self.assertEqual(result.stdout, b"o" * maximum)
+        self.assertEqual(result.stderr, b"e" * maximum)
+
+    def test_git_probe_preserves_accepted_return_code_and_output(self):
+        real_popen = subprocess.Popen
+
+        def nonzero_process(_command, **kwargs):
+            return real_popen(
+                [
+                    sys.executable,
+                    "-c",
+                    (
+                        "import os,sys;"
+                        "os.write(1,b'expected-out');"
+                        "os.write(2,b'expected-error');"
+                        "sys.exit(7)"
+                    ),
+                ],
+                **kwargs,
+            )
+
+        with mock.patch.object(
+            guard.subprocess,
+            "Popen",
+            side_effect=nonzero_process,
+        ):
+            result = guard.run_git(
+                self.repo,
+                ["config", "--get", "synthetic.key"],
+                accepted=(7,),
+            )
+        self.assertEqual(result.returncode, 7)
+        self.assertEqual(result.stdout, b"expected-out")
+        self.assertEqual(result.stderr, b"expected-error")
+
+        with (
+            mock.patch.object(
+                guard.subprocess,
+                "Popen",
+                side_effect=nonzero_process,
+            ),
+            self.assertRaisesRegex(
+                guard.EvidenceError,
+                "git_probe_failed",
+            ),
+        ):
+            guard.run_git(
+                self.repo,
+                ["config", "--get", "synthetic.key"],
+            )
+
+    def test_git_probe_spawn_failure_is_public_safe(self):
+        with (
+            mock.patch.object(
+                guard.subprocess,
+                "Popen",
+                side_effect=OSError("private spawn detail"),
+            ),
+            self.assertRaisesRegex(
+                guard.EvidenceError,
+                "git_probe_unavailable",
+            ),
+        ):
+            guard.run_git(
+                self.repo,
+                ["rev-parse", "--verify", "HEAD"],
+            )
+
+    def test_git_probe_unexpected_selector_failure_reaps_process(self):
+        real_popen = subprocess.Popen
+        processes: list[subprocess.Popen[bytes]] = []
+
+        def sleeping_process(_command, **kwargs):
+            process = real_popen(
+                [sys.executable, "-c", "import time;time.sleep(30)"],
+                **kwargs,
+            )
+            processes.append(process)
+            return process
+
+        with (
+            mock.patch.object(
+                guard.subprocess,
+                "Popen",
+                side_effect=sleeping_process,
+            ),
+            mock.patch.object(
+                guard.selectors,
+                "DefaultSelector",
+                side_effect=RuntimeError("private selector detail"),
+            ),
+            self.assertRaisesRegex(
+                guard.EvidenceError,
+                "git_probe_unavailable",
+            ),
+        ):
+            guard.run_git(
+                self.repo,
+                ["rev-parse", "--verify", "HEAD"],
+            )
+
+        self.assertEqual(len(processes), 1)
+        self.assertIsNotNone(processes[0].returncode)
+        assert processes[0].stdout is not None
+        assert processes[0].stderr is not None
+        self.assertTrue(processes[0].stdout.closed)
+        self.assertTrue(processes[0].stderr.closed)
+
+    def test_git_probe_interrupt_reaps_process_before_propagating(self):
+        real_popen = subprocess.Popen
+        processes: list[subprocess.Popen[bytes]] = []
+
+        def sleeping_process(_command, **kwargs):
+            process = real_popen(
+                [sys.executable, "-c", "import time;time.sleep(30)"],
+                **kwargs,
+            )
+            processes.append(process)
+            return process
+
+        with (
+            mock.patch.object(
+                guard.subprocess,
+                "Popen",
+                side_effect=sleeping_process,
+            ),
+            mock.patch.object(
+                guard.selectors,
+                "DefaultSelector",
+                side_effect=KeyboardInterrupt,
+            ),
+            self.assertRaises(KeyboardInterrupt),
+        ):
+            guard.run_git(
+                self.repo,
+                ["rev-parse", "--verify", "HEAD"],
+            )
+
+        self.assertEqual(len(processes), 1)
+        self.assertIsNotNone(processes[0].returncode)
+        assert processes[0].stdout is not None
+        assert processes[0].stderr is not None
+        self.assertTrue(processes[0].stdout.closed)
+        self.assertTrue(processes[0].stderr.closed)
+
+    def test_git_probe_timeout_kills_descendants_holding_pipes(self):
+        real_popen = subprocess.Popen
+        pid_file = self.root / "descendant-pid"
+        processes: list[subprocess.Popen[bytes]] = []
+        child_source = "import time;time.sleep(30)"
+
+        def descendant_process(_command, **kwargs):
+            process = real_popen(
+                [
+                    sys.executable,
+                    "-c",
+                    (
+                        "import pathlib,subprocess,sys;"
+                        "child=subprocess.Popen(["
+                        f"sys.executable,'-c',{child_source!r}"
+                        "]);"
+                        f"pathlib.Path({os.fspath(pid_file)!r}).write_text("
+                        "str(child.pid),encoding='ascii')"
+                    ),
+                ],
+                **kwargs,
+            )
+            processes.append(process)
+            return process
+
+        started = time.monotonic()
+        with (
+            mock.patch.object(
+                guard,
+                "COMMAND_TIMEOUT_SECONDS",
+                0.5,
+            ),
+            mock.patch.object(
+                guard.subprocess,
+                "Popen",
+                side_effect=descendant_process,
+            ),
+            self.assertRaisesRegex(
+                guard.EvidenceError,
+                "git_probe_unavailable",
+            ),
+        ):
+            guard.run_git(
+                self.repo,
+                ["rev-parse", "--verify", "HEAD"],
+            )
+        self.assertLess(time.monotonic() - started, 2)
+        self.assertEqual(len(processes), 1)
+        self.assertIsNotNone(processes[0].returncode)
+        assert processes[0].stdout is not None
+        assert processes[0].stderr is not None
+        self.assertTrue(processes[0].stdout.closed)
+        self.assertTrue(processes[0].stderr.closed)
+        self.assertTrue(pid_file.is_file())
+
+        descendant_pid = int(pid_file.read_text(encoding="ascii"))
+
+        def descendant_is_running() -> bool:
+            try:
+                os.kill(descendant_pid, 0)
+            except ProcessLookupError:
+                return False
+            process_stat = Path(f"/proc/{descendant_pid}/stat")
+            if process_stat.is_file():
+                try:
+                    if process_stat.read_text(encoding="ascii").split()[2] == "Z":
+                        return False
+                except (OSError, IndexError):
+                    pass
+            return True
+
+        deadline = time.monotonic() + 1
+        while descendant_is_running() and time.monotonic() < deadline:
+            time.sleep(0.01)
+        descendant_running = descendant_is_running()
+        if descendant_running:
+            try:
+                os.kill(descendant_pid, signal.SIGKILL)
+            except ProcessLookupError:
+                pass
+        self.assertFalse(descendant_running)
+
+    def test_git_probe_timeout_after_child_closes_both_pipes(self):
+        real_popen = subprocess.Popen
+        processes: list[subprocess.Popen[bytes]] = []
+
+        def closed_pipe_process(_command, **kwargs):
+            process = real_popen(
+                [
+                    sys.executable,
+                    "-c",
+                    "import os,time;os.close(1);os.close(2);time.sleep(30)",
+                ],
+                **kwargs,
+            )
+            processes.append(process)
+            return process
+
+        started = time.monotonic()
+        with (
+            mock.patch.object(
+                guard,
+                "COMMAND_TIMEOUT_SECONDS",
+                0.25,
+            ),
+            mock.patch.object(
+                guard.subprocess,
+                "Popen",
+                side_effect=closed_pipe_process,
+            ),
+            self.assertRaisesRegex(
+                guard.EvidenceError,
+                "git_probe_unavailable",
+            ),
+        ):
+            guard.run_git(
+                self.repo,
+                ["rev-parse", "--verify", "HEAD"],
+            )
+        self.assertLess(time.monotonic() - started, 2)
+        self.assertEqual(len(processes), 1)
+        self.assertIsNotNone(processes[0].returncode)
+        assert processes[0].stdout is not None
+        assert processes[0].stderr is not None
+        self.assertTrue(processes[0].stdout.closed)
+        self.assertTrue(processes[0].stderr.closed)
 
     def test_state_collection_never_executes_configured_filters(self):
         marker = self.root / "configured-filter-ran"
