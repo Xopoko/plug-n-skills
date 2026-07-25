@@ -110,6 +110,19 @@ class ThreadSupervisionContractTests(unittest.TestCase):
             compact,
         )
 
+    def test_aggregate_claims_fail_closed_without_exact_coverage(self):
+        compact = " ".join(SKILL.read_text(encoding="utf-8").split()).lower()
+        for invariant in (
+            "separate universe breadth from per-item evidence depth",
+            "bind the item set and cutoff",
+            "exact item-by-dimension coverage",
+            "`capability-workbench:capability-auditor`",
+            "do not install or activate another plugin",
+            "report the claim as bounded or partial",
+            "independent enumeration evidence",
+        ):
+            self.assertIn(invariant, compact)
+
     def test_supervision_docs_are_public_safe_and_use_no_raw_directives(self):
         for path in (SKILL, REFERENCE):
             text = path.read_text(encoding="utf-8")

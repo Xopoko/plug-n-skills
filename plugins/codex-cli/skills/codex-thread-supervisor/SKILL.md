@@ -75,6 +75,20 @@ expanding a live snapshot.
 Report transitions, not elapsed time. A useful update states what changed, the
 evidence class, the remaining gate, and whether observer action is allowed.
 
+## Bound Aggregate Claims
+
+When a target claims that every member of a set was reviewed, audited, or
+validated, separate universe breadth from per-item evidence depth. Bind the
+item set and cutoff, name the required dimensions, and reject counts or
+percentages as substitutes for exact item-by-dimension coverage.
+
+When `capability-workbench:capability-auditor` is already available, route the
+claim through its evidence coverage gate. Do not install or activate another
+plugin merely to perform the check. If the gate is unavailable, its ledger is
+invalid, or any required pair is missing, failing, or blocked, report the claim
+as bounded or partial. Never promote a supplied universe to real-world
+completeness without independent enumeration evidence.
+
 ## Continue An Ongoing Watch
 
 When the user requests a nonterminal ongoing watch, keep exactly one native
