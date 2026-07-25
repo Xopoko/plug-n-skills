@@ -6,7 +6,8 @@ description: >-
   prompts, skill packages, marketplace plugins, MCP/tool schemas,
   long-context placement, prompt/context compression, retrieval provenance,
   runtime context diagnostics, duplicated or overlapping prose, competing
-  skill descriptions, irrelevant-context pruning, prompt reformatting,
+  skill descriptions, companion-artifact drift, current-state commitments,
+  irrelevant-context pruning, prompt reformatting,
   agent/subagent context handoffs, brittle trigger descriptions, strict
   JSON/schema/tool-call output, validators, retry/repair loops, or
   behavior-preserving token reduction.
@@ -25,6 +26,7 @@ Bundled commands use `$PLUGIN_ROOT` (`$env:PLUGIN_ROOT` in PowerShell; same path
 - Compress prose, not commitments: goals, constraints, decisions, IDs, paths, dates, warnings, evidence refs, safety boundaries, and behavior-critical exact wording need verbatim text or typed recovery pointers.
 - Treat raw logs, transcripts, reports, and source packs as evidence archives. Do not hot-load them; keep compact claims plus source refs.
 - Do not let retrieval, memory recall, or archived artifacts become authoritative state without provenance, confidence, and validation.
+- When companion artifacts can authorize actions or gate proof, seal their reviewed state in a typed state-commitment bundle and validate it; matching words do not prove semantic agreement.
 - Do not bury action-critical commitments in the middle of large hot/router files; keep anchors, source order, or explicit state pointers.
 - Pack only context with a stated relevance criterion; related-but-non-answering material is the most harmful distractor class.
 - Order context to match the consumer's reasoning or execution order.
@@ -93,6 +95,7 @@ Load paths:
 | Batch or repository-wide behavior-preserving compression (docs, AGENTS.md, skills): target selection, compress, deterministic invariants, adversarial refute, repair loop | `references/compression-pipeline.md` |
 | Skill/plugin portfolio split, merge, delete, move, router, cross-plugin overlap, or script-extract decisions | Capability Workbench `capability-portfolio-architect` when available |
 | Prompt, model-output, tool-call, schema, retry, or prose-parsing review | `references/prompt-contracts.md` |
+| Cross-artifact current identity, review/proof status, authority, stop scope, or companion-drift validation | `references/state-commitment-contract.md` |
 | Long-context placement, compression, schema/task validity, retrieval citation, cache-prefix, distractor-budget, format-sensitivity, or handoff acceptance gates | `references/research-backed-gates.md` |
 | Final audit sections and JSON/Markdown report contracts | `references/report-contracts.md` |
 
@@ -110,6 +113,7 @@ python3 "$PLUGIN_ROOT/skills/context-density/scripts/context_density_audit.py" <
 python3 "$PLUGIN_ROOT/skills/context-density/scripts/context_density_audit.py" <files-or-dirs> --emit-gate-checklist gate-evidence.md
 python3 "$PLUGIN_ROOT/skills/context-density/scripts/context_density_audit.py" <files-or-dirs> --load-path-map loadpaths.json
 python3 "$PLUGIN_ROOT/skills/context-density/scripts/context_density_audit.py" <files-or-dirs> --commitment-ledger atoms.json --fail-on-missing-commitments
+python3 "$PLUGIN_ROOT/skills/context-density/scripts/state_commitment_guard.py" validate --input state-commitment.json
 python3 "$PLUGIN_ROOT/skills/context-density/scripts/description_overlap.py" <dirs> --min-jaccard 0.25 --top 20
 python3 "$PLUGIN_ROOT/skills/context-density/scripts/compression_invariants.py" <original> <compressed> --json
 python3 "$PLUGIN_ROOT/skills/context-density/scripts/refuter_calibration.py" plant <original> --exam exam.md --key key.json

@@ -107,6 +107,69 @@ Flags:
   overriding the filename heuristic; precedence hot > router > reference > evidence.
 - `--emit-gate-checklist FILE`: fillable markdown evidence form for triggered gates.
 
+`state_commitment_guard.py validate --input FILE` emits this envelope for a
+decoded strict bundle:
+
+```json
+{
+  "schema": "context_density.state_commitment_validation.v1",
+  "status": "pass|fail",
+  "valid": true,
+  "state_version": 1,
+  "cutoff_utc": "2026-01-01T00:00:00Z",
+  "commitment_digest": "<computed-sha256>",
+  "snapshot_digest": "<computed-sha256>",
+  "counts": {"entities": 1, "identities": 1, "source_refs": 5, "companions": 1},
+  "active_stop_scope_ids": [],
+  "entities": [{
+    "id": "entity-1",
+    "has_effective_authority": true,
+    "blockers": [],
+    "current_identity_ids": ["identity-1"],
+    "source_review_status": "accepted",
+    "executable_proof_status": "passed",
+    "execution_count": 1,
+    "authority_mode": "scoped_write",
+    "authorized_actions": ["publish"],
+    "stopped_actions": [],
+    "effective_actions": ["publish"],
+    "confidence_level": "high",
+    "conflict_status": "none",
+    "fallback": "none",
+    "evidence_ref_ids": [
+      "source-authority",
+      "source-confidence",
+      "source-proof",
+      "source-review"
+    ]
+  }],
+  "errors": []
+}
+```
+
+`blockers` contains only authority, active-stop, or unresolved-conflict
+conditions. Review, proof, and confidence are independent observations; this
+schema does not invent a universal readiness policy. Any validation failure
+forces `has_effective_authority: false` and `effective_actions: []`.
+
+Malformed, unsafe, unreadable, or out-of-bounds input emits:
+
+```json
+{
+  "schema": "context_density.state_commitment_error.v1",
+  "status": "error",
+  "valid": false,
+  "error": {"code": "stable_code", "path": "$.field", "message": "..."}
+}
+```
+
+The validation envelope exits `0` for `pass` and `2` for semantic conflict,
+digest mismatch, or companion drift. The error envelope exits `1`. Output has
+no generated timestamp and is deterministically sorted. Pin `snapshot_digest`,
+not only `commitment_digest`, when the exact companion set is part of the
+consumer contract. See `state-commitment-contract.md` for the strict input
+schema and trust boundary.
+
 `description_overlap.py --json` emits:
 
 ```json
