@@ -30,6 +30,8 @@ Favor confidence/speed over coverage vanity:
 - Non-shared iOS/native behavior should be validated via native target tasks/Xcode.
 - Compose shared UI tests should focus on semantics/observable behavior.
 - Compose Multiplatform UI tests should use current Compose testing API and target-specific setup.
+- Keyboard and D-pad tests should exercise real interactive controls and the
+  owning target's input mode, not synthetic focus targets added by the fixture.
 - Verify source-set/dependency instructions against current docs before editing Gradle files.
 
 ## Proof Integrity
@@ -52,6 +54,39 @@ Favor confidence/speed over coverage vanity:
 - For exactly-once event claims, assert cardinality across creation,
   restoration, resume, and re-collection as applicable. Idempotency alone does
   not prove exactly-once delivery.
+
+## Keyboard And D-pad Focus
+
+- Define the user-visible focus sequence before editing the fixture: start,
+  forward/reverse destinations, boundaries, skipped disabled or hidden nodes,
+  and activation callbacks.
+- Seed focus on an existing interactive control. Prefer the target test API's
+  focus request; otherwise attach a narrow requester seam to that same control
+  inside the test host. Do not add blank focusable sentinels, wrapper endpoints,
+  or test-only controls that change the graph being tested.
+- Request and verify keyboard input mode when the target requires it; a rejected
+  mode request is not proof. Inject the real key sequence with the current
+  Compose test API and assert each actual destination. Preserve the real
+  callbacks and assert their observable counts when activation is part of the
+  claim.
+- Treat the effective default traversal as the baseline. Simple
+  one-dimensional layouts often follow declaration order, while focus groups,
+  scrolling, visibility, and parent properties can change the graph. Use
+  `focusProperties` only for an intentional product contract, never as a patch
+  that makes a test pass.
+- Keep interaction and rendering proof separate: a screenshot cannot prove
+  keyboard traversal, while a focus assertion cannot approve visual meaning.
+- Bind the receipt to exact source bytes, source set, target, leaf test task,
+  and non-empty result: use clean-at-SHA for committed delivery, or a base
+  revision plus an affected-file manifest/content hash covering staged,
+  unstaged, and relevant untracked bytes, explicitly marked uncommitted. Never
+  clean, commit, stash, or overwrite user work without authority. One target
+  does not prove focus parity elsewhere.
+- Keep modality claims separate. A Tab or arrow-key test does not prove rotary
+  or analog-controller input; use the owning target's input API and receipt.
+
+Use `../../references/compose-focus-testing.md` for fixture rules, a test
+sequence, failure triage, and exact evidence requirements.
 
 ## Test First
 
