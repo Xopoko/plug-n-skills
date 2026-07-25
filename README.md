@@ -170,7 +170,7 @@ instructions.
 | Reference files | 228 | - | Longer ledgers, contracts, scorecards, and source notes. |
 | Helper and validator scripts | 80 | - | Deterministic plugin-local helpers. |
 | Startup metadata | 165 skills | 13,063 | Skill name, description, and file pointer for routing. |
-| On-demand skill bodies | 165 skills | 113,068 | Instruction bodies after frontmatter, loaded only when selected. |
+| On-demand skill bodies | 165 skills | 113,128 | Instruction bodies after frontmatter, loaded only when selected. |
 
 Regenerate the report after skill edits:
 
@@ -196,7 +196,7 @@ Token columns are `startup metadata / on-demand body`.
 | `codex-cli` | 8 | 4 | 2 | 702 | 9,059 |
 | `scheduled-automation` | 1 | 5 | 0 | 103 | 1,158 |
 | `gitlab-review` | 1 | 3 | 1 | 117 | 1,083 |
-| `stacked-delivery` | 1 | 4 | 1 | 123 | 1,645 |
+| `stacked-delivery` | 1 | 4 | 1 | 123 | 1,705 |
 | `git-worktree-safety` | 1 | 1 | 1 | 159 | 1,014 |
 | `claude-code` | 6 | 2 | 1 | 528 | 4,669 |
 | `architecture-intelligence` | 9 | 8 | 2 | 645 | 6,890 |
@@ -395,7 +395,7 @@ Token cells are shown as `startup/body`.
 
 | Skill | Tokens | Description |
 | --- | ---: | --- |
-| `stacked-change-delivery` | 123/1,645 | Use when pull requests, merge requests, patch sets, or branch changes form a dependency stack and a child must remain based on an exact parent head. Covers stacked diffs, restacking after ancestor updates, per-node CI proof, safe bottom-up or forge-native atomic-prefix landing, isolated worktrees, and cross-agent handoffs. Do not use for one independent change, ordinary review-thread response, or automatic merge or force-push authorization. |
+| `stacked-change-delivery` | 123/1,705 | Use when pull requests, merge requests, patch sets, or branch changes form a dependency stack and a child must remain based on an exact parent head. Covers stacked diffs, restacking after ancestor updates, per-node CI proof, safe bottom-up or forge-native atomic-prefix landing, isolated worktrees, and cross-agent handoffs. Do not use for one independent change, ordinary review-thread response, or automatic merge or force-push authorization. |
 
 #### `git-worktree-safety`
 

@@ -196,6 +196,11 @@ class StackedDeliveryGuidanceTests(unittest.TestCase):
             "same fail-closed rule as `metadata-unverified`",
             "explicitly historical and excluded from current proof",
             "do not rewrite immutable provenance, lease, or old-to-new mappings",
+            "metadata freshness can block an independently applicable action",
+            "it never makes that action required",
+            "zero eligible existing review discussions",
+            "no evidence-reply gate and no substitute top-level note",
+            "forge-specific review workflow",
         ):
             self.assertIn(invariant, skill)
         for invariant in (
@@ -222,6 +227,13 @@ class StackedDeliveryGuidanceTests(unittest.TestCase):
             "checkpoints, or status text",
             "internal receipt validation does not prove that a live public "
             "record is current",
+            "after another workflow or explicit policy independently establishes",
+            "it does not create a reply obligation",
+            "an evidence reply is `not-applicable`",
+            "do not add it as a delivery gate",
+            "do not create a top-level note as a substitute",
+            "stack proof, review-thread eligibility, and write authority as "
+            "separate decisions",
         ):
             self.assertIn(invariant, restack)
         for invariant in (

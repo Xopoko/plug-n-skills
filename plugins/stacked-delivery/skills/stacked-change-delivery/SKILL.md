@@ -115,7 +115,12 @@ Load only the reference needed:
    producer, then read back. If its active bindings cannot be compared, use the
    same fail-closed rule as `metadata-unverified`. An old identity may remain
    only when explicitly historical and excluded from current proof. Do not
-   rewrite immutable provenance, lease, or old-to-new mappings.
+   rewrite immutable provenance, lease, or old-to-new mappings. Metadata
+   freshness can block an independently applicable action; it never makes that
+   action required. In particular, zero eligible existing review discussions
+   means no evidence-reply gate and no substitute top-level note. Route
+   discussion eligibility and reply safety to the forge-specific review
+   workflow.
 9. **Hand off by receipt.** Build a canonical receipt containing the snapshot
    digest, exact node heads, accepted proof IDs, worktree and writer ownership,
    and receiver. Run `validate-handoff`, preserve its handoff digest, and pair

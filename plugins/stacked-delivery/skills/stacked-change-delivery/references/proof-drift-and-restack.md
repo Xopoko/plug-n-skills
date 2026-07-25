@@ -115,6 +115,13 @@ it as `metadata-unverified`. Both `metadata-stale` and `metadata-unverified`
 block a readiness claim, evidence reply, or handoff; neither erases otherwise
 current underlying proof.
 
+The binding audit evaluates freshness only after another workflow or explicit
+policy independently establishes that a conditional action applies. It does not
+create a reply obligation. When the owning review workflow finds zero eligible
+existing discussions, an evidence reply is `not-applicable`: do not add it as a
+delivery gate and do not create a top-level note as a substitute. Keep stack
+proof, review-thread eligibility, and write authority as separate decisions.
+
 Obtain fresh authority for the exact record and update action before changing a
 mutable record. Authority to push, restack, retarget, reply, or edit another
 surface does not imply authority to edit a change description, checkpoint, or
