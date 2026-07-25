@@ -1,9 +1,9 @@
 # Prepared Mutation Handoff
 
 Use this contract when one task prepares exact replacement history for another
-task to publish later. It is an additive companion to the current-state
-`stacked_delivery.handoff.v1` receipt. It does not authorize a ref update,
-metadata change, merge, approval, cleanup, or proof retry.
+task to publish later. It is a strict pre-rewrite companion, not a current-state
+handoff receipt. It does not authorize a ref update, metadata change, merge,
+approval, cleanup, or proof retry.
 
 The deterministic guard accepts:
 
@@ -23,6 +23,14 @@ action or `complete`. Readiness distinguishes `history-ready`,
 `mutation-ready`, `metadata-ready`, and `complete`. Exit `2` means the next
 action is blocked by an open gap or a safety gate failed. Exit `1` means the
 document is malformed or does not match the strict schema.
+
+Those readiness labels are phase-local to the prepared mutation transaction.
+They do not mean post-rewrite metadata-current, landing-ready, or handoff-valid.
+The v1 prepared schema requires an exact
+`stacked_delivery.snapshot.v1` baseline and rejects snapshot v2 rather than
+silently ignoring its metadata inventory. After the authorized mutation and
+readback, collect exact `stacked_delivery.snapshot.v2` before `next-action` or
+building `stacked_delivery.handoff.v2`.
 
 ## Top-Level Bindings
 
@@ -46,17 +54,18 @@ The exact top-level fields are:
 - ordered `history_receipts`, initially empty;
 - `metadata_receipt`, initially null.
 
-The old snapshot must pass the existing snapshot validator, and
-`snapshot_digest` must equal its canonical digest. The rewrite nodes must be one
-contiguous unlanded suffix in the same bottom-to-top order. Every mapping binds
-the snapshot's node ID, change ID, source branch, old node head, and old parent
-head. Every object ID is non-zero, and all Git object IDs in one package use
-one Git object-ID width. The old snapshot remains the fixed transaction
-baseline while strict history receipts record a completed action prefix. The
-guard derives one content-addressed transaction digest over repository and
-stack scope, baseline, receiver, authority, policies, predecessor, rewrite,
-backup and lease bindings, exclusions, and actions. Proof evidence, watcher
-ownership, and receipts do not change that transaction digest.
+The old snapshot must be exact snapshot v1 and pass the existing structural
+snapshot validator, and `snapshot_digest` must equal its canonical digest. The
+rewrite nodes must be one contiguous unlanded suffix in the same bottom-to-top
+order. Every mapping binds the snapshot's node ID, change ID, source branch,
+old node head, and old parent head. Every object ID is non-zero, and all Git
+object IDs in one package use one Git object-ID width. The old snapshot remains
+the fixed pre-rewrite transaction baseline while strict history receipts record
+a completed action prefix. The guard derives one content-addressed transaction
+digest over repository and stack scope, baseline, receiver, authority,
+policies, predecessor, rewrite, backup and lease bindings, exclusions, and
+actions. Proof evidence, watcher ownership, and receipts do not change that
+transaction digest.
 
 Keep authority evidence, owner references, and recovery references opaque.
 Never put names, email addresses, credentials, local paths, private URLs, raw
@@ -282,7 +291,10 @@ The receiver must:
    node head, and new target branch head;
 8. append the action's exact receipt and validate the new canonical package
    before another action;
-9. stop on drift, conflict, ambiguous receipt, attribution failure, proof
+9. after the final mutation and readback, collect and validate snapshot v2,
+   reconcile its complete metadata inventory, then use that snapshot for
+   `next-action` or handoff v2;
+10. stop on drift, conflict, ambiguous receipt, attribution failure, proof
    rejection, or partial publication.
 
 On failure, preserve backups and the last confirmed old/new mapping. Do not run

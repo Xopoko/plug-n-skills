@@ -12,12 +12,19 @@ review or merge readiness and fails closed when a lower layer changes.
   content-addressed handoff receipt. It also validates additive prepared
   history-mutation handoffs with exact old/new mappings, equivalence,
   attribution, backup, lease, proof, authority, scope, and action-order gates.
-  The workflow keeps composition, contribution provenance, local writer
+  After a rewrite, it also audits active proof-bearing descriptions, statuses,
+  checkpoints, and handoffs against the refreshed identities. The workflow
+  keeps metadata freshness, composition, contribution provenance, local writer
   coordination, and fresh publication authority as separate gates.
 
 The bundled guard consumes already-collected JSON. It is read-only and
 standard-library only: it never invokes Git, contacts a forge, mutates a ref,
-rebases, pushes, retargets, approves, or merges.
+rebases, pushes, retargets, approves, or merges. Exact snapshot and handoff v2
+schemas bind a complete active metadata-record audit to the current stack and
+proof composition, with a separate handoff inventory digest. Exact legacy v1
+inputs keep their field sets and canonical digests: structural validation stays
+available, while `next-action` returns blocked and `validate-handoff` returns
+fail with explicit legacy metadata-gate issues.
 
 For a future rewrite prepared for another task:
 
