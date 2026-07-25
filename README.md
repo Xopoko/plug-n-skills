@@ -170,7 +170,7 @@ instructions.
 | Reference files | 228 | - | Longer ledgers, contracts, scorecards, and source notes. |
 | Helper and validator scripts | 80 | - | Deterministic plugin-local helpers. |
 | Startup metadata | 165 skills | 13,063 | Skill name, description, and file pointer for routing. |
-| On-demand skill bodies | 165 skills | 112,909 | Instruction bodies after frontmatter, loaded only when selected. |
+| On-demand skill bodies | 165 skills | 113,254 | Instruction bodies after frontmatter, loaded only when selected. |
 
 Regenerate the report after skill edits:
 
@@ -199,7 +199,7 @@ Token columns are `startup metadata / on-demand body`.
 | `stacked-delivery` | 1 | 4 | 1 | 123 | 1,486 |
 | `git-worktree-safety` | 1 | 1 | 1 | 159 | 1,014 |
 | `claude-code` | 6 | 2 | 1 | 528 | 4,669 |
-| `architecture-intelligence` | 9 | 8 | 2 | 645 | 6,890 |
+| `architecture-intelligence` | 9 | 8 | 2 | 645 | 7,235 |
 | `design-intelligence` | 7 | 2 | 1 | 472 | 5,101 |
 | `game-design-intelligence` | 6 | 2 | 1 | 536 | 2,916 |
 | `kotlin-multiplatform` | 14 | 18 | 1 | 1,100 | 11,803 |
@@ -425,7 +425,7 @@ Token cells are shown as `startup/body`.
 | `architecture-ownership-topology` | 66/583 | Use when architecture crosses ownership or review boundaries: CODEOWNERS/OWNERS, module coverage, cross-owned dependencies, socio-technical coordination, and governance paths. |
 | `architecture-refactoring-strategy` | 67/517 | Use when code changes need staged structural design: boundary extraction, modularization, dependency inversion, migrations, anti-corruption layers, tests, rollout gates, and rollback. |
 | `architecture-runtime-topology` | 67/579 | Use when code work touches runtime shape: services, app/CLI/background flows, deployment/IaC, observability, resilience, external integrations, ownership, and runtime coupling. |
-| `async-state-consistency` | 118/1,619 | Use when designing, reviewing, debugging, or testing asynchronous state holders, caches, observers, subscriber notifications, memoized or coalesced loads, replay, or one-shot reads where invalidation, late subscribers, stale in-flight completion, read or publish races, out-of-order completion, or keyed/global ownership can expose stale state. Not for UI-only loading presentation, deployment topology, distributed consensus, or unrelated test flakiness. |
+| `async-state-consistency` | 118/1,964 | Use when designing, reviewing, debugging, or testing asynchronous state holders, caches, observers, subscriber notifications, memoized or coalesced loads, replay, or one-shot reads where invalidation, late subscribers, stale in-flight completion, read or publish races, out-of-order completion, or keyed/global ownership can expose stale state. Not for UI-only loading presentation, deployment topology, distributed consensus, or unrelated test flakiness. |
 | `codebase-architecture-audit` | 73/839 | Use before architecture-significant code work to recover the actual source-backed system shape: modules, dependencies, domain seams, runtime coupling, ownership, quality attributes, tests, docs, and risks. |
 
 #### `design-intelligence`

@@ -48,6 +48,11 @@ Before proposing a repair:
   boundary or expose an asynchronous contract.
 - Make late-subscriber replay semantics explicit. A cleared value cannot remain
   current merely because a replay container retained it.
+- Do not encode a required authority transition only as a transient value in an
+  equality-conflating observable. If invalidate followed by an equal-payload
+  replacement must restart or fence consumers, include a monotonic authority
+  epoch in the retained snapshot or provide an equivalent lossless revision
+  receipt at the decision boundary. Payload equality is not authority equality.
 
 ## Map Authority
 
@@ -114,6 +119,24 @@ admission, and the final commit need a linearization point.
 Use controllable gates, barriers, latches, virtual time, or a controlled
 scheduler. Sleeps and scheduler luck are not race proof.
 
+- Give every controlled operation identity-bound receipts and assert their
+  required partial order. A gate release or continuation resume proves only
+  `released(A)`. When the schedule requires late A to traverse the guarded
+  path, require `released(A) < decision(A)` from the real post-await commit or
+  caller-outcome path. A `finally` marker is only `terminated(A)` and cannot
+  substitute for that post-release decision receipt.
+- Attach instrumentation before the controlled schedule and assert the complete
+  ordered emission and caller-result trace through a closed observation
+  horizon. Instrument commit and enqueue surfaces, then drain or acknowledge
+  every controlled output queue after the last enqueue opportunity. A
+  forbidden transient followed by a safe terminal state still fails.
+- Include a permitted control schedule, such as fresh post-invalidation work,
+  so an empty trace or disconnected probe cannot pass vacuously.
+- State the proof boundary: these receipts prove only the enumerated
+  interleavings and instrumented surfaces. Platform scheduler behavior, memory
+  ordering, and claims over all possible races need appropriate runtime stress,
+  race detection, model checking, or platform evidence.
+
 At minimum, cover:
 
 - late collection after invalidation;
@@ -138,6 +161,9 @@ At minimum, cover:
 - A starts, B starts, B fails or is cancelled, then A completes under both the
   declared latest-start-wins and latest-success-wins policies;
 - keyed invalidation that leaves unrelated-key work valid, plus global clear;
+- invalidate and immediately replace with an equal payload without draining an
+  equality-conflating observer; the authority epoch still changes and revoked
+  work remains fenced;
 - TTL next-read behavior separately from active subscriber emissions;
 - blocked delivery followed by reentrant subscriber code, and user-supplied
   predicate or factory hooks that perform nested mutation before the outer

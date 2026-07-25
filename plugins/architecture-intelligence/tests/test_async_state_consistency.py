@@ -95,7 +95,7 @@ class AsyncStateConsistencySkillTest(unittest.TestCase):
             for line in text.splitlines()
             if line.startswith("| ASC-")
         }
-        self.assertEqual(rows, {f"ASC-{index:02d}" for index in range(1, 18)})
+        self.assertEqual(rows, {f"ASC-{index:02d}" for index in range(1, 19)})
         for invariant in (
             "empty dependency vector",
             "Stamped replay read",
@@ -116,6 +116,8 @@ class AsyncStateConsistencySkillTest(unittest.TestCase):
             "later mutate the in-flight registry",
             "bypass is generation-scoped",
             "same-generation admission policy",
+            "equality-conflating observers",
+            "payload equality is not authority equality",
         ):
             self.assertIn(invariant.lower(), compact)
         asc_13 = next(
@@ -178,6 +180,60 @@ class AsyncStateConsistencySkillTest(unittest.TestCase):
             "combined shared-work admission",
         ):
             self.assertIn(invariant, text)
+
+    def test_deterministic_proof_requires_causal_receipts_and_full_trace(self):
+        skill = " ".join(SKILL.read_text(encoding="utf-8").split()).lower()
+        reference = " ".join(REFERENCE.read_text(encoding="utf-8").split()).lower()
+
+        for invariant in (
+            "identity-bound receipts",
+            "continuation resume proves only `released(a)`",
+            "`released(a) < decision(a)`",
+            "`finally` marker is only `terminated(a)`",
+            "closed observation horizon",
+            "instrument commit and enqueue surfaces",
+            "drain or acknowledge every controlled output queue",
+            "forbidden transient followed by a safe terminal state",
+            "permitted control schedule",
+            "cannot pass vacuously",
+            "proof boundary",
+            "claims over all possible races",
+        ):
+            self.assertIn(invariant, skill)
+
+        for invariant in (
+            "causal receipts and observable traces",
+            "monotonic sequence",
+            "bind every receipt to an operation identity",
+            "continuation resume as a schedule receipt only",
+            "`released(a) < decision(a)`",
+            "real post-await commit decision",
+            "marker in the fake's release callback does not prove",
+            "`finally` marker is a separate `terminated(a)` receipt",
+            "close the observation horizon",
+            "last enqueue opportunity",
+            "complete ordered trace",
+            "eventual state is safe",
+            "output queue can still contain work",
+            "vacuously empty trace",
+            "diagnostic evidence rather than a successful completion receipt",
+            "enumerated interleavings and instrumented surfaces",
+        ):
+            self.assertIn(invariant, reference)
+
+        asc_18 = next(
+            line.lower()
+            for line in REFERENCE.read_text(encoding="utf-8").splitlines()
+            if line.startswith("| ASC-18 ")
+        )
+        for invariant in (
+            "equal-payload",
+            "without draining",
+            "retained authority epoch advances",
+            "revoked work remains fenced",
+            "intermediate invalidated value",
+        ):
+            self.assertIn(invariant, asc_18)
 
     def test_router_and_publication_surfaces_expose_the_skill(self):
         router = (ROOT / "skills" / "architecture-intelligence" / "SKILL.md").read_text(
