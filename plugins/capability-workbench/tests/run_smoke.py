@@ -531,6 +531,362 @@ def test_external_discovery_gate() -> None:
         check("external_discovery_gate: thin complete claim fails", result.returncode != 0, result.stdout)
 
 
+def test_evidence_coverage_gate() -> None:
+    script = str(SCRIPTS / "audit" / "evidence_coverage_gate.py")
+
+    template = run([script, "--template"])
+    template_data = json.loads(template.stdout)
+    check(
+        "evidence_coverage_gate: template is partial and agent-agnostic",
+        template_data.get("schema") == "capability.evidence_coverage.v1"
+        and template_data.get("universe", {}).get("status") == "partial",
+        template.stdout,
+    )
+    template_conflict = run([script, "ignored.json", "--template", "--json"])
+    template_conflict_payload = json.loads(template_conflict.stdout)
+    check(
+        "evidence_coverage_gate: template cannot bypass a supplied ledger",
+        template_conflict.returncode == 2
+        and template_conflict_payload["errors"]
+        == ["template_and_ledger_are_mutually_exclusive"],
+        template_conflict.stdout + template_conflict.stderr,
+    )
+
+    full = {
+        "schema": "capability.evidence_coverage.v1",
+        "subject": "synthetic-review",
+        "cutoff": "snapshot-1",
+        "universe": {
+            "status": "complete",
+            "items": ["alpha", "beta"],
+            "dimensions": ["metadata", "source-review"],
+            "evidence_refs": ["inventory-ref"],
+        },
+        "checks": [
+            {
+                "item": item,
+                "dimension": dimension,
+                "outcome": "pass",
+                "evidence_refs": [f"{item}-{dimension}-ref"],
+            }
+            for item in ("alpha", "beta")
+            for dimension in ("metadata", "source-review")
+        ],
+        "claims": [
+            {
+                "id": "full-review",
+                "kind": "full_matrix",
+                "items": ["alpha", "beta"],
+                "dimensions": ["metadata", "source-review"],
+            }
+        ],
+    }
+
+    with tempfile.TemporaryDirectory() as tmp:
+        ledger = Path(tmp) / "evidence-coverage.json"
+
+        ledger.write_text(json.dumps(full), encoding="utf-8")
+        result = run([script, str(ledger), "--json"])
+        payload = json.loads(result.stdout)
+        canonical_full = result.stdout
+        full_fingerprint = payload["ledger_fingerprint"]
+        check(
+            "evidence_coverage_gate: complete 2x2 matrix passes",
+            result.returncode == 0
+            and payload["input_valid"]
+            and payload["all_claims_satisfied"]
+            and payload["highest_satisfied_claim"] == "full_matrix",
+            result.stdout + result.stderr,
+        )
+        check(
+            "evidence_coverage_gate: result binds subject and cutoff",
+            payload["subject"] == "synthetic-review"
+            and payload["cutoff"] == "snapshot-1"
+            and payload["declared_universe_status"] == "complete"
+            and full_fingerprint.startswith("sha256:"),
+            result.stdout + result.stderr,
+        )
+
+        rebound = json.loads(json.dumps(full))
+        rebound["cutoff"] = "snapshot-2"
+        ledger.write_text(json.dumps(rebound), encoding="utf-8")
+        result = run([script, str(ledger), "--json"])
+        payload = json.loads(result.stdout)
+        check(
+            "evidence_coverage_gate: cutoff changes the bound receipt",
+            result.returncode == 0
+            and payload["ledger_fingerprint"] != full_fingerprint
+            and result.stdout != canonical_full,
+            result.stdout + result.stderr,
+        )
+
+        missing = json.loads(json.dumps(full))
+        missing["checks"].pop()
+        ledger.write_text(json.dumps(missing), encoding="utf-8")
+        result = run([script, str(ledger), "--json"])
+        payload = json.loads(result.stdout)
+        check(
+            "evidence_coverage_gate: one missing pair fails exact coverage",
+            result.returncode == 1
+            and payload["input_valid"]
+            and payload["claim_results"][0]["missing_pairs"]
+            == [{"dimension": "source-review", "item": "beta"}],
+            result.stdout + result.stderr,
+        )
+
+        blocked = json.loads(json.dumps(full))
+        blocked["checks"][-1]["outcome"] = "blocked"
+        ledger.write_text(json.dumps(blocked), encoding="utf-8")
+        result = run([script, str(ledger), "--json"])
+        payload = json.loads(result.stdout)
+        check(
+            "evidence_coverage_gate: blocked pair cannot satisfy a claim",
+            result.returncode == 1
+            and payload["claim_results"][0]["nonpassing_pairs"][0]["outcome"]
+            == "blocked",
+            result.stdout + result.stderr,
+        )
+
+        bounded = json.loads(json.dumps(full))
+        bounded["universe"]["status"] = "partial"
+        bounded["claims"] = [
+            {
+                "id": "bounded-review",
+                "kind": "bounded_matrix",
+                "items": ["alpha"],
+                "dimensions": ["metadata"],
+            }
+        ]
+        ledger.write_text(json.dumps(bounded), encoding="utf-8")
+        result = run([script, str(ledger), "--json"])
+        payload = json.loads(result.stdout)
+        check(
+            "evidence_coverage_gate: bounded subset passes without full promotion",
+            result.returncode == 0
+            and payload["highest_satisfied_claim"] == "bounded_matrix",
+            result.stdout + result.stderr,
+        )
+        check(
+            "evidence_coverage_gate: bounded result exposes partial universe",
+            payload["declared_universe_status"] == "partial",
+            result.stdout + result.stderr,
+        )
+
+        partial_full = json.loads(json.dumps(full))
+        partial_full["universe"]["status"] = "partial"
+        ledger.write_text(json.dumps(partial_full), encoding="utf-8")
+        result = run([script, str(ledger), "--json"])
+        payload = json.loads(result.stdout)
+        check(
+            "evidence_coverage_gate: partial universe cannot support full matrix",
+            result.returncode == 1
+            and payload["claim_results"][0]["reasons"]
+            == ["declared_universe_is_partial"],
+            result.stdout + result.stderr,
+        )
+
+        thin_claim = json.loads(json.dumps(full))
+        thin_claim["claims"][0]["dimensions"] = ["metadata"]
+        ledger.write_text(json.dumps(thin_claim), encoding="utf-8")
+        result = run([script, str(ledger), "--json"])
+        payload = json.loads(result.stdout)
+        check(
+            "evidence_coverage_gate: full claim cannot omit a dimension",
+            result.returncode == 2
+            and any(
+                error.startswith("full_matrix_dimensions_must_equal_universe")
+                for error in payload["errors"]
+            ),
+            result.stdout + result.stderr,
+        )
+
+        duplicate = json.loads(json.dumps(full))
+        duplicate["checks"].append(dict(duplicate["checks"][0]))
+        ledger.write_text(json.dumps(duplicate), encoding="utf-8")
+        result = run([script, str(ledger), "--json"])
+        payload = json.loads(result.stdout)
+        check(
+            "evidence_coverage_gate: duplicate pair fails structurally",
+            result.returncode == 2
+            and any(error.startswith("duplicate_check") for error in payload["errors"]),
+            result.stdout + result.stderr,
+        )
+
+        unknown = json.loads(json.dumps(full))
+        unknown["checks"][0]["item"] = "gamma"
+        ledger.write_text(json.dumps(unknown), encoding="utf-8")
+        result = run([script, str(ledger), "--json"])
+        payload = json.loads(result.stdout)
+        check(
+            "evidence_coverage_gate: unknown item fails structurally",
+            result.returncode == 2
+            and any(error.startswith("unknown_item") for error in payload["errors"]),
+            result.stdout + result.stderr,
+        )
+
+        empty = json.loads(json.dumps(full))
+        empty["universe"]["items"] = []
+        empty["checks"] = []
+        empty["claims"][0]["items"] = []
+        ledger.write_text(json.dumps(empty), encoding="utf-8")
+        result = run([script, str(ledger), "--json"])
+        payload = json.loads(result.stdout)
+        check(
+            "evidence_coverage_gate: empty universe never passes vacuously",
+            result.returncode == 2
+            and "must_not_be_empty:$.universe.items" in payload["errors"],
+            result.stdout + result.stderr,
+        )
+
+        unexpected = json.loads(json.dumps(full))
+        unexpected["threshold"] = 0.9
+        ledger.write_text(json.dumps(unexpected), encoding="utf-8")
+        result = run([script, str(ledger), "--json"])
+        payload = json.loads(result.stdout)
+        check(
+            "evidence_coverage_gate: unknown fields fail closed",
+            result.returncode == 2
+            and "unknown_field:$.threshold" in payload["errors"],
+            result.stdout + result.stderr,
+        )
+
+        ledger.write_text('{"schema":"one","schema":"two"}', encoding="utf-8")
+        result = run([script, str(ledger), "--json"])
+        payload = json.loads(result.stdout)
+        check(
+            "evidence_coverage_gate: duplicate JSON keys fail without traceback",
+            result.returncode == 2
+            and payload["errors"] == ["duplicate_json_key"]
+            and not result.stderr,
+            result.stdout + result.stderr,
+        )
+
+        wrong_types = json.loads(json.dumps(full))
+        wrong_types["universe"]["status"] = []
+        wrong_types["checks"][0]["outcome"] = {}
+        wrong_types["claims"][0]["kind"] = []
+        ledger.write_text(json.dumps(wrong_types), encoding="utf-8")
+        result = run([script, str(ledger), "--json"])
+        payload = json.loads(result.stdout)
+        required_type_errors = {
+            "invalid_universe_status",
+            "invalid_outcome:$.checks[0]",
+            "invalid_claim_kind:$.claims[0]",
+        }
+        check(
+            "evidence_coverage_gate: wrong JSON types fail without traceback",
+            result.returncode == 2
+            and required_type_errors.issubset(set(payload["errors"]))
+            and not result.stderr,
+            result.stdout + result.stderr,
+        )
+
+        ledger.write_text('{"schema":' + ("9" * 10_000) + "}", encoding="utf-8")
+        result = run([script, str(ledger), "--json"])
+        payload = json.loads(result.stdout)
+        check(
+            "evidence_coverage_gate: oversized JSON integer fails without traceback",
+            result.returncode == 2
+            and payload["errors"] == ["invalid_json"]
+            and not result.stderr,
+            result.stdout + result.stderr,
+        )
+
+        ledger.write_text(("[" * 20_000) + ("]" * 20_000), encoding="utf-8")
+        result = run([script, str(ledger), "--json"])
+        payload = json.loads(result.stdout)
+        check(
+            "evidence_coverage_gate: deeply nested JSON fails without traceback",
+            result.returncode == 2
+            and payload["errors"] in (["invalid_json"], ["ledger_must_be_object"])
+            and not result.stderr,
+            result.stdout + result.stderr,
+        )
+
+        ledger.write_bytes(b" " * 2_000_001)
+        result = run([script, str(ledger), "--json"])
+        payload = json.loads(result.stdout)
+        check(
+            "evidence_coverage_gate: oversized input is rejected after bounded read",
+            result.returncode == 2
+            and payload["errors"] == ["input_too_large"]
+            and not result.stderr,
+            result.stdout + result.stderr,
+        )
+
+        if hasattr(os, "mkfifo"):
+            fifo = Path(tmp) / "ledger.fifo"
+            os.mkfifo(fifo)
+            result = run([script, str(fifo), "--json"])
+            payload = json.loads(result.stdout)
+            check(
+                "evidence_coverage_gate: non-regular input is rejected",
+                result.returncode == 2
+                and payload["errors"] == ["ledger_must_be_regular_file"]
+                and not result.stderr,
+                result.stdout + result.stderr,
+            )
+
+        long_claim = json.loads(json.dumps(full))
+        long_claim["claims"][0]["id"] = "x" * 200_000
+        ledger.write_text(json.dumps(long_claim), encoding="utf-8")
+        result = run([script, str(ledger), "--json"])
+        payload = json.loads(result.stdout)
+        check(
+            "evidence_coverage_gate: invalid claim id is not reflected in output",
+            result.returncode == 2
+            and len(result.stdout) < 10_000
+            and ("x" * 256) not in result.stdout,
+            result.stdout[:2_000] + result.stderr,
+        )
+
+        amplified = {
+            "schema": "capability.evidence_coverage.v1",
+            "subject": "bounded-output",
+            "cutoff": "snapshot-1",
+            "universe": {
+                "status": "complete",
+                "items": [f"item-{index:03d}" for index in range(128)],
+                "dimensions": [f"dim-{index:02d}" for index in range(32)],
+                "evidence_refs": ["inventory-ref"],
+            },
+            "checks": [],
+            "claims": [
+                {
+                    "id": f"full-review-{index}",
+                    "kind": "full_matrix",
+                    "items": [f"item-{item:03d}" for item in range(128)],
+                    "dimensions": [f"dim-{dimension:02d}" for dimension in range(32)],
+                }
+                for index in range(2)
+            ],
+        }
+        ledger.write_text(json.dumps(amplified), encoding="utf-8")
+        result = run([script, str(ledger), "--json"])
+        payload = json.loads(result.stdout)
+        check(
+            "evidence_coverage_gate: aggregate claim expansion is bounded",
+            result.returncode == 2
+            and "total_claim_matrix_too_large" in payload["errors"]
+            and len(result.stdout) < 10_000,
+            result.stdout[:2_000] + result.stderr,
+        )
+
+        permuted = json.loads(json.dumps(full))
+        permuted["universe"]["items"].reverse()
+        permuted["universe"]["dimensions"].reverse()
+        permuted["checks"].reverse()
+        permuted["claims"][0]["items"].reverse()
+        permuted["claims"][0]["dimensions"].reverse()
+        ledger.write_text(json.dumps(permuted), encoding="utf-8")
+        result = run([script, str(ledger), "--json"])
+        check(
+            "evidence_coverage_gate: canonical output ignores input ordering",
+            result.returncode == 0 and result.stdout == canonical_full,
+            result.stdout + result.stderr,
+        )
+
+
 def test_portfolio_audit() -> None:
     script = str(SCRIPTS / "portfolio" / "portfolio_architecture_audit.py")
     result = run([script, ".", "--json"], cwd=PLUGIN_ROOT)
@@ -763,6 +1119,7 @@ def main() -> int:
         test_codex_skill_catalog_audit,
         test_install_scope_gate,
         test_external_discovery_gate,
+        test_evidence_coverage_gate,
         test_portfolio_audit,
         test_capability_inventory,
         test_agent_target,

@@ -36,12 +36,12 @@
     {
       "name": "capability-workbench",
       "source": "./plugins/capability-workbench",
-      "description": "Capability discovery, synthesis, portfolio architecture, skill trigger metadata, Codex catalog-budget audits, agent guidance authoring, vetting, packaging, installation, and marketplace visibility."
+      "description": "Capability discovery, synthesis, portfolio architecture, skill trigger metadata, Codex catalog-budget and evidence-coverage audits, agent guidance authoring, vetting, packaging, installation, and marketplace visibility."
     },
     {
       "name": "codex-cli",
       "source": "./plugins/codex-cli",
-      "description": "Codex CLI operations, automation, producer-native deferred completion, diagnostics, live thread supervision, plugin and MCP lifecycle, session log forensics, and local environment actions."
+      "description": "Codex CLI operations, automation, producer-native deferred completion, diagnostics, live thread supervision with aggregate claim boundaries, plugin and MCP lifecycle, session log forensics, and local environment actions."
     },
     {
       "name": "scheduled-automation",

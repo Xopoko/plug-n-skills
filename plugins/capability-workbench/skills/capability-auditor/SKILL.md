@@ -1,6 +1,6 @@
 ---
 name: capability-auditor
-description: Use when auditing agent skills or plugins for safety, coverage, duplicated logic, token/context cost, prompt-contract risk, validation readiness, marketplace visibility, dependencies, network behavior, or install/update risk. For structural split/merge/move/delete/router decisions across skills or plugins, use capability-portfolio-architect instead.
+description: Use when auditing agent skills or plugins for safety, evidence completeness across multiple artifacts, duplicated logic, token/context cost, prompt-contract risk, validation readiness, marketplace visibility, dependencies, network behavior, or install/update risk. Not for line, branch, mutation, or test coverage metrics. For structural split/merge/move/delete/router decisions across skills or plugins, use capability-portfolio-architect instead.
 ---
 
 # Capability Auditor
@@ -42,6 +42,13 @@ python3 "$PLUGIN_ROOT/scripts/context/token_count.py" <skill-or-plugin-dir> --js
 python3 "$PLUGIN_ROOT/scripts/context/context_density_audit.py" <skill-or-plugin-dir> --json --top 20
 python3 "$PLUGIN_ROOT/scripts/skill/codex_skill_catalog_audit.py" \
   <enabled-skill-roots-or-plugin-roots> --context-window <tokens> --json
+```
+
+Aggregate evidence coverage:
+
+```bash
+python3 "$PLUGIN_ROOT/scripts/audit/evidence_coverage_gate.py" \
+  <evidence-coverage-ledger.json> --json
 ```
 
 Skill validation:
@@ -97,6 +104,25 @@ For synthesis outputs, create a workflow ledger:
 - reason.
 
 This catches over-preserved source bloat and under-synthesized capability loss.
+
+For a claim over multiple skills, plugins, candidates, files, or other items,
+read `$PLUGIN_ROOT/references/evidence-coverage-contract.md`. Freeze the
+declared universe and cutoff, name the evidence dimensions, and validate the
+exact item-by-dimension matrix. A complete inventory does not prove review
+depth, and complete evidence for one dimension does not prove another.
+
+Use `full_matrix` only when the item set and dimension set exactly match a
+complete declared universe. Use `bounded_matrix` for honest subsets. If the
+gate is unavailable, invalid, or unsupported, downgrade the claim to bounded
+or partial instead of estimating completeness from counts or percentages.
+
+The gate validates the supplied contract, not the truth of the universe,
+evidence, reviewer independence, or review quality. Those remain separate
+audit findings.
+
+Do not use the gate for line, branch, mutation, or test coverage metrics, a
+plain inventory without an aggregate completeness claim, or a single-artifact
+review. Route those cases to the relevant domain tool or ordinary audit.
 
 ## Commitment Preservation Review
 
