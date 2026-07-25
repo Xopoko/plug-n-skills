@@ -132,12 +132,12 @@ replaced to match the repository source, and repeated runs converge.
 | --- | --- |
 | `architecture-intelligence` | Source-backed architecture audits, async state consistency, ownership and runtime topology, module boundaries, ADRs, fitness functions, conformance checks, and refactoring strategy. |
 | `build-swift-apps` | Building, debugging, profiling, testing, packaging, and releasing Swift apps across iOS and macOS. |
-| `capability-workbench` | Capability discovery, synthesis, plugin packaging, agent guidance files, trigger metadata, Codex catalog-budget audits, install-scope decisions, vetting, repair, icon workflows, install/cache checks, and separate runtime-discovery checks. |
+| `capability-workbench` | Capability discovery, synthesis, plugin packaging, agent guidance files, trigger metadata, Codex catalog-budget and exact evidence-coverage audits, install-scope decisions, vetting, repair, icon workflows, install/cache checks, and separate runtime-discovery checks. |
 | `claude-code` | Claude Code CLI operations, print-mode automation, diagnostics, plugin and MCP lifecycle, hooks, settings, agents, sessions, and worktrees. |
-| `codex-cli` | Codex CLI operations, automation, producer-native deferred completion, diagnostics, live thread supervision, controlled skill handoffs and evidence corrections, plugin and MCP lifecycle, normalized session trace audits, and local environment actions. |
+| `codex-cli` | Codex CLI operations, automation, producer-native deferred completion, diagnostics, live thread supervision, controlled skill handoffs, evidence corrections, aggregate claim boundaries, plugin and MCP lifecycle, normalized session trace audits, and local environment actions. |
 | `scheduled-automation` | Local scheduler diagnostics, real-runtime proof, safe canaries, correlated run receipts, missed-run analysis, and rollback-aware repair. |
 | `gitlab-review` | Race-safe GitLab merge request review response, reviewer-owned resolution, idempotent thread replies, and exact-head handoff proof. |
-| `stacked-delivery` | Dependency-safe stacked change delivery with exact parent-head binding, descendant invalidation, node-local proof, distinct provenance and publication-authority gates, safe landing order, and guarded handoff receipts. |
+| `stacked-delivery` | Dependency-safe stacked change delivery with exact parent-head binding, descendant invalidation, node-local proof, post-rewrite proof-record freshness, distinct provenance and publication-authority gates, safe landing order, and guarded handoff receipts. |
 | `git-worktree-safety` | Git pointer and SSH-signed-commit recovery with redacted evidence, exact-state journals, one-use authorization, and fail-closed proof. |
 | `context-density` | Context design, long-context placement, typed state and companion-drift validation, research-backed acceptance gates, prompt contracts, skill compression, structural handoff, and validation reporting. |
 | `design-intelligence` | Product framing, interface architecture, interaction design, visual hierarchy, accessibility, and design-system governance. |
@@ -167,10 +167,10 @@ instructions.
 | --- | ---: | ---: | --- |
 | Plugin packs | 17 | - | Installable packages under `plugins/`. |
 | Skill entrypoints | 166 | - | `SKILL.md` files exposed through plugin metadata. |
-| Reference files | 230 | - | Longer ledgers, contracts, scorecards, and source notes. |
-| Helper and validator scripts | 82 | - | Deterministic plugin-local helpers. |
-| Startup metadata | 166 skills | 13,295 | Skill name, description, and file pointer for routing. |
-| On-demand skill bodies | 166 skills | 114,457 | Instruction bodies after frontmatter, loaded only when selected. |
+| Reference files | 231 | - | Longer ledgers, contracts, scorecards, and source notes. |
+| Helper and validator scripts | 83 | - | Deterministic plugin-local helpers. |
+| Startup metadata | 166 skills | 13,312 | Skill name, description, and file pointer for routing. |
+| On-demand skill bodies | 166 skills | 115,852 | Instruction bodies after frontmatter, loaded only when selected. |
 
 Regenerate the report after skill edits:
 
@@ -192,14 +192,14 @@ Token columns are `startup metadata / on-demand body`.
 | `tauri` | 6 | 0 | 1 | 481 | 3,235 |
 | `scientific-research` | 1 | 4 | 1 | 91 | 2,024 |
 | `context-density` | 1 | 9 | 8 | 137 | 2,806 |
-| `capability-workbench` | 10 | 14 | 22 | 941 | 12,825 |
-| `codex-cli` | 8 | 4 | 2 | 702 | 9,059 |
+| `capability-workbench` | 10 | 15 | 23 | 958 | 13,076 |
+| `codex-cli` | 8 | 4 | 2 | 702 | 9,303 |
 | `scheduled-automation` | 1 | 5 | 0 | 103 | 1,158 |
 | `gitlab-review` | 1 | 3 | 1 | 117 | 1,083 |
-| `stacked-delivery` | 1 | 4 | 1 | 123 | 1,486 |
+| `stacked-delivery` | 1 | 4 | 1 | 123 | 1,933 |
 | `git-worktree-safety` | 2 | 2 | 2 | 382 | 2,469 |
 | `claude-code` | 6 | 2 | 1 | 528 | 4,669 |
-| `architecture-intelligence` | 9 | 8 | 2 | 645 | 6,890 |
+| `architecture-intelligence` | 9 | 8 | 2 | 645 | 7,343 |
 | `design-intelligence` | 7 | 2 | 1 | 472 | 5,101 |
 | `game-design-intelligence` | 6 | 2 | 1 | 536 | 2,916 |
 | `kotlin-multiplatform` | 14 | 18 | 1 | 1,100 | 11,803 |
@@ -214,11 +214,11 @@ Token columns are `startup metadata / on-demand body`.
 | `tauri` | Tauri 2 development: project setup/migration, tauri.conf & capabilities/security, Rust IPC & plugins, shell UI, debug/test, and distribution/mobile release. |
 | `scientific-research` | Disciplined scholarly research workflow: discovery, source routing, DOI dedup, claim ledgers, and evidence quality gates across arXiv/OpenAlex/Crossref/Europe PMC/Semantic Scholar/NCBI/CORE/OpenCitations. |
 | `context-density` | Context design, prompt-contract optimization, typed state validation, research-backed acceptance gates, compression validation, and structural handoff for agent skills, plugins, prompts, docs, and workflows. |
-| `capability-workbench` | Agent-agnostic capability workbench for discovery, synthesis, portfolio architecture, trigger metadata and Codex catalog-budget audits, agent guidance, vetting, repair, installation, packaging, and imagegen-backed plugin icons. |
+| `capability-workbench` | Agent-agnostic capability workbench for discovery, synthesis, portfolio architecture, trigger metadata, Codex catalog-budget and evidence-coverage audits, agent guidance, vetting, repair, installation, packaging, and imagegen-backed plugin icons. |
 | `codex-cli` | Codex CLI operations, automation, producer-native deferred completion, diagnostics, live thread supervision, plugin and MCP lifecycle, normalized session trace audits, and local environment actions. |
 | `scheduled-automation` | Local scheduler diagnostics, real-runtime proof, safe canaries, correlated run receipts, and missed-run analysis for launchd, systemd timers, cron, and Windows Task Scheduler. |
 | `gitlab-review` | Race-safe GitLab merge request review response with complete discussion inventory, reviewer-owned resolution, idempotent replies, and exact-head handoff proof. |
-| `stacked-delivery` | Dependency-safe delivery for stacked pull requests, merge requests, and dependent changes with exact parent-head binding, descendant invalidation, per-node proof, provenance and publication-authority boundaries, safe landing order, and guarded handoff receipts. |
+| `stacked-delivery` | Dependency-safe delivery for stacked pull requests, merge requests, and dependent changes with exact parent-head binding, descendant invalidation, per-node proof, post-rewrite proof-record freshness, provenance and publication-authority boundaries, safe landing order, and guarded handoff receipts. |
 | `git-worktree-safety` | Fail-closed Git safety for worktree pointer and SSH-signed-commit recovery, with redacted evidence, exact-state journals, one-use authorization, and explicit host boundaries. |
 | `claude-code` | Claude Code CLI operations, print-mode automation, diagnostics, plugin and MCP lifecycle, hooks, settings, agents, sessions, and worktrees. |
 | `architecture-intelligence` | Source-backed software architecture intelligence for codebase audits, ownership topology, runtime topology, async state consistency, architecture conformance and drift checks, structure metrics, module boundaries, dependency flow, ADRs, fitness functions, and incremental refactoring. |
@@ -356,7 +356,7 @@ Token cells are shown as `startup/body`.
 | Skill | Tokens | Description |
 | --- | ---: | --- |
 | `agent-guidance-factory` | 119/678 | Create, refresh, audit, or migrate repository agent guidance files such as AGENTS.md, AGENTS.override.md, CLAUDE.md, .claude/rules, and Cursor rules. Use when a repo needs durable coding-agent instructions, instruction load-order decisions, nested guidance, or cleanup of bloated or stale agent docs. Do not use for ordinary human README or CONTRIBUTING docs unless they must feed agent guidance. |
-| `capability-auditor` | 97/1,405 | Use when auditing agent skills or plugins for safety, coverage, duplicated logic, token/context cost, prompt-contract risk, validation readiness, marketplace visibility, dependencies, network behavior, or install/update risk. For structural split/merge/move/delete/router decisions across skills or plugins, use capability-portfolio-architect instead. |
+| `capability-auditor` | 114/1,656 | Use when auditing agent skills or plugins for safety, evidence completeness across multiple artifacts, duplicated logic, token/context cost, prompt-contract risk, validation readiness, marketplace visibility, dependencies, network behavior, or install/update risk. Not for line, branch, mutation, or test coverage metrics. For structural split/merge/move/delete/router decisions across skills or plugins, use capability-portfolio-architect instead. |
 | `capability-portfolio-architect` | 103/947 | Use when auditing agent skill/plugin portfolio architecture for cross-plugin capability overlap, weak routing, duplicated or missing skills, split/merge/delete/move decisions, shared capability extraction, reference/script extraction, or plugin boundary redesign. For safety, coverage, or validation review of a single artifact without boundary changes, use capability-auditor instead. |
 | `capability-reality-repair` | 92/836 | Repair stale or false agent capability instructions immediately. Use when a skill, script, plugin manifest/helper, MCP/tool contract, connector guidance, validator, or bundled reference describes commands, schemas, paths, outputs, install state, dependencies, or behavior that does not match live reality. |
 | `capability-synthesizer` | 126/2,228 | Use when performing broad external-first discovery, vetting, scoring, distillation, or synthesis of agent skills or plugin packs from the public web, GitHub/public repositories, OpenClaw/ClawHub, marketplaces, research sources, community implementations, user references, or local skills. Use for well-vetted capability synthesis, cross-skill comparison, plugin-pack synthesis, global capability acquisition, skill strengthening, and adoption/rejection changelogs. |
@@ -377,7 +377,7 @@ Token cells are shown as `startup/body`.
 | `codex-exec-automation` | 97/1,018 | Use when preparing, running, debugging, or reviewing non-interactive Codex CLI automation with `codex exec`, `codex exec resume`, `codex review`, JSONL events, output schemas, last-message files, cwd/profile/config flags, sandbox and approval modes, or CI-style agent runs. |
 | `codex-log-reader` | 93/1,279 | Use when locating, summarizing, auditing, or debugging Codex session rollout JSONL logs by CODEX_THREAD_ID, cwd, query, issue key, project path, child or inherited-history symptoms, malformed or huge log symptoms, permission concerns, or "what happened in this Codex thread" questions. |
 | `codex-plugin-mcp-manager` | 77/895 | Use when managing Codex CLI plugins, plugin marketplaces, local marketplace refreshes, cache visibility, MCP server list/get/add/remove/login/logout, MCP bearer token environment variables, or plugin/MCP installation failures. |
-| `codex-thread-supervisor` | 106/1,960 | Use when watching, monitoring, following, or supervising one or more live Codex tasks or threads by ID, including cursor-based transitions, completion or attention gates, claim checks, compact checkpoints, narrowly authorized skill handoffs or evidence corrections, and privacy-safe capability mining. Not for post-hoc rollout forensics, current-turn subagents, or external job polling. |
+| `codex-thread-supervisor` | 106/2,204 | Use when watching, monitoring, following, or supervising one or more live Codex tasks or threads by ID, including cursor-based transitions, completion or attention gates, claim checks, compact checkpoints, narrowly authorized skill handoffs or evidence corrections, and privacy-safe capability mining. Not for post-hoc rollout forensics, current-turn subagents, or external job polling. |
 
 #### `scheduled-automation`
 
@@ -395,7 +395,7 @@ Token cells are shown as `startup/body`.
 
 | Skill | Tokens | Description |
 | --- | ---: | --- |
-| `stacked-change-delivery` | 123/1,486 | Use when pull requests, merge requests, patch sets, or branch changes form a dependency stack and a child must remain based on an exact parent head. Covers stacked diffs, restacking after ancestor updates, per-node CI proof, safe bottom-up or forge-native atomic-prefix landing, isolated worktrees, and cross-agent handoffs. Do not use for one independent change, ordinary review-thread response, or automatic merge or force-push authorization. |
+| `stacked-change-delivery` | 123/1,933 | Use when pull requests, merge requests, patch sets, or branch changes form a dependency stack and a child must remain based on an exact parent head. Covers stacked diffs, restacking after ancestor updates, per-node CI proof, safe bottom-up or forge-native atomic-prefix landing, isolated worktrees, and cross-agent handoffs. Do not use for one independent change, ordinary review-thread response, or automatic merge or force-push authorization. |
 
 #### `git-worktree-safety`
 
@@ -426,7 +426,7 @@ Token cells are shown as `startup/body`.
 | `architecture-ownership-topology` | 66/583 | Use when architecture crosses ownership or review boundaries: CODEOWNERS/OWNERS, module coverage, cross-owned dependencies, socio-technical coordination, and governance paths. |
 | `architecture-refactoring-strategy` | 67/517 | Use when code changes need staged structural design: boundary extraction, modularization, dependency inversion, migrations, anti-corruption layers, tests, rollout gates, and rollback. |
 | `architecture-runtime-topology` | 67/579 | Use when code work touches runtime shape: services, app/CLI/background flows, deployment/IaC, observability, resilience, external integrations, ownership, and runtime coupling. |
-| `async-state-consistency` | 118/1,619 | Use when designing, reviewing, debugging, or testing asynchronous state holders, caches, observers, subscriber notifications, memoized or coalesced loads, replay, or one-shot reads where invalidation, late subscribers, stale in-flight completion, read or publish races, out-of-order completion, or keyed/global ownership can expose stale state. Not for UI-only loading presentation, deployment topology, distributed consensus, or unrelated test flakiness. |
+| `async-state-consistency` | 118/2,072 | Use when designing, reviewing, debugging, or testing asynchronous state holders, caches, observers, subscriber notifications, memoized or coalesced loads, replay, or one-shot reads where invalidation, late subscribers, stale in-flight completion, read or publish races, out-of-order completion, or keyed/global ownership can expose stale state. Not for UI-only loading presentation, deployment topology, distributed consensus, or unrelated test flakiness. |
 | `codebase-architecture-audit` | 73/839 | Use before architecture-significant code work to recover the actual source-backed system shape: modules, dependencies, domain seams, runtime coupling, ownership, quality attributes, tests, docs, and risks. |
 
 #### `design-intelligence`

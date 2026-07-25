@@ -35,9 +35,10 @@ record a public-safe task-local proof-gap sidecar containing:
   an equivalent remote proof authority.
 
 Keep this record out of the snapshot's accepted `proofs`. Unavailability is
-neither a failed proof result nor a successful proof. The v1 guard treats a
-non-empty proof list as landing-eligible, so use `proofs: []` while any
-policy-required proof surface remains open. Partial or non-equivalent results
+neither a failed proof result nor a successful proof. At the proof layer, the
+guard treats a non-empty accepted proof list as satisfied, so use `proofs: []`
+while any policy-required proof surface remains open. `next-action` separately
+requires snapshot v2 and its metadata audit. Partial or non-equivalent results
 stay in task-local evidence until policy confirms every required surface is
 satisfied or explicitly equivalent. Reinspect a drift-prone gate once when
 needed, but do not rerun the same proof while its gate fingerprint is
@@ -76,10 +77,93 @@ Distinguish:
 
 - `dependency-current`: parent and target bindings are exact;
 - `proof-current`: accepted proof matches the current composition;
+- `metadata-current`: every active proof-bearing mutable record matches the
+  current composition and proof identities;
+- `metadata-stale`: an active record contradicts the current identity tuple;
+- `metadata-unverified`: an active record cannot be completely compared with
+  the current tuple;
 - `review-ready`: forge review requirements currently pass;
 - `landable`: policy and delivery-mode requirements currently pass.
 
 No one flag implies the others.
+
+## Post-Rewrite Evidence Binding
+
+Run one binding audit after a restack, non-fast-forward rewrite, or retarget
+changes a base, parent, node head, target, pipeline, or accepted proof identity.
+Complete it before any readiness claim, evidence reply, or handoff.
+
+Freeze the refreshed current tuple from read-only live evidence:
+
+- stable change and node identities;
+- exact base or parent head and exact node head;
+- source and target refs;
+- each accepted proof ID, proof head, dependency head, and terminal status.
+
+Then inventory every active mutable record that presents proof or current
+delivery state. This includes a change description, status or check summary,
+durable checkpoint, and handoff summary. Preserve its exact identity and
+evidence references while comparing active bindings with the refreshed tuple.
+Counts, labels such as "latest", a green badge, or a receipt that is internally
+self-consistent do not establish live freshness.
+
+Encode that completed audit in exact `stacked_delivery.snapshot.v2`
+`metadata_inventory`. Bind the inventory and every comparable active record to
+the canonical composition digest, bind audited-surface coverage and the exact
+record list through `audit_digest`, and keep each exact readback behind an
+opaque evidence ID and SHA-256 hash. Use a null record binding when comparison
+is incomplete; do not invent a digest. `next-action` blocks an exact legacy v1
+snapshot, and enforces the v2 audit before returning `ready` or `complete`.
+`validate-handoff` fails an exact v1 receipt, and enforces an exact v2 snapshot
+plus a separate digest of the inventory carried by handoff v2.
+Sort active records canonically by kind and record ID before binding the audit.
+If audit integrity is unverified and another binding is stale, report aggregate
+`metadata-unverified` while retaining both blocking states; do not let an
+untrusted audit make the stronger `metadata-stale` classification. When two v2
+snapshots carry different canonical inventory digests, `compare` reports that
+metadata drift and fails even when node composition and proof are unchanged.
+
+If any active binding still names an old base, parent, head, target, pipeline,
+or proof, classify that record as `metadata-stale`. Do not use it to support
+`proof-current`, `review-ready`, or `landable`. A pending proof may be recorded
+as pending, but it cannot replace terminal exact-composition proof. If an
+active record cannot be completely compared with the refreshed tuple, classify
+it as `metadata-unverified`. Both `metadata-stale` and `metadata-unverified`
+block a readiness claim, evidence reply, or handoff; neither erases otherwise
+current underlying proof.
+
+The binding audit evaluates freshness only after another workflow or explicit
+policy independently establishes that a conditional action applies. It does not
+create a reply obligation. When the owning review workflow finds zero eligible
+existing discussions, an evidence reply is `not-applicable`: do not add it as a
+delivery gate and do not create a top-level note as a substitute. Keep stack
+proof, review-thread eligibility, and write authority as separate decisions.
+
+Obtain fresh authority for the exact record and update action before changing a
+mutable record. Authority to push, restack, retarget, reply, or edit another
+surface does not imply authority to edit a change description, checkpoint, or
+status. Update an agent-maintained record only through its authorized owner.
+Refresh a producer-owned check or status through its authoritative producer;
+do not manually rewrite its result. Once the new proof state is known and the
+surface-specific action is authorized, update or refresh the record, read back
+the same surface, and compare again. Without that authority or producer path,
+leave the record unchanged, report the blocking state, and keep readiness
+blocked.
+
+Old identities remain valid in immutable provenance, lease guards,
+old-to-new mappings, append-only discussion history, or receipts explicitly
+labelled historical or superseded and excluded from current proof. Do not erase
+or relabel those records merely because they differ from the live tuple.
+
+Do not parse arbitrary generated prose, trust a raw string search, or treat a
+Markdown rewrite as semantic proof. Prefer repository-defined structured
+fields or a canonical receipt block when one exists. Otherwise classify the
+record as `metadata-unverified`; do not silently infer missing bindings. The
+bundled guard validates the supplied structured inventory, its canonical audit
+digest, each declared composition binding, and the handoff's inventory digest.
+It does not fetch or authenticate forge descriptions, checkpoints, statuses,
+or handoff summaries, and an internal receipt validation does not prove that a
+live public record is current or that the declared inventory is complete.
 
 ## Independent Pre-Write Gates
 

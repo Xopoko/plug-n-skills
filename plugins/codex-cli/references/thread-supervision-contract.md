@@ -99,6 +99,36 @@ Limit each inline list to eight entries and keep at most five active capability
 candidate references. Externalize superseded history to private evidence
 artifacts rather than growing the checkpoint.
 
+`open_gates` contains only currently applicable blockers. Bind every entry to a
+current live subject or explicit policy requirement, eligibility evidence, and
+an owner. Capability availability, mutation authority, or a possible workflow
+step does not make an action required. When a complete inventory contains zero
+eligible targets for a conditional action, keep that action out of
+`open_gates`; record `not-applicable` in the transition or private evidence only
+when the decision matters. Never create an external object or write merely to
+make a checkpoint gate exist.
+
+Represent each open gate as a structured claim:
+
+```json
+{
+  "gate_id": "stable-public-safe-gate-id",
+  "kind": "proof|policy|approval|input|external-action",
+  "subject_ref": "opaque-current-live-subject-or-policy-ref",
+  "eligibility_state": "eligible",
+  "eligibility_evidence_ref": "opaque-current-evidence-ref",
+  "eligibility_cutoff": "opaque-cursor-revision-or-timestamp",
+  "eligibility_owner": "owning-workflow-or-policy",
+  "owner": "target|user|reviewer|external-system",
+  "required_transition": "bounded evidence-backed terminal condition"
+}
+```
+
+For a domain-specific conditional action, the eligibility receipt comes from
+the workflow or policy that owns that action. The supervisor may normalize the
+receipt into the checkpoint, but it must not synthesize eligibility. Remove or
+reclassify the gate after subject, cutoff, eligibility, or owner drift.
+
 `pending_intervention` is either `null` or a compact object containing the
 action, immutable intervention ID, payload fingerprint, revision ID when
 applicable, delivery state, and acknowledgement state. Keep only one pending
@@ -413,7 +443,10 @@ After compaction or a later wake:
 11. Resume the single recorded next action.
 
 If the checkpoint is missing the supervisor task or host, a target, cursor,
-authorization, open gate, continuation owner, heartbeat logical key, or
-heartbeat lifecycle state, perform one bounded read to repair that field. Do
-not replay the entire supervision history. While heartbeat identity or
-lifecycle is ambiguous, do not create, update, or retire a wakeup.
+authorization, the `open_gates` field, a previously evidenced applicable gate,
+continuation owner, heartbeat logical key, or heartbeat lifecycle state,
+perform one bounded read to repair that field. A present empty `open_gates`
+list is valid after a complete zero-eligible inventory and must not be
+repopulated from prose. Do not replay the entire supervision history. While
+heartbeat identity or lifecycle is ambiguous, do not create, update, or retire
+a wakeup.

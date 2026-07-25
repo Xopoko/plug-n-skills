@@ -110,6 +110,53 @@ class ThreadSupervisionContractTests(unittest.TestCase):
             compact,
         )
 
+    def test_aggregate_claims_fail_closed_without_exact_coverage(self):
+        compact = " ".join(SKILL.read_text(encoding="utf-8").split()).lower()
+        for invariant in (
+            "separate universe breadth from per-item evidence depth",
+            "bind the item set and cutoff",
+            "exact item-by-dimension coverage",
+            "`capability-workbench:capability-auditor`",
+            "do not install or activate another plugin",
+            "report the claim as bounded or partial",
+            "independent enumeration evidence",
+        ):
+            self.assertIn(invariant, compact)
+
+    def test_open_gates_require_current_eligible_targets(self):
+        skill = " ".join(SKILL.read_text(encoding="utf-8").split()).lower()
+        for invariant in (
+            "current live subject or explicit policy requirement",
+            "a possible action or available authority is not a gate",
+            "zero eligible targets",
+            "`not-applicable` outside `open_gates`",
+            "never create a discussion, note, approval, or other external write",
+        ):
+            self.assertIn(invariant, skill)
+
+        contract = " ".join(
+            REFERENCE.read_text(encoding="utf-8").split()
+        ).lower()
+        for invariant in (
+            "`open_gates` contains only currently applicable blockers",
+            "eligibility evidence, and an owner",
+            "capability availability, mutation authority, or a possible workflow",
+            "complete inventory contains zero eligible targets",
+            "never create an external object or write merely to make a checkpoint",
+            '"gate_id": "stable-public-safe-gate-id"',
+            '"eligibility_state": "eligible"',
+            '"eligibility_evidence_ref": "opaque-current-evidence-ref"',
+            '"eligibility_owner": "owning-workflow-or-policy"',
+            '"required_transition": "bounded evidence-backed terminal condition"',
+            "the supervisor may normalize the receipt into the checkpoint",
+            "it must not synthesize eligibility",
+            "subject, cutoff, eligibility, or owner drift",
+            "a previously evidenced applicable gate",
+            "a present empty `open_gates` list is valid",
+            "must not be repopulated from prose",
+        ):
+            self.assertIn(invariant, contract)
+
     def test_supervision_docs_are_public_safe_and_use_no_raw_directives(self):
         for path in (SKILL, REFERENCE):
             text = path.read_text(encoding="utf-8")

@@ -44,7 +44,13 @@ observe it.
 2. Separate observed state from inferred progress.
 3. Record the active turn, latest transition, open gates, and immutable proof
    identities that matter to the target's own completion claim.
-4. If the task is already terminal, report that once and do not intervene.
+4. Bind each open gate to a current live subject or explicit policy requirement,
+   its eligibility evidence, and its owner. A possible action or available
+   authority is not a gate. When a complete inventory finds zero eligible
+   targets for a conditional action, record it as `not-applicable` outside
+   `open_gates`; never create a discussion, note, approval, or other external
+   write solely to satisfy a checkpoint.
+5. If the task is already terminal, report that once and do not intervene.
 
 Use `read_thread` only to disambiguate one named missing fact. Increase history
 depth or include a bounded tool output only when that fact requires it. Route
@@ -74,6 +80,20 @@ expanding a live snapshot.
 
 Report transitions, not elapsed time. A useful update states what changed, the
 evidence class, the remaining gate, and whether observer action is allowed.
+
+## Bound Aggregate Claims
+
+When a target claims that every member of a set was reviewed, audited, or
+validated, separate universe breadth from per-item evidence depth. Bind the
+item set and cutoff, name the required dimensions, and reject counts or
+percentages as substitutes for exact item-by-dimension coverage.
+
+When `capability-workbench:capability-auditor` is already available, route the
+claim through its evidence coverage gate. Do not install or activate another
+plugin merely to perform the check. If the gate is unavailable, its ledger is
+invalid, or any required pair is missing, failing, or blocked, report the claim
+as bounded or partial. Never promote a supplied universe to real-world
+completeness without independent enumeration evidence.
 
 ## Continue An Ongoing Watch
 
