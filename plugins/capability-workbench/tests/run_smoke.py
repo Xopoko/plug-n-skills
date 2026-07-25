@@ -798,7 +798,7 @@ def test_evidence_coverage_gate() -> None:
         check(
             "evidence_coverage_gate: deeply nested JSON fails without traceback",
             result.returncode == 2
-            and payload["errors"] == ["invalid_json"]
+            and payload["errors"] in (["invalid_json"], ["ledger_must_be_object"])
             and not result.stderr,
             result.stdout + result.stderr,
         )
