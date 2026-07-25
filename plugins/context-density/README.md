@@ -14,7 +14,8 @@ It consolidates token-efficient context design, runtime context diagnostics, ski
 8. Validate compression with total cost, output cost, placement, behavior, format sensitivity, schema/task checks, cache metrics when applicable, and skill/plugin validation.
 9. Emit machine-readable `research_gate_risks` and `research_gate_summary` for triggered acceptance gates and required evidence.
 10. Validate preserved exact commitments with `--commitment-ledger`.
-11. Enforce research gates in CI-style workflows with `--fail-on-research-gates`.
-12. Report adopted changes, rejected changes, token delta, contract risks, and remaining tradeoffs.
+11. Validate typed state commitments and exact companion snapshots without inferring state from prose.
+12. Enforce research gates in CI-style workflows with `--fail-on-research-gates`.
+13. Report adopted changes, rejected changes, token delta, contract risks, and remaining tradeoffs.
 
 The plugin exposes one public skill, `context-density`, with conditional references and deterministic scripts under `skills/context-density/`.
