@@ -138,7 +138,7 @@ replaced to match the repository source, and repeated runs converge.
 | `scheduled-automation` | Local scheduler diagnostics, real-runtime proof, safe canaries, correlated run receipts, missed-run analysis, and rollback-aware repair. |
 | `gitlab-review` | Race-safe GitLab merge request review response, reviewer-owned resolution, idempotent thread replies, and exact-head handoff proof. |
 | `stacked-delivery` | Dependency-safe stacked change delivery with exact parent-head binding, descendant invalidation, node-local proof, distinct provenance and publication-authority gates, safe landing order, and guarded handoff receipts. |
-| `git-worktree-safety` | Read-only Git worktree recovery audits, branch/ref/reflog retention classification, exact clean replacement proof, and POSIX-gated convenience-symlink repair. |
+| `git-worktree-safety` | Git pointer and SSH-signed-commit recovery with redacted evidence, exact-state journals, one-use authorization, and fail-closed proof. |
 | `context-density` | Context design, long-context placement, typed state and companion-drift validation, research-backed acceptance gates, prompt contracts, skill compression, structural handoff, and validation reporting. |
 | `design-intelligence` | Product framing, interface architecture, interaction design, visual hierarchy, accessibility, and design-system governance. |
 | `game-design-intelligence` | Gameplay loops, systems, progression, economies, motivation, retention, onboarding, difficulty, multiplayer, and live-service critique. |
@@ -166,11 +166,11 @@ instructions.
 | Metric | Count | Tokens | Notes |
 | --- | ---: | ---: | --- |
 | Plugin packs | 17 | - | Installable packages under `plugins/`. |
-| Skill entrypoints | 165 | - | `SKILL.md` files exposed through plugin metadata. |
-| Reference files | 229 | - | Longer ledgers, contracts, scorecards, and source notes. |
-| Helper and validator scripts | 81 | - | Deterministic plugin-local helpers. |
-| Startup metadata | 165 skills | 13,072 | Skill name, description, and file pointer for routing. |
-| On-demand skill bodies | 165 skills | 113,002 | Instruction bodies after frontmatter, loaded only when selected. |
+| Skill entrypoints | 166 | - | `SKILL.md` files exposed through plugin metadata. |
+| Reference files | 230 | - | Longer ledgers, contracts, scorecards, and source notes. |
+| Helper and validator scripts | 82 | - | Deterministic plugin-local helpers. |
+| Startup metadata | 166 skills | 13,295 | Skill name, description, and file pointer for routing. |
+| On-demand skill bodies | 166 skills | 114,457 | Instruction bodies after frontmatter, loaded only when selected. |
 
 Regenerate the report after skill edits:
 
@@ -197,7 +197,7 @@ Token columns are `startup metadata / on-demand body`.
 | `scheduled-automation` | 1 | 5 | 0 | 103 | 1,158 |
 | `gitlab-review` | 1 | 3 | 1 | 117 | 1,083 |
 | `stacked-delivery` | 1 | 4 | 1 | 123 | 1,486 |
-| `git-worktree-safety` | 1 | 1 | 1 | 159 | 1,014 |
+| `git-worktree-safety` | 2 | 2 | 2 | 382 | 2,469 |
 | `claude-code` | 6 | 2 | 1 | 528 | 4,669 |
 | `architecture-intelligence` | 9 | 8 | 2 | 645 | 6,890 |
 | `design-intelligence` | 7 | 2 | 1 | 472 | 5,101 |
@@ -219,7 +219,7 @@ Token columns are `startup metadata / on-demand body`.
 | `scheduled-automation` | Local scheduler diagnostics, real-runtime proof, safe canaries, correlated run receipts, and missed-run analysis for launchd, systemd timers, cron, and Windows Task Scheduler. |
 | `gitlab-review` | Race-safe GitLab merge request review response with complete discussion inventory, reviewer-owned resolution, idempotent replies, and exact-head handoff proof. |
 | `stacked-delivery` | Dependency-safe delivery for stacked pull requests, merge requests, and dependent changes with exact parent-head binding, descendant invalidation, per-node proof, provenance and publication-authority boundaries, safe landing order, and guarded handoff receipts. |
-| `git-worktree-safety` | Host-neutral read-only diagnosis for missing, stale, or broken Git worktrees and convenience symlinks, with ref/reflog retention classification and POSIX-only exact-pointer repair. |
+| `git-worktree-safety` | Fail-closed Git safety for worktree pointer and SSH-signed-commit recovery, with redacted evidence, exact-state journals, one-use authorization, and explicit host boundaries. |
 | `claude-code` | Claude Code CLI operations, print-mode automation, diagnostics, plugin and MCP lifecycle, hooks, settings, agents, sessions, and worktrees. |
 | `architecture-intelligence` | Source-backed software architecture intelligence for codebase audits, ownership topology, runtime topology, async state consistency, architecture conformance and drift checks, structure metrics, module boundaries, dependency flow, ADRs, fitness functions, and incremental refactoring. |
 | `design-intelligence` | Source-backed, technology-agnostic UI/UX judgment: product framing, information architecture, interaction design, usability/accessibility review, visual communication, and design-system governance. Deliberately avoids Figma automation, framework recipes, and CSS recipes. |
@@ -401,6 +401,7 @@ Token cells are shown as `startup/body`.
 
 | Skill | Tokens | Description |
 | --- | ---: | --- |
+| `git-commit-signing-recovery` | 223/1,455 | Use when an ordinary Git commit fails before ref advancement at SSH signing with signer, agent, socket, helper-program, or signing-key evidence. Preserves the staged state, records private recovery state, issues one single-use signed retry authorization after a relevant signer-state change, and verifies the resulting commit, parent, diff, signer identity, and residual worktree state. Do not use for hook failures or hook-mutated state, conflicts, index or object corruption, remote authentication, OpenPGP or X.509 commit signing, editor/template or cleanup-transformed commit messages, artifact or release signing, key generation or rotation, initial or root commits, amend, merge, empty commits, index-altering `-a`/pathspec/interactive commit modes, non-signer command-scoped Git configuration or commit-metadata environment overrides, rebase/cherry-pick sequencers, unsigned-policy changes, or ordinary commit creation. |
 | `git-worktree-recovery` | 159/1,014 | Use when an expected Git worktree path or convenience symlink is missing, stale, or broken and a registered replacement may already hold the branch. Classifies branch-ref, reflog-only, object-only, or missing retention and guards POSIX-only exact symlink repair when directory-relative primitives are available. Do not use for Git administrative worktree repair after moving a main or linked worktree, ordinary worktree creation/removal/pruning, ref restoration, checkout/reset, stacked-change restacking, host-specific session orchestration, recovery of unsaved content from a vanished checkout, or arbitrary non-Git symlink repair. |
 
 #### `claude-code`

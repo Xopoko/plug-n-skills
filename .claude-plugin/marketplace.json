@@ -61,7 +61,7 @@
     {
       "name": "git-worktree-safety",
       "source": "./plugins/git-worktree-safety",
-      "description": "Read-only Git worktree recovery audits, ref and reflog retention classification, clean replacement proof, and POSIX-gated exact convenience-symlink repair."
+      "description": "Git pointer and SSH-signed-commit recovery with redacted evidence, exact-state journals, one-use authorization, and fail-closed proof."
     },
     {
       "name": "claude-code",
