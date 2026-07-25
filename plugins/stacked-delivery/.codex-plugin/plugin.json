@@ -19,7 +19,7 @@
   "interface": {
     "displayName": "Stacked Delivery",
     "shortDescription": "Deliver dependent changes without stack drift.",
-    "longDescription": "A cross-agent, cross-forge workflow for freezing a stacked-change chain, proving every child against the exact current parent head, invalidating descendants after ancestor drift, rebinding proof-bearing descriptions and checkpoints after rewrites, keeping CI evidence node-local, separating contribution provenance from publication authority, enforcing safe landing prefixes, and handing off current state or prepared history mutations with guarded receipts.",
+    "longDescription": "A cross-agent, cross-forge workflow for freezing a stacked-change chain, proving every child against the exact current parent head, invalidating descendants after ancestor drift, rebinding proof-bearing descriptions, statuses, checkpoints, and handoffs after rewrites, keeping CI evidence node-local, separating contribution provenance from publication authority, enforcing safe landing prefixes, and handing off current state or prepared history mutations with guarded receipts.",
     "developerName": "Xopoko",
     "category": "Coding",
     "capabilities": [

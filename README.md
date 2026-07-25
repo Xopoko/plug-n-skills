@@ -139,7 +139,7 @@ replaced to match the repository source, and repeated runs converge.
 | `gitlab-review` | Race-safe GitLab merge request review response, reviewer-owned resolution, idempotent thread replies, and exact-head handoff proof. |
 | `stacked-delivery` | Dependency-safe stacked change delivery with exact parent-head binding, descendant invalidation, node-local proof, post-rewrite proof-record freshness, distinct provenance and publication-authority gates, safe landing order, and guarded handoff receipts. |
 | `git-worktree-safety` | Read-only Git worktree recovery audits, branch/ref/reflog retention classification, exact clean replacement proof, and POSIX-gated convenience-symlink repair. |
-| `context-density` | Context design, long-context placement, research-backed acceptance gates, prompt contracts, skill compression, structural handoff, and validation reporting. |
+| `context-density` | Context design, long-context placement, typed state and companion-drift validation, research-backed acceptance gates, prompt contracts, skill compression, structural handoff, and validation reporting. |
 | `design-intelligence` | Product framing, interface architecture, interaction design, visual hierarchy, accessibility, and design-system governance. |
 | `game-design-intelligence` | Gameplay loops, systems, progression, economies, motivation, retention, onboarding, difficulty, multiplayer, and live-service critique. |
 | `kotlin-multiplatform` | Kotlin Multiplatform architecture, Gradle diagnosis, Compose Multiplatform, iOS interop, testing, security, publishing, and production readiness. |
@@ -167,10 +167,10 @@ instructions.
 | --- | ---: | ---: | --- |
 | Plugin packs | 17 | - | Installable packages under `plugins/`. |
 | Skill entrypoints | 165 | - | `SKILL.md` files exposed through plugin metadata. |
-| Reference files | 228 | - | Longer ledgers, contracts, scorecards, and source notes. |
-| Helper and validator scripts | 80 | - | Deterministic plugin-local helpers. |
-| Startup metadata | 165 skills | 13,063 | Skill name, description, and file pointer for routing. |
-| On-demand skill bodies | 165 skills | 113,128 | Instruction bodies after frontmatter, loaded only when selected. |
+| Reference files | 229 | - | Longer ledgers, contracts, scorecards, and source notes. |
+| Helper and validator scripts | 81 | - | Deterministic plugin-local helpers. |
+| Startup metadata | 165 skills | 13,072 | Skill name, description, and file pointer for routing. |
+| On-demand skill bodies | 165 skills | 113,449 | Instruction bodies after frontmatter, loaded only when selected. |
 
 Regenerate the report after skill edits:
 
@@ -191,12 +191,12 @@ Token columns are `startup metadata / on-demand body`.
 | `pixijs` | 26 | 64 | 0 | 1,861 | 7,967 |
 | `tauri` | 6 | 0 | 1 | 481 | 3,235 |
 | `scientific-research` | 1 | 4 | 1 | 91 | 2,024 |
-| `context-density` | 1 | 8 | 7 | 128 | 2,713 |
+| `context-density` | 1 | 9 | 8 | 137 | 2,806 |
 | `capability-workbench` | 10 | 14 | 22 | 941 | 12,825 |
 | `codex-cli` | 8 | 4 | 2 | 702 | 9,059 |
 | `scheduled-automation` | 1 | 5 | 0 | 103 | 1,158 |
 | `gitlab-review` | 1 | 3 | 1 | 117 | 1,083 |
-| `stacked-delivery` | 1 | 4 | 1 | 123 | 1,705 |
+| `stacked-delivery` | 1 | 4 | 1 | 123 | 1,933 |
 | `git-worktree-safety` | 1 | 1 | 1 | 159 | 1,014 |
 | `claude-code` | 6 | 2 | 1 | 528 | 4,669 |
 | `architecture-intelligence` | 9 | 8 | 2 | 645 | 6,890 |
@@ -213,7 +213,7 @@ Token columns are `startup metadata / on-demand body`.
 | `pixijs` | PixiJS v8 skill collection: application setup, scene graph, assets, events, filters, rendering, performance, v7->v8 migration, and project scaffolding. |
 | `tauri` | Tauri 2 development: project setup/migration, tauri.conf & capabilities/security, Rust IPC & plugins, shell UI, debug/test, and distribution/mobile release. |
 | `scientific-research` | Disciplined scholarly research workflow: discovery, source routing, DOI dedup, claim ledgers, and evidence quality gates across arXiv/OpenAlex/Crossref/Europe PMC/Semantic Scholar/NCBI/CORE/OpenCitations. |
-| `context-density` | Context design, prompt-contract optimization, research-backed acceptance gates, compression validation, and structural handoff for agent skills, plugins, prompts, docs, and workflows. |
+| `context-density` | Context design, prompt-contract optimization, typed state validation, research-backed acceptance gates, compression validation, and structural handoff for agent skills, plugins, prompts, docs, and workflows. |
 | `capability-workbench` | Agent-agnostic capability workbench for discovery, synthesis, portfolio architecture, trigger metadata and Codex catalog-budget audits, agent guidance, vetting, repair, installation, packaging, and imagegen-backed plugin icons. |
 | `codex-cli` | Codex CLI operations, automation, producer-native deferred completion, diagnostics, live thread supervision, plugin and MCP lifecycle, normalized session trace audits, and local environment actions. |
 | `scheduled-automation` | Local scheduler diagnostics, real-runtime proof, safe canaries, correlated run receipts, and missed-run analysis for launchd, systemd timers, cron, and Windows Task Scheduler. |
@@ -349,7 +349,7 @@ Token cells are shown as `startup/body`.
 
 | Skill | Tokens | Description |
 | --- | ---: | --- |
-| `context-density` | 128/2,713 | Use when designing, auditing, refactoring, measuring, or validating token-efficient context and prompt/output contracts. Trigger for AGENTS.md, prompts, skill packages, marketplace plugins, MCP/tool schemas, long-context placement, prompt/context compression, retrieval provenance, runtime context diagnostics, duplicated or overlapping prose, competing skill descriptions, irrelevant-context pruning, prompt reformatting, agent/subagent context handoffs, brittle trigger descriptions, strict JSON/schema/tool-call output, validators, retry/repair loops, or behavior-preserving token reduction. |
+| `context-density` | 137/2,806 | Use when designing, auditing, refactoring, measuring, or validating token-efficient context and prompt/output contracts. Trigger for AGENTS.md, prompts, skill packages, marketplace plugins, MCP/tool schemas, long-context placement, prompt/context compression, retrieval provenance, runtime context diagnostics, duplicated or overlapping prose, competing skill descriptions, companion-artifact drift, current-state commitments, irrelevant-context pruning, prompt reformatting, agent/subagent context handoffs, brittle trigger descriptions, strict JSON/schema/tool-call output, validators, retry/repair loops, or behavior-preserving token reduction. |
 
 #### `capability-workbench`
 
@@ -395,7 +395,7 @@ Token cells are shown as `startup/body`.
 
 | Skill | Tokens | Description |
 | --- | ---: | --- |
-| `stacked-change-delivery` | 123/1,705 | Use when pull requests, merge requests, patch sets, or branch changes form a dependency stack and a child must remain based on an exact parent head. Covers stacked diffs, restacking after ancestor updates, per-node CI proof, safe bottom-up or forge-native atomic-prefix landing, isolated worktrees, and cross-agent handoffs. Do not use for one independent change, ordinary review-thread response, or automatic merge or force-push authorization. |
+| `stacked-change-delivery` | 123/1,933 | Use when pull requests, merge requests, patch sets, or branch changes form a dependency stack and a child must remain based on an exact parent head. Covers stacked diffs, restacking after ancestor updates, per-node CI proof, safe bottom-up or forge-native atomic-prefix landing, isolated worktrees, and cross-agent handoffs. Do not use for one independent change, ordinary review-thread response, or automatic merge or force-push authorization. |
 
 #### `git-worktree-safety`
 

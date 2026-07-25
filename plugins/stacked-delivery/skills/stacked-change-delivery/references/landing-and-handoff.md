@@ -69,19 +69,20 @@ Otherwise record it merely as a local recovery artifact with:
 After refreshing topology, a companion rebind note may reference the unchanged
 artifact digest, the new snapshot digest, and the exact node, worktree, and
 writer. This records recovery continuity only. It does not make the work
-dependency-current, proof-current, review-ready, or landable, and the v1 guard
-does not validate that note.
+dependency-current, proof-current, review-ready, or landable, and the bundled
+guard does not validate that note.
 
 If authorized editing resumes, any content change supersedes the earlier
 artifact. Refresh it with the same repository-native coverage and validation
 before proof, commit, or handoff; never claim an older digest describes current
-dirty state. The v1 snapshot and handoff schemas bind committed heads only, so
-do not add undeclared dirty-work fields. Reconcile the work into a current node
-head and rerun node-local proof before selecting a rewrite or landing action.
+dirty state. Both snapshot and handoff schema versions bind committed heads
+only, so do not add undeclared dirty-work fields. Reconcile the work into a
+current node head and rerun node-local proof before selecting a rewrite or
+landing action.
 
 ## Handoff Receipt
 
-A portable receipt binds:
+An exact `stacked_delivery.handoff.v2` receipt binds:
 
 - receipt and stack schema versions;
 - repository identity and forge adapter;
@@ -89,6 +90,10 @@ A portable receipt binds:
 - stack ID, base branch, and base head;
 - ordered node IDs and exact heads;
 - accepted proof IDs for each node;
+- the complete active metadata inventory, its canonical audit digest, exact
+  record/evidence identities, and per-record composition bindings;
+- a separate `metadata_inventory_digest` over the exact inventory carried
+  inside the snapshot;
 - worktree and writer ownership identities;
 - the explicit receiver identity.
 
@@ -97,7 +102,22 @@ Preserve the canonical bytes alongside the handoff digest returned by the
 guard. Compute the next safe action separately from the same snapshot so a
 receiver can re-run that decision after refreshing live state.
 Reject extra nodes, missing nodes, incomplete ownership pairs, conflicting
-active worktrees, stale heads, stale proof IDs, or a snapshot digest mismatch.
+active worktrees, stale heads, stale proof IDs, an incomplete, stale, or
+unverified metadata inventory, an inventory digest mismatch, or a snapshot
+digest mismatch.
+
+Compatibility uses exact schemas. A v1 handoff embeds an exact v1 snapshot and
+does not accept `metadata_inventory_digest`; a v2 handoff embeds an exact v2
+snapshot and requires that field. Mixed versions and unknown cross-version
+fields are malformed rather than normalized.
+
+Exact legacy `stacked_delivery.handoff.v1` receipts remain parseable so old
+content-addressed receipts keep their original meaning. `validate-handoff`
+returns `fail` with `legacy_handoff_metadata_gate` and
+`legacy_snapshot_metadata_gate`. It passes only for v2 when the embedded
+snapshot carries a complete `metadata-current` inventory and the top-level
+digest binds that exact inventory. This validates supplied canonical data only;
+it does not authenticate the external collector or live record.
 
 The receipt is content-addressed and tamper-evident. It becomes independently
 immutable only when a trusted signature, transparency log, or append-only

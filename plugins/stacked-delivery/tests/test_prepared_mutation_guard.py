@@ -47,7 +47,7 @@ EVIDENCE_HASH = "9" * 64
 
 def snapshot() -> dict:
     return {
-        "schema": guard.SNAPSHOT_SCHEMA,
+        "schema": guard.SNAPSHOT_SCHEMA_V1,
         "repository_id": "repository-1",
         "forge_adapter": "generic-v1",
         "stack_id": "stack-1",
@@ -381,6 +381,29 @@ class PreparedMutationShapeTests(unittest.TestCase):
         self.assertNotEqual(guard.PREPARED_MUTATION_SCHEMA, guard.HANDOFF_SCHEMA)
         with self.assertRaises(guard.InputError):
             guard.parse_handoff(prepared_mutation())
+
+    def test_prepared_mutation_rejects_snapshot_v2_instead_of_ignoring_audit(self):
+        value = prepared_mutation()
+        snapshot_value = value["snapshot"]
+        snapshot_value["schema"] = guard.SNAPSHOT_SCHEMA_V2
+        composition_digest = guard.snapshot_composition_digest(snapshot_value)
+        inventory = {
+            "audit_id": "metadata-audit-1",
+            "audit_digest": EVIDENCE_HASH,
+            "audited_kinds": sorted(guard.METADATA_RECORD_KINDS),
+            "complete": True,
+            "composition_digest": composition_digest,
+            "evidence_id": "metadata-evidence-1",
+            "records": [],
+        }
+        inventory["audit_digest"] = guard.metadata_audit_digest(inventory)
+        snapshot_value["metadata_inventory"] = inventory
+        value["snapshot_digest"] = guard.stable_digest(snapshot_value)
+        with self.assertRaisesRegex(
+            guard.InputError,
+            "requires an exact pre-rewrite snapshot v1",
+        ):
+            guard.parse_prepared_mutation(value)
 
     def test_unknown_field_is_rejected(self):
         value = prepared_mutation()
@@ -1064,6 +1087,8 @@ class PreparedMutationGuidanceTests(unittest.TestCase):
             "references/prepared-mutation-handoff.md",
             "validate the additive prepared mutation handoff",
             "does not expand the receiver's authority",
+            "exact pre-rewrite `stacked_delivery.snapshot.v1` only",
+            "fresh snapshot v2 before requesting a next action or handoff v2",
         ):
             self.assertIn(invariant, compact)
 
@@ -1095,6 +1120,9 @@ class PreparedMutationGuidanceTests(unittest.TestCase):
             "one git object-id width",
             "retarget predecessor ref must equal its bound head",
             "preserve backups and the last confirmed old/new mapping",
+            "phase-local to the prepared mutation transaction",
+            "rejects snapshot v2 rather than silently ignoring its metadata inventory",
+            "collect exact `stacked_delivery.snapshot.v2` before `next-action`",
         ):
             self.assertIn(invariant, compact)
 

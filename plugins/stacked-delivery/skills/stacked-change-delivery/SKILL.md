@@ -89,9 +89,13 @@ Load only the reference needed:
    and needs explicit authorization; perform it bottom to top, preserve old to
    new object-ID evidence and repository-required contribution attribution,
    then rerun proof for every rewritten node. When another task will publish a
-   prepared rewrite, validate the additive prepared mutation handoff. Treat its
-   authority record as preparation evidence, not automatically fresh
-   publication permission; validation does not expand the receiver's authority.
+   prepared rewrite, validate the additive prepared mutation handoff. Its v1
+   contract embeds exact pre-rewrite `stacked_delivery.snapshot.v1` only; it
+   rejects snapshot v2 because prepared-mutation validation is not post-rewrite
+   readiness or handoff proof. Treat its authority record as preparation
+   evidence, not automatically fresh publication permission; validation does
+   not expand the receiver's authority. After mutation and readback, build a
+   fresh snapshot v2 before requesting a next action or handoff v2.
    Immediately before the returned action, refresh the current owner, actor,
    allowed action, scope, validity, remote lease, and any revocation or veto.
    If an owned worktree is dirty when drift appears, stop edits and preserve it
@@ -101,7 +105,10 @@ Load only the reference needed:
    select only the lowest current unlanded node. Atomic-prefix mode may select
    only a contiguous proven prefix starting there, and only after live
    feature detection confirms the forge will land that exact prefix. Never
-   skip an unlanded dependency.
+   skip an unlanded dependency. The command requires exact snapshot v2 and its
+   metadata inventory to be complete, content-bound, and `metadata-current`;
+   an exact legacy v1 snapshot remains parseable but returns `blocked` rather
+   than `ready` or `complete`.
 8. **Read back every transition.** After an authorized push, retarget, or
    landing, refetch the base and full stack. Confirm server-side heads and
    targets, then rebuild and revalidate the snapshot. A lower landing normally
@@ -116,15 +123,22 @@ Load only the reference needed:
    same fail-closed rule as `metadata-unverified`. An old identity may remain
    only when explicitly historical and excluded from current proof. Do not
    rewrite immutable provenance, lease, or old-to-new mappings. Metadata
+   inventory records carry exact opaque identity/evidence references and bind
+   to the canonical snapshot composition digest. The inventory audit digest
+   binds its completeness claim and exact active record list. Sort that list by
+   kind and record ID; an unverified audit dominates any concurrent stale
+   binding, and v2 `compare` fails when the canonical inventory digest changes.
+   Do not add historical or superseded non-proof records to that list. Metadata
    freshness can block an independently applicable action; it never makes that
    action required. In particular, zero eligible existing review discussions
    means no evidence-reply gate and no substitute top-level note. Route
    discussion eligibility and reply safety to the forge-specific review
    workflow.
-9. **Hand off by receipt.** Build a canonical receipt containing the snapshot
-   digest, exact node heads, accepted proof IDs, worktree and writer ownership,
-   and receiver. Run `validate-handoff`, preserve its handoff digest, and pair
-   the receipt with a fresh `next-action` result. Call the receipt
+9. **Hand off by receipt.** Build an exact handoff v2 containing the snapshot
+   digest, exact node heads, accepted proof IDs, complete active metadata
+   inventory, separate inventory digest, worktree and writer ownership, and
+   receiver. Run `validate-handoff`, preserve its handoff digest, and pair the
+   receipt with a fresh `next-action` result. Call the receipt
    content-addressed and tamper-evident. Do not call it immutable unless a
    trusted signature or append-only attestation system independently records
    the same digest.

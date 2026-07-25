@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import importlib.util
+import json
 import unittest
 from pathlib import Path
 
@@ -42,6 +43,7 @@ GUARD_PATH = (
     / "scripts"
     / "stacked_delivery_guard.py"
 )
+CODEX_MANIFEST = ROOT / ".codex-plugin" / "plugin.json"
 SPEC = importlib.util.spec_from_file_location(
     "stacked_delivery_guidance_guard", GUARD_PATH
 )
@@ -58,7 +60,7 @@ def compact(path: Path) -> str:
 def one_node_snapshot(proofs: list[dict]) -> dict:
     base = "a" * 40
     head = "b" * 40
-    return {
+    value = {
         "schema": guard.SNAPSHOT_SCHEMA,
         "repository_id": "repository-1",
         "forge_adapter": "generic-v1",
@@ -82,6 +84,19 @@ def one_node_snapshot(proofs: list[dict]) -> dict:
             }
         ],
     }
+    composition_digest = guard.snapshot_composition_digest(value)
+    inventory = {
+        "audit_id": "metadata-audit-1",
+        "audit_digest": "c" * 64,
+        "audited_kinds": sorted(guard.METADATA_RECORD_KINDS),
+        "complete": True,
+        "composition_digest": composition_digest,
+        "evidence_id": "metadata-evidence-1",
+        "records": [],
+    }
+    inventory["audit_digest"] = guard.metadata_audit_digest(inventory)
+    value["metadata_inventory"] = inventory
+    return value
 
 
 class StackedDeliveryGuidanceTests(unittest.TestCase):
@@ -109,7 +124,7 @@ class StackedDeliveryGuidanceTests(unittest.TestCase):
         ):
             self.assertIn(invariant, reference)
 
-    def test_v1_guard_requires_mandatory_gap_to_remain_proofless(self):
+    def test_proof_layer_requires_mandatory_gap_to_remain_proofless(self):
         _, blocked = guard.next_action_data(one_node_snapshot([]))
         self.assertEqual(blocked["status"], "blocked")
         self.assertEqual(
@@ -201,6 +216,9 @@ class StackedDeliveryGuidanceTests(unittest.TestCase):
             "zero eligible existing review discussions",
             "no evidence-reply gate and no substitute top-level note",
             "forge-specific review workflow",
+            "metadata inventory to be complete, content-bound, and "
+            "`metadata-current`",
+            "separate inventory digest",
         ):
             self.assertIn(invariant, skill)
         for invariant in (
@@ -223,8 +241,8 @@ class StackedDeliveryGuidanceTests(unittest.TestCase):
             "do not parse arbitrary generated prose",
             "classify the record as `metadata-unverified`",
             "do not silently infer missing bindings",
-            "does not fetch, parse, or authenticate forge descriptions, "
-            "checkpoints, or status text",
+            "does not fetch or authenticate forge descriptions, checkpoints, "
+            "statuses, or handoff summaries",
             "internal receipt validation does not prove that a live public "
             "record is current",
             "after another workflow or explicit policy independently establishes",
@@ -234,6 +252,11 @@ class StackedDeliveryGuidanceTests(unittest.TestCase):
             "do not create a top-level note as a substitute",
             "stack proof, review-thread eligibility, and write authority as "
             "separate decisions",
+            "`stacked_delivery.snapshot.v2` `metadata_inventory`",
+            "`next-action` blocks an exact legacy v1 snapshot, and enforces "
+            "the v2 audit before returning `ready` or `complete`",
+            "`validate-handoff` fails an exact v1 receipt",
+            "a separate digest of the inventory carried by handoff v2",
         ):
             self.assertIn(invariant, restack)
         for invariant in (
@@ -242,8 +265,51 @@ class StackedDeliveryGuidanceTests(unittest.TestCase):
             "`metadata-current`, `metadata-stale`, or `metadata-unverified`",
             "only `metadata-current` supports the handoff",
             "historical or superseded non-proof",
+            "complete active metadata inventory",
+            "`metadata_inventory_digest`",
+            "`validate-handoff` returns `fail`",
         ):
             self.assertIn(invariant, handoff)
+
+    def test_manifest_names_the_full_audited_surface(self):
+        manifest = json.loads(CODEX_MANIFEST.read_text(encoding="utf-8"))
+        long_description = manifest["interface"]["longDescription"].lower()
+        self.assertIn(
+            "descriptions, statuses, checkpoints, and handoffs",
+            long_description,
+        )
+
+    def test_versioned_metadata_gate_is_exact_and_fail_closed(self):
+        remote = {
+            "proof_id": "remote-proof-1",
+            "node_id": "node-1",
+            "node_head_sha": "b" * 40,
+            "dependency_head_sha": "a" * 40,
+            "status": "success",
+            "terminal": True,
+            "superseded": False,
+        }
+        current = one_node_snapshot([remote])
+        _, ready = guard.next_action_data(current)
+        self.assertEqual(ready["status"], "ready")
+        self.assertEqual(ready["metadata"]["status"], "metadata-current")
+
+        legacy = dict(current)
+        legacy["schema"] = guard.SNAPSHOT_SCHEMA_V1
+        del legacy["metadata_inventory"]
+        parsed = guard.parse_snapshot(legacy)
+        self.assertNotIn("metadata_inventory", parsed)
+        _, blocked = guard.next_action_data(legacy)
+        self.assertEqual(blocked["status"], "blocked")
+        self.assertIn(
+            "legacy_snapshot_metadata_gate",
+            {item["code"] for item in blocked["violations"]},
+        )
+
+        snapshot_reference = compact(SNAPSHOT_REFERENCE)
+        self.assertIn("`stacked_delivery.snapshot.v2`", snapshot_reference)
+        self.assertIn("exact legacy v1 snapshots", snapshot_reference)
+        self.assertIn("cannot return `ready` or `complete`", snapshot_reference)
 
     def test_paths_and_dirty_work_contract_are_portable_and_bounded(self):
         skill = compact(SKILL)
@@ -260,7 +326,7 @@ class StackedDeliveryGuidanceTests(unittest.TestCase):
             "repository-native recovery mechanism",
             "preserve the worktree in place",
             "local digest labeled as unverified by this plugin",
-            "v1 guard does not validate that note",
+            "bundled guard does not validate that note",
         ):
             self.assertIn(invariant, handoff)
         for invariant in (

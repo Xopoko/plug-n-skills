@@ -35,9 +35,10 @@ record a public-safe task-local proof-gap sidecar containing:
   an equivalent remote proof authority.
 
 Keep this record out of the snapshot's accepted `proofs`. Unavailability is
-neither a failed proof result nor a successful proof. The v1 guard treats a
-non-empty proof list as landing-eligible, so use `proofs: []` while any
-policy-required proof surface remains open. Partial or non-equivalent results
+neither a failed proof result nor a successful proof. At the proof layer, the
+guard treats a non-empty accepted proof list as satisfied, so use `proofs: []`
+while any policy-required proof surface remains open. `next-action` separately
+requires snapshot v2 and its metadata audit. Partial or non-equivalent results
 stay in task-local evidence until policy confirms every required surface is
 satisfied or explicitly equivalent. Reinspect a drift-prone gate once when
 needed, but do not rerun the same proof while its gate fingerprint is
@@ -106,6 +107,22 @@ evidence references while comparing active bindings with the refreshed tuple.
 Counts, labels such as "latest", a green badge, or a receipt that is internally
 self-consistent do not establish live freshness.
 
+Encode that completed audit in exact `stacked_delivery.snapshot.v2`
+`metadata_inventory`. Bind the inventory and every comparable active record to
+the canonical composition digest, bind audited-surface coverage and the exact
+record list through `audit_digest`, and keep each exact readback behind an
+opaque evidence ID and SHA-256 hash. Use a null record binding when comparison
+is incomplete; do not invent a digest. `next-action` blocks an exact legacy v1
+snapshot, and enforces the v2 audit before returning `ready` or `complete`.
+`validate-handoff` fails an exact v1 receipt, and enforces an exact v2 snapshot
+plus a separate digest of the inventory carried by handoff v2.
+Sort active records canonically by kind and record ID before binding the audit.
+If audit integrity is unverified and another binding is stale, report aggregate
+`metadata-unverified` while retaining both blocking states; do not let an
+untrusted audit make the stronger `metadata-stale` classification. When two v2
+snapshots carry different canonical inventory digests, `compare` reports that
+metadata drift and fails even when node composition and proof are unchanged.
+
 If any active binding still names an old base, parent, head, target, pipeline,
 or proof, classify that record as `metadata-stale`. Do not use it to support
 `proof-current`, `review-ready`, or `landable`. A pending proof may be recorded
@@ -142,10 +159,11 @@ Do not parse arbitrary generated prose, trust a raw string search, or treat a
 Markdown rewrite as semantic proof. Prefer repository-defined structured
 fields or a canonical receipt block when one exists. Otherwise classify the
 record as `metadata-unverified`; do not silently infer missing bindings. The
-bundled guard validates supplied snapshots and receipts; it does not fetch,
-parse, or authenticate forge descriptions, checkpoints, or status text, and an
-internal receipt validation does not prove that a live public record is
-current.
+bundled guard validates the supplied structured inventory, its canonical audit
+digest, each declared composition binding, and the handoff's inventory digest.
+It does not fetch or authenticate forge descriptions, checkpoints, statuses,
+or handoff summaries, and an internal receipt validation does not prove that a
+live public record is current or that the declared inventory is complete.
 
 ## Independent Pre-Write Gates
 

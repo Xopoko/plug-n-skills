@@ -19,7 +19,12 @@ review or merge readiness and fails closed when a lower layer changes.
 
 The bundled guard consumes already-collected JSON. It is read-only and
 standard-library only: it never invokes Git, contacts a forge, mutates a ref,
-rebases, pushes, retargets, approves, or merges.
+rebases, pushes, retargets, approves, or merges. Exact snapshot and handoff v2
+schemas bind a complete active metadata-record audit to the current stack and
+proof composition, with a separate handoff inventory digest. Exact legacy v1
+inputs keep their field sets and canonical digests: structural validation stays
+available, while `next-action` returns blocked and `validate-handoff` returns
+fail with explicit legacy metadata-gate issues.
 
 For a future rewrite prepared for another task:
 

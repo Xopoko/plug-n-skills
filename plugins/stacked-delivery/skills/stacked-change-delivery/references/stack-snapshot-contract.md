@@ -15,6 +15,8 @@ The snapshot must bind:
   full current head object ID, parent node or root, expected parent object ID,
   lifecycle state, resulting landing head or null, active worktree and writer
   identities or an explicit null pair, and proofs.
+- for readiness or handoff: a complete active metadata inventory whose audit
+  and record bindings match the exact current composition.
 
 Use full lowercase, non-zero 40- or 64-hex object IDs. A shortened hash is
 display data, not an identity; the all-zero deletion or unborn sentinel is not
@@ -25,6 +27,71 @@ Repository and forge scope are digest inputs, not display metadata. Use a
 stable public-safe repository identifier or a stable digest when the canonical
 name is sensitive. Never reuse a receipt across a different repository or
 forge adapter merely because branches and object IDs happen to match.
+
+## Metadata Inventory V2
+
+`stacked_delivery.snapshot.v2` has the exact v1 stack fields plus the required
+`metadata_inventory` field. It carries one complete audit of active
+proof-bearing mutable records. The inventory has an opaque `audit_id` and
+`evidence_id`, an exact `audited_kinds` array covering change descriptions,
+status summaries, durable checkpoints, and handoff summaries, a `complete`
+boolean, the current `composition_digest`, a content-addressed `audit_digest`,
+and a bounded `records` array.
+
+Compute `composition_digest` from canonical JSON after removing the top-level
+`metadata_inventory` field rather than replacing it with null. The remaining
+object still carries the v2 schema identifier. This avoids a self-reference
+while binding repository and forge scope, stack and base, ordered nodes,
+branches, heads, ownership, lifecycle state, and every accepted proof identity.
+Compute `audit_digest` from the canonical inventory object after removing only
+`audit_digest`; it therefore binds audited-surface coverage, the complete flag,
+composition digest, evidence reference, and exact record list.
+
+The records array contains active records only. Each record has:
+
+- a stable `record_id`;
+- kind `change-description`, `status-summary`, `durable-checkpoint`, or
+  `handoff-summary`;
+- an opaque exact-readback `evidence_id` and its non-zero SHA-256
+  `evidence_hash`;
+- either a binding containing the current `composition_digest`, or null when
+  the record cannot be completely compared.
+
+Sort records canonically by `(kind, record_id)` before computing
+`audit_digest`. A different order is `metadata-unverified`; do not allow two
+equivalent inventories to produce different ready snapshot digests. Duplicate
+record IDs remain a separate structured gate failure.
+
+A null binding is `metadata-unverified`. A binding or inventory composition
+digest that differs from the current composition is `metadata-stale`.
+Incomplete audited-surface coverage, an incomplete audit, duplicate active
+record identity, or audit-digest mismatch is also fail-closed. Historical or
+superseded non-proof records stay outside this active inventory.
+When unverified audit integrity and a stale binding coexist, the aggregate
+status is `metadata-unverified`; `blocking_statuses` retains both states. Only
+an otherwise trustworthy audit may aggregate to `metadata-stale`.
+
+Compatibility is deliberate and two-way strict. Exact legacy v1 snapshots do
+not accept v2 fields; exact v2 snapshots require the inventory. V1 snapshots
+remain parseable, keep their original canonical digest, and may still be used
+for structural `validate-snapshot`, same-version `compare`, or
+prepared-mutation inspection. Structural `validate-snapshot` retains its exact
+legacy validation v1 output and does not add a metadata field. The current-state
+gate in `next-action` classifies the missing inventory through
+`legacy_snapshot_metadata_gate` and returns `blocked` with
+`legacy_snapshot_requires_v2_metadata`; it cannot return `ready` or `complete`
+until the collector creates an exact v2 snapshot with a complete
+`metadata-current` inventory. `compare` reports a v1-to-v2 transition as
+explicit schema drift. `validate-handoff` applies the corresponding exact
+handoff-version gate described in `landing-and-handoff.md`.
+
+Output schemas follow the same boundary. V1 structural validation and
+`next-action` retain their exact v1 output field sets. V2 uses validation and
+next-action v2 outputs with the structured metadata summary. A v1-to-v1 compare
+retains exact `stacked_delivery.compare.v1`. Any comparison involving v2 emits
+`stacked_delivery.compare.v2`, binds the before/after inventory digests, and
+returns `fail` with `metadata_changes` when they differ. That metadata drift
+does not by itself invalidate otherwise unchanged node proof.
 
 ## Linear Topology
 

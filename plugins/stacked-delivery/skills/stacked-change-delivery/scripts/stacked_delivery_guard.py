@@ -13,13 +13,25 @@ import sys
 from typing import Any, NoReturn, Sequence
 
 
-SNAPSHOT_SCHEMA = "stacked_delivery.snapshot.v1"
-HANDOFF_SCHEMA = "stacked_delivery.handoff.v1"
+SNAPSHOT_SCHEMA_V1 = "stacked_delivery.snapshot.v1"
+SNAPSHOT_SCHEMA_V2 = "stacked_delivery.snapshot.v2"
+SNAPSHOT_SCHEMA = SNAPSHOT_SCHEMA_V2
+HANDOFF_SCHEMA_V1 = "stacked_delivery.handoff.v1"
+HANDOFF_SCHEMA_V2 = "stacked_delivery.handoff.v2"
+HANDOFF_SCHEMA = HANDOFF_SCHEMA_V2
 PREPARED_MUTATION_SCHEMA = "stacked_delivery.prepared_mutation_handoff.v1"
-VALIDATION_SCHEMA = "stacked_delivery.validation.v1"
-COMPARE_SCHEMA = "stacked_delivery.compare.v1"
-NEXT_ACTION_SCHEMA = "stacked_delivery.next_action.v1"
-HANDOFF_VALIDATION_SCHEMA = "stacked_delivery.handoff_validation.v1"
+VALIDATION_SCHEMA_V1 = "stacked_delivery.validation.v1"
+VALIDATION_SCHEMA_V2 = "stacked_delivery.validation.v2"
+VALIDATION_SCHEMA = VALIDATION_SCHEMA_V2
+COMPARE_SCHEMA_V1 = "stacked_delivery.compare.v1"
+COMPARE_SCHEMA_V2 = "stacked_delivery.compare.v2"
+COMPARE_SCHEMA = COMPARE_SCHEMA_V2
+NEXT_ACTION_SCHEMA_V1 = "stacked_delivery.next_action.v1"
+NEXT_ACTION_SCHEMA_V2 = "stacked_delivery.next_action.v2"
+NEXT_ACTION_SCHEMA = NEXT_ACTION_SCHEMA_V2
+HANDOFF_VALIDATION_SCHEMA_V1 = "stacked_delivery.handoff_validation.v1"
+HANDOFF_VALIDATION_SCHEMA_V2 = "stacked_delivery.handoff_validation.v2"
+HANDOFF_VALIDATION_SCHEMA = HANDOFF_VALIDATION_SCHEMA_V2
 PREPARED_MUTATION_VALIDATION_SCHEMA = (
     "stacked_delivery.prepared_mutation_validation.v1"
 )
@@ -28,6 +40,12 @@ ERROR_SCHEMA = "stacked_delivery.error.v1"
 FORGE_MODES = {"sequential", "atomic-prefix"}
 NODE_STATES = {"unlanded", "landed", "retargeted"}
 PROOF_STATUSES = {"success", "failure", "running", "cancelled", "skipped"}
+METADATA_RECORD_KINDS = {
+    "change-description",
+    "durable-checkpoint",
+    "handoff-summary",
+    "status-summary",
+}
 PREPARED_ACTION_KINDS = {"history-ref-update", "metadata-update"}
 AUTHORITY_SOURCES = {"repository-policy", "user"}
 LEASE_MODES = {"exact-remote-head"}
@@ -58,6 +76,7 @@ MAX_INPUT_BYTES = 1024 * 1024
 MAX_NODES = 64
 MAX_PROOFS_PER_NODE = 32
 MAX_TOTAL_PROOFS = 512
+MAX_METADATA_RECORDS = MAX_NODES * len(METADATA_RECORD_KINDS)
 MAX_ACTIONS = MAX_NODES * 2
 MAX_SCOPE_ACTIONS = 32
 MAX_ISSUES = 128
@@ -78,6 +97,7 @@ SNAPSHOT_KEYS = {
     "base",
     "nodes",
 }
+SNAPSHOT_V2_KEYS = SNAPSHOT_KEYS | {"metadata_inventory"}
 BASE_KEYS = {"branch", "head_sha"}
 NODE_KEYS = {
     "node_id",
@@ -109,6 +129,24 @@ HANDOFF_KEYS = {
     "snapshot",
     "bindings",
 }
+HANDOFF_V2_KEYS = HANDOFF_KEYS | {"metadata_inventory_digest"}
+METADATA_INVENTORY_KEYS = {
+    "audit_id",
+    "audit_digest",
+    "audited_kinds",
+    "complete",
+    "composition_digest",
+    "evidence_id",
+    "records",
+}
+METADATA_RECORD_KEYS = {
+    "binding",
+    "evidence_hash",
+    "evidence_id",
+    "kind",
+    "record_id",
+}
+METADATA_BINDING_KEYS = {"composition_digest"}
 PREPARED_MUTATION_KEYS = {
     "schema",
     "receiver_id",
@@ -267,7 +305,28 @@ Snapshot schema ({SNAPSHOT_SCHEMA}):
     "stack_id": "stack-1",
     "forge_mode": "sequential" | "atomic-prefix",
     "base": {{"branch": "main", "head_sha": "<40-or-64-lower-hex>"}},
-    "nodes": [<ordered bottom-to-top node>, ...]
+    "nodes": [<ordered bottom-to-top node>, ...],
+    "metadata_inventory": {{
+      "audit_id": "...",
+      "audit_digest": "<sha256-of-canonical-audit-payload>",
+      "audited_kinds": [
+        "change-description", "durable-checkpoint",
+        "handoff-summary", "status-summary"
+      ],
+      "complete": true,
+      "composition_digest": "<sha256-of-snapshot-without-inventory>",
+      "evidence_id": "...",
+      "records": [{{
+        "record_id": "...",
+        "kind": "change-description" | "status-summary" |
+                "durable-checkpoint" | "handoff-summary",
+        "evidence_id": "...",
+        "evidence_hash": "<sha256-of-exact-readback-evidence>",
+        "binding": {{
+          "composition_digest": "<sha256-of-snapshot-without-inventory>"
+        }} | null
+      }}, ...]
+    }}
   }}
 
 Each node has exactly:
@@ -288,12 +347,19 @@ Each proof has exactly:
   superseded.
 Only status "success", terminal true, superseded false, and exact current
 node/dependency heads are accepted. Proof IDs are unique across the stack.
+The metadata inventory contains only active proof-bearing mutable records.
+audited_kinds must cover all four supported surfaces. Its audit digest binds
+that coverage, the complete flag, current composition digest, evidence
+reference, and exact record list. A null record binding is metadata-unverified;
+a non-current composition digest is metadata-stale.
 
 Handoff schema ({HANDOFF_SCHEMA}):
   {{
     "schema": "{HANDOFF_SCHEMA}",
     "receiver_id": "receiver-1",
     "snapshot_digest": "<sha256-of-canonical-snapshot>",
+    "metadata_inventory_digest":
+      "<sha256-of-canonical-snapshot-metadata-inventory>",
     "snapshot": <snapshot object>,
     "bindings": [{{
       "node_id": "...", "change_id": "...", "head_sha": "...",
@@ -303,13 +369,24 @@ Handoff schema ({HANDOFF_SCHEMA}):
     }}, ...]
   }}
 
+Legacy schemas {SNAPSHOT_SCHEMA_V1} and {HANDOFF_SCHEMA_V1} retain their exact
+field sets and canonical digests. They remain parseable for structural
+validation and comparison, but next-action blocks a v1 snapshot and
+validate-handoff fails a v1 receipt with explicit legacy metadata-gate issues.
+The exact v2 schemas require the inventory fields shown above. A v2 next action
+requires a complete, content-bound, metadata-current inventory; a v2 handoff
+also requires its separate inventory digest binding.
+
 Prepared mutation handoff schema ({PREPARED_MUTATION_SCHEMA}) is an additive
-strict companion to the current-state handoff. It binds the old snapshot,
-receiver, explicit predecessor, nullable external proof-wait owner, authority
-and exclusions, opaque proof and attribution policy bindings, per-node old/new
-history plus equivalence, attribution, backup, lease, proof or gap evidence,
-separate ordered history-ref and optional metadata actions, and a bounded
-content-addressed history-receipt prefix. See
+strict pre-rewrite companion to the current-state handoff. It requires an exact
+{SNAPSHOT_SCHEMA_V1} old snapshot and rejects snapshot v2 because it does not
+establish post-rewrite metadata readiness. It binds the receiver, explicit
+predecessor, nullable external proof-wait owner, authority and exclusions,
+opaque proof and attribution policy bindings, per-node old/new history plus
+equivalence, attribution, backup, lease, proof or gap evidence, separate
+ordered history-ref and optional metadata actions, and a bounded
+content-addressed history-receipt prefix. After mutation and readback, build
+snapshot v2 before next-action or handoff v2. See
 references/prepared-mutation-handoff.md for the exact field contract.
 
 The program reads only the named input files. It never invokes a forge, git,
@@ -535,6 +612,109 @@ def _identifier_array(
     return result
 
 
+def _parse_metadata_binding(
+    value: Any,
+    label: str,
+) -> dict[str, Any] | None:
+    if value is None:
+        return None
+    raw = _expect_object(value, METADATA_BINDING_KEYS, label)
+    return {
+        "composition_digest": _sha256(
+            raw["composition_digest"],
+            f"{label}.composition_digest",
+        )
+    }
+
+
+def _parse_metadata_record(value: Any, index: int) -> dict[str, Any]:
+    label = f"metadata_inventory.records[{index}]"
+    raw = _expect_object(value, METADATA_RECORD_KEYS, label)
+    kind = raw["kind"]
+    if not isinstance(kind, str) or kind not in METADATA_RECORD_KINDS:
+        raise InputError(f"{label}.kind is unsupported")
+    return {
+        "record_id": _identifier(raw["record_id"], f"{label}.record_id"),
+        "kind": kind,
+        "evidence_id": _identifier(raw["evidence_id"], f"{label}.evidence_id"),
+        "evidence_hash": _sha256(
+            raw["evidence_hash"],
+            f"{label}.evidence_hash",
+        ),
+        "binding": _parse_metadata_binding(
+            raw["binding"],
+            f"{label}.binding",
+        ),
+    }
+
+
+def _parse_metadata_inventory(value: Any) -> dict[str, Any]:
+    label = "metadata_inventory"
+    raw = _expect_object(value, METADATA_INVENTORY_KEYS, label)
+    raw_records = _array(
+        raw["records"],
+        f"{label}.records",
+        MAX_METADATA_RECORDS,
+    )
+    return {
+        "audit_id": _identifier(raw["audit_id"], f"{label}.audit_id"),
+        "audit_digest": _sha256(
+            raw["audit_digest"],
+            f"{label}.audit_digest",
+        ),
+        "audited_kinds": _identifier_array(
+            raw["audited_kinds"],
+            f"{label}.audited_kinds",
+            len(METADATA_RECORD_KINDS),
+            nonempty=True,
+        ),
+        "complete": _boolean(raw["complete"], f"{label}.complete"),
+        "composition_digest": _sha256(
+            raw["composition_digest"],
+            f"{label}.composition_digest",
+        ),
+        "evidence_id": _identifier(
+            raw["evidence_id"],
+            f"{label}.evidence_id",
+        ),
+        "records": [
+            _parse_metadata_record(record, index)
+            for index, record in enumerate(raw_records)
+        ],
+    }
+
+
+def metadata_audit_digest(inventory: dict[str, Any]) -> str:
+    """Digest the declared audit payload without its self-address field."""
+
+    return stable_digest(
+        {
+            key: value
+            for key, value in inventory.items()
+            if key != "audit_digest"
+        }
+    )
+
+
+def snapshot_composition_digest(snapshot: dict[str, Any]) -> str:
+    """Digest current stack composition without the metadata audit extension."""
+
+    return stable_digest(
+        {
+            key: value
+            for key, value in snapshot.items()
+            if key != "metadata_inventory"
+        }
+    )
+
+
+def metadata_inventory_digest(snapshot: dict[str, Any]) -> str | None:
+    """Digest the exact metadata inventory carried by a snapshot."""
+
+    inventory = snapshot.get("metadata_inventory")
+    return stable_digest(inventory) if inventory is not None else None
+
+
 def _parse_proof(value: Any, node_index: int, proof_index: int) -> dict[str, Any]:
     label = f"nodes[{node_index}].proofs[{proof_index}]"
     raw = _expect_object(value, PROOF_KEYS, label)
@@ -593,8 +773,14 @@ def _parse_node(value: Any, index: int) -> dict[str, Any]:
 def parse_snapshot(value: Any) -> dict[str, Any]:
     """Parse and normalize only the documented exact snapshot shape."""
 
-    raw = _expect_object(value, SNAPSHOT_KEYS, "snapshot")
-    if raw["schema"] != SNAPSHOT_SCHEMA:
+    if not isinstance(value, dict):
+        raise InputError("snapshot must be an object")
+    schema = value.get("schema")
+    if schema == SNAPSHOT_SCHEMA_V1:
+        raw = _expect_object(value, SNAPSHOT_KEYS, "snapshot")
+    elif schema == SNAPSHOT_SCHEMA_V2:
+        raw = _expect_object(value, SNAPSHOT_V2_KEYS, "snapshot")
+    else:
         raise InputError("snapshot schema is unsupported")
     mode = raw["forge_mode"]
     if not isinstance(mode, str) or mode not in FORGE_MODES:
@@ -607,8 +793,8 @@ def parse_snapshot(value: Any) -> dict[str, Any]:
     proof_count = sum(len(node["proofs"]) for node in nodes)
     if proof_count > MAX_TOTAL_PROOFS:
         raise InputError("snapshot proof count exceeds the collection limit")
-    return {
-        "schema": SNAPSHOT_SCHEMA,
+    snapshot = {
+        "schema": schema,
         "repository_id": _identifier(raw["repository_id"], "snapshot.repository_id"),
         "forge_adapter": _identifier(raw["forge_adapter"], "snapshot.forge_adapter"),
         "stack_id": _identifier(raw["stack_id"], "snapshot.stack_id"),
@@ -619,6 +805,11 @@ def parse_snapshot(value: Any) -> dict[str, Any]:
         },
         "nodes": nodes,
     }
+    if schema == SNAPSHOT_SCHEMA_V2:
+        snapshot["metadata_inventory"] = _parse_metadata_inventory(
+            raw["metadata_inventory"]
+        )
+    return snapshot
 
 
 def _issue(
@@ -627,6 +818,7 @@ def _issue(
     *,
     node_id: str | None = None,
     proof_id: str | None = None,
+    record_id: str | None = None,
     action_id: str | None = None,
     surface_id: str | None = None,
     field: str | None = None,
@@ -638,6 +830,8 @@ def _issue(
         item["node_id"] = node_id
     if proof_id is not None:
         item["proof_id"] = proof_id
+    if record_id is not None:
+        item["record_id"] = record_id
     if action_id is not None:
         item["action_id"] = action_id
     if surface_id is not None:
@@ -912,14 +1106,172 @@ def snapshot_issues(snapshot: dict[str, Any]) -> list[dict[str, Any]]:
     return issues
 
 
+def metadata_inventory_audit(
+    snapshot: dict[str, Any],
+    *,
+    required: bool,
+) -> tuple[dict[str, Any], list[dict[str, Any]]]:
+    """Classify supplied mutable-record bindings against current composition."""
+
+    issues: list[dict[str, Any]] = []
+    current_composition_digest = snapshot_composition_digest(snapshot)
+    inventory = snapshot.get("metadata_inventory")
+    if inventory is None:
+        if required:
+            _issue(
+                issues,
+                "legacy_snapshot_metadata_gate",
+                field="schema",
+            )
+        return (
+            {
+                "status": "metadata-unverified",
+                "blocking_statuses": ["metadata-unverified"],
+                "audit_id": None,
+                "evidence_id": None,
+                "inventory_digest": None,
+                "current_composition_digest": current_composition_digest,
+                "audited_kinds": [],
+                "complete": False,
+                "records": [],
+                "required_snapshot_schema": SNAPSHOT_SCHEMA_V2,
+            },
+            issues,
+        )
+
+    has_stale = False
+    has_unverified = False
+    if set(inventory["audited_kinds"]) != METADATA_RECORD_KINDS:
+        has_unverified = True
+        _issue(
+            issues,
+            "metadata_inventory_surface_coverage_incomplete",
+            field="metadata_inventory.audited_kinds",
+        )
+    if inventory["complete"] is not True:
+        has_unverified = True
+        _issue(
+            issues,
+            "metadata_inventory_incomplete",
+            field="metadata_inventory.complete",
+        )
+    if inventory["audit_digest"] != metadata_audit_digest(inventory):
+        has_unverified = True
+        _issue(
+            issues,
+            "metadata_inventory_audit_digest_mismatch",
+            field="metadata_inventory.audit_digest",
+        )
+    if inventory["composition_digest"] != current_composition_digest:
+        has_stale = True
+        _issue(
+            issues,
+            "metadata_inventory_composition_stale",
+            field="metadata_inventory.composition_digest",
+        )
+
+    record_order = [
+        (record["kind"], record["record_id"])
+        for record in inventory["records"]
+    ]
+    if record_order != sorted(record_order):
+        has_unverified = True
+        _issue(
+            issues,
+            "metadata_records_not_canonical_order",
+            field="metadata_inventory.records",
+        )
+
+    seen_record_ids: set[str] = set()
+    records: list[dict[str, Any]] = []
+    for record in inventory["records"]:
+        record_id = record["record_id"]
+        if record_id in seen_record_ids:
+            has_unverified = True
+            _issue(
+                issues,
+                "duplicate_metadata_record_id",
+                record_id=record_id,
+                field="metadata_inventory.records",
+            )
+        seen_record_ids.add(record_id)
+
+        binding = record["binding"]
+        if binding is None:
+            record_status = "metadata-unverified"
+            has_unverified = True
+            _issue(
+                issues,
+                "metadata_record_unverified",
+                record_id=record_id,
+                field="binding",
+            )
+        elif binding["composition_digest"] != current_composition_digest:
+            record_status = "metadata-stale"
+            has_stale = True
+            _issue(
+                issues,
+                "metadata_record_stale",
+                record_id=record_id,
+                field="binding.composition_digest",
+            )
+        else:
+            record_status = "metadata-current"
+        records.append(
+            {
+                "record_id": record_id,
+                "kind": record["kind"],
+                "evidence_id": record["evidence_id"],
+                "status": record_status,
+            }
+        )
+
+    blocking_statuses: list[str] = []
+    if has_unverified:
+        blocking_statuses.append("metadata-unverified")
+    if has_stale:
+        blocking_statuses.append("metadata-stale")
+    status = (
+        "metadata-unverified"
+        if has_unverified
+        else "metadata-stale"
+        if has_stale
+        else "metadata-current"
+    )
+    return (
+        {
+            "status": status,
+            "blocking_statuses": blocking_statuses,
+            "audit_id": inventory["audit_id"],
+            "evidence_id": inventory["evidence_id"],
+            "inventory_digest": stable_digest(inventory),
+            "current_composition_digest": current_composition_digest,
+            "audited_kinds": inventory["audited_kinds"],
+            "complete": inventory["complete"],
+            "records": records,
+            "required_snapshot_schema": SNAPSHOT_SCHEMA_V2,
+        },
+        issues,
+    )
+
+
 def validate_snapshot_data(value: Any) -> tuple[dict[str, Any], dict[str, Any]]:
     """Parse a snapshot and build its validation result."""
 
     snapshot = parse_snapshot(value)
     issues = snapshot_issues(snapshot)
+    metadata, metadata_issues = metadata_inventory_audit(
+        snapshot,
+        required=False,
+    )
+    issues.extend(metadata_issues[: max(0, MAX_ISSUES - len(issues))])
     proof_count = sum(len(node["proofs"]) for node in snapshot["nodes"])
     result = {
-        "schema": VALIDATION_SCHEMA,
+        "schema": (
+            VALIDATION_SCHEMA_V1
+            if snapshot["schema"] == SNAPSHOT_SCHEMA_V1
+            else VALIDATION_SCHEMA_V2
+        ),
         "status": "pass" if not issues else "fail",
         "snapshot_digest": stable_digest(snapshot),
         "repository_id": snapshot["repository_id"],
@@ -929,6 +1281,9 @@ def validate_snapshot_data(value: Any) -> tuple[dict[str, Any], dict[str, Any]]:
         "proof_count": proof_count,
         "violations": issues,
     }
+    if snapshot["schema"] == SNAPSHOT_SCHEMA_V2:
+        result["snapshot_schema"] = snapshot["schema"]
+        result["metadata"] = metadata
     return snapshot, result
 
 
@@ -963,15 +1318,47 @@ def compare_snapshot_data(
     after = parse_snapshot(after_value)
     before_issues = snapshot_issues(before)
     after_issues = snapshot_issues(after)
+    _, before_metadata_issues = metadata_inventory_audit(before, required=False)
+    _, after_metadata_issues = metadata_inventory_audit(after, required=False)
+    before_issues.extend(
+        before_metadata_issues[: max(0, MAX_ISSUES - len(before_issues))]
+    )
+    after_issues.extend(
+        after_metadata_issues[: max(0, MAX_ISSUES - len(after_issues))]
+    )
 
     topology_changes: list[dict[str, Any]] = []
     branch_drift: list[dict[str, Any]] = []
     head_drift: list[dict[str, Any]] = []
     state_changes: list[dict[str, Any]] = []
     proof_changes: list[dict[str, Any]] = []
+    metadata_changes: list[dict[str, Any]] = []
     changed_ancestors: list[dict[str, Any]] = []
     cause_indexes: list[tuple[int, str, bool]] = []
+    uses_v2 = (
+        before["schema"] == SNAPSHOT_SCHEMA_V2
+        or after["schema"] == SNAPSHOT_SCHEMA_V2
+    )
+    before_inventory_digest = metadata_inventory_digest(before)
+    after_inventory_digest = metadata_inventory_digest(after)
 
+    if before["schema"] != after["schema"]:
+        _change(
+            topology_changes,
+            "schema",
+            field="schema",
+            before=before["schema"],
+            after=after["schema"],
+        )
+        cause_indexes.append((-1, "schema", True))
+    if uses_v2 and before_inventory_digest != after_inventory_digest:
+        _change(
+            metadata_changes,
+            "metadata",
+            field="metadata_inventory_digest",
+            before=before_inventory_digest,
+            after=after_inventory_digest,
+        )
     for field in ("repository_id", "forge_adapter"):
         if before[field] != after[field]:
             _change(
@@ -1172,9 +1559,10 @@ def compare_snapshot_data(
         or head_drift
         or state_changes
         or proof_changes
+        or metadata_changes
     )
     result = {
-        "schema": COMPARE_SCHEMA,
+        "schema": COMPARE_SCHEMA_V2 if uses_v2 else COMPARE_SCHEMA_V1,
         "status": "fail" if failed else "pass",
         "repository_id": after["repository_id"],
         "forge_adapter": after["forge_adapter"],
@@ -1190,6 +1578,14 @@ def compare_snapshot_data(
         "proof_changes": proof_changes,
         "violations": violations,
     }
+    if uses_v2:
+        result.update(
+            {
+                "before_metadata_inventory_digest": before_inventory_digest,
+                "after_metadata_inventory_digest": after_inventory_digest,
+                "metadata_changes": metadata_changes,
+            }
+        )
     return before, after, result
 
 
@@ -1209,23 +1605,45 @@ def next_action_data(value: Any) -> tuple[dict[str, Any], dict[str, Any]]:
     """Return only a structured, dependency-safe next landing action."""
 
     snapshot = parse_snapshot(value)
-    issues = snapshot_issues(snapshot)
+    snapshot_gate_issues = snapshot_issues(snapshot)
+    metadata, metadata_gate_issues = metadata_inventory_audit(
+        snapshot,
+        required=True,
+    )
+    issues = list(snapshot_gate_issues)
+    issues.extend(metadata_gate_issues[: max(0, MAX_ISSUES - len(issues))])
     base_result: dict[str, Any] = {
-        "schema": NEXT_ACTION_SCHEMA,
+        "schema": (
+            NEXT_ACTION_SCHEMA_V1
+            if snapshot["schema"] == SNAPSHOT_SCHEMA_V1
+            else NEXT_ACTION_SCHEMA_V2
+        ),
         "repository_id": snapshot["repository_id"],
         "forge_adapter": snapshot["forge_adapter"],
         "stack_id": snapshot["stack_id"],
         "forge_mode": snapshot["forge_mode"],
         "snapshot_digest": stable_digest(snapshot),
     }
+    if snapshot["schema"] == SNAPSHOT_SCHEMA_V2:
+        base_result["snapshot_schema"] = snapshot["schema"]
+        base_result["metadata"] = metadata
     if issues:
+        reasons: list[str] = []
+        if snapshot_gate_issues:
+            reasons.append("snapshot_gate_failed")
+        if metadata_gate_issues:
+            reasons.append(
+                "legacy_snapshot_requires_v2_metadata"
+                if snapshot["schema"] == SNAPSHOT_SCHEMA_V1
+                else "metadata_gate_failed"
+            )
         result = dict(base_result)
         result.update(
             {
                 "status": "blocked",
                 "action": None,
                 "nodes": [],
-                "reasons": ["snapshot_gate_failed"],
+                "reasons": reasons,
                 "violations": issues,
             }
         )
@@ -1301,19 +1719,36 @@ def _parse_binding(value: Any, index: int) -> dict[str, Any]:
 def parse_handoff(value: Any) -> dict[str, Any]:
     """Parse the exact self-contained handoff receipt shape."""
 
-    raw = _expect_object(value, HANDOFF_KEYS, "handoff")
-    if raw["schema"] != HANDOFF_SCHEMA:
+    if not isinstance(value, dict):
+        raise InputError("handoff must be an object")
+    schema = value.get("schema")
+    if schema == HANDOFF_SCHEMA_V1:
+        raw = _expect_object(value, HANDOFF_KEYS, "handoff")
+        expected_snapshot_schema = SNAPSHOT_SCHEMA_V1
+    elif schema == HANDOFF_SCHEMA_V2:
+        raw = _expect_object(value, HANDOFF_V2_KEYS, "handoff")
+        expected_snapshot_schema = SNAPSHOT_SCHEMA_V2
+    else:
         raise InputError("handoff schema is unsupported")
     bindings_raw = _array(raw["bindings"], "handoff.bindings", MAX_NODES)
-    return {
-        "schema": HANDOFF_SCHEMA,
+    snapshot = parse_snapshot(raw["snapshot"])
+    if snapshot["schema"] != expected_snapshot_schema:
+        raise InputError("handoff and snapshot schema versions are incompatible")
+    handoff = {
+        "schema": schema,
         "receiver_id": _identifier(raw["receiver_id"], "handoff.receiver_id"),
         "snapshot_digest": _sha256(raw["snapshot_digest"], "handoff.snapshot_digest"),
-        "snapshot": parse_snapshot(raw["snapshot"]),
+        "snapshot": snapshot,
         "bindings": [
             _parse_binding(binding, index) for index, binding in enumerate(bindings_raw)
         ],
     }
+    if schema == HANDOFF_SCHEMA_V2:
+        handoff["metadata_inventory_digest"] = _sha256(
+            raw["metadata_inventory_digest"],
+            "handoff.metadata_inventory_digest",
+        )
+    return handoff
 
 
 def handoff_issues(handoff: dict[str, Any]) -> list[dict[str, Any]]:
@@ -1323,9 +1758,28 @@ def handoff_issues(handoff: dict[str, Any]) -> list[dict[str, Any]]:
     snapshot = handoff["snapshot"]
     bindings = handoff["bindings"]
     receiver_id = handoff["receiver_id"]
+    _, metadata_issues = metadata_inventory_audit(snapshot, required=True)
+    issues.extend(metadata_issues[: max(0, MAX_ISSUES - len(issues))])
 
     if handoff["snapshot_digest"] != stable_digest(snapshot):
         _issue(issues, "stale_snapshot_digest")
+    if handoff["schema"] == HANDOFF_SCHEMA_V1:
+        _issue(
+            issues,
+            "legacy_handoff_metadata_gate",
+            field="schema",
+        )
+    else:
+        current_inventory_digest = metadata_inventory_digest(snapshot)
+        if (
+            current_inventory_digest is None
+            or handoff["metadata_inventory_digest"] != current_inventory_digest
+        ):
+            _issue(
+                issues,
+                "stale_metadata_inventory_digest",
+                field="metadata_inventory_digest",
+            )
     if len(bindings) != len(snapshot["nodes"]):
         _issue(issues, "binding_count_mismatch")
 
@@ -1389,8 +1843,16 @@ def validate_handoff_data(
 
     handoff = parse_handoff(value)
     issues = handoff_issues(handoff)
+    metadata, _ = metadata_inventory_audit(
+        handoff["snapshot"],
+        required=True,
+    )
     result = {
-        "schema": HANDOFF_VALIDATION_SCHEMA,
+        "schema": (
+            HANDOFF_VALIDATION_SCHEMA_V1
+            if handoff["schema"] == HANDOFF_SCHEMA_V1
+            else HANDOFF_VALIDATION_SCHEMA_V2
+        ),
         "status": "pass" if not issues else "fail",
         "repository_id": handoff["snapshot"]["repository_id"],
         "forge_adapter": handoff["snapshot"]["forge_adapter"],
@@ -1401,6 +1863,16 @@ def validate_handoff_data(
         "node_count": len(handoff["snapshot"]["nodes"]),
         "violations": issues,
     }
+    if handoff["schema"] == HANDOFF_SCHEMA_V2:
+        result.update(
+            {
+                "handoff_schema": handoff["schema"],
+                "snapshot_schema": handoff["snapshot"]["schema"],
+                "required_handoff_schema": HANDOFF_SCHEMA_V2,
+                "metadata_inventory_digest": metadata["inventory_digest"],
+                "metadata": metadata,
+            }
+        )
     return handoff, result
 
 
@@ -1831,6 +2303,11 @@ def parse_prepared_mutation(value: Any) -> dict[str, Any]:
         "prepared.history_receipts",
         MAX_NODES,
     )
+    snapshot = parse_snapshot(raw["snapshot"])
+    if snapshot["schema"] != SNAPSHOT_SCHEMA_V1:
+        raise InputError(
+            "prepared mutation v1 requires an exact pre-rewrite snapshot v1"
+        )
     return {
         "schema": PREPARED_MUTATION_SCHEMA,
         "receiver_id": _identifier(raw["receiver_id"], "prepared.receiver_id"),
@@ -1838,7 +2315,7 @@ def parse_prepared_mutation(value: Any) -> dict[str, Any]:
             raw["snapshot_digest"],
             "prepared.snapshot_digest",
         ),
-        "snapshot": parse_snapshot(raw["snapshot"]),
+        "snapshot": snapshot,
         "new_predecessor": _parse_new_predecessor(raw["new_predecessor"]),
         "proof_wait_owner_ref": _optional_identifier(
             raw["proof_wait_owner_ref"],
@@ -2860,15 +3337,19 @@ def build_parser() -> JsonArgumentParser:
 
     next_action = subparsers.add_parser(
         "next-action",
-        help="select the dependency-safe next landing node or prefix",
-        description="Return a structured action, never a command string.",
+        help="select the dependency-safe, metadata-current landing node or prefix",
+        description=(
+            "Return a structured action only after stack and metadata gates pass."
+        ),
     )
     next_action.add_argument("--input", required=True, metavar="FILE")
 
     handoff = subparsers.add_parser(
         "validate-handoff",
-        help="validate a self-contained handoff receipt",
-        description="Validate snapshot digest and exact receipt bindings.",
+        help="validate a self-contained, metadata-bound handoff receipt",
+        description=(
+            "Validate snapshot, metadata-inventory digest and exact bindings."
+        ),
     )
     handoff.add_argument("--input", required=True, metavar="FILE")
 
