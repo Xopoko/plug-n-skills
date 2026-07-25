@@ -1,25 +1,27 @@
 {
   "name": "git-worktree-safety",
-  "version": "0.1.0",
-  "description": "Host-neutral read-only diagnosis for missing, stale, or broken Git worktrees and convenience symlinks, with ref/reflog retention classification and POSIX-only exact-pointer repair.",
+  "version": "0.2.0",
+  "description": "Fail-closed Git safety for worktree pointer and SSH-signed-commit recovery, with redacted evidence, exact-state journals, one-use authorization, and explicit host boundaries.",
   "author": {
     "name": "Xopoko"
   },
   "repository": "https://github.com/Xopoko/plug-n-skills/tree/main/plugins/git-worktree-safety",
   "license": "MIT",
   "keywords": [
+    "commit",
     "git",
     "recovery",
     "reflog",
     "safety",
+    "signing",
     "symlink",
     "worktree"
   ],
   "skills": "./skills/",
   "interface": {
-    "displayName": "Git Worktree Safety",
-    "shortDescription": "Recover stale worktree pointers without changing Git state.",
-    "longDescription": "A host-neutral Git audit plugin for diagnosing vanished worktree paths and broken convenience symlinks. It proves live branch identity, classifies ref, reflog-only, object-only, unknown, and missing commit retention, and validates one exact clean registered replacement. Exact compare-and-swap-style symlink repair is available only on POSIX runtimes with proven directory-relative and atomic-replace support; other hosts remain read-only.",
+    "displayName": "Git Safety",
+    "shortDescription": "Recover worktree pointers and SSH-signed commits safely.",
+    "longDescription": "Fail-closed Git recovery for vanished worktree pointers and failed ordinary SSH commit signing. Worktree recovery proves live branch identity and supports tightly gated pointer-only repair. POSIX signing recovery records private exact-state evidence, atomically issues one helper authorization per state after a verified signer-state change, and checks the resulting parent, diff, hook policy, signer identity, and residual worktree state.",
     "developerName": "Xopoko",
     "category": "Coding",
     "capabilities": [
@@ -28,9 +30,12 @@
       "Clean symbolic replacement proof bound to the live branch ref",
       "Broken convenience-symlink inspection with raw paths omitted from JSON",
       "POSIX-only fingerprint and raw-target guarded exact symlink repair",
-      "Post-repair proof that relevant Git state remained unchanged"
+      "Post-repair proof that relevant Git state remained unchanged",
+      "SSH-signed-commit snapshots with raw signing values omitted",
+      "Atomic one-use authorization per exact observed state",
+      "Post-commit parent, diff, hook, signer-identity, and residue verification"
     ],
-    "defaultPrompt": "Audit this missing Git worktree or broken convenience symlink and determine whether an exact pointer-only repair is safe.",
+    "defaultPrompt": "Audit this Git recovery case and determine whether a pointer repair or one signed commit retry is safe.",
     "brandColor": "#143C45",
     "composerIcon": "./assets/icon.png",
     "logo": "./assets/icon.png"

@@ -53,7 +53,7 @@ PLUGIN_SUMMARIES = {
     "design-intelligence": "Product framing, UI architecture, accessibility, and design systems.",
     "game-design-intelligence": "Loops, progression, economies, onboarding, difficulty, and retention.",
     "gitlab-review": "Review-thread races, evidence replies, ownership, and exact-head proof.",
-    "git-worktree-safety": "Audit vanished worktrees and guard exact pointer repair.",
+    "git-worktree-safety": "Guard worktree pointers and SSH-signed commits.",
     "kotlin-multiplatform": "KMP migration, Gradle, Compose UI, tests, and publishing.",
     "pixijs": "PixiJS v8 scenes, assets, rendering, events, and performance.",
     "scientific-research": "Scholarly discovery, deduplication, evidence ledgers, and quality gates.",

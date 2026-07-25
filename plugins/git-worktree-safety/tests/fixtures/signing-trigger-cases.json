@@ -1,0 +1,72 @@
+{
+  "schema": "git_commit_signing_recovery.trigger_cases.v1",
+  "should_trigger": [
+    {
+      "id": "ssh-agent-signing-failure",
+      "prompt": "git commit reached SSH signing, the agent failed before HEAD advanced, and the staged changes are still present."
+    },
+    {
+      "id": "socket-recovered",
+      "prompt": "An SSH signer socket failed during commit and is now restored. Recheck the unchanged Git state before retrying once."
+    },
+    {
+      "id": "same-key-one-shot-program",
+      "prompt": "The configured SSH signing agent is broken, but a detached probe reached the same trusted key through a one-command signer program override. Do not change persistent Git config."
+    },
+    {
+      "id": "unknown-signing-policy",
+      "prompt": "SSH signing policy is unclear after a signer failure. Fail closed on unsigned fallback and capture a recovery receipt."
+    },
+    {
+      "id": "post-commit-verification",
+      "prompt": "The SSH-signed retry succeeded. Prove the new commit has the expected parent, exact recorded diff, valid signature, and unchanged residual worktree state."
+    },
+    {
+      "id": "hooks-passed-before-signer-failure",
+      "prompt": "The ordinary commit hooks completed successfully, then SSH signing failed before HEAD advanced. Preserve the exact observed state and recover signing safely."
+    },
+    {
+      "id": "buried-signing-recovery",
+      "buried_need": true,
+      "prompt": "Prepare the delivery handoff, but first handle the failed commit safely: SSH signing stopped before ref advancement and no one has proven that the staged set is unchanged."
+    }
+  ],
+  "should_not_trigger": [
+    {
+      "id": "hook-failure",
+      "prompt": "The pre-commit hook failed its formatter and changed files before signing began."
+    },
+    {
+      "id": "invocation-override",
+      "prompt": "Retry this SSH signing failure with git -c core.hooksPath=/alternate commit -a so an unstaged file is included."
+    },
+    {
+      "id": "index-corruption",
+      "prompt": "Git reports a corrupt index and missing objects."
+    },
+    {
+      "id": "remote-authentication",
+      "prompt": "The commit exists, but git push cannot authenticate to the remote SSH server."
+    },
+    {
+      "id": "artifact-signing",
+      "prompt": "Fix code-signing and provisioning for this application release artifact."
+    },
+    {
+      "id": "key-rotation",
+      "prompt": "Generate a new signing key, rotate trust policy, and replace the allowed signers file."
+    },
+    {
+      "id": "sequencer-operation",
+      "prompt": "A rebase or cherry-pick sequencer stopped while creating one of several rewritten commits."
+    },
+    {
+      "id": "unsupported-commit-mode",
+      "prompt": "Recover signing for an initial/root, amend, merge, empty, editor, template, or cleanup-transformed commit."
+    },
+    {
+      "id": "unsupported-openpgp",
+      "prompt": "Recover an OpenPGP or X.509 commit-signing failure with this SSH-only workflow."
+    }
+  ]
+}
