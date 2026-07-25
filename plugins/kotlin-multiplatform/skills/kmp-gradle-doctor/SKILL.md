@@ -102,6 +102,34 @@ Task names vary by module/target; use `./gradlew :module:tasks --all` when uncer
 
 ## Static Analysis
 
+### Static-Analysis Failure Protocol
+
+- For a static-analysis failure, first classify the outcome as a reported
+  finding, task/configuration failure, environment/dependency failure, or tool
+  crash. A parser exception or internal stack trace is not a lint finding and
+  does not justify a style rewrite by itself.
+- For a tool crash, record the exact task or entrypoint, tool/plugin version,
+  JDK and Kotlin versions, config and baseline inputs, flags, and analyzed
+  source scope from CI. Start with the project-pinned task. If CI invokes a
+  standalone binary, reproduce with that exact binary and config in a
+  disposable directory; do not change project pins merely to diagnose it.
+- Minimize only after reproducing the same failure fingerprint. Compare the
+  smallest crashing input with the last known-good input and separate a parser
+  avoidance from a semantic code change. Suppressing a rule, excluding a
+  source, disabling the analyzer, or making an unproven syntax-only edit is a
+  diagnostic experiment, not acceptance proof.
+- Before publishing another code head, require positive local evidence that the
+  pinned analyzer executes and accepts the candidate, plus the narrow compile
+  or behavior proof invalidated by the edit. A task that never executed is not
+  proof. The candidate remains unproven until remote CI reports terminal
+  success with non-empty execution of the same analyzer and config on the
+  immutable exact published head.
+- If that published head retains the same tool-crash fingerprint after a local
+  pass, the local reproducer is non-equivalent. Stop further code publication
+  until evidence identifies a relevant difference in the analyzer binary,
+  plugins, JDK, config, flags, or source inputs and the corrected local
+  reproducer explains the remote failure. Another source edit alone is not new
+  evidence.
 - detekt often needs explicit KMP source-set inputs/config; do not assume root `detekt` checks all `commonMain`, `iosMain`, and `androidMain` code.
 - Type-resolution can explode runtime in large KMP monorepos; prefer scoped tasks; avoid enabling all Android variants unless required.
 - KSP must match Kotlin versions; verify compatibility before bumping KGP or KSP.
