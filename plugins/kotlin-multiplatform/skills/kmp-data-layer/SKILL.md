@@ -1,6 +1,6 @@
 ---
 name: kmp-data-layer
-description: Design and review KMP data layers, repositories, source-of-truth, DTO/domain mapping, sync, offline-first behavior, persistence choices, error handling, threading, and API exposure.
+description: Design and review KMP data layers, repositories, source-of-truth, DTO/domain mapping, sync, offline-first behavior, persistence choices, error handling, shared/coalesced work, cancellation and admission races, causal receipts, threading, and API exposure.
 ---
 
 # KMP Data Layer
@@ -20,6 +20,8 @@ Before implementing, identify:
 - conflict resolution
 - same-generation shared-work admission: join/coalesce, queue/serialize, or
   independent attempts
+- shared-work cancellation ownership: one waiter versus the shared entry, plus
+  the shared entry's join-eligibility transition
 - error model
 - platform storage requirements
 - persistence/network library target support
@@ -71,6 +73,13 @@ Use Klibs.io and official docs as target-support evidence. Do not put a library 
 - Do not swallow cancellation.
 - Cancellation is not a commit fence. Cancellation-ignoring work still needs
   ownership and caller-result guards; define how its late failure is observed.
+- Separate cancellation of one waiter from cancellation requested for the
+  shared entry. Cancelling one waiter must not detach otherwise healthy shared
+  work. A shared-entry cancellation request atomically makes that exact
+  membership non-joinable or detaches it before later admission, even if the
+  work has not terminated. Give a replacement a distinct identity, and let
+  late cleanup remove only the still-matching entry. Join eligibility,
+  termination, and commit authority remain separate.
 - Use clocks, dispatchers, and platform services through injectable abstractions when tests need control
 - Make sync idempotent and resilient to duplicate callbacks
 - Keep one authoritative `StateFlow` or project-equivalent lifecycle state and
@@ -99,8 +108,8 @@ Use Klibs.io and official docs as target-support evidence. Do not put a library 
   user-computed results. Across a durable persistence and notification
   boundary, use an ordered, idempotent notification record.
 - Linearize shared-work admission against invalidation: atomically read the
-  current owning generation and join a matching entry or install the new
-  entry. Never validate authority, release ownership, then mutate the
+  current owning generation and join a matching joinable entry or install the
+  new entry. Never validate authority, release ownership, then mutate the
   in-flight registry.
 - Apply invalidation liveness at every outer and inner coordination layer on
   the public data-layer path. Each mutex, actor, queue, single-flight, or
@@ -122,6 +131,12 @@ Use Klibs.io and official docs as target-support evidence. Do not put a library 
 - Put shared behavior in `commonTest` with `kotlin.test` when the harness fits.
 - Use gates or barriers at the final controllable read/commit boundary; sleeps
   and delays are not synchronization proof.
+- Bind every controlled operation to identity-bound `started(A)`,
+  `released(A)`, `decision(A)`, and `terminated(A)` receipts. A gate release is
+  only a schedule receipt. When late A must traverse the guarded path, await a
+  bounded `decision(A)` after the real post-await commit or caller-outcome
+  branch and assert `released(A) < decision(A)`. A `finally` marker proves only
+  `terminated(A)` and cannot substitute for the decision receipt.
 - Cover state transitions and projections, late collection, pre-invalidation
   completion, same-key reverse completion, both final-boundary winners,
   read-side clear, post-invalidation coalescer liveness, newer failure under
@@ -137,3 +152,11 @@ Use Klibs.io and official docs as target-support evidence. Do not put a library 
   For compare-and-set, CAS the combined generation-and-membership snapshot:
   require the expected generation while installing membership, then retry on
   mismatch.
+- For shared-entry cancellation, first prove that cancelling one waiter leaves
+  healthy shared work joinable. Then gate a new caller immediately before
+  admission and run cancellation-first and admission-first. Cancellation-first
+  makes the old nonterminal entry non-joinable before the caller selects
+  membership; the caller uses a distinct eligible entry, and identity-bound
+  late cleanup cannot remove the replacement. Admission-first preserves the
+  declared same-generation outcome. Neither schedule uses cancellation as
+  commit authority.

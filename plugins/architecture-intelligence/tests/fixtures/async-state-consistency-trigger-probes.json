@@ -39,6 +39,10 @@
       "prompt": "Coalesced work ignores cancellation after invalidation, and a new caller is forced to wait behind that revoked operation before it can refresh."
     },
     {
+      "id": "shared-entry-cancellation",
+      "prompt": "A coalesced shared entry received a cancellation request but has not terminated, and a later same-generation caller joins it instead of using a different eligible entry."
+    },
+    {
       "id": "buried-context",
       "prompt": "While refactoring a repository and its public API, preserve the existing behavior and also close the stale warm-cache replay that occurs when clear lands between candidate read and ownership validation."
     }

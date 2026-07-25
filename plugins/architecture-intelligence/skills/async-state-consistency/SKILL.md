@@ -33,9 +33,12 @@ Before proposing a repair:
    when a newer attempt fails or is cancelled.
 5. Choose a separate same-generation admission policy: join/coalesce one
    shared operation, queue/serialize distinct attempts, or run independently.
-6. Define the direct caller outcome when its work is rejected: authoritative
+6. For shared work, distinguish cancellation of one waiter from cancellation
+   requested for the shared entry, and define when that entry stops being
+   joinable.
+7. Define the direct caller outcome when its work is rejected: authoritative
    reread, declared stale/retry/cancellation, or another explicit result.
-7. Separate read-time freshness from active expiry. Elapsed time alone is not
+8. Separate read-time freshness from active expiry. Elapsed time alone is not
    an observer emission trigger; name the timer, refresh, lifecycle, scheduler,
    or storage signal that re-evaluates state.
 
@@ -98,10 +101,19 @@ memo, retained observer state, persistence layer, and projection.
   idempotent notification record.
 - Cancellation is cooperative, not authority. Work that ignores cancellation
   still needs the same commit and caller-result guards.
+- Treat shared-entry join eligibility as separate from commit authority and
+  work termination. Cancelling one waiter must not detach otherwise healthy
+  shared work. When cancellation is requested for the shared entry itself,
+  atomically mark that exact membership non-joinable or detach it before a
+  later admission can select it, even if the work has not terminated. Give a
+  replacement entry a distinct identity, and let late completion or cleanup
+  remove membership only while that identity still matches. Cancellation alone
+  does not revoke commit authority; use the declared supersession and
+  invalidation fences.
 - Shared-work admission must linearize against invalidation. In one atomic or
   serialized transition, read the current owning generation and either join a
-  matching entry or install the new entry. Do not validate authority, release
-  ownership, then mutate the in-flight registry.
+  matching joinable entry or install the new entry. Do not validate authority,
+  release ownership, then mutate the in-flight registry.
 - When invalidation wins, apply the liveness rule at every outer and inner
   coordination layer on the component's public path. Each mutex, actor, queue,
   single-flight, or coalescer must detach revoked work or otherwise allow
@@ -162,6 +174,12 @@ At minimum, cover:
   requiring the expected generation while installing membership; retry on
   mismatch; also run a same-generation pair that preserves the declared
   admission policy;
+- cancel one waiter while shared work remains healthy and prove the entry keeps
+  its declared join behavior; separately gate a new caller immediately before
+  admission and run shared-entry-cancellation-first and admission-first. When
+  shared-entry cancellation wins, the nonterminal entry is already
+  non-joinable, the new caller uses a distinct eligible identity, and late
+  cleanup of the old identity cannot remove the replacement;
 - A starts, B starts, B fails or is cancelled, then A completes under both the
   declared latest-start-wins and latest-success-wins policies;
 - keyed invalidation that leaves unrelated-key work valid, plus global clear;
