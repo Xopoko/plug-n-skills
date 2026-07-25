@@ -27,6 +27,19 @@ Recommended split for shared Compose UI:
 
 Do not run network calls from composables. Do not store controllers, lambdas, `MutableState`, Android `Context`, UIKit objects, or platform handles in durable screen state.
 
+## Hosted And Standalone Composition
+
+When a previously standalone route also renders inside a larger host:
+
+- Extract shared content that is neutral to parent-owned same-axis scrolling and
+  pull-to-refresh. Keep one scroll/pull owner per same-axis or gesture boundary
+  by default. Orthogonal or deliberately coordinated nesting is allowed only
+  with an explicit gesture contract and interaction proof.
+- Let the host own its scroll/pull container. Preserve the standalone public facade, signature/defaults, wrapper, and observable behavior; both entry paths delegate to shared content instead of the host nesting the standalone wrapper.
+- Treat only published or externally consumed semantics IDs, `testTag`s, and accessibility identifiers as compatibility surfaces. Preserve their supported lookup, meaning, and cardinality unless the change is intentional.
+- Do not widen production visibility or module APIs only to let tests reach extracted internals. Test through production entry points or keep implementation proof in the owning module.
+- Read [Hosted And Standalone UI Composition](references/hosted-standalone-composition.md) before refactoring a route across these two contexts.
+
 ## Platform Entry Points
 
 Use the local project convention. Common patterns:
