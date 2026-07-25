@@ -44,7 +44,13 @@ observe it.
 2. Separate observed state from inferred progress.
 3. Record the active turn, latest transition, open gates, and immutable proof
    identities that matter to the target's own completion claim.
-4. If the task is already terminal, report that once and do not intervene.
+4. Bind each open gate to a current live subject or explicit policy requirement,
+   its eligibility evidence, and its owner. A possible action or available
+   authority is not a gate. When a complete inventory finds zero eligible
+   targets for a conditional action, record it as `not-applicable` outside
+   `open_gates`; never create a discussion, note, approval, or other external
+   write solely to satisfy a checkpoint.
+5. If the task is already terminal, report that once and do not intervene.
 
 Use `read_thread` only to disambiguate one named missing fact. Increase history
 depth or include a bounded tool output only when that fact requires it. Route
