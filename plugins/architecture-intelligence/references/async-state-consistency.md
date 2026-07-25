@@ -26,6 +26,7 @@ value can coexist with loading instead of erasing it implicitly.
 | Key or domain generation | One key or declared invalidation domain | Key/domain invalidation | Work and cached values in that domain only |
 | Publication revision | Competing ordinary publications in one domain | The declared policy reserves newer work or accepts a successful commit | Out-of-order completion without emitting invalidated |
 | Operation identity | One async attempt or caller | An attempt or join begins | Direct caller, join, and cancellation outcome; final commit only when the supersession policy reserves ownership |
+| Shared-entry join eligibility | One in-flight registry entry | The entry is installed, detached, or receives a shared-entry cancellation request | Whether later callers may join that exact entry; not work termination or commit authority |
 | Dependency revision vector | External owned inputs | A dependency changes | Derived memo or projection freshness |
 
 An empty dependency vector is not global freshness. Validate the global or
@@ -99,7 +100,7 @@ Audit every row that exists:
 | Late subscriber | Replay container retained a revoked value | Current lifecycle state and generation |
 | Warm cache | Hit bypasses current invalidation state | Atomic candidate-and-authority read |
 | One-shot caller | Shared publish is rejected but the function returns its own value | Explicit caller supersession outcome |
-| Coordination stack | An outer mutex, actor, queue, single-flight, or coalescer still makes a post-invalidation caller join or wait behind revoked work | Where a layer admits or joins shared work, generation and entry membership change atomically; every layer detaches revoked work or permits current-generation progress |
+| Coordination stack | An outer mutex, actor, queue, single-flight, or coalescer still makes a later caller join or wait behind revoked or non-joinable work | Where a layer admits or joins shared work, generation, entry identity, membership, and join eligibility change atomically; every layer detaches revoked work or permits eligible progress; late cleanup is conditional on entry identity |
 | Memoized projection | Candidate is read before dependency or global validation | Stamped complete snapshot or retry |
 | Persistence | Late work writes a value that later startup replays | Ownership checked in the persistent commit |
 | Notification | Mutation commits but subscribers never learn it | Non-delivering intent in the state commit; delivery after release, or durable ordered notification |
@@ -157,16 +158,31 @@ failure.
 
 ### Cancellation boundary
 
-Cancellation is not a commit fence. Treat caller cancellation, underlying work
-termination, shared-state publication authority, and late failure observation
-as separate contracts.
+Cancellation is not a commit fence. Treat cancellation of one waiter,
+cancellation requested for the shared entry, shared-entry join eligibility,
+underlying work termination, shared-state publication authority, and late
+failure observation as separate contracts.
+
+Cancelling one waiter must not detach or make otherwise healthy shared work
+non-joinable. When cancellation is requested for the shared entry itself,
+atomically mark that exact membership non-joinable or detach it before a later
+admission can select it. The work may remain nonterminal and may ignore
+cancellation, but a later same-generation caller starts or joins a different
+eligible entry according to the declared admission policy.
+
+Give every registry entry a distinct identity. Late completion or cleanup may
+remove membership only if the registry still contains that exact identity; it
+must not remove a replacement installed after cancellation. The cancellation
+request does not itself revoke commit authority. Final publication still uses
+the declared invalidation and supersession fences.
 
 ### Coalesced-work invalidation
 
 Admission to shared work must linearize against invalidation. In one atomic or
 serialized transition, read the current owning generation and either join a
-matching current-generation entry or install the new entry. Do not validate an
-ownership token, release ownership, and later mutate the in-flight registry.
+matching current-generation, joinable entry or install the new entry. Do not
+validate an ownership token, release ownership, and later mutate the in-flight
+registry.
 
 Invalidation must atomically advance the owning generation and detach matching
 in-flight entries from the current lookup, join, and wait path. A caller whose
@@ -246,6 +262,7 @@ winners where order is part of the contract.
 | ASC-17 | Gate immediately before B's whole atomic admission attempt; run invalidation-first and admission-first, then a same-generation pair; for CAS, allow an earlier speculative snapshot, then CAS the combined generation-and-membership snapshot by requiring the expected generation while installing membership | Invalidation-first admits B only under the current generation; admission-first is subsequently detached or revoked, later callers neither join nor wait behind it, and its late commit is rejected; a mismatched CAS retries; the same-generation pair preserves the declared admission and publication-order policies |
 | ASC-18 | Publish V, invalidate, then immediately publish equal-payload V again without draining an equality-conflating observer | The retained authority epoch advances and is observable at every decision boundary; revoked work remains fenced; no consumer depends on delivery of the intermediate invalidated value |
 | ASC-19 | Carry source-issued token A through a projection, then issue token B with the same exposed counters but a different source-defined owner or authority field; also present malformed, truncated, noncanonical, and incomplete supported-version encodings | Every layer preserves the complete source token and compares through the source contract; genuine B survives the same path and authorizes B's commit; A and consumer-reconstructed tokens are rejected; every invalid encoding and unsupported version fails closed |
+| ASC-20 | Hold shared A nonterminal. First cancel one waiter and admit a control caller while A remains healthy. Separately gate B immediately before admission and run shared-entry-cancellation-first and admission-first; in the first schedule install replacement B, then let A clean up | One-waiter cancellation does not detach healthy A and the control caller follows the declared same-generation policy. Shared-entry-cancellation-first makes A non-joinable before B selects membership, so B neither joins nor waits behind A and uses a distinct eligible identity; A's late cleanup cannot remove B. Admission-first preserves the declared same-generation outcome. Neither schedule treats cancellation as commit authority |
 
 Holding A before its last ownership check does not prove the check-to-commit
 boundary. The gate must be immediately before the atomic or serialized attempt.
@@ -275,6 +292,11 @@ insufficient, and a timeout is not proof.
   admission transition, without split validate-then-registry mutation?
 - Does cross-generation progress preserve the declared same-generation
   coordination and publication-order policies?
+- Does cancelling one waiter preserve healthy shared work, while cancellation
+  requested for the shared entry atomically makes that exact membership
+  non-joinable without becoming commit authority?
+- Can late completion or cleanup of a cancelled shared entry remove a
+  replacement whose identity no longer matches?
 - Is every user hook and potentially reentrant, blocking, suspending, or
   backpressured delivery step outside the serialized owner?
 - Can cancellation-ignoring work still reach a commit surface?

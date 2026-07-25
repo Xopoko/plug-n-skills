@@ -56,7 +56,7 @@ class AsyncStateConsistencySkillTest(unittest.TestCase):
         self.assertEqual(payload["schema"], "architecture_intelligence.trigger_probes.v1")
         self.assertEqual(payload["skill"], "async-state-consistency")
         self.assertGreaterEqual(len(payload["should_trigger"]), 8)
-        self.assertLessEqual(len(payload["should_trigger"]), 10)
+        self.assertLessEqual(len(payload["should_trigger"]), 11)
         self.assertGreaterEqual(len(payload["should_not_trigger"]), 4)
         self.assertLessEqual(len(payload["should_not_trigger"]), 8)
         positive_ids = {item["id"] for item in payload["should_trigger"]}
@@ -72,6 +72,7 @@ class AsyncStateConsistencySkillTest(unittest.TestCase):
                 "mutation-notification-gap",
                 "read-side-race",
                 "reverse-completion",
+                "shared-entry-cancellation",
                 "state-projection",
                 "ttl-contract",
             },
@@ -86,6 +87,19 @@ class AsyncStateConsistencySkillTest(unittest.TestCase):
             self.assertEqual(set(item), {"id", "prompt", "route"})
             self.assertTrue(item["prompt"].strip())
             self.assertTrue(item["route"].strip())
+        shared_entry_cancellation = next(
+            item["prompt"].lower()
+            for item in payload["should_trigger"]
+            if item["id"] == "shared-entry-cancellation"
+        )
+        for signal in (
+            "shared entry",
+            "cancellation request",
+            "has not terminated",
+            "same-generation caller",
+            "different eligible entry",
+        ):
+            self.assertIn(signal, shared_entry_cancellation)
 
     def test_reference_covers_required_race_schedules(self):
         text = REFERENCE.read_text(encoding="utf-8")
@@ -95,7 +109,7 @@ class AsyncStateConsistencySkillTest(unittest.TestCase):
             for line in text.splitlines()
             if line.startswith("| ASC-")
         }
-        self.assertEqual(rows, {f"ASC-{index:02d}" for index in range(1, 20)})
+        self.assertEqual(rows, {f"ASC-{index:02d}" for index in range(1, 21)})
         for invariant in (
             "empty dependency vector",
             "Stamped replay read",
@@ -122,6 +136,11 @@ class AsyncStateConsistencySkillTest(unittest.TestCase):
             "source-issued ownership token is authority evidence",
             "do not synthesize a new token",
             "versioned lossless encoding",
+            "shared-entry join eligibility",
+            "cancellation of one waiter",
+            "cancellation requested for the shared entry",
+            "exact identity",
+            "must not remove a replacement",
         ):
             self.assertIn(invariant.lower(), compact)
         asc_13 = next(
@@ -160,6 +179,26 @@ class AsyncStateConsistencySkillTest(unittest.TestCase):
         ):
             self.assertIn(invariant, asc_17)
 
+        asc_20 = next(
+            line.lower()
+            for line in text.splitlines()
+            if line.startswith("| ASC-20 ")
+        )
+        for invariant in (
+            "hold shared a nonterminal",
+            "cancel one waiter",
+            "shared-entry-cancellation-first",
+            "admission-first",
+            "does not detach healthy a",
+            "non-joinable before b selects membership",
+            "neither joins nor waits behind a",
+            "distinct eligible identity",
+            "late cleanup cannot remove b",
+            "admission-first preserves",
+            "cancellation as commit authority",
+        ):
+            self.assertIn(invariant, asc_20)
+
     def test_skill_forbids_revoked_waits_and_owner_reentry(self):
         text = " ".join(SKILL.read_text(encoding="utf-8").split()).lower()
         for invariant in (
@@ -182,6 +221,15 @@ class AsyncStateConsistencySkillTest(unittest.TestCase):
             "cas the combined generation-and-membership snapshot",
             "expected generation while installing membership",
             "combined shared-work admission",
+            "shared-entry join eligibility as separate from commit authority",
+            "cancelling one waiter must not detach",
+            "shared entry itself",
+            "exact membership non-joinable",
+            "work has not terminated",
+            "replacement entry a distinct identity",
+            "cleanup remove membership only while that identity still matches",
+            "cancellation alone does not revoke commit authority",
+            "shared-entry-cancellation-first and admission-first",
         ):
             self.assertIn(invariant, text)
 
