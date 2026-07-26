@@ -1,27 +1,27 @@
 ---
 name: codex-thread-supervisor
-description: Use when watching, monitoring, following, or supervising one or more live Codex tasks or threads by ID, including cursor-based transitions, completion or attention gates, claim checks, compact checkpoint adoption guardrails, narrowly authorized skill handoffs or evidence corrections, and privacy-safe capability mining. Not for post-hoc rollout forensics, current-turn subagents, or external job polling.
+description: "Use for live Codex task or thread supervision by ID: cursor transitions, attention gates, bounded claims, checkpoint adoption, authorized skill or evidence handoffs, and privacy-safe capability mining. Not for rollout forensics, current-turn subagents, or external jobs."
 ---
 
 # Codex Thread Supervisor
 
-Bundled references use `$PLUGIN_ROOT` (`$env:PLUGIN_ROOT` in PowerShell). Set it
-to the host's plugin-root variable when defined, otherwise to this skill
-folder's `../..`.
+Bundled references use `$PLUGIN_ROOT` (`$env:PLUGIN_ROOT` in PowerShell), set to
+the host plugin root or this skill folder's `../..`.
 
 Supervise live Codex tasks without taking ownership of their work. Observation
 is read-only by default. A message to a target thread is allowed only when the
 user's intervention policy explicitly permits it.
 
-Use native Codex task tools such as `list_threads`, `read_thread`,
-`wait_threads`, and `send_message_to_thread`. If they are deferred, discover
-them with tool search. Without native thread tools, live supervision is
-unavailable. Offer `codex-log-reader` only when the user accepts a read-only
-retrospective; it cannot provide live cursor or attention semantics.
+Use native `list_threads`, `read_thread`, `wait_threads`, and
+`send_message_to_thread`; discover deferred tools with tool search. Without
+them, live supervision is unavailable. `codex-log-reader` is only for
+user-accepted retrospectives and has no live cursor or attention semantics.
 
 Read `$PLUGIN_ROOT/references/thread-supervision-contract.md` when the run
 crosses a compaction, covers multiple threads, permits interventions, or will
 produce reusable capability changes.
+When selecting or reconciling `send-skill-handoff`, also read
+`$PLUGIN_ROOT/references/thread-skill-handoff-contract.md`.
 
 ## Bind The Watch
 
@@ -177,15 +177,15 @@ Send a target-thread message only when every condition holds:
    evidence revision.
 6. The benefit exceeds the interruption and context cost.
 
-Use only the typed actions in the supervision contract. An unlisted message
-type remains prohibited even if the target would probably benefit.
+Use only typed actions in the supervision contract. Unlisted target messages
+remain prohibited.
 
-For `send-skill-handoff`, send one compact message containing only:
-
-- the exact skill name;
-- why it applies now;
-- the smallest relevant mechanism or guardrail;
-- a statement that task scope and mutation authority do not expand.
+For `send-skill-handoff`, use the versioned handoff payload and
+acknowledgement. Bind immutable source, canonical content, and receiver
+catalog/cache/loaded-runtime identity. Separate `runtime-loaded` from
+`direct-source-read`: direct reading applies guidance without proving installed
+or runtime-active capability. Never install or refresh; scope and authority
+stay unchanged.
 
 For `send-evidence-delta`, use the versioned envelope and acknowledgement
 states in the supervision contract. For `amends` or `retracts`, send only
