@@ -6,22 +6,24 @@ from __future__ import annotations
 import argparse
 import json
 import os
+import re
 from pathlib import Path
 from typing import Any
 
 
 DEFAULT_SKILL_ROOTS = [
     "${CODEX_HOME:-$HOME/.codex}/skills",
-    "$HOME/.codex/skills/.system",
+    "${CODEX_HOME:-$HOME/.codex}/skills/.system",
     "${CLAUDE_HOME:-$HOME/.claude}/skills",
-    "$HOME/.claude/skills/.system",
+    "${CLAUDE_HOME:-$HOME/.claude}/skills/.system",
     "${CURSOR_HOME:-$HOME/.cursor}/skills",
+]
+DEFAULT_CODEX_CACHE_ROOTS = [
+    "${CODEX_HOME:-$HOME/.codex}/plugins/cache",
 ]
 DEFAULT_PLUGIN_ROOTS = [
     "$HOME/plugins",
-    "$HOME/.codex/plugins/cache/local",
-    "$HOME/.codex/plugins/cache/openai-curated",
-    "$HOME/.codex/plugins/cache/openai-curated-remote",
+    *DEFAULT_CODEX_CACHE_ROOTS,
     "${CLAUDE_HOME:-$HOME/.claude}/plugins",
 ]
 DEFAULT_MARKETPLACES = [
@@ -29,6 +31,12 @@ DEFAULT_MARKETPLACES = [
     "${CLAUDE_HOME:-$HOME/.claude}/plugins/marketplace.json",
 ]
 PLUGIN_MANIFEST_NAMES = (".codex-plugin", ".claude-plugin")
+MAX_CACHE_VERSION_LENGTH = 255
+SEMVER_RE = re.compile(
+    r"^(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)"
+    r"(?:-([0-9A-Za-z-]+(?:\.[0-9A-Za-z-]+)*))?"
+    r"(?:\+([0-9A-Za-z-]+(?:\.[0-9A-Za-z-]+)*))?$"
+)
 
 
 def expand_template(raw: str) -> Path:
@@ -47,9 +55,10 @@ def expand_template(raw: str) -> Path:
 
 def read_json(path: Path) -> dict[str, Any] | None:
     try:
-        return json.loads(path.read_text(encoding="utf-8"))
+        payload = json.loads(path.read_text(encoding="utf-8"))
     except Exception:
         return None
+    return payload if isinstance(payload, dict) else None
 
 
 def read_frontmatter(path: Path) -> dict[str, str]:
@@ -78,6 +87,159 @@ def maybe_match(row: dict[str, Any], query: str | None) -> bool:
     return query.lower() in haystack
 
 
+def semver_sort_key(raw: str) -> tuple[Any, ...] | None:
+    """Return SemVer precedence plus a deterministic cachebuster tie-break."""
+    if len(raw) > MAX_CACHE_VERSION_LENGTH:
+        return None
+    match = SEMVER_RE.fullmatch(raw)
+    if match is None:
+        return None
+
+    prerelease = match.group(4)
+    if prerelease is not None:
+        prerelease_parts = prerelease.split(".")
+        if any(
+            part.isdigit() and len(part) > 1 and part.startswith("0")
+            for part in prerelease_parts
+        ):
+            return None
+        prerelease_key = tuple(
+            (0, int(part)) if part.isdigit() else (1, part)
+            for part in prerelease_parts
+        )
+    else:
+        prerelease_key = ()
+
+    build = match.group(5)
+    build_key = (
+        tuple(
+            (0, int(part)) if part.isdigit() else (1, part)
+            for part in build.split(".")
+        )
+        if build
+        else ()
+    )
+
+    return (
+        int(match.group(1)),
+        int(match.group(2)),
+        int(match.group(3)),
+        prerelease is None,
+        prerelease_key,
+        build_key,
+    )
+
+
+def path_is_within_without_symlinks(path: Path, root: Path) -> bool:
+    try:
+        relative = path.relative_to(root)
+    except ValueError:
+        return False
+    current = root
+    if current.is_symlink():
+        return False
+    for part in relative.parts:
+        current /= part
+        if current.is_symlink():
+            return False
+    return True
+
+
+def readable_directories(root: Path) -> list[Path]:
+    try:
+        entries = list(root.iterdir())
+    except OSError:
+        return []
+    directories: list[Path] = []
+    for path in entries:
+        try:
+            if path.is_symlink() or not path.is_dir():
+                continue
+        except OSError:
+            continue
+        directories.append(path)
+    return directories
+
+
+def direct_plugin_manifests(plugin_root: Path) -> list[Path]:
+    manifests: list[Path] = []
+    for manifest_dir in PLUGIN_MANIFEST_NAMES:
+        manifest_parent = plugin_root / manifest_dir
+        manifest = manifest_parent / "plugin.json"
+        try:
+            if (
+                manifest_parent.is_symlink()
+                or manifest.is_symlink()
+                or not manifest.is_file()
+                or not path_is_within_without_symlinks(
+                    manifest,
+                    plugin_root,
+                )
+            ):
+                continue
+        except OSError:
+            continue
+        manifests.append(manifest)
+    return manifests
+
+
+def preferred_cache_manifest(plugin_root: Path) -> Path | None:
+    for manifest in direct_plugin_manifests(plugin_root):
+        if read_json(manifest) is not None:
+            return manifest
+    return None
+
+
+def resolved_path_is_within(path: Path, root: Path) -> bool:
+    try:
+        path.resolve(strict=False).relative_to(
+            root.resolve(strict=False)
+        )
+    except (OSError, RuntimeError, ValueError):
+        return False
+    return True
+
+
+def cache_plugin_candidates(plugin_dir: Path) -> list[tuple[tuple[Any, ...], Path]]:
+    candidates: dict[Path, tuple[Any, ...]] = {}
+    for candidate in readable_directories(plugin_dir):
+        manifest = preferred_cache_manifest(candidate)
+        if manifest is None:
+            continue
+        data = read_json(manifest)
+        if data is None:
+            continue
+        directory_key = semver_sort_key(candidate.name)
+        manifest_key = semver_sort_key(str(data.get("version", "")))
+        key = directory_key or manifest_key
+        if key is not None:
+            candidates[candidate] = key
+    return [(key, path) for path, key in candidates.items()]
+
+
+def latest_cache_version_roots(root: Path) -> list[Path]:
+    """Select one current candidate per source/plugin without deleting siblings."""
+    selected: list[Path] = []
+    if not root.is_dir() or root.is_symlink():
+        return selected
+    for source_dir in sorted(readable_directories(root)):
+        for plugin_dir in sorted(readable_directories(source_dir)):
+            if preferred_cache_manifest(plugin_dir) is not None:
+                selected.append(plugin_dir)
+                continue
+            candidates = cache_plugin_candidates(plugin_dir)
+            if candidates:
+                highest_key = max(key for key, _ in candidates)
+                highest = [
+                    path
+                    for key, path in candidates
+                    if key == highest_key
+                ]
+                if len(highest) == 1:
+                    selected.append(highest[0])
+    return selected
+
+
 def inventory_skills(roots: list[Path], query: str | None) -> list[dict[str, Any]]:
     rows: list[dict[str, Any]] = []
     seen: set[Path] = set()
@@ -101,24 +263,48 @@ def inventory_skills(roots: list[Path], query: str | None) -> list[dict[str, Any
     return rows
 
 
-def inventory_plugins(roots: list[Path], query: str | None) -> list[dict[str, Any]]:
+def inventory_plugins(
+    roots: list[Path],
+    query: str | None,
+    *,
+    versioned_cache_roots: set[Path] | None = None,
+) -> list[dict[str, Any]]:
     rows: list[dict[str, Any]] = []
     seen: set[Path] = set()
     seen_plugins: set[Path] = set()
+    cache_roots = versioned_cache_roots or set()
     for root in roots:
         if not root.exists():
             continue
-        manifests = [
-            manifest
-            for manifest_dir in PLUGIN_MANIFEST_NAMES
-            for manifest in root.rglob(f"{manifest_dir}/plugin.json")
-        ]
+        if any(
+            root != cache_root
+            and resolved_path_is_within(root, cache_root)
+            for cache_root in cache_roots
+        ):
+            continue
+        if root in cache_roots:
+            manifests = [
+                manifest
+                for scan_root in latest_cache_version_roots(root)
+                for manifest in [preferred_cache_manifest(scan_root)]
+                if manifest is not None
+            ]
+        else:
+            manifests = [
+                manifest
+                for manifest_dir in PLUGIN_MANIFEST_NAMES
+                for manifest in root.rglob(
+                    f"{manifest_dir}/plugin.json"
+                )
+            ]
         for manifest in sorted(manifests):
             if manifest in seen or manifest.parent.parent in seen_plugins:
                 continue
             seen.add(manifest)
             seen_plugins.add(manifest.parent.parent)
-            data = read_json(manifest) or {}
+            data = read_json(manifest)
+            if data is None:
+                continue
             interface = data.get("interface") if isinstance(data.get("interface"), dict) else {}
             row = {
                 "name": data.get("name") or manifest.parent.parent.name,
@@ -176,6 +362,10 @@ def main() -> int:
 
     skill_roots = [expand_template(p) for p in DEFAULT_SKILL_ROOTS + args.skill_root]
     plugin_roots = [expand_template(p) for p in DEFAULT_PLUGIN_ROOTS + args.plugin_root]
+    codex_cache_roots = {
+        expand_template(path)
+        for path in DEFAULT_CODEX_CACHE_ROOTS
+    }
     marketplace_paths = [expand_template(p) for p in DEFAULT_MARKETPLACES + args.marketplace]
 
     payload = {
@@ -185,7 +375,11 @@ def main() -> int:
         "plugin_roots": [str(p) for p in plugin_roots],
         "marketplace_paths": [str(p) for p in marketplace_paths],
         "skills": inventory_skills(skill_roots, args.query),
-        "plugins": inventory_plugins(plugin_roots, args.query),
+        "plugins": inventory_plugins(
+            plugin_roots,
+            args.query,
+            versioned_cache_roots=codex_cache_roots,
+        ),
         "marketplace_entries": inventory_marketplaces(marketplace_paths, args.query),
     }
     payload["counts"] = {

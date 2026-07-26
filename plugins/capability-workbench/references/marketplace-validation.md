@@ -94,8 +94,20 @@ locators into them; removing those siblings would break an active session
 without proving that it loaded the new version. Cleanup of retained versions is
 a separate, explicit lifecycle action after their consumers have ended. A
 native host CLI owns its cache lifecycle; the helper's target-equivalence
-receipt does not prove that a CLI-managed install retained siblings. An expected
-upstream source must also be outside the target-version replacement scope.
+receipt does not prove that a CLI-managed install retained siblings. Capability
+inventory scans every immediate source in the active Codex profile's cache
+read-only and reports one current locator per source/plugin pair. It selects the
+highest strict SemVer from the locator directory or its direct plugin manifest,
+preferring a valid Codex manifest when both host manifests exist, falling back
+to a valid Claude manifest, and using build metadata as a deterministic
+tie-break for cachebuster-only updates. A direct plugin manifest is
+authoritative over retained child locators. Redundant explicit roots resolving
+within the same Codex cache are not recursively rescanned.
+Histories without a valid SemVer or with multiple highest-precedence locators
+are omitted, and inaccessible cache sources are skipped without weakening
+other results. Historical locator directories remain untouched and are not
+reported as current plugin candidates. An expected upstream source must also
+be outside the target-version replacement scope.
 Enabled config and marketplace selection are captured before and revalidated
 after the anchored tree proof. Concurrent adversarial directory replacement or
 change after the receipt returns is outside this helper's guarantee.
