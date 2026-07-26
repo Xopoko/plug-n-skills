@@ -54,6 +54,10 @@ Favor confidence/speed over coverage vanity:
   parseable JUnit files, reject stale pre-existing results, and fail any set
   mismatch. A trace without retained, inspectable results proves scheduling
   only.
+- When Gradle is proven blocked before relevant compilation and a standalone
+  Kotlin/Native harness could add evidence, use
+  `../../references/standalone-kotlin-harness.md`. Keep it supplemental: a flat
+  source union is only a canary and never project-task or CI proof.
 - When changing a fixture or assertion to prove a new claim, inventory the
   existing regression claims first. Preserve them with explicit pre/post
   assertions or separate tests; do not trade one proof obligation for another.
