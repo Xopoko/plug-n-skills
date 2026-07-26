@@ -18,6 +18,40 @@ def checkpoint_example(text: str) -> dict:
     return json.loads(match.group(1))
 
 
+def adoption_verdict_example(text: str) -> dict:
+    match = re.search(
+        r"Keep pair, lineage, protection, commit, readback, and adoption.*?"
+        r"```json\n(.*?)\n```",
+        text,
+        re.DOTALL,
+    )
+    if match is None:
+        raise AssertionError("adoption verdict JSON example not found")
+    return json.loads(match.group(1))
+
+
+def adoption_failure_schedule(text: str) -> dict[str, str]:
+    match = re.search(
+        r"Use this deterministic failure schedule:\n\n"
+        r"\| Condition \| Required verdict \|\n"
+        r"\| --- \| --- \|\n"
+        r"(.*?)\n\nThe pre-CAS intent",
+        text,
+        re.DOTALL,
+    )
+    if match is None:
+        raise AssertionError("adoption failure schedule not found")
+
+    rows = {}
+    for line in match.group(1).splitlines():
+        cells = [cell.strip() for cell in line.strip().strip("|").split("|")]
+        if len(cells) != 2:
+            raise AssertionError(f"malformed adoption schedule row: {line}")
+        condition, verdict = cells
+        rows[condition.lower()] = verdict.lower()
+    return rows
+
+
 class ThreadSupervisionContractTests(unittest.TestCase):
     def test_checkpoint_binds_one_supervisor_owned_continuation(self):
         contract = checkpoint_example(REFERENCE.read_text(encoding="utf-8"))
@@ -156,6 +190,142 @@ class ThreadSupervisionContractTests(unittest.TestCase):
             "must not be repopulated from prose",
         ):
             self.assertIn(invariant, contract)
+
+    def test_canonical_adoption_contract_fails_closed(self):
+        skill = " ".join(SKILL.read_text(encoding="utf-8").split()).lower()
+        for invariant in (
+            "validating a supplied `previous -> current` pair is not canonical adoption",
+            "explicit mutation authority",
+            "existing store interface",
+            "never emulate cas",
+            "guardrails, not a canonical store or adopter",
+            "full retained head token",
+            "basis head-token fingerprint",
+            "pair-only receipt",
+            "generation and creating-intent fingerprint",
+            "prevents fork and aba adoption",
+            "`reconciliation-required`, not `not-adopted`",
+            "independent closed verdicts",
+        ):
+            self.assertIn(invariant, skill)
+
+        reference = REFERENCE.read_text(encoding="utf-8")
+        contract = " ".join(reference.split()).lower()
+        for invariant in (
+            "## canonical checkpoint adoption",
+            "producer-owned transition receipt",
+            "separate consumer-owned commit",
+            "candidate-supplied predecessor metadata is not authority",
+            "existing canonical store interface",
+            "never emulate this with a read followed by an ordinary write",
+            "full head token",
+            "unique monotonic generation",
+            "a-to-b-to-a",
+            "versioned canonical serialization and digest algorithm",
+            "basis head-token fingerprint",
+            "pair-only receipt without that binding",
+            "reject a store or chain mismatch",
+            "cannot repair a namespace mismatch",
+            "protected-contract fingerprint",
+            "immutable pre-cas adoption intent",
+            "this order is non-circular",
+            "terminal adoption receipt",
+            "never an input to the candidate token",
+            "exact replay of the same operation id and intent is idempotent",
+            "same id with a different intent",
+            "separately authorized baseline receipt",
+            "read back the full token and native operation result",
+            "`reconciliation-required`",
+        ):
+            self.assertIn(invariant, contract)
+
+        verdict = adoption_verdict_example(reference)
+        self.assertEqual(verdict["schema"], "codex.checkpoint_adoption.v1")
+        expected_fields = {
+            "pair": {"valid", "invalid", "unknown"},
+            "lineage": {
+                "valid",
+                "baseline-valid",
+                "unbound",
+                "mismatch",
+                "namespace-mismatch",
+                "unknown",
+            },
+            "protection": {"valid", "mismatch", "authorized-new-chain", "unknown"},
+            "commit": {
+                "not-attempted",
+                "committed",
+                "conflict",
+                "id-conflict",
+                "outcome-unknown",
+            },
+            "readback": {"not-run", "matched", "different", "unavailable"},
+            "adoption": {
+                "not-eligible",
+                "capability-unavailable",
+                "adopted",
+                "already-adopted",
+                "head-conflict",
+                "protected-mismatch",
+                "namespace-mismatch",
+                "id-conflict",
+                "reconciliation-required",
+            },
+        }
+        self.assertEqual(set(verdict) - {"schema"}, set(expected_fields))
+        for field, states in expected_fields.items():
+            self.assertEqual(set(verdict[field].split("|")), states)
+
+        self.assertEqual(
+            adoption_failure_schedule(reference),
+            {
+                "valid pair, but no authorized atomic store": (
+                    "`pair=valid`, `commit=not-attempted`, "
+                    "`adoption=capability-unavailable`"
+                ),
+                "missing basis head-token binding": (
+                    "`lineage=unbound`, `commit=not-attempted`, "
+                    "`adoption=not-eligible`"
+                ),
+                "wrong retained predecessor, generation, or aba token": (
+                    "`lineage=mismatch`, `commit=not-attempted`, "
+                    "`adoption=not-eligible`"
+                ),
+                "store or chain differs": (
+                    "`lineage=namespace-mismatch`, `commit=not-attempted`, "
+                    "`adoption=namespace-mismatch`"
+                ),
+                "protected goal or authority differs": (
+                    "`protection=mismatch`, `commit=not-attempted`, "
+                    "`adoption=protected-mismatch`"
+                ),
+                "compare-and-swap observes another full head token": (
+                    "`commit=conflict`, `adoption=head-conflict`"
+                ),
+                "store confirms commit but readback is unavailable": (
+                    "`commit=committed`, "
+                    "`readback=unavailable`, `adoption=reconciliation-required`"
+                ),
+                "native commit outcome and readback are unavailable": (
+                    "`commit=outcome-unknown`, `readback=unavailable`, "
+                    "`adoption=reconciliation-required`"
+                ),
+                "store confirms commit but readback names a different token": (
+                    "`commit=committed`, `readback=different`, "
+                    "`adoption=reconciliation-required`"
+                ),
+                "exact operation replay and matching readback": (
+                    "`commit=committed`, `readback=matched`, "
+                    "`adoption=already-adopted`"
+                ),
+                "same operation id with different intent": (
+                    "`commit=id-conflict`, `adoption=id-conflict`"
+                ),
+                "atomic commit and exact readback both succeed": (
+                    "`commit=committed`, `readback=matched`, `adoption=adopted`"
+                ),
+            },
+        )
 
     def test_supervision_docs_are_public_safe_and_use_no_raw_directives(self):
         for path in (SKILL, REFERENCE):

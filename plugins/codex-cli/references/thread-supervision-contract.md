@@ -144,6 +144,108 @@ private-data boundary, and task constraints. Evidence revisions never modify
 it. Fingerprint that protected state separately so the receiver can reject a
 message formed against different authority.
 
+## Canonical Checkpoint Adoption
+
+A producer-owned transition receipt validates only the exact snapshots supplied
+to that producer. It does not prove that its predecessor is the retained
+canonical checkpoint or that any canonical pointer changed. Candidate-supplied
+predecessor metadata is not authority.
+
+Adoption is available only when the task has explicit mutation authority and an
+existing canonical store interface that atomically compare-and-swaps a full
+head token and records the CAS outcome under one operation ID. Never emulate this
+with a read followed by an ordinary write. Without that interface, stop at
+`pair=valid`, set `adoption=capability-unavailable`, and keep the candidate
+noncanonical.
+
+A canonical head token binds the store fingerprint, chain ID, unique monotonic
+generation, snapshot fingerprint, predecessor head-token fingerprint, and
+creating intent or baseline receipt fingerprint. Comparing only snapshot
+content is insufficient: two forks may contain the same snapshot, and an
+A-to-B-to-A sequence must not recreate an old head token. The store defines a
+versioned canonical serialization and digest algorithm for that token. A
+transition receipt used for adoption binds the resulting canonical
+head-token fingerprint plus its schema version. A pair-only receipt without
+that binding is valid only as pair evidence.
+
+Treat canonical adoption as a separate consumer-owned commit:
+
+1. Independently load the store fingerprint, chain ID, full current head token,
+   and retained receipt named by that token.
+2. Require the producer receipt's basis head-token fingerprint to equal the
+   canonical fingerprint of the full current token under the named schema
+   version. Require its `from.snapshot_fingerprint` to equal that token's
+   snapshot fingerprint, its protected-contract fingerprint to match the
+   retained contract, and its `to.snapshot_fingerprint` to equal the candidate.
+3. Reject a store or chain mismatch as `namespace-mismatch`. Reject protected
+   goal or authority drift as `protected-mismatch`; ordinary adoption never
+   edits the protected contract. A separately authorized, typed new-chain or
+   rebind receipt must name its authorizer, policy, old contract, new contract,
+   and destination chain. It cannot repair a namespace mismatch.
+4. Build an immutable pre-CAS adoption intent, then ask the authorized store to
+   atomically replace the full expected token with the fresh candidate token
+   and persist the native operation result under the intent's operation ID. A
+   different observed token is `head-conflict`; preserve it and perform at most
+   one bounded read-only reconciliation.
+5. Read back the full token and native operation result, then emit a terminal
+   adoption receipt. Report `adopted` only when both match. If the commit
+   outcome or readback is unknown, report
+   `reconciliation-required`; never report `not-adopted` or retry the mutation
+   until the operation ID is reconciled.
+
+Keep pair, lineage, protection, commit, readback, and adoption as independent
+closed verdict fields:
+
+```json
+{
+  "schema": "codex.checkpoint_adoption.v1",
+  "pair": "valid|invalid|unknown",
+  "lineage": "valid|baseline-valid|unbound|mismatch|namespace-mismatch|unknown",
+  "protection": "valid|mismatch|authorized-new-chain|unknown",
+  "commit": "not-attempted|committed|conflict|id-conflict|outcome-unknown",
+  "readback": "not-run|matched|different|unavailable",
+  "adoption": "not-eligible|capability-unavailable|adopted|already-adopted|head-conflict|protected-mismatch|namespace-mismatch|id-conflict|reconciliation-required"
+}
+```
+
+Use this deterministic failure schedule:
+
+| Condition | Required verdict |
+| --- | --- |
+| Valid pair, but no authorized atomic store | `pair=valid`, `commit=not-attempted`, `adoption=capability-unavailable` |
+| Missing basis head-token binding | `lineage=unbound`, `commit=not-attempted`, `adoption=not-eligible` |
+| Wrong retained predecessor, generation, or ABA token | `lineage=mismatch`, `commit=not-attempted`, `adoption=not-eligible` |
+| Store or chain differs | `lineage=namespace-mismatch`, `commit=not-attempted`, `adoption=namespace-mismatch` |
+| Protected goal or authority differs | `protection=mismatch`, `commit=not-attempted`, `adoption=protected-mismatch` |
+| Compare-and-swap observes another full head token | `commit=conflict`, `adoption=head-conflict` |
+| Store confirms commit but readback is unavailable | `commit=committed`, `readback=unavailable`, `adoption=reconciliation-required` |
+| Native commit outcome and readback are unavailable | `commit=outcome-unknown`, `readback=unavailable`, `adoption=reconciliation-required` |
+| Store confirms commit but readback names a different token | `commit=committed`, `readback=different`, `adoption=reconciliation-required` |
+| Exact operation replay and matching readback | `commit=committed`, `readback=matched`, `adoption=already-adopted` |
+| Same operation ID with different intent | `commit=id-conflict`, `adoption=id-conflict` |
+| Atomic commit and exact readback both succeed | `commit=committed`, `readback=matched`, `adoption=adopted` |
+
+The pre-CAS intent binds the immutable operation ID, token schema and digest
+version, store and chain fingerprints, expected full token, candidate head
+core, producer receipt and basis-token fingerprints, protected-contract
+fingerprint, and the pair, lineage, and protection verdicts. The candidate head
+core contains everything except the intent fingerprint; fingerprint the intent,
+then construct the full candidate token from that core plus the intent
+fingerprint. This order is non-circular.
+
+The terminal adoption receipt binds the intent fingerprint, exact candidate
+token, native commit result, commit, readback, and adoption verdicts, and final
+readback. It is created after commit and is never an input to the candidate
+token. Exact replay of the same operation ID and intent is idempotent. The same
+ID with a different intent is an atomic conflict. A new chain starts only from
+a separately authorized baseline receipt and cannot claim earlier continuity.
+Keep raw snapshots, goal text, paths, and private evidence out of public
+receipts; expose only stable opaque refs and closed verdicts.
+
+A successful producer exit, `validated_step`, operator prose, or a stale
+adoption receipt never substitutes for the canonical compare-and-swap and
+readback.
+
 ## State Classification
 
 | State | Evidence | Observer action |

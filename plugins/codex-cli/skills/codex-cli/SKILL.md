@@ -1,6 +1,6 @@
 ---
 name: codex-cli
-description: Route Codex CLI work across local CLI inspection, non-interactive exec/review automation, deferred completion without polling, live task and thread supervision, plugin and MCP management, doctor/debug/sandbox/app-server diagnostics, session log forensics, and Codex app local environment actions.
+description: Route Codex CLI work across local CLI inspection, non-interactive exec/review automation, deferred completion without polling, live task and thread supervision with canonical checkpoint adoption guardrails, plugin and MCP management, doctor/debug/sandbox/app-server diagnostics, session log forensics, and Codex app local environment actions.
 ---
 
 # Codex CLI Router
@@ -38,7 +38,7 @@ runtime arguments instead.
 - Long-running executables with an existing producer-native atomic JSON terminal receipt that would otherwise require repeated process or remote-status polling: use `codex-deferred-completion`.
 - Installed plugin marketplaces, plugin add/list/remove, local marketplace refresh, MCP server list/get/add/remove/login/logout: use `codex-plugin-mcp-manager`.
 - Installation health, config/auth/runtime issues, feature flags, sandbox denials, debug models, app-server, remote control, or experimental server transports: use `codex-doctor-debugger`.
-- Live Codex task or thread watching by ID, including cursor-based transition waits, completion or attention gates, claims in the actively supervised task, narrowly authorized skill handoffs or evidence corrections, or capability mining from that live watch: use `codex-thread-supervisor`.
+- Live Codex task or thread watching by ID, including cursor-based transition waits, canonical checkpoint adoption guardrails, completion or attention gates, claims in the actively supervised task, narrowly authorized skill handoffs or evidence corrections, or capability mining from that live watch: use `codex-thread-supervisor`.
 - CODEX_THREAD_ID lookup, rollout JSONL, "what happened in that Codex thread", malformed logs, huge logs, or safe redacted session summaries: use `codex-log-reader`.
 - `.codex/environments/environment.toml`, Codex app Run/Test/Preview actions, startup commands, long-running dev servers, or repeatable local project actions: use `codex-environments`.
 
