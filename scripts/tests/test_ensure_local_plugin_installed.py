@@ -144,6 +144,38 @@ class LocalPluginVisibilityTest(unittest.TestCase):
         self.assertTrue(outcome.install_state_verified)
         self.assertTrue(self.check_only().install_state_verified)
 
+    def test_installing_new_version_preserves_active_session_cache_locator(self):
+        cached_skill = self.cache_path / "skills" / "fixture-skill" / "SKILL.md"
+        cached_skill_bytes = cached_skill.read_bytes()
+        manifest_path = self.plugin_root / ".codex-plugin" / "plugin.json"
+        manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
+        manifest["version"] = "0.2.0"
+        manifest_path.write_text(json.dumps(manifest), encoding="utf-8")
+        next_cache_path = self.cache_path.parent / "0.2.0"
+
+        with mock.patch.object(
+            ensure_local_plugin_installed,
+            "try_cli_install",
+        ) as cli_install:
+            outcome = ensure_local_plugin_installed.ensure_installed(
+                plugin_path=self.plugin_root,
+                marketplace_path=self.marketplace_path,
+                config_path=self.config_path,
+                cache_root=self.cache_root,
+                codex_bin="codex",
+                force_manual=True,
+            )
+
+        cli_install.assert_not_called()
+        self.assertEqual("manual-fallback", outcome.mode)
+        self.assertTrue(outcome.cache_path.samefile(next_cache_path))
+        self.assertTrue(
+            cached_skill.is_file(),
+            "a running agent can still hold this versioned skill locator",
+        )
+        self.assertEqual(cached_skill_bytes, cached_skill.read_bytes())
+        self.assertTrue((next_cache_path / "README.md").is_file())
+
     def test_changed_cached_file_fails_install_state_verification(self):
         (self.cache_path / "README.md").write_text(
             "# Stale fixture plugin\n",
@@ -427,13 +459,13 @@ class LocalPluginVisibilityTest(unittest.TestCase):
 
         self.assertFalse((self.plugin_root / "runtime-cache").exists())
 
-    def test_expected_source_inside_cache_deletion_scope_is_preserved(self):
+    def test_expected_source_in_retained_sibling_version_is_preserved(self):
         expected_source = self.cache_path.parent / "9.9.9"
         shutil.copytree(self.plugin_root, expected_source)
         cached_readme = (self.cache_path / "README.md").read_bytes()
 
-        with self.assertRaisesRegex(ValueError, r"must be disjoint"):
-            ensure_local_plugin_installed.ensure_installed(
+        try:
+            outcome = ensure_local_plugin_installed.ensure_installed(
                 plugin_path=self.plugin_root,
                 marketplace_path=self.marketplace_path,
                 config_path=self.config_path,
@@ -442,14 +474,17 @@ class LocalPluginVisibilityTest(unittest.TestCase):
                 expected_source_path=expected_source,
                 force_manual=True,
             )
+        except ValueError as error:
+            self.fail(f"a retained sibling version is outside replacement scope: {error}")
 
+        self.assertTrue(outcome.expected_source_verified)
         self.assertTrue(expected_source.is_dir())
         self.assertEqual(
             cached_readme,
             (self.cache_path / "README.md").read_bytes(),
         )
 
-    def test_unsafe_install_identifiers_cannot_retarget_cache_pruning(self):
+    def test_unsafe_install_identifiers_cannot_retarget_cache_materialization(self):
         victim = self.cache_root / "victim" / "9.9.9" / "sentinel.txt"
         victim.parent.mkdir(parents=True)
         victim.write_text("keep\n", encoding="utf-8")
@@ -491,6 +526,30 @@ class LocalPluginVisibilityTest(unittest.TestCase):
                     )
 
                 self.assertEqual("keep\n", victim.read_text(encoding="utf-8"))
+
+    def test_unsafe_version_cannot_retarget_cache_replacement(self):
+        victim = self.cache_root / "local" / "victim" / "9.9.9" / "sentinel.txt"
+        victim.parent.mkdir(parents=True)
+        victim.write_text("keep\n", encoding="utf-8")
+        manifest_path = self.plugin_root / ".codex-plugin" / "plugin.json"
+        manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
+        manifest["version"] = "../../victim/9.9.9"
+        manifest_path.write_text(json.dumps(manifest), encoding="utf-8")
+
+        with self.assertRaisesRegex(
+            ValueError,
+            r"plugin\.json field `version` must be strict semver",
+        ):
+            ensure_local_plugin_installed.ensure_installed(
+                plugin_path=self.plugin_root,
+                marketplace_path=self.marketplace_path,
+                config_path=self.config_path,
+                cache_root=self.cache_root,
+                codex_bin="codex",
+                force_manual=True,
+            )
+
+        self.assertEqual("keep\n", victim.read_text(encoding="utf-8"))
 
     def test_symlinked_plugin_and_cache_roots_are_rejected(self):
         plugin_link = self.root / "linked-plugin"
