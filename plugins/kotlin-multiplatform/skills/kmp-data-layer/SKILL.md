@@ -1,6 +1,6 @@
 ---
 name: kmp-data-layer
-description: Design and review KMP data layers, repositories, source-of-truth, DTO/domain mapping, sync, offline-first behavior, persistence choices, error handling, shared/coalesced work, cancellation and admission races, causal receipts, threading, and API exposure.
+description: Design and review KMP data layers, repositories, source-of-truth, legacy storage migration, durable migration decisions, resurrection prevention, DTO/domain mapping, sync, offline-first behavior, persistence choices, error handling, shared/coalesced work, cancellation and admission races, causal receipts, threading, and API exposure.
 ---
 
 # KMP Data Layer
@@ -28,6 +28,23 @@ Before implementing, identify:
 - test layer per behavior
 - explicit initial, available, invalidated, error, and stale/retry meaning where
   absence or ownership has lifecycle significance
+
+## Legacy Storage Migration
+
+For one-time imports from platform or legacy stores, use
+`references/legacy-storage-migration.md`.
+
+- Treat migration state as durable provenance. Do not infer completion from the
+  current destination shape when the product requires one-time eligibility or
+  no resurrection after reset.
+- If the exact destination key is already present, let it win and record
+  completion through the same transaction, CAS, or destination-owned generation
+  before returning. A later reset must not resurrect legacy data implicitly.
+- Separate source capture from policy projection. Persist a minimal,
+  policy-safe capture only when crash recovery must not re-read mutable source;
+  do not retain sensitive raw payloads by default.
+- Keep cleanup separate and optional. Never remove legacy state before the
+  durable destination decision and completion record exist.
 
 ## Async State Consistency Adapter
 
