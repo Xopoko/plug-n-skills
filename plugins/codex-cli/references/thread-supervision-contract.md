@@ -130,8 +130,10 @@ receipt into the checkpoint, but it must not synthesize eligibility. Remove or
 reclassify the gate after subject, cutoff, eligibility, or owner drift.
 
 `pending_intervention` is either `null` or a compact object containing the
-action, immutable intervention ID, payload fingerprint, revision ID when
-applicable, delivery state, and acknowledgement state. Keep only one pending
+action, schema, immutable intervention ID, payload fingerprint, immutable
+content-addressed payload recovery ref, revision ID when applicable, delivery
+state, and acknowledgement state. A skill handoff also retains its expected
+source digest and requested consumption mode. Keep only one pending
 intervention per target. A second write requires proof that the first was not
 delivered or a terminal acknowledgement. Local abandonment does not restore
 the consumed limit or authorize a resend.
@@ -358,19 +360,18 @@ allowlist.
 
 ### Skill Handoff Payload
 
-```json
-{
-  "schema": "codex.thread_skill_handoff.v1",
-  "handoff_id": "immutable-opaque-id",
-  "payload_fingerprint": "stable-fingerprint",
-  "skill": "exact-skill-name",
-  "why_now": "current next step that benefits",
-  "mechanism": "smallest relevant guardrail",
-  "already_present": false,
-  "scope_effect": "none",
-  "authority_effect": "none"
-}
-```
+New handoffs use `codex.thread_skill_handoff.v2`. Bind canonical source content,
+sender-observed catalog/cache/loaded-runtime identity, requested consumption,
+and constant no-activation authority. Before consumption, the receiver
+atomically reserves the handoff ID and payload fingerprint; it then returns one
+validated `applied`, `conflict`, or `stale` acknowledgement. A direct source
+read applies guidance without proving installation or runtime activation.
+
+Read `$PLUGIN_ROOT/references/thread-skill-handoff-contract.md` for the complete
+envelopes, canonical digest algorithms, receiver reservation, closed terminal
+matrix, compaction recovery, and deterministic validator. Keep the
+content-addressed payload ref pending until that validator accepts the
+acknowledgement.
 
 ### Evidence Delta Payload
 
@@ -538,9 +539,11 @@ After compaction or a later wake:
 7. Revalidate only current status and drift-prone external claims.
 8. Preserve each target's last intervention and last-reported transition
    fingerprints.
-9. Preserve the protected-contract fingerprint and any pending intervention
-   delivery or acknowledgement state; never infer acknowledgement from target
-   activity.
+9. Preserve the protected-contract fingerprint and every pending intervention's
+   exact payload recovery ref, digest or revision identity, requested mode,
+   delivery state, and acknowledgement state. Load and validate the immutable
+   payload before accepting an acknowledgement; never infer it from activity or
+   reconstruct it from prose.
 10. After emitting a transition, advance that target's report fingerprint.
 11. Resume the single recorded next action.
 

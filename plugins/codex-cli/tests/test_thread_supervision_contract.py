@@ -9,6 +9,7 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[1]
 SKILL = ROOT / "skills" / "codex-thread-supervisor" / "SKILL.md"
 REFERENCE = ROOT / "references" / "thread-supervision-contract.md"
+HANDOFF_REFERENCE = ROOT / "references" / "thread-skill-handoff-contract.md"
 
 
 def checkpoint_example(text: str) -> dict:
@@ -50,6 +51,28 @@ def adoption_failure_schedule(text: str) -> dict[str, str]:
         condition, verdict = cells
         rows[condition.lower()] = verdict.lower()
     return rows
+
+
+def skill_handoff_example(text: str) -> dict:
+    match = re.search(
+        r"## Sender Envelope.*?```json\n(.*?)\n```",
+        text,
+        re.DOTALL,
+    )
+    if match is None:
+        raise AssertionError("skill handoff JSON example not found")
+    return json.loads(match.group(1))
+
+
+def skill_handoff_ack_example(text: str) -> dict:
+    match = re.search(
+        r"## Receiver Acknowledgement.*?```json\n(.*?)\n```",
+        text,
+        re.DOTALL,
+    )
+    if match is None:
+        raise AssertionError("skill handoff acknowledgement JSON example not found")
+    return json.loads(match.group(1))
 
 
 class ThreadSupervisionContractTests(unittest.TestCase):
@@ -327,8 +350,153 @@ class ThreadSupervisionContractTests(unittest.TestCase):
             },
         )
 
+    def test_skill_handoff_binds_source_receiver_and_consumption_state(self):
+        reference = HANDOFF_REFERENCE.read_text(encoding="utf-8")
+        handoff = skill_handoff_example(reference)
+        self.assertEqual(handoff["schema"], "codex.thread_skill_handoff.v2")
+        self.assertEqual(
+            set(handoff),
+            {
+                "schema",
+                "handoff_id",
+                "payload_fingerprint",
+                "skill",
+                "why_now",
+                "mechanism",
+                "receiver_basis",
+                "requested_consumption",
+                "activation_authorized",
+                "scope_effect",
+                "authority_effect",
+                "ack_required",
+            },
+        )
+        self.assertEqual(
+            set(handoff["skill"]),
+            {
+                "name",
+                "source_version",
+                "source_repository",
+                "source_revision",
+                "source_path",
+                "content_manifest",
+                "content_digest",
+                "verification_state",
+            },
+        )
+        self.assertEqual(
+            set(handoff["receiver_basis"]),
+            {"catalog", "cache", "runtime"},
+        )
+        for surface in ("catalog", "cache"):
+            self.assertEqual(
+                set(handoff["receiver_basis"][surface]),
+                {
+                    "version",
+                    "source_repository",
+                    "source_revision",
+                    "content_digest",
+                    "relation_to_source",
+                },
+            )
+            self.assertIn(
+                handoff["receiver_basis"][surface]["relation_to_source"],
+                {"exact", "older", "newer", "absent", "unknown"},
+            )
+        self.assertEqual(
+            set(handoff["receiver_basis"]["runtime"]),
+            {"discovery", "loaded"},
+        )
+        self.assertEqual(handoff["requested_consumption"], "direct-source-read")
+        self.assertFalse(handoff["activation_authorized"])
+        self.assertEqual(handoff["scope_effect"], "none")
+        self.assertEqual(handoff["authority_effect"], "none")
+        self.assertTrue(handoff["ack_required"])
+
+        acknowledgement = skill_handoff_ack_example(reference)
+        self.assertEqual(
+            acknowledgement["schema"], "codex.thread_skill_handoff_ack.v1"
+        )
+        self.assertEqual(
+            set(acknowledgement),
+            {
+                "schema",
+                "handoff_id",
+                "payload_fingerprint",
+                "expected_source_content_digest",
+                "observed_source",
+                "receiver_record_fingerprint",
+                "status",
+                "reason",
+                "supersession_evidence_ref",
+                "observed_receiver",
+                "consumption_mode",
+                "runtime_used",
+                "install_attempted",
+                "evidence_refs",
+            },
+        )
+        self.assertEqual(acknowledgement["status"], "applied")
+        self.assertEqual(
+            acknowledgement["reason"], "exact-direct-source-read"
+        )
+        self.assertEqual(
+            acknowledgement["consumption_mode"], "direct-source-read"
+        )
+        self.assertFalse(acknowledgement["runtime_used"])
+        self.assertFalse(acknowledgement["install_attempted"])
+        self.assertEqual(
+            set(acknowledgement["observed_receiver"]),
+            {"catalog", "cache", "runtime"},
+        )
+
+        compact_reference = " ".join(reference.split()).lower()
+        for invariant in (
+            "new handoffs must use v2",
+            "v1 cannot prove exact source identity, receiver version, "
+            "consumption mode, or runtime activation",
+            "runtime.discovery=active` is not proof of the loaded bytes",
+            "`activation_authorized` is a constant false safety marker",
+            "atomically reserve `(handoff_id, payload_fingerprint)`",
+            "same id and fingerprint returns the stored terminal acknowledgement",
+            "same id with a different fingerprint returns "
+            "`conflict/id-conflict`",
+            "persist the terminal acknowledgement atomically with the reservation",
+            "expected digest always echoes the handoff",
+            "`observed_source` independently records what the receiver verified",
+            "content-addressed private payload ref",
+            "deterministic validator",
+        ):
+            self.assertIn(invariant, compact_reference)
+
+        compact_skill = " ".join(
+            SKILL.read_text(encoding="utf-8").split()
+        ).lower()
+        for invariant in (
+            "versioned handoff payload and acknowledgement",
+            "immutable source, canonical content, and receiver "
+            "catalog/cache/loaded-runtime identity",
+            "`runtime-loaded` from `direct-source-read`",
+            "without proving installed or runtime-active capability",
+            "never install or refresh",
+            "thread-skill-handoff-contract.md",
+        ):
+            self.assertIn(invariant, compact_skill)
+
+        compact_supervision = " ".join(
+            REFERENCE.read_text(encoding="utf-8").split()
+        ).lower()
+        for invariant in (
+            "immutable content-addressed payload recovery ref",
+            "expected source digest and requested consumption mode",
+            "load and validate the immutable payload before accepting an "
+            "acknowledgement",
+            "never infer it from activity or reconstruct it from prose",
+        ):
+            self.assertIn(invariant, compact_supervision)
+
     def test_supervision_docs_are_public_safe_and_use_no_raw_directives(self):
-        for path in (SKILL, REFERENCE):
+        for path in (SKILL, REFERENCE, HANDOFF_REFERENCE):
             text = path.read_text(encoding="utf-8")
             self.assertTrue(text.isascii(), str(path))
             for forbidden in (
