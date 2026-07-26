@@ -185,6 +185,12 @@ def _error_payload(problem: InputProblem) -> dict[str, Any]:
     }
 
 
+def _generic_input_error_payload() -> dict[str, Any]:
+    return _error_payload(
+        InputProblem("input_error", "$", "input validation could not complete")
+    )
+
+
 def canonical_core(bundle: dict[str, Any]) -> bytes:
     """Return canonical UTF-8 JSON for the commitment-covered fields."""
     core = {
@@ -1947,14 +1953,18 @@ def main(argv: list[str] | None = None) -> int:
     except InputProblem as problem:
         payload = _error_payload(problem)
         exit_code = 1
-    except (OSError, RecursionError, ValueError):
-        payload = _error_payload(
-            InputProblem("input_error", "$", "input validation could not complete")
-        )
+    except Exception:
+        # Machine consumers require one non-leaking JSON envelope for every
+        # non-interrupt failure, including unexpected validation defects.
+        payload = _generic_input_error_payload()
         exit_code = 1
     finally:
         if companion_base_descriptor is not None:
-            os.close(companion_base_descriptor)
+            try:
+                os.close(companion_base_descriptor)
+            except Exception:
+                payload = _generic_input_error_payload()
+                exit_code = 1
     sys.stdout.write(_json_line(payload) + "\n")
     return exit_code
 

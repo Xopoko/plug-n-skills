@@ -191,13 +191,16 @@ class AsyncStateConsistencySkillTest(unittest.TestCase):
             "admission-first",
             "does not detach healthy a",
             "non-joinable before b selects membership",
-            "neither joins nor waits behind a",
+            "does not join a",
             "distinct eligible identity",
+            "execution or wait follows the declared same-generation admission policy",
+            "queue or serialization may keep b waiting for a to terminate",
             "late cleanup cannot remove b",
             "admission-first preserves",
             "cancellation as commit authority",
         ):
             self.assertIn(invariant, asc_20)
+        self.assertNotIn("neither joins nor waits behind a", asc_20)
 
     def test_skill_forbids_revoked_waits_and_owner_reentry(self):
         text = " ".join(SKILL.read_text(encoding="utf-8").split()).lower()

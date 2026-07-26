@@ -35,6 +35,28 @@ ALLOWED_ANCILLARY_CHUNKS = {
     b"sRGB",
 }
 CONTROL_CHARACTERS = re.compile(r"[\x00-\x1f\x7f]")
+WIN32_FORBIDDEN_CHARACTERS = re.compile(r'[<>"|?*]')
+WIN32_RESERVED_DEVICE_NAMES = frozenset(
+    {"CON", "PRN", "AUX", "NUL", "CONIN$", "CONOUT$"}
+    | {
+        f"{prefix}{suffix}"
+        for prefix in ("COM", "LPT")
+        for suffix in (
+            "1",
+            "2",
+            "3",
+            "4",
+            "5",
+            "6",
+            "7",
+            "8",
+            "9",
+            "\u00b9",
+            "\u00b2",
+            "\u00b3",
+        )
+    }
+)
 SHA256_PATTERN = re.compile(r"[0-9a-f]{64}")
 
 
@@ -376,6 +398,26 @@ def normalized_member_path(value: str, *, label: str) -> str:
         fail("escaping_path", f"{label} path escapes or aliases its root", value)
     if unicodedata.normalize("NFC", value) != value:
         fail("non_normalized_path", f"{label} path must use NFC normalization", value)
+    for part in value.split("/"):
+        if part.endswith((".", " ")):
+            fail(
+                "win32_trailing_alias",
+                f"{label} path contains a Win32 trailing-dot or trailing-space alias",
+                value,
+            )
+        if WIN32_FORBIDDEN_CHARACTERS.search(part):
+            fail(
+                "win32_invalid_character",
+                f"{label} path contains a Win32-invalid character",
+                value,
+            )
+        device_name = part.split(".", 1)[0].rstrip(" ").upper()
+        if device_name in WIN32_RESERVED_DEVICE_NAMES:
+            fail(
+                "win32_reserved_name",
+                f"{label} path contains a Win32 reserved device name",
+                value,
+            )
 
     candidate = PurePosixPath(value)
     if candidate.is_absolute():
@@ -386,7 +428,10 @@ def normalized_member_path(value: str, *, label: str) -> str:
 
 
 def collision_key(path: str) -> str:
-    return unicodedata.normalize("NFC", path).casefold()
+    return "/".join(
+        unicodedata.normalize("NFC", part.rstrip(" .")).casefold()
+        for part in path.split("/")
+    )
 
 
 def load_allowlist(path: Path, max_files: int) -> tuple[list[str], str]:

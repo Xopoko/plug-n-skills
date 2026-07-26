@@ -100,7 +100,7 @@ Audit every row that exists:
 | Late subscriber | Replay container retained a revoked value | Current lifecycle state and generation |
 | Warm cache | Hit bypasses current invalidation state | Atomic candidate-and-authority read |
 | One-shot caller | Shared publish is rejected but the function returns its own value | Explicit caller supersession outcome |
-| Coordination stack | An outer mutex, actor, queue, single-flight, or coalescer still makes a later caller join or wait behind revoked or non-joinable work | Where a layer admits or joins shared work, generation, entry identity, membership, and join eligibility change atomically; every layer detaches revoked work or permits eligible progress; late cleanup is conditional on entry identity |
+| Coordination stack | An outer mutex, actor, queue, single-flight, or coalescer still makes a later caller join a non-joinable entry, or join or wait behind work revoked by invalidation | Where a layer admits or joins shared work, generation, entry identity, membership, and join eligibility change atomically; every layer detaches revoked work or permits eligible progress; late cleanup is conditional on entry identity |
 | Memoized projection | Candidate is read before dependency or global validation | Stamped complete snapshot or retry |
 | Persistence | Late work writes a value that later startup replays | Ownership checked in the persistent commit |
 | Notification | Mutation commits but subscribers never learn it | Non-delivering intent in the state commit; delivery after release, or durable ordered notification |
@@ -169,6 +169,11 @@ atomically mark that exact membership non-joinable or detach it before a later
 admission can select it. The work may remain nonterminal and may ignore
 cancellation, but a later same-generation caller starts or joins a different
 eligible entry according to the declared admission policy.
+
+Non-joinable means that the later caller cannot join the old membership; it
+does not override the declared same-generation queue or serialization policy.
+A replacement may remain queued until the old work terminates, but it must
+already have a distinct eligible identity.
 
 Give every registry entry a distinct identity. Late completion or cleanup may
 remove membership only if the registry still contains that exact identity; it
@@ -262,7 +267,7 @@ winners where order is part of the contract.
 | ASC-17 | Gate immediately before B's whole atomic admission attempt; run invalidation-first and admission-first, then a same-generation pair; for CAS, allow an earlier speculative snapshot, then CAS the combined generation-and-membership snapshot by requiring the expected generation while installing membership | Invalidation-first admits B only under the current generation; admission-first is subsequently detached or revoked, later callers neither join nor wait behind it, and its late commit is rejected; a mismatched CAS retries; the same-generation pair preserves the declared admission and publication-order policies |
 | ASC-18 | Publish V, invalidate, then immediately publish equal-payload V again without draining an equality-conflating observer | The retained authority epoch advances and is observable at every decision boundary; revoked work remains fenced; no consumer depends on delivery of the intermediate invalidated value |
 | ASC-19 | Carry source-issued token A through a projection, then issue token B with the same exposed counters but a different source-defined owner or authority field; also present malformed, truncated, noncanonical, and incomplete supported-version encodings | Every layer preserves the complete source token and compares through the source contract; genuine B survives the same path and authorizes B's commit; A and consumer-reconstructed tokens are rejected; every invalid encoding and unsupported version fails closed |
-| ASC-20 | Hold shared A nonterminal. First cancel one waiter and admit a control caller while A remains healthy. Separately gate B immediately before admission and run shared-entry-cancellation-first and admission-first; in the first schedule install replacement B, then let A clean up | One-waiter cancellation does not detach healthy A and the control caller follows the declared same-generation policy. Shared-entry-cancellation-first makes A non-joinable before B selects membership, so B neither joins nor waits behind A and uses a distinct eligible identity; A's late cleanup cannot remove B. Admission-first preserves the declared same-generation outcome. Neither schedule treats cancellation as commit authority |
+| ASC-20 | Hold shared A nonterminal. First cancel one waiter and admit a control caller while A remains healthy. Separately gate B immediately before admission and run shared-entry-cancellation-first and admission-first; in the first schedule install replacement B, then let A clean up | One-waiter cancellation does not detach healthy A and the control caller follows the declared same-generation policy. Shared-entry-cancellation-first makes A non-joinable before B selects membership, so B does not join A and uses a distinct eligible identity. B's execution or wait follows the declared same-generation admission policy; queue or serialization may keep B waiting for A to terminate. A's late cleanup cannot remove B. Admission-first preserves the declared same-generation outcome. Neither schedule treats cancellation as commit authority |
 
 Holding A before its last ownership check does not prove the check-to-commit
 boundary. The gate must be immediately before the atomic or serialized attempt.
