@@ -155,6 +155,33 @@ failure, filtered-run, and final-head contract.
 - Make duplicate callbacks/retries idempotent.
 - Add redacted observability for high-risk transitions when useful.
 
+## Change Scope Freeze
+
+Before freezing a material KMP diff for review or proof:
+
+- Bind the exact base and candidate, then derive the complete changed-path set
+  and statuses from committed, staged, and unstaged changes. Inventory every
+  task-scope untracked path without mutating user-owned work. Mark each as
+  retained candidate or excluded with a reason; include retained bytes in the
+  candidate manifest with status `untracked`. Create one ledger row per
+  candidate path: purpose class (production, compatibility,
+  test/fixture/harness, generated/project membership, or temporary), served
+  claim or seam, affected target, unique proof obligation, and final
+  disposition. The candidate's exact (path, status) set must equal the ledger.
+- If cleanup residue exists and cleanup is authorized, remove or revert
+  temporary proof residue, generator-only configuration, accidental
+  format-only churn, and obsolete or duplicate scaffolding. If residue exists
+  without cleanup authority, report the blocker and stop with
+  `SCOPE_UNRESOLVED`. Retain compatibility, platform, and test seams only with
+  a named consumer or claim plus targeted proof.
+- Treat diff size as a review-capacity signal, not an acceptance criterion.
+  Split when reviewers or proofs cannot cover every row; retain necessary
+  cross-boundary seams when they form the smallest coherent implementation.
+- After any cleanup, base change, or input drift, re-derive the ledger and
+  invalidate the affected fingerprint, review, and proof. Freeze only the
+  minimized candidate. If any path is unclassified or unjustified, stop with
+  `SCOPE_UNRESOLVED`.
+
 ## Review
 
 Lead reviews with:
