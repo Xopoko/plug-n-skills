@@ -32,6 +32,10 @@ A minimal migration record can use these states:
 - `complete`: the migration is terminal for this epoch, with a reason such as
   `imported`, `destination-won`, or a policy-declared terminal source outcome.
 
+Treat `corrupt` as an in-memory read classification, not a writable record
+state: a declared migration-metadata key is present but its type or schema is
+invalid, so no migration transition is eligible.
+
 Use a separate `cleanup-pending` or cleanup receipt when legacy deletion is
 required. Cleanup status must not erase or weaken the completed destination
 decision.
@@ -41,6 +45,13 @@ decision.
 Check exact key presence, not whether a parsed value resembles a default.
 Empty, unknown, or invalid destination payloads can still be authoritative
 presence under the product policy.
+
+Apply the same presence-first rule to checkpoints, receipts, epochs, and
+cleanup metadata. A typed nullable getter returning `null` does not prove
+absence when the key exists. Classify a present wrong-typed or malformed value
+as `corrupt`; preserve it and fail before admission, source capture, projection,
+destination writes, or cleanup. Only an explicit repair or separately
+versioned epoch may replace it.
 
 On Apple platforms, typed `UserDefaults` accessors and registered defaults can
 return fallback values. A registered fallback is not persistent-domain
@@ -149,6 +160,7 @@ For malformed or policy-invalid source, make the policy explicit:
 | Deferred source arrives | Before the retry condition, prove retries do not consult source. After the declared watermark or trigger, CAS-admit one new attempt; if destination appeared meanwhile, terminalize destination-won instead. |
 | Malformed source, terminal policy | Persist `complete(source-rejected)` with policy-authorized, minimized, and protected evidence; otherwise keep bounded metadata or a digest. Never partially project a prefix or subset as valid data. |
 | Malformed source, repairable policy | Keep a policy-safe quarantined/deferred checkpoint, preserve the source, and prove a retry cannot write partial data. |
+| Wrong-typed or malformed migration metadata | Read presence before typed decoding and classify it `corrupt` in memory. Prove the original key and value remain unchanged while admission, source-capture, projection, destination-write, migration-metadata-write, and cleanup counts stay zero. |
 | Concurrent callers | Gate both callers before admission; one repository owner produces at most one checkpoint and one durable terminal decision. |
 | Concurrent durable captures | CAS-install one capture identity; prove a losing caller discards its local capture and cannot project or commit it. |
 | Registered default only | Prove the fallback is not persistent presence and classify the requested source key as missing. |
