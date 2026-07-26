@@ -91,15 +91,15 @@ same-dispatcher `NonCancellable` boundary:
 
 ```kotlin
 val receipt = withContext(NonCancellable) {
-    val receipt: AcceptedAuthorityCommit = withContext(ioDispatcher) {
+    val committedReceipt: AcceptedAuthorityCommit = withContext(ioDispatcher) {
         store.transaction {
             requireAuthority(expectedAuthority)
             store.commit()
             AcceptedAuthorityCommit(revision)
         }
     }
-    publishRequired(receipt) // awaits WakeAccepted(revision)
-    receipt
+    publishRequired(committedReceipt) // awaits WakeAccepted(revision)
+    committedReceipt
 }
 currentCoroutineContext().ensureActive()
 return receipt

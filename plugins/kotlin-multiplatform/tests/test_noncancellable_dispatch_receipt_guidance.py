@@ -92,7 +92,7 @@ class NonCancellableDispatchReceiptGuidanceTest(unittest.TestCase):
             "prompt-cancellable return dispatch can replace the caller's observation of an accepted receipt",
             "outer same-dispatcher noncancellable boundary",
             "acceptedauthoritycommit",
-            "publishrequired(receipt)",
+            "publishrequired(committedreceipt)",
             "wakeaccepted",
             "currentcoroutinecontext().ensureactive()",
             "keep preliminary admission cancellable",
@@ -109,11 +109,15 @@ class NonCancellableDispatchReceiptGuidanceTest(unittest.TestCase):
         ):
             self.assertIn(invariant, text)
 
-        safe_start = text.index("instead, keep the dispatcher hop")
-        safe_end = text.index("keep preliminary admission cancellable", safe_start)
+        safe_start_anchor = "instead, keep the dispatcher hop"
+        safe_end_anchor = "keep preliminary admission cancellable"
+        self.assertIn(safe_start_anchor, text)
+        self.assertIn(safe_end_anchor, text)
+        safe_start = text.index(safe_start_anchor)
+        safe_end = text.index(safe_end_anchor, safe_start)
         safe_block = text[safe_start:safe_end]
         self.assertLess(
-            safe_block.index("publishrequired(receipt)"),
+            safe_block.index("publishrequired(committedreceipt)"),
             safe_block.index("currentcoroutinecontext().ensureactive()"),
         )
 
