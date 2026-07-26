@@ -1,6 +1,6 @@
 ---
 name: codex-thread-supervisor
-description: Use when watching, monitoring, following, or supervising one or more live Codex tasks or threads by ID, including cursor-based transitions, completion or attention gates, claim checks, compact checkpoints, narrowly authorized skill handoffs or evidence corrections, and privacy-safe capability mining. Not for post-hoc rollout forensics, current-turn subagents, or external job polling.
+description: Use when watching, monitoring, following, or supervising one or more live Codex tasks or threads by ID, including cursor-based transitions, completion or attention gates, claim checks, compact checkpoint adoption guardrails, narrowly authorized skill handoffs or evidence corrections, and privacy-safe capability mining. Not for post-hoc rollout forensics, current-turn subagents, or external job polling.
 ---
 
 # Codex Thread Supervisor
@@ -56,6 +56,35 @@ Use `read_thread` only to disambiguate one named missing fact. Increase history
 depth or include a bounded tool output only when that fact requires it. Route
 persisted-history questions to `codex-log-reader` instead of repeatedly
 expanding a live snapshot.
+
+## Adopt Typed Checkpoints
+
+Validating a supplied `previous -> current` pair is not canonical adoption. A
+receipt proves that pair, not the retained head or store advance.
+This skill supplies guardrails, not a canonical store or adopter. Use with
+explicit mutation authority and an existing store interface
+with atomic full-token CAS. Never emulate CAS with read plus ordinary write.
+Without it, keep `pair=valid`, `adoption=capability-unavailable`, and the
+candidate noncanonical.
+
+Adoption checks:
+
+1. Independently load the full retained head token, store, chain, and origin
+   receipt.
+2. Match the producer receipt's basis head-token fingerprint and schema version
+   to that token, plus its `from`, candidate `to`, and protected fingerprint.
+   A pair-only receipt is ineligible.
+3. Reject store or chain mismatch. Protected drift needs separate typed
+   new-chain or rebind authority.
+4. Create the immutable pre-CAS intent; CAS the full token, including its
+   generation and creating-intent fingerprint. This prevents fork and ABA adoption.
+5. Read the token and native result before the terminal receipt. Unknown commit
+   or readback is `reconciliation-required`, not `not-adopted`; reconcile the
+   operation ID before retrying.
+
+Keep pair, lineage, protection, commit, readback, and adoption as independent
+closed verdicts. Separate producer and adoption receipts. Details are in
+`$PLUGIN_ROOT/references/thread-supervision-contract.md`.
 
 ## Watch Transitions
 

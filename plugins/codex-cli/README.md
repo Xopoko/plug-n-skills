@@ -10,8 +10,9 @@ evidence.
 - `codex-exec-automation`: non-interactive `codex exec` and `codex review` runs.
 - `codex-deferred-completion`: one validated producer-native terminal receipt without model-driven polling.
 - `codex-thread-supervisor`: live multi-thread observation, transition waits,
-  gated skill handoffs or versioned evidence corrections, aggregate claim
-  boundaries, and privacy-safe capability mining.
+  canonical checkpoint adoption guardrails, gated skill handoffs or versioned
+  evidence corrections, aggregate claim boundaries, and privacy-safe capability
+  mining.
 - `codex-plugin-mcp-manager`: plugin marketplaces, installed plugins, and MCP servers.
 - `codex-doctor-debugger`: `doctor`, `debug`, `sandbox`, feature flags, app-server, and remote-control diagnostics.
 - `codex-log-reader`: redacted rollout JSONL lookup, root/child normalization, active-scope views, deterministic trace audits, searches, and log health checks.
