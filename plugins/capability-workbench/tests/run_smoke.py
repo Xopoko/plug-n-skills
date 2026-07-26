@@ -21,6 +21,7 @@ SCRIPTS = PLUGIN_ROOT / "scripts"
 
 FAILURES: list[str] = []
 PASSES = 0
+NEUTRAL_HOMES = {"CODEX_HOME": "", "CLAUDE_HOME": "", "CURSOR_HOME": ""}
 
 
 def run(args: list[str], *, cwd: Path | None = None, env: dict | None = None) -> subprocess.CompletedProcess:
@@ -927,7 +928,8 @@ def test_capability_inventory() -> None:
                 "--plugin-root",
                 str(root / "plugins"),
                 "--json",
-            ]
+            ],
+            env=NEUTRAL_HOMES,
         )
         check("capability_inventory: runs", result.returncode == 0, result.stderr)
         if result.returncode == 0:
@@ -1082,6 +1084,16 @@ def test_capability_inventory() -> None:
             "retained-cache-release-precedence",
             "3.0.0",
         )
+        write_cached_plugin(
+            "local",
+            "retained-cache-build-tiebreak",
+            "2.2.0+001",
+        )
+        build_tiebreak_locator = write_cached_plugin(
+            "local",
+            "retained-cache-build-tiebreak",
+            "2.2.0+1",
+        )
         direct_plugin = (
             codex_home
             / "plugins"
@@ -1192,7 +1204,7 @@ def test_capability_inventory() -> None:
         )
         malformed_codex.mkdir(parents=True)
         (malformed_codex / "plugin.json").write_text(
-            "{",
+            "{}",
             encoding="utf-8",
         )
         valid_claude = claude_fallback_locator / ".claude-plugin"
@@ -1216,7 +1228,7 @@ def test_capability_inventory() -> None:
         )
         direct_bad_codex.mkdir(parents=True)
         (direct_bad_codex / "plugin.json").write_text(
-            "[]",
+            "{}",
             encoding="utf-8",
         )
         direct_valid_claude = (
@@ -1322,6 +1334,15 @@ def test_capability_inventory() -> None:
                 ),
                 str(payload["plugins"]),
             )
+            check(
+                "capability_inventory: build metadata tie-break is deterministic",
+                any(
+                    row["name"] == "retained-cache-build-tiebreak"
+                    and Path(row["path"]) == build_tiebreak_locator
+                    for row in payload["plugins"]
+                ),
+                str(payload["plugins"]),
+            )
             plugin_names = {row["name"] for row in payload["plugins"]}
             check(
                 "capability_inventory: omits ambiguous non-SemVer histories",
@@ -1413,9 +1434,6 @@ def test_capability_inventory() -> None:
                 retained_locator.is_dir() and older_semver_locator.is_dir(),
                 f"{retained_locator}, {older_semver_locator}",
             )
-
-
-NEUTRAL_HOMES = {"CODEX_HOME": "", "CLAUDE_HOME": "", "CURSOR_HOME": ""}
 
 
 def test_agent_target() -> None:

@@ -113,7 +113,7 @@ def semver_sort_key(raw: str) -> tuple[Any, ...] | None:
     build = match.group(5)
     build_key = (
         tuple(
-            (0, int(part)) if part.isdigit() else (1, part)
+            (0, int(part), part) if part.isdigit() else (1, part)
             for part in build.split(".")
         )
         if build
@@ -185,7 +185,16 @@ def direct_plugin_manifests(plugin_root: Path) -> list[Path]:
 
 def preferred_cache_manifest(plugin_root: Path) -> Path | None:
     for manifest in direct_plugin_manifests(plugin_root):
-        if read_json(manifest) is not None:
+        data = read_json(manifest)
+        if (
+            data is not None
+            and all(
+                isinstance(data.get(field), str)
+                and bool(data[field].strip())
+                for field in ("name", "version", "description")
+            )
+            and semver_sort_key(data["version"]) is not None
+        ):
             return manifest
     return None
 
