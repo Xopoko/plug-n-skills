@@ -21,6 +21,7 @@ SCRIPTS = PLUGIN_ROOT / "scripts"
 
 FAILURES: list[str] = []
 PASSES = 0
+NEUTRAL_HOMES = {"CODEX_HOME": "", "CLAUDE_HOME": "", "CURSOR_HOME": ""}
 
 
 def run(args: list[str], *, cwd: Path | None = None, env: dict | None = None) -> subprocess.CompletedProcess:
@@ -927,7 +928,8 @@ def test_capability_inventory() -> None:
                 "--plugin-root",
                 str(root / "plugins"),
                 "--json",
-            ]
+            ],
+            env=NEUTRAL_HOMES,
         )
         check("capability_inventory: runs", result.returncode == 0, result.stderr)
         if result.returncode == 0:
@@ -952,8 +954,486 @@ def test_capability_inventory() -> None:
                 str(payload["skills"]),
             )
 
+        codex_home = root / "codex-home"
+        home = root / "home"
 
-NEUTRAL_HOMES = {"CODEX_HOME": "", "CLAUDE_HOME": "", "CURSOR_HOME": ""}
+        def write_cached_plugin(
+            source: str,
+            plugin_name: str,
+            locator: str,
+            version: str | None = None,
+        ) -> Path:
+            version_dir = (
+                codex_home
+                / "plugins"
+                / "cache"
+                / source
+                / plugin_name
+                / locator
+            )
+            manifest_dir = version_dir / ".codex-plugin"
+            manifest_dir.mkdir(parents=True)
+            (manifest_dir / "plugin.json").write_text(
+                json.dumps(
+                    {
+                        "name": plugin_name,
+                        "version": version or locator,
+                        "description": "Synthetic retained cache fixture.",
+                    }
+                ),
+                encoding="utf-8",
+            )
+            return version_dir
+
+        retained_locator = write_cached_plugin(
+            "local",
+            "retained-cache-fixture",
+            "1.10.0+codex.20260725090000",
+        )
+        latest_locator = write_cached_plugin(
+            "local",
+            "retained-cache-fixture",
+            "1.10.0+codex.20260726120000",
+        )
+        older_semver_locator = write_cached_plugin(
+            "local",
+            "retained-cache-fixture",
+            "1.9.0+codex.20260727120000",
+        )
+        for version_dir in (
+            retained_locator,
+            latest_locator,
+            older_semver_locator,
+        ):
+            claude_manifest = version_dir / ".claude-plugin"
+            claude_manifest.mkdir()
+            (claude_manifest / "plugin.json").write_text(
+                json.dumps(
+                    {
+                        "name": "retained-cache-fixture",
+                        "version": version_dir.name.split("+", 1)[0],
+                        "description": "Synthetic retained cache fixture.",
+                    }
+                ),
+                encoding="utf-8",
+            )
+        write_skill(
+            retained_locator / "skills",
+            "retained-cache-skill",
+            "---\nname: retained-cache-skill\ndescription: Synthetic fixture.\n---\n",
+        )
+        bundled_locator = write_cached_plugin(
+            "openai-bundled",
+            "retained-cache-bundled",
+            "2.0.0",
+        )
+        write_cached_plugin(
+            "openai-curated",
+            "retained-cache-hash",
+            "content-hash-old",
+            "2.0.0",
+        )
+        latest_hash_locator = write_cached_plugin(
+            "openai-curated",
+            "retained-cache-hash",
+            "content-hash-current",
+            "2.1.0",
+        )
+        write_cached_plugin(
+            "openai-curated",
+            "retained-cache-tied-hash",
+            "content-hash-a",
+            "4.0.0",
+        )
+        write_cached_plugin(
+            "openai-curated",
+            "retained-cache-tied-hash",
+            "content-hash-b",
+            "4.0.0",
+        )
+        write_cached_plugin(
+            "local",
+            "retained-cache-ambiguous",
+            "content-a",
+            "development-a",
+        )
+        write_cached_plugin(
+            "local",
+            "retained-cache-ambiguous",
+            "content-b",
+            "development-b",
+        )
+        write_cached_plugin(
+            "local",
+            "retained-cache-unicode-semver",
+            "12٣.0.0",
+        )
+        write_cached_plugin(
+            "openai-curated",
+            "retained-cache-oversized-semver",
+            "content-hash",
+            f"1.{('9' * 5000)}.0",
+        )
+        write_cached_plugin(
+            "local",
+            "retained-cache-release-precedence",
+            "3.0.0-rc.1",
+        )
+        release_locator = write_cached_plugin(
+            "local",
+            "retained-cache-release-precedence",
+            "3.0.0",
+        )
+        write_cached_plugin(
+            "local",
+            "retained-cache-build-tiebreak",
+            "2.2.0+001",
+        )
+        build_tiebreak_locator = write_cached_plugin(
+            "local",
+            "retained-cache-build-tiebreak",
+            "2.2.0+1",
+        )
+        direct_plugin = (
+            codex_home
+            / "plugins"
+            / "cache"
+            / "local"
+            / "retained-cache-direct"
+        )
+        direct_manifest = direct_plugin / ".codex-plugin"
+        direct_manifest.mkdir(parents=True)
+        (direct_manifest / "plugin.json").write_text(
+            json.dumps(
+                {
+                    "name": "retained-cache-direct",
+                    "version": "5.0.0",
+                    "description": "Direct legacy cache fixture.",
+                }
+            ),
+            encoding="utf-8",
+        )
+        write_cached_plugin(
+            "local",
+            "retained-cache-direct",
+            "content-a",
+            "development-a",
+        )
+        write_cached_plugin(
+            "local",
+            "retained-cache-direct",
+            "content-b",
+            "development-b",
+        )
+        write_cached_plugin(
+            "local",
+            "retained-cache-direct",
+            "1.0.0",
+        )
+
+        outside_plugin = root / "outside-plugin"
+        outside_locator = outside_plugin / "9.0.0"
+        outside_manifest = outside_locator / ".codex-plugin"
+        outside_manifest.mkdir(parents=True)
+        (outside_manifest / "plugin.json").write_text(
+            json.dumps(
+                {
+                    "name": "retained-cache-external",
+                    "version": "9.0.0",
+                    "description": "Must not be scanned through a cache symlink.",
+                }
+            ),
+            encoding="utf-8",
+        )
+        cache_local = codex_home / "plugins" / "cache" / "local"
+        (cache_local / "retained-cache-plugin-link").symlink_to(
+            outside_plugin,
+            target_is_directory=True,
+        )
+        linked_version_plugin = cache_local / "retained-cache-version-link"
+        linked_version_plugin.mkdir()
+        (linked_version_plugin / "9.0.0").symlink_to(
+            outside_locator,
+            target_is_directory=True,
+        )
+        safe_manifest_locator = write_cached_plugin(
+            "local",
+            "retained-cache-manifest-link",
+            "6.0.0",
+        )
+        linked_manifest_parent = (
+            safe_manifest_locator / ".claude-plugin"
+        )
+        linked_manifest_parent.mkdir()
+        (linked_manifest_parent / "plugin.json").symlink_to(
+            outside_manifest / "plugin.json",
+        )
+        cache_alias = root / "cache-local-alias"
+        cache_alias.symlink_to(cache_local, target_is_directory=True)
+
+        normalized_extra_root = (
+            codex_home / "plugins" / "other-root"
+        )
+        normalized_extra_manifest = (
+            normalized_extra_root
+            / "retained-cache-normalized-extra"
+            / ".codex-plugin"
+        )
+        normalized_extra_manifest.mkdir(parents=True)
+        (normalized_extra_manifest / "plugin.json").write_text(
+            json.dumps(
+                {
+                    "name": "retained-cache-normalized-extra",
+                    "version": "8.0.0",
+                    "description": "Ordinary extra-root fixture.",
+                }
+            ),
+            encoding="utf-8",
+        )
+
+        claude_fallback_locator = (
+            codex_home
+            / "plugins"
+            / "cache"
+            / "openai-curated"
+            / "retained-cache-claude-fallback"
+            / "content-hash"
+        )
+        malformed_codex = (
+            claude_fallback_locator / ".codex-plugin"
+        )
+        malformed_codex.mkdir(parents=True)
+        (malformed_codex / "plugin.json").write_text(
+            "{}",
+            encoding="utf-8",
+        )
+        valid_claude = claude_fallback_locator / ".claude-plugin"
+        valid_claude.mkdir()
+        (valid_claude / "plugin.json").write_text(
+            json.dumps(
+                {
+                    "name": "retained-cache-claude-fallback",
+                    "version": "7.0.0",
+                    "description": "Valid fallback manifest.",
+                }
+            ),
+            encoding="utf-8",
+        )
+
+        direct_claude_fallback = (
+            cache_local / "retained-cache-direct-claude-fallback"
+        )
+        direct_bad_codex = (
+            direct_claude_fallback / ".codex-plugin"
+        )
+        direct_bad_codex.mkdir(parents=True)
+        (direct_bad_codex / "plugin.json").write_text(
+            "{}",
+            encoding="utf-8",
+        )
+        direct_valid_claude = (
+            direct_claude_fallback / ".claude-plugin"
+        )
+        direct_valid_claude.mkdir()
+        (direct_valid_claude / "plugin.json").write_text(
+            json.dumps(
+                {
+                    "name": "retained-cache-direct-claude-fallback",
+                    "version": "7.1.0",
+                    "description": "Valid direct fallback manifest.",
+                }
+            ),
+            encoding="utf-8",
+        )
+
+        unreadable_source = (
+            codex_home / "plugins" / "cache" / "unreadable-source"
+        )
+        unreadable_source.mkdir()
+        unreadable_source.chmod(0)
+
+        write_skill(
+            home / ".codex" / "skills" / ".system",
+            "retained-cache-personal-system",
+            "---\nname: retained-cache-personal-system\ndescription: Must remain profile-isolated.\n---\n",
+        )
+
+        try:
+            result = run(
+                [
+                    script,
+                    "--query",
+                    "retained-cache",
+                    "--plugin-root",
+                    str(cache_local),
+                    "--plugin-root",
+                    str(cache_alias),
+                    "--plugin-root",
+                    str(
+                        codex_home
+                        / "plugins"
+                        / "cache"
+                        / ".."
+                        / "other-root"
+                    ),
+                    "--json",
+                ],
+                env={
+                    "HOME": str(home),
+                    "CODEX_HOME": str(codex_home),
+                    "CLAUDE_HOME": "",
+                    "CURSOR_HOME": "",
+                },
+            )
+        finally:
+            unreadable_source.chmod(0o700)
+        check(
+            "capability_inventory: retained cache fixture runs",
+            result.returncode == 0,
+            result.stderr,
+        )
+        if result.returncode == 0:
+            payload = json.loads(result.stdout)
+            cache_rows = [
+                row
+                for row in payload["plugins"]
+                if row["name"] == "retained-cache-fixture"
+            ]
+            check(
+                "capability_inventory: only latest cachebuster version is current",
+                len(cache_rows) == 1
+                and cache_rows[0]["version"] == latest_locator.name
+                and Path(cache_rows[0]["path"]) == latest_locator,
+                str(cache_rows),
+            )
+            check(
+                "capability_inventory: discovers all cache sources",
+                any(
+                    row["name"] == "retained-cache-bundled"
+                    and Path(row["path"]) == bundled_locator
+                    for row in payload["plugins"]
+                ),
+                str(payload["plugins"]),
+            )
+            check(
+                "capability_inventory: uses manifest SemVer for hash locators",
+                any(
+                    row["name"] == "retained-cache-hash"
+                    and row["version"] == "2.1.0"
+                    and Path(row["path"]) == latest_hash_locator
+                    for row in payload["plugins"]
+                ),
+                str(payload["plugins"]),
+            )
+            check(
+                "capability_inventory: release outranks prerelease",
+                any(
+                    row["name"] == "retained-cache-release-precedence"
+                    and Path(row["path"]) == release_locator
+                    for row in payload["plugins"]
+                ),
+                str(payload["plugins"]),
+            )
+            check(
+                "capability_inventory: build metadata tie-break is deterministic",
+                any(
+                    row["name"] == "retained-cache-build-tiebreak"
+                    and Path(row["path"]) == build_tiebreak_locator
+                    for row in payload["plugins"]
+                ),
+                str(payload["plugins"]),
+            )
+            plugin_names = {row["name"] for row in payload["plugins"]}
+            check(
+                "capability_inventory: omits ambiguous non-SemVer histories",
+                "retained-cache-ambiguous" not in plugin_names,
+                str(payload["plugins"]),
+            )
+            check(
+                "capability_inventory: omits tied hash locator histories",
+                "retained-cache-tied-hash" not in plugin_names,
+                str(payload["plugins"]),
+            )
+            check(
+                "capability_inventory: rejects non-ASCII SemVer digits",
+                "retained-cache-unicode-semver" not in plugin_names,
+                str(payload["plugins"]),
+            )
+            check(
+                "capability_inventory: skips oversized SemVer identifiers",
+                "retained-cache-oversized-semver" not in plugin_names,
+                str(payload["plugins"]),
+            )
+            check(
+                "capability_inventory: does not follow cache symlinks",
+                "retained-cache-external" not in plugin_names
+                and "retained-cache-plugin-link" not in plugin_names
+                and "retained-cache-version-link" not in plugin_names,
+                str(payload["plugins"]),
+            )
+            check(
+                "capability_inventory: scans only selected direct manifests",
+                sum(
+                    row["name"] == "retained-cache-direct"
+                    and Path(row["path"]) == direct_plugin
+                    for row in payload["plugins"]
+                )
+                == 1,
+                str(payload["plugins"]),
+            )
+            check(
+                "capability_inventory: rejects linked sibling manifests",
+                "retained-cache-external" not in plugin_names
+                and any(
+                    row["name"] == "retained-cache-manifest-link"
+                    and Path(row["path"]) == safe_manifest_locator
+                    for row in payload["plugins"]
+                ),
+                str(payload["plugins"]),
+            )
+            check(
+                "capability_inventory: normalized ordinary extra roots remain",
+                "retained-cache-normalized-extra" in plugin_names,
+                str(payload["plugins"]),
+            )
+            check(
+                "capability_inventory: valid Claude manifest is cache fallback",
+                any(
+                    row["name"] == "retained-cache-claude-fallback"
+                    and row["version"] == "7.0.0"
+                    and Path(row["path"]) == claude_fallback_locator
+                    for row in payload["plugins"]
+                )
+                and any(
+                    row["name"]
+                    == "retained-cache-direct-claude-fallback"
+                    and row["version"] == "7.1.0"
+                    and Path(row["path"]) == direct_claude_fallback
+                    for row in payload["plugins"]
+                ),
+                str(payload["plugins"]),
+            )
+            check(
+                "capability_inventory: plugin cache is not a skill root",
+                not any(
+                    row["name"] == "retained-cache-skill"
+                    for row in payload["skills"]
+                ),
+                str(payload["skills"]),
+            )
+            check(
+                "capability_inventory: custom Codex profile stays isolated",
+                not any(
+                    row["name"] == "retained-cache-personal-system"
+                    for row in payload["skills"]
+                ),
+                str(payload["skills"]),
+            )
+            check(
+                "capability_inventory: retained locator directory is preserved",
+                retained_locator.is_dir() and older_semver_locator.is_dir(),
+                f"{retained_locator}, {older_semver_locator}",
+            )
 
 
 def test_agent_target() -> None:
