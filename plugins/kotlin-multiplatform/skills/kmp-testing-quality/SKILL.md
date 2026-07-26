@@ -75,7 +75,7 @@ Favor confidence/speed over coverage vanity:
   `focusProperties` only for an intentional product contract, never as a patch
   that makes a test pass.
 - Keep interaction and rendering proof separate: a screenshot cannot prove
-  keyboard traversal, while a focus assertion cannot approve visual meaning.
+  keyboard traversal, while a focus assertion cannot prove visual meaning.
 - Bind the receipt to exact source bytes, source set, target, leaf test task,
   and non-empty result: use clean-at-SHA for committed delivery, or a base
   revision plus an affected-file manifest/content hash covering staged,
