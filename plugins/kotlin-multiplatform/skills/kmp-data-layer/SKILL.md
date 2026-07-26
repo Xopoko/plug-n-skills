@@ -90,6 +90,17 @@ Use Klibs.io and official docs as target-support evidence. Do not put a library 
 - Do not swallow cancellation.
 - Cancellation is not a commit fence. Cancellation-ignoring work still needs
   ownership and caller-result guards; define how its late failure is observed.
+- A dispatcher-changing `withContext` has a prompt-cancellable return hop: its
+  block may durably commit, yet cancellation of the original context can
+  discard its returned receipt. When cancellation-ignoring persistence must
+  publish a required receipt or wake on the caller dispatcher, do not place
+  that publication after `withContext(NonCancellable + ioDispatcher)`. After
+  the final admission/authority check, enter `withContext(NonCancellable)` on
+  the caller dispatcher, nest `withContext(ioDispatcher)` for the durable
+  write, and publish before leaving the outer boundary; await a bounded,
+  identity-bound local acceptance rather than detached observation. Then call
+  `ensureActive()` before later caller-owned effects. A cancelled caller does
+  not receive the typed return, but required publication completes first.
 - Separate cancellation of one waiter from cancellation requested for the
   shared entry. Cancelling one waiter must not detach otherwise healthy shared
   work. A shared-entry cancellation request atomically makes that exact
