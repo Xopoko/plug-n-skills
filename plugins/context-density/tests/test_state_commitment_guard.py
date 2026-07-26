@@ -7,7 +7,7 @@ import subprocess
 import sys
 import tempfile
 import unittest
-from contextlib import redirect_stdout
+from contextlib import redirect_stderr, redirect_stdout
 from pathlib import Path
 from unittest.mock import patch
 
@@ -1006,6 +1006,53 @@ class MalformedInputTests(BundleCase):
         self.assertEqual(exit_code, 1)
         self.assertEqual(payload["schema"], guard.ERROR_SCHEMA)
         self.assertEqual(payload["error"]["code"], "invalid_arguments")
+
+    def test_unexpected_validation_exception_is_generic_json(self):
+        self.materialize()
+        stdout = io.StringIO()
+        stderr = io.StringIO()
+        with (
+            patch.object(
+                guard,
+                "validate_bundle",
+                side_effect=TypeError("sentinel-internal-detail"),
+            ),
+            redirect_stdout(stdout),
+            redirect_stderr(stderr),
+        ):
+            exit_code = guard.main(["validate", "--input", str(self.input)])
+
+        output = stdout.getvalue()
+        payload = json.loads(output)
+        self.assertEqual(exit_code, 1, payload)
+        self.assertEqual(payload["schema"], guard.ERROR_SCHEMA)
+        self.assertEqual(payload["error"]["code"], "input_error")
+        self.assertNotIn("sentinel-internal-detail", output)
+        self.assertEqual("", stderr.getvalue())
+
+    def test_cleanup_exception_is_generic_json(self):
+        stdout = io.StringIO()
+        stderr = io.StringIO()
+        with (
+            patch.object(guard, "_load_input", return_value=({}, 123)),
+            patch.object(guard, "validate_bundle", return_value=({}, 0)),
+            patch.object(
+                guard.os,
+                "close",
+                side_effect=OSError("sentinel-cleanup-detail"),
+            ),
+            redirect_stdout(stdout),
+            redirect_stderr(stderr),
+        ):
+            exit_code = guard.main(["validate", "--input", "unused.json"])
+
+        output = stdout.getvalue()
+        payload = json.loads(output)
+        self.assertEqual(exit_code, 1, payload)
+        self.assertEqual(payload["schema"], guard.ERROR_SCHEMA)
+        self.assertEqual(payload["error"]["code"], "input_error")
+        self.assertNotIn("sentinel-cleanup-detail", output)
+        self.assertEqual("", stderr.getvalue())
 
     def test_embedded_nul_input_path_is_json_error(self):
         stdout = io.StringIO()

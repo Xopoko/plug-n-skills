@@ -867,7 +867,12 @@ def capture_control_plane_snapshot(
     marketplace_name: str,
     plugin_name: str,
 ) -> tuple[bytes, bytes]:
-    config_before = config_file.read_bytes()
+    try:
+        config_before = config_file.read_bytes()
+    except FileNotFoundError:
+        raise ValueError(
+            f'{config_file} does not enable [plugins."{plugin_id}"]'
+        ) from None
     marketplace_before = marketplace_file.read_bytes()
 
     ensure_config_enabled(config_file, plugin_id)

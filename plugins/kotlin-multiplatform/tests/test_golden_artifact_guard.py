@@ -321,6 +321,40 @@ class GoldenArtifactGuardTest(unittest.TestCase):
             ("parent", "goldens/../a.png", "escaping_path"),
             ("backslash", "goldens\\a.png", "backslash_path"),
             ("absolute", "/goldens/a.png", "absolute_path"),
+            ("trailing-dot", "goldens./a.png", "win32_trailing_alias"),
+            ("trailing-space", "goldens /a.png", "win32_trailing_alias"),
+            ("reserved-directory", "CON/a.png", "win32_reserved_name"),
+            ("reserved-file", "goldens/NUL.png", "win32_reserved_name"),
+            (
+                "reserved-superscript",
+                "goldens/COM\u00b9.png",
+                "win32_reserved_name",
+            ),
+            (
+                "reserved-space-before-extension",
+                "goldens/NUL .png",
+                "win32_reserved_name",
+            ),
+            (
+                "reserved-numbered-space-before-extension",
+                "goldens/COM1 .png",
+                "win32_reserved_name",
+            ),
+            (
+                "reserved-superscript-space-before-extension",
+                "goldens/LPT\u00b9 .png",
+                "win32_reserved_name",
+            ),
+            (
+                "reserved-directory-space-before-extension",
+                "CON .dir/a.png",
+                "win32_reserved_name",
+            ),
+            (
+                "reserved-console-space-before-extension",
+                "goldens/CONIN$ .png",
+                "win32_reserved_name",
+            ),
         )
         for label, member, code in cases:
             with self.subTest(label=label), tempfile.TemporaryDirectory() as temp_dir:
@@ -343,6 +377,79 @@ class GoldenArtifactGuardTest(unittest.TestCase):
             )
             self.assertEqual(2, result.returncode)
             self.assertEqual("colliding_member", receipt["errors"][0]["code"])
+
+    def test_rejects_win32_invalid_component_characters(self):
+        for character in '<>"|?*':
+            with (
+                self.subTest(character=character),
+                tempfile.TemporaryDirectory() as temp_dir,
+            ):
+                result, receipt, _ = run_guard(
+                    Path(temp_dir),
+                    entries=[
+                        (
+                            f"goldens/a{character}.png",
+                            rgba_png(),
+                            REGULAR_MODE,
+                        )
+                    ],
+                    allowlist="goldens/a.png\n",
+                )
+                self.assertEqual(2, result.returncode)
+                self.assertEqual(
+                    "win32_invalid_character",
+                    receipt["errors"][0]["code"],
+                )
+
+    def test_rejects_win32_unsafe_allowlist_paths(self):
+        cases = (
+            ("trailing-dot", "goldens./a.png", "win32_trailing_alias"),
+            ("trailing-space", "goldens /a.png", "win32_trailing_alias"),
+            ("reserved", "goldens/PRN.png", "win32_reserved_name"),
+            (
+                "reserved-space-before-extension",
+                "goldens/CONOUT$ .png",
+                "win32_reserved_name",
+            ),
+            (
+                "reserved-superscript-space-before-extension",
+                "goldens/COM\u00b2 .png",
+                "win32_reserved_name",
+            ),
+            ("invalid-character", "goldens/a?.png", "win32_invalid_character"),
+        )
+        for label, allowlist_path, code in cases:
+            with self.subTest(label=label), tempfile.TemporaryDirectory() as temp_dir:
+                result, receipt, _ = run_guard(
+                    Path(temp_dir),
+                    entries=[("goldens/a.png", rgba_png(), REGULAR_MODE)],
+                    allowlist=f"{allowlist_path}\n",
+                )
+                self.assertEqual(2, result.returncode)
+                self.assertEqual(code, receipt["errors"][0]["code"])
+
+    def test_win32_collision_key_is_defensive_and_safe_controls_pass(self):
+        canonical_key = GUARD_MODULE.collision_key("goldens/a.png")
+        self.assertEqual(
+            canonical_key,
+            GUARD_MODULE.collision_key("goldens./a.png"),
+        )
+        self.assertEqual(
+            canonical_key,
+            GUARD_MODULE.collision_key("goldens /a.png"),
+        )
+
+        with tempfile.TemporaryDirectory() as temp_dir:
+            result, receipt, _ = run_guard(
+                Path(temp_dir),
+                entries=[
+                    (".goldens/a.png", rgba_png(), REGULAR_MODE),
+                    ("goldens/COM10.png", rgba_png(), REGULAR_MODE),
+                ],
+                allowlist=".goldens/a.png\ngoldens/COM10.png\n",
+            )
+            self.assertEqual(0, result.returncode, result.stderr)
+            self.assertEqual("accepted", receipt["status"])
 
     def test_rejects_duplicate_and_non_regular_members(self):
         with tempfile.TemporaryDirectory() as temp_dir:

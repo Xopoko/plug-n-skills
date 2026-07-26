@@ -382,6 +382,12 @@ class LocalPluginVisibilityTest(unittest.TestCase):
             with self.assertRaisesRegex(ValueError, r"does not enable"):
                 self.check_only()
 
+    def test_missing_config_reports_not_enabled(self):
+        self.config_path.unlink()
+
+        with self.assertRaisesRegex(ValueError, r"does not enable"):
+            self.check_only()
+
     def test_marketplace_selection_is_revalidated_after_tree_verification(self):
         original_tree_check = (
             ensure_local_plugin_installed.ensure_installation_state_matches
