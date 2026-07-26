@@ -170,7 +170,7 @@ instructions.
 | Reference files | 235 | - | Longer ledgers, contracts, scorecards, and source notes. |
 | Helper and validator scripts | 84 | - | Deterministic plugin-local helpers. |
 | Startup metadata | 166 skills | 13,347 | Skill name, description, and file pointer for routing. |
-| On-demand skill bodies | 166 skills | 118,395 | Instruction bodies after frontmatter, loaded only when selected. |
+| On-demand skill bodies | 166 skills | 118,418 | Instruction bodies after frontmatter, loaded only when selected. |
 
 Regenerate the report after skill edits:
 
@@ -202,7 +202,7 @@ Token columns are `startup metadata / on-demand body`.
 | `architecture-intelligence` | 9 | 8 | 2 | 645 | 7,585 |
 | `design-intelligence` | 7 | 2 | 1 | 472 | 5,101 |
 | `game-design-intelligence` | 6 | 2 | 1 | 536 | 2,916 |
-| `kotlin-multiplatform` | 14 | 22 | 2 | 1,135 | 14,104 |
+| `kotlin-multiplatform` | 14 | 22 | 2 | 1,135 | 14,127 |
 | `spec-driven-development` | 6 | 0 | 2 | 333 | 3,267 |
 
 ### Plugin Focus
@@ -458,7 +458,7 @@ Token cells are shown as `startup/body`.
 | --- | ---: | --- |
 | `kmp-architecture` | 68/932 | Design or refactor Kotlin Multiplatform module boundaries, source-set hierarchy, shared logic/shared UI split, platform APIs, interop boundaries, and cross-platform library choices. |
 | `kmp-compose-ui` | 73/1,242 | Build and repair Compose Multiplatform UI, state, navigation, external URI effects, resources, platform entry points, previews, performance, accessibility, and UI tests in Kotlin Multiplatform projects. |
-| `kmp-data-layer` | 96/2,155 | Design and review KMP data layers, repositories, source-of-truth, legacy storage migration, durable migration decisions, resurrection prevention, DTO/domain mapping, sync, offline-first behavior, persistence choices, error handling, shared/coalesced work, cancellation and admission races, causal receipts, threading, and API exposure. |
+| `kmp-data-layer` | 96/2,178 | Design and review KMP data layers, repositories, source-of-truth, legacy storage migration, durable migration decisions, resurrection prevention, DTO/domain mapping, sync, offline-first behavior, persistence choices, error handling, shared/coalesced work, cancellation and admission races, causal receipts, threading, and API exposure. |
 | `kmp-ecosystem-selection` | 85/400 | Select Kotlin Multiplatform ecosystem libraries, services, and tools for persistence, networking, DI, navigation, logging, observability, testing, code quality, resources, images, docs, payments, and reference templates without forcing a stack. |
 | `kmp-gradle-doctor` | 81/1,904 | Diagnose and fix Kotlin Multiplatform Gradle, source-set, dependency, private dependency resolution or consumption failures, Android target, Compose plugin, KGP/AGP, testing, static-analysis, and CI issues. |
 | `kmp-interop-bridges` | 89/581 | Design and review KMP platform bridges, source-set placement, expect/actual, entry-point wiring, cinterop, Swift API readiness, SKIE, KMP-NativeCoroutines, KDoctor, XCFrameworks, and SwiftPM export. |
