@@ -55,6 +55,14 @@ publishing or security workflow instead.
 5. Check official docs for current DSL/version-sensitive guidance before edits.
 6. If the failure looks host-specific on macOS/iOS, separate project diagnosis from environment diagnosis. Use `kdoctor` only if installed or explicitly approved to install; scope: host/toolchain readiness.
 
+## Supplemental Native Source Proof
+
+When any project-pinned build or test path is proven blocked before relevant
+source compilation and supplemental local Native evidence would help, use
+`kmp-testing-quality` with
+`../../references/standalone-kotlin-harness.md`. The harness does not clear the
+blocker or prove Gradle, project integration, or CI.
+
 ## Environment Triage
 
 Use project static inspection first. Then consider host diagnostics when symptoms include Xcode selection, CocoaPods/Ruby, Android Studio plugin, JDK/JAVA_HOME, simulator, or iOS Gradle task failures unrelated to source changes.
