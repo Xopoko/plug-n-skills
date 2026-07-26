@@ -125,6 +125,20 @@ building a version bridge.
   are representable, which authority wins conflicts, and how re-upgrade
   reconciles them without reopening a completed migration epoch.
 
+Treat every mirror repair as a competing publisher, not fire-and-forget
+cleanup. Cancellation is not a commit fence: bind each admitted repair to the
+canonical revision and a distinct repair identity, and do not release its
+writer ownership while its mirror write can still occur. A newer repair may
+produce an accepted receipt only after both conditions hold: every older
+capable write is terminal or storage-visible conditional authority has fenced
+it; and the final mirror durably reflects the newest admitted canonical
+revision. When the mirror API cannot conditionally reject an old write,
+serialize the actual writes through one non-detached owner and write the newest
+canonical value after older capable writes finish. A readback taken while an
+older write can still run is only tentative. If neither fencing nor ordered
+compensation is possible, classify mirror freshness as best-effort and keep it
+out of durable compatibility claims.
+
 Mirror presence or absence alone never authorizes re-import. If an older writer
 cannot leave a trustworthy change marker and the newer binary has no protected
 baseline or generation, round-trip compatibility is unprovable; classify the
@@ -209,6 +223,7 @@ For malformed or policy-invalid source, make the policy explicit:
 | Unsupported downgrade attempt | With canonical state `A` and a `complete` migration record, simulate an older binary writing `B` and deleting the compatibility mirror. Prove the old writer is prevented or detected and rejected, or prove the declared canonical-wins policy retains `A` and repairs only the derived mirror while explicitly discarding the older edit. Never open a new migration epoch or claim downgrade support. |
 | Supported downgrade and re-upgrade | Exercise `N -> N-1 -> N` with an older write and deletion. Prove either an observable writer revision/tombstone or a protected baseline/generation that older writers cannot alter; verify reconciliation follows the declared conflict policy and neither stale `A` nor a missing mirror silently wins. Repeat the cycle and include equal-value ABA when generation matters. |
 | Crash while publishing a compatibility mirror | Crash before and after the mirror write. Prove canonical state remains the active-state authority, the migration record remains the eligibility authority, derived-mirror repair is idempotent, and a stale or absent mirror cannot re-enable source capture. |
+| Cancelled mirror repair overtaken by a newer repair | Gate repair `A` immediately before its mirror write, request cancellation, then start repair `B` for a newer canonical revision before releasing `A`. Prove `B` cannot return an accepted receipt until both conditions hold: `A` is terminal or a storage-visible fence rejects its stale write; and the final mirror durably reflects `B`'s newest canonical revision. A cancellation request, `B` write receipt, or readback while `A` can still write is insufficient. If this cannot be guaranteed, classify the mirror as best-effort instead of compatibility-fresh. |
 | Migration record lost during downgrade | Prove independent protected evidence detects the loss and fails closed. If none exists, prove the older binary cannot erase the record or that downgrade is blocked and explicit recovery is required; classify the round trip as unsupported and do not claim automatic loss detection. |
 | Cleanup fails | Keep the durable destination decision, retain `cleanup-pending`, and retry only the idempotent cleanup step. |
 | Crash before cleanup starts | Prove `cleanup-pending` committed with the terminal receipt and only cleanup resumes. |
