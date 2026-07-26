@@ -87,11 +87,18 @@ Source and cache trees must be disjoint and contain only regular files and
 directories. Symlinks present at roots, inside scanned trees, or along the cache
 path are rejected before install/config mutation; regular files are opened
 without following a swapped final-component symlink and the opened descriptor
-is revalidated. An expected upstream source must also be outside the cache
-version/deletion scope. Enabled config and marketplace selection are captured
-before and revalidated after the anchored tree proof. Concurrent adversarial
-directory replacement or change after the receipt returns is outside this
-helper's guarantee.
+is revalidated. When this repository's helper takes its manual materialization
+path, it replaces only the selected target-version directory. It retains sibling
+version directories because already-running sessions can hold absolute skill
+locators into them; removing those siblings would break an active session
+without proving that it loaded the new version. Cleanup of retained versions is
+a separate, explicit lifecycle action after their consumers have ended. A
+native host CLI owns its cache lifecycle; the helper's target-equivalence
+receipt does not prove that a CLI-managed install retained siblings. An expected
+upstream source must also be outside the target-version replacement scope.
+Enabled config and marketplace selection are captured before and revalidated
+after the anchored tree proof. Concurrent adversarial directory replacement or
+change after the receipt returns is outside this helper's guarantee.
 
 For updates:
 

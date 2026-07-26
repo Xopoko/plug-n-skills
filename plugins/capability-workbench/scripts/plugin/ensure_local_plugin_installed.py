@@ -790,7 +790,6 @@ def ensure_cache_materialized(
     if cache_path.exists():
         shutil.rmtree(cache_path)
     cache_path.parent.mkdir(parents=True, exist_ok=True)
-    prune_stale_cache_versions(cache_path)
     shutil.copytree(
         plugin_root,
         cache_path,
@@ -803,19 +802,6 @@ def ensure_cache_materialized(
         shutil.rmtree(cache_path)
         raise
     return True
-
-
-def prune_stale_cache_versions(cache_path: Path) -> None:
-    plugin_cache_dir = cache_path.parent
-    if not plugin_cache_dir.exists():
-        return
-    for entry in plugin_cache_dir.iterdir():
-        if entry == cache_path:
-            continue
-        if entry.is_dir():
-            shutil.rmtree(entry)
-        else:
-            entry.unlink()
 
 
 def ensure_installation_receipt(
@@ -1231,9 +1217,9 @@ def ensure_cache_path_has_no_symlink_components(
 
 def ensure_disjoint_install_paths(*, plugin_root: Path, cache_path: Path) -> None:
     source = plugin_root.resolve(strict=False)
-    cache_parent = cache_path.parent.resolve(strict=False)
-    if path_is_within(source, cache_parent) or path_is_within(cache_parent, source):
-        raise ValueError("plugin source and version-cache parent must be disjoint")
+    target_cache = cache_path.resolve(strict=False)
+    if path_is_within(source, target_cache) or path_is_within(target_cache, source):
+        raise ValueError("plugin source and target version-cache must be disjoint")
 
 
 def path_is_within(path: Path, parent: Path) -> bool:

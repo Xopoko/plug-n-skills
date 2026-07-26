@@ -151,6 +151,12 @@ Distribution:
 - Installing a plugin makes Codex load the installed cache copy, not the source
   folder directly. Source edits need an install/cache refresh before the
   installed copy changes.
+- A running session can retain an absolute locator into the versioned cache copy
+  it discovered. This repository's manual cache materializer preserves sibling
+  version directories; their cleanup is a separate explicit action after all
+  consumers of those locators have ended. A host-managed installer needs its own
+  retention proof. Retention does not prove that any session loaded the newer
+  version.
 
 Codex-specific metadata:
 
@@ -376,6 +382,10 @@ evidence rather than assumptions:
   marketplace copy, or older global skill. Refresh the install state and run a
   source/cache equivalence check against the intended marketplace source, then
   verify runtime discovery separately.
+- A declared skill locator no longer exists after an update: an older versioned
+  cache directory was removed while a running session still referenced it.
+  Restore that exact cache copy or restart the affected session before using the
+  newer discovery state; do not relabel a direct source read as runtime loading.
 
 ## Source Links
 
