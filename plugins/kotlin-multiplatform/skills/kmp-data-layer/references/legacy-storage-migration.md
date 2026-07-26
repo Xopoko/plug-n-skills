@@ -96,6 +96,45 @@ ownership. If the storage topology cannot provide this boundary, document
 at-least-once import semantics and do not claim no resurrection across crashes
 and resets.
 
+## Version Coexistence And Downgrade
+
+Before publishing a permanent migration record or legacy-format compatibility
+mirror, declare whether an older binary may read or write the same store. Keep
+the existing authorities distinct: canonical storage owns active state, while
+the migration record owns only migration eligibility. If the design introduces
+a separate active-state journal, name that authority explicitly and review its
+schema, writer compatibility, recovery, and rollback as an architectural
+decision.
+
+This section is not applicable only when older binaries cannot access the
+store and no compatibility mirror, rollback, backup restore, extension, or
+other mixed-version writer path exists. Record that boundary instead of
+building a version bridge.
+
+- When downgrade is unsupported, keep the mirror explicitly derived and
+  non-authoritative. Canonical state and the completed migration decision remain
+  authoritative on re-upgrade; document that older-version writes or deletes
+  may be rejected or overwritten, and either prevent old writers or detect
+  their drift and fail closed. Do not describe this as downgrade-compatible or
+  no-data-loss behavior.
+- When downgrade is supported, treat the mirror as a version bridge with a
+  bounded compatibility window. Require observable causal evidence: either
+  every supported writer participates in a revision, writer-version, or
+  tombstone protocol, or the newer side retains a protected baseline or
+  generation that older writers cannot alter. Define which writes and deletes
+  are representable, which authority wins conflicts, and how re-upgrade
+  reconciles them without reopening a completed migration epoch.
+
+Mirror presence or absence alone never authorizes re-import. If an older writer
+cannot leave a trustworthy change marker and the newer binary has no protected
+baseline or generation, round-trip compatibility is unprovable; classify the
+path as best-effort or unsupported instead of guessing. Retain the bridge until
+the minimum supported binary no longer needs it. Detecting loss of the
+migration record requires independent protected evidence. Without that
+evidence, prevent the older binary or restore path from accessing the store,
+require explicit recovery, and classify the round trip as unsupported; absence
+alone cannot prove either loss or `not-started`.
+
 ## Resumable Protocol
 
 1. Read the durable migration record and cleanup status.
@@ -167,6 +206,10 @@ For malformed or policy-invalid source, make the policy explicit:
 | Destination appears during projection | Re-check presence and generation at final commit; atomically record `complete(destination-won)` without overwriting the newer destination. |
 | External writer races final commit | Force a generation mismatch and prove CAS retries the decision instead of overwriting the external value. |
 | Another importer completes, then reset occurs | Keep the first terminal receipt across reset; prove a stale projector sees the completed or changed admission token and cannot recommit its candidate. |
+| Unsupported downgrade attempt | With canonical state `A` and a `complete` migration record, simulate an older binary writing `B` and deleting the compatibility mirror. Prove the old writer is prevented or detected and rejected, or prove the declared canonical-wins policy retains `A` and repairs only the derived mirror while explicitly discarding the older edit. Never open a new migration epoch or claim downgrade support. |
+| Supported downgrade and re-upgrade | Exercise `N -> N-1 -> N` with an older write and deletion. Prove either an observable writer revision/tombstone or a protected baseline/generation that older writers cannot alter; verify reconciliation follows the declared conflict policy and neither stale `A` nor a missing mirror silently wins. Repeat the cycle and include equal-value ABA when generation matters. |
+| Crash while publishing a compatibility mirror | Crash before and after the mirror write. Prove canonical state remains the active-state authority, the migration record remains the eligibility authority, derived-mirror repair is idempotent, and a stale or absent mirror cannot re-enable source capture. |
+| Migration record lost during downgrade | Prove independent protected evidence detects the loss and fails closed. If none exists, prove the older binary cannot erase the record or that downgrade is blocked and explicit recovery is required; classify the round trip as unsupported and do not claim automatic loss detection. |
 | Cleanup fails | Keep the durable destination decision, retain `cleanup-pending`, and retry only the idempotent cleanup step. |
 | Crash before cleanup starts | Prove `cleanup-pending` committed with the terminal receipt and only cleanup resumes. |
 | Explicit re-import | Require a new migration epoch or policy version; current destination absence alone never re-enables the old source. |
