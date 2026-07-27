@@ -10,23 +10,33 @@ VISUAL_SKILL = PLUGIN_ROOT / "skills" / "visual-communication" / "SKILL.md"
 ROUTER_SKILL = PLUGIN_ROOT / "skills" / "design-intelligence" / "SKILL.md"
 
 
+def normalized_text(text: str) -> str:
+    return " ".join(text.lower().split())
+
+
 def skill_description(text: str) -> str:
     match = re.search(r'^description:\s*"([^"]+)"$', text, re.MULTILINE)
     if match is None:
         raise AssertionError("quoted skill description is missing")
-    return match.group(1)
+    return normalized_text(match.group(1))
 
 
 def markdown_section(text: str, heading: str) -> str:
     marker = f"## {heading}\n"
     if marker not in text:
         raise AssertionError(f"missing section: {heading}")
-    return text.split(marker, 1)[1].split("\n## ", 1)[0]
+    return normalized_text(text.split(marker, 1)[1].split("\n## ", 1)[0])
 
 
 class VisualCommunicationSkillContractTests(unittest.TestCase):
+    def test_contract_matching_ignores_markdown_reflow(self) -> None:
+        self.assertEqual(
+            "compare only equivalent states",
+            normalized_text("compare  only\n\tequivalent   states"),
+        )
+
     def test_trigger_metadata_routes_visual_evidence_review(self) -> None:
-        description = skill_description(VISUAL_SKILL.read_text(encoding="utf-8")).lower()
+        description = skill_description(VISUAL_SKILL.read_text(encoding="utf-8"))
 
         for trigger in ("ui screenshots", "golden images", "visual diffs", "capture state"):
             with self.subTest(trigger=trigger):
@@ -36,7 +46,7 @@ class VisualCommunicationSkillContractTests(unittest.TestCase):
 
     def test_screenshot_evidence_requires_state_and_causal_boundaries(self) -> None:
         text = VISUAL_SKILL.read_text(encoding="utf-8")
-        section = markdown_section(text, "Screenshot Evidence Boundary").lower()
+        section = markdown_section(text, "Screenshot Evidence Boundary")
 
         for requirement in (
             "exact rendered build or artifact",
@@ -58,7 +68,7 @@ class VisualCommunicationSkillContractTests(unittest.TestCase):
         self.assertIn("keep unavoidable raw evidence private", section)
 
     def test_router_exposes_the_visual_evidence_boundary(self) -> None:
-        router = ROUTER_SKILL.read_text(encoding="utf-8")
+        router = normalized_text(ROUTER_SKILL.read_text(encoding="utf-8"))
 
         self.assertIn("screenshot or golden-image evidence boundaries", router)
 
