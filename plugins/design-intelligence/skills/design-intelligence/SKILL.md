@@ -44,7 +44,7 @@ Use the smallest skill set:
 - `interface-architecture`: navigation, taxonomy, labels, findability, content model, screen structure, hierarchy.
 - `interaction-design`: task flow, affordances, feedback, state coverage, errors, undo, empty/loading states, progressive disclosure, efficiency.
 - `usability-accessibility-review`: heuristics, cognitive walkthrough, WCAG/APG/COGA risk, inclusive design, dark patterns.
-- `visual-communication`: hierarchy, scannability, attention, grouping, readability, density, emphasis.
+- `visual-communication`: hierarchy, scannability, attention, grouping, readability, density, emphasis, and screenshot or golden-image evidence boundaries.
 - `design-system-governance`: reusable decisions, patterns, contribution, accessibility proof, maturity, drift.
 
 Dependency order: product framing -> interface architecture -> interaction design -> visual communication -> usability/accessibility review -> design-system governance.
