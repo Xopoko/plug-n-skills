@@ -1,4 +1,5 @@
 import json
+import re
 import unittest
 from pathlib import Path
 
@@ -99,6 +100,51 @@ class RepoStructureTest(unittest.TestCase):
             (ROOT / "scripts" / "token-report.py").is_file(),
             "missing token report generator",
         )
+
+    def test_pull_request_merge_gate_is_current_head_bound(self):
+        guidance = (ROOT / "AGENTS.md").read_text()
+        heading = "## Pull Request Merge Gate"
+        _, found_heading, remainder = guidance.partition(heading)
+        self.assertEqual(found_heading, heading, "missing Pull Request Merge Gate")
+        section = remainder.partition("## ")[0]
+        normalized = " ".join(re.findall(r"[a-z0-9]+", section.lower()))
+
+        section.encode("ascii")
+        for required_contract in (
+            r"merge authority.*merge readiness.*separate",
+            r"same immutable pull request head h",
+            r"required ci for h.*terminal.*successful",
+            r"running.*skipped.*cancelled.*failed.*unbound.*do not satisfy",
+            r"completed codex review.*covers h",
+            r"completed copilot review.*covers h",
+            (
+                r"after both bot reviews.*complete final reread.*all review "
+                r"comments and threads.*for h.*address every actionable finding"
+            ),
+            (
+                r"immediately before merge.*reread.*pull request head.*"
+                r"complete comment thread inventory"
+            ),
+            (
+                r"any head change or any new or edited actionable comment "
+                r"after the final reread invalidates readiness"
+            ),
+            (
+                r"re run.*affected ci.*bot review gates.*new head.*"
+                r"repeat.*final reread"
+            ),
+            (
+                r"if either bot is unavailable or its current head receipt "
+                r"cannot be proven hold the pull request do not merge"
+            ),
+            (
+                r"perform the merge only with an expected head compare and swap "
+                r"bound to h.*server side condition.*rejects atomically.*current "
+                r"pull request head differs from h.*pre merge reread is not enough.*"
+                r"never fall back to an unguarded merge primitive"
+            ),
+        ):
+            self.assertRegex(normalized, required_contract)
 
 
 if __name__ == "__main__":
