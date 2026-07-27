@@ -86,6 +86,57 @@ Keep pair, lineage, protection, commit, readback, and adoption as independent
 closed verdicts. Separate producer and adoption receipts. Details are in
 `$PLUGIN_ROOT/references/thread-supervision-contract.md`.
 
+## Rebind Protected Policy Before External Mutations
+
+When direct user input changes a protected goal, authority, task constraint, or
+required external-object field, capture a new protected policy revision. Do not
+encode that control-plane change as an evidence delta.
+
+Before accepting an affected target's external mutation:
+
+1. Require receiver-owned adoption of the exact policy revision and protected
+   fingerprint, bound to the exact receiver identity, with an acknowledgement
+   ref and receiver cutoff. If no authorized typed rebind exists, keep the
+   mutation blocked as
+   `capability-unavailable`; do not send an unlisted message.
+2. Bind the authorized operation, destination, subject, cutoff, and every
+   mandatory field to that revision. Persist a receiver-bound immutable
+   pre-write intent only through an existing authorized intent store, then bind
+   the mutation receipt to it. Require the fixed store schema, exact store,
+   existing authorization, preallocated intent-store and owning-system mutation
+   operation IDs, and immutability evidence. Retain both IDs in the immutable
+   intent before the external write. If that store is unavailable, keep the
+   external mutation blocked; never emulate it with an ordinary local write.
+3. Read back the exact external object and one keyed, evidence-bound result for
+   every mandatory field after the write. Use only the closed HMAC fingerprint
+   envelope; raw values and bare digests are malformed. Preallocate the
+   owning-system operation ID, bind it to the destination, subject, and intent,
+   and bind the readback to both that operation ID and the exact mutation
+   receipt with owning-system ordering evidence. Missing, extra, or duplicate
+   field results fail closed. Object existence, a related field, target
+   activity, or intent is not policy adoption.
+4. Keep missing or mismatched fields as `policy-drift`. Any unknown mutation
+   or intent outcome, or incomplete/unavailable/ambiguous readback, is
+   `reconciliation-required` after receipt shape and durable operation IDs
+   validate, regardless of another semantic policy defect. Reconcile by the
+   preallocated operation ID; require the mutation operation ID and both
+   retained intent identities to exactly match the immutable recovery record,
+   and require an unknown intent write to match its recovered authorized store
+   namespace while mutation remains exactly `not-attempted` with no mutation or
+   readback observations; a simultaneous unknown mutation is invalid. Before
+   reconciling unavailable readback,
+   independently resolve the canonical owning-system mutation receipt.
+   Presence alone is insufficient. Do not infer success from a retained
+   receipt field.
+
+An unrelated pending evidence or skill intervention neither blocks recording
+the direct user revision nor proves receiver adoption. It still retains its
+ordinary delivery and acknowledgement rules. See the protected policy
+application receipt and failure schedule in the supervision contract.
+Before yielding or compaction, persist the separate immutable application
+recovery ref plus both operation IDs; never hide them in the evidence-delta
+revision or ordinary pending-intervention slot.
+
 ## Watch Transitions
 
 - Wait on up to eight targets in one `wait_threads` call. For more targets, use

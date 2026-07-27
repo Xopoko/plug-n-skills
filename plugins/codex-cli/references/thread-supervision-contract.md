@@ -59,6 +59,15 @@ Keep the checkpoint compact and machine-readable when possible:
       "open_gates": [],
       "immutable_evidence": [],
       "protected_contract_fingerprint": "goal-policy-boundary-fingerprint",
+      "protected_policy_application": {
+        "schema": "codex.protected_policy_application_checkpoint.v1",
+        "state": "revision-captured|adoption-pending|intent-pending|intent-outcome-unknown|mutation-pending|mutation-outcome-unknown|readback-pending|terminal",
+        "policy_revision_id": "opaque-policy-revision-or-null",
+        "operation_policy_fingerprint": "opaque-operation-policy-fingerprint-or-null",
+        "recovery_ref": "opaque-protected-policy-application-recovery-ref",
+        "intent_operation_id": "opaque-intent-operation-id-or-null",
+        "mutation_operation_id": "opaque-mutation-operation-id-or-null"
+      },
       "current_contract_revision": null,
       "recent_revision_refs": [],
       "pending_intervention": null,
@@ -145,6 +154,262 @@ cadence, per-target authorization and limits, prohibited mutations,
 private-data boundary, and task constraints. Evidence revisions never modify
 it. Fingerprint that protected state separately so the receiver can reject a
 message formed against different authority.
+
+`protected_policy_application` is `null` when no affected policy application is
+active. Otherwise it is a separate recovery record; never overload
+`current_contract_revision` or `pending_intervention`. Persist its immutable
+content-addressed private `recovery_ref` before each adoption, intent, mutation,
+or readback attempt. When either write outcome is unknown, retain the exact
+policy revision, operation-policy fingerprint, intent operation ID, and mutation
+operation ID until owning-system reconciliation reaches a terminal state.
+
+## Protected Policy Application
+
+A direct user revision to the protected contract is control-plane state, not
+observer evidence. Capture it even when the target already has an unrelated
+pending intervention. That pending intervention keeps its delivery and
+acknowledgement state, but it neither serializes protected-policy capture nor
+proves that the receiver adopted the new revision.
+
+Before an affected external mutation can be accepted, require a receiver-owned
+rebind to the exact protected revision and fingerprint. A rebind is not a new
+intervention action: use only an already authorized typed receiver mechanism.
+If no such mechanism exists, set
+`receiver_adoption.status=capability-unavailable`, keep the affected mutation
+blocked, and do not send an unlisted target message or smuggle policy through
+`send-evidence-delta`.
+
+The operation policy must enumerate every mandatory external-object field
+before the write. Bind field refs, independently recoverable expectation
+evidence, and keyed, non-reversible expected-value fingerprint envelopes rather
+than private values. The only supported envelope is `hmac-sha256` with a
+`sha256:` key-reference fingerprint and a lowercase 64-hex digest; a raw value
+or bare digest is malformed. Derive it with an authorized key and a
+domain-separated message that binds the schema and field ref. Never use an
+unsalted digest for a low-entropy field. After the authorized mutation, read
+back the exact object identity and
+every mandatory field from the owning system at a current cutoff. Each readback
+result binds its field ref, keyed observed-value fingerprint envelope, and an
+opaque owning-system evidence ref. Independently resolve the expectation and
+observation evidence to verify the authorized key, derivation scheme, field
+subject, and digest. Object existence, a related field, actor intent, target
+activity, or a pending intervention acknowledgement is not proof of policy
+application.
+
+Fingerprint `operation_policy` as
+`sha256:` plus lowercase SHA-256 of its UTF-8 JSON with recursively sorted
+object keys, no insignificant whitespace, and array order preserved. Persist an
+immutable pre-write intent after receiver adoption and before the mutation only
+through an existing authorized intent store. Never create or emulate that store
+with an ordinary write under supervision authority. If it is unavailable, keep
+the affected external mutation blocked. If intent creation has an unknown
+outcome, reconcile it before any external mutation. The intent receipt names the
+fixed store schema, exact store, existing authorization, a preallocated
+intent-store operation ID, the preallocated owning-system mutation operation
+ID, receiver identity and acknowledgement, operation-policy fingerprint, and
+immutability evidence. The external mutation uses that retained mutation
+operation ID and binds it to the exact destination, subject, intent operation,
+and intent ref. These operation IDs remain available when a write receipt is
+missing after an unknown outcome. The terminal readback binds both the exact
+mutation operation ID and mutation receipt plus
+owning-system evidence that the readback is post-mutation. Presence of these
+refs is insufficient: independently resolve them and verify the named store,
+authorization, receiver, subject, fingerprints, operation identities, and
+ordering relation.
+
+This example is a complete `applied` receipt:
+
+```json
+{
+  "schema": "codex.protected_policy_application.v1",
+  "policy_revision_id": "opaque-user-authorized-revision",
+  "authorizer": "user",
+  "from_protected_contract_fingerprint": "prior-protected-fingerprint",
+  "to_protected_contract_fingerprint": "current-protected-fingerprint",
+  "receiver_thread_id": "opaque-receiver-thread-id",
+  "operation_policy_fingerprint": "sha256:9dd14cec80c2351a274e120744602902aed7dfcb68f1fa8b9b21655cf17f6649",
+  "recovery_ref": "opaque-protected-policy-application-recovery-ref",
+  "receiver_adoption": {
+    "status": "adopted",
+    "receiver_thread_id": "opaque-receiver-thread-id",
+    "acknowledgement_ref": "opaque-receiver-owned-ack-ref",
+    "policy_revision_id": "opaque-user-authorized-revision",
+    "from_protected_contract_fingerprint": "prior-protected-fingerprint",
+    "to_protected_contract_fingerprint": "current-protected-fingerprint",
+    "operation_policy_fingerprint": "sha256:9dd14cec80c2351a274e120744602902aed7dfcb68f1fa8b9b21655cf17f6649",
+    "cutoff": "opaque-receiver-adoption-cutoff"
+  },
+  "operation_policy": {
+    "destination_ref": "opaque-external-system-ref",
+    "subject_ref": "opaque-action-intent-or-object-ref",
+    "operation": "create",
+    "eligibility_cutoff": "opaque-revision-or-timestamp",
+    "mandatory_fields": [
+      {
+        "field_ref": "opaque-domain-field-ref",
+        "expected_value_fingerprint": {
+          "scheme": "hmac-sha256",
+          "key_ref_fingerprint": "sha256:1807dbf17817a8d83d0b098f063b16bd2d904809e8cf0731ffa3ff2c68aa30dd",
+          "digest": "8fab1805ae51245c10795c447a58e0196bc67352e4e2e8ba663979929778238c"
+        },
+        "expectation_evidence_ref": "opaque-keyed-expectation-proof-ref"
+      }
+    ]
+  },
+  "prewrite_intent": {
+    "status": "created",
+    "store_schema": "codex.authorized_immutable_intent_store.v1",
+    "store_ref": "opaque-authorized-intent-store-ref",
+    "store_authorization_ref": "opaque-intent-store-authorization-ref",
+    "operation_id": "opaque-preallocated-intent-operation-id",
+    "mutation_operation_id": "opaque-preallocated-mutation-operation-id",
+    "intent_ref": "opaque-immutable-prewrite-intent-ref",
+    "receiver_thread_id": "opaque-receiver-thread-id",
+    "receiver_acknowledgement_ref": "opaque-receiver-owned-ack-ref",
+    "operation_policy_fingerprint": "sha256:9dd14cec80c2351a274e120744602902aed7dfcb68f1fa8b9b21655cf17f6649",
+    "relation": "after-adoption",
+    "ordering_evidence_ref": "opaque-adoption-before-intent-proof-ref",
+    "immutability_evidence_ref": "opaque-intent-immutability-proof-ref",
+    "cutoff": "opaque-prewrite-intent-cutoff"
+  },
+  "mutation": {
+    "state": "committed",
+    "operation_id": "opaque-preallocated-mutation-operation-id",
+    "destination_ref": "opaque-external-system-ref",
+    "subject_ref": "opaque-action-intent-or-object-ref",
+    "receipt_ref": "opaque-owning-system-write-receipt",
+    "prewrite_intent_operation_id": "opaque-preallocated-intent-operation-id",
+    "prewrite_intent_ref": "opaque-immutable-prewrite-intent-ref",
+    "cutoff": "opaque-mutation-cutoff"
+  },
+  "readback": {
+    "state": "complete",
+    "object_ref": "opaque-object-id",
+    "cutoff": "opaque-post-mutation-cutoff",
+    "mutation_operation_id": "opaque-preallocated-mutation-operation-id",
+    "mutation_receipt_ref": "opaque-owning-system-write-receipt",
+    "relation": "after-mutation",
+    "ordering_evidence_ref": "opaque-mutation-before-readback-proof-ref",
+    "field_results": [
+      {
+        "field_ref": "opaque-domain-field-ref",
+        "observed_value_fingerprint": {
+          "scheme": "hmac-sha256",
+          "key_ref_fingerprint": "sha256:1807dbf17817a8d83d0b098f063b16bd2d904809e8cf0731ffa3ff2c68aa30dd",
+          "digest": "8fab1805ae51245c10795c447a58e0196bc67352e4e2e8ba663979929778238c"
+        },
+        "evidence_ref": "opaque-owning-system-readback-ref",
+        "status": "matched"
+      }
+    ]
+  },
+  "application": "applied"
+}
+```
+
+Closed states are:
+
+- `receiver_adoption.status`:
+  `not-proven|adopted|conflict|capability-unavailable`;
+- `prewrite_intent.status`:
+  `not-created|created|capability-unavailable|outcome-unknown`;
+- `prewrite_intent.store_schema`:
+  `codex.authorized_immutable_intent_store.v1`;
+- `prewrite_intent.relation`: `after-adoption`;
+- `mutation.state`: `not-attempted|committed|outcome-unknown`;
+- `readback.state`: `not-run|complete|unavailable`;
+- `readback.relation`: `after-mutation`;
+- each field result `status`: `matched|mismatched|missing|unavailable`;
+- `application`:
+  `invalid|blocked|applied|policy-drift|reconciliation-required`.
+
+Every populated ref, cutoff, and fingerprint is a non-empty string of at most
+1024 UTF-8 bytes. Reject oversized strings, objects, arrays, numbers, and
+booleans before receipt construction. A null is allowed only for a field whose
+closed state explicitly says that no observation was made. The keyed
+fingerprint envelope is the sole structured exception: it has exactly
+`scheme`, `key_ref_fingerprint`, and `digest`, all with the formats defined
+above.
+
+`mandatory_fields` is non-empty and unique by `field_ref`. An adopted receiver
+acknowledgement echoes the top-level receiver identity, policy revision, and
+both protected fingerprints, binds the operation-policy fingerprint, and
+supplies a receiver-owned acknowledgement ref and cutoff. The independently
+recovered pre-write intent must prove the fixed store schema, exact authorized store,
+authorization, immutability, and `after-adoption`, and bind that exact receiver,
+acknowledgement, policy fingerprint, and preallocated owning-system mutation
+operation ID. The independently recovered mutation receipt must bind the exact
+destination, subject, retained mutation operation ID, intent operation ID, and
+intent ref. A complete readback proves
+`after-mutation`, binds that exact mutation operation ID and receipt, and
+contains exactly one result for every mandatory field and no others. Every
+matched result has independently recoverable expectation and owning-system
+observation evidence and an observed keyed fingerprint envelope equal to the
+expected envelope.
+
+Resolve evidence through the owning receiver, intent store, or external system,
+not through receipt-supplied prose. The normalized resolved records must exactly
+echo their subject bindings: receiver and policy fingerprints for adoption;
+store schema, store identity, authorization, both operation IDs, receiver, and
+policy for the intent; destination, subject, operation IDs, intent ref, and
+cutoff for the mutation; and object, mutation identity, cutoff, field ref,
+fingerprint envelope, and status for field readback. An unresolved,
+substituted, or differently bound ref cannot support `application=applied`.
+Independently load `recovery_ref` from the private immutable recovery store. Its
+typed record binds the policy revision, receiver, operation-policy fingerprint,
+exact authorized intent-store schema/ref/authorization, canonical intent ref,
+destination, subject, and both preallocated operation IDs. The receipt cannot
+replace that record or supply an alternate resolver.
+After receipt shape, closed states, bounded scalar formats, and durable
+operation IDs are valid, an unknown intent or mutation outcome takes precedence
+over every semantic policy or evidence mismatch. Reconcile it before
+classifying the remaining defect or permitting a retry. A malformed receipt
+whose unknown state or operation identity cannot be trusted remains `invalid`.
+For an unknown mutation, the mutation operation ID, retained intent operation
+ID, and retained intent ref must exactly equal the corresponding identities in
+the immutable intent recovery record. Presence alone is insufficient. For a
+committed mutation with incomplete or unavailable readback, retain that same
+trusted mutation-to-intent identity and independently resolve the canonical
+owning-system mutation receipt before returning reconciliation. Any conflicting
+readback operation or receipt identity is invalid rather than a reconciliation
+target. An unknown intent-store write must use the exact recovered store schema,
+store ref, authorization ref, and preallocated intent operation ID; a
+receipt-supplied store namespace is not a reconciliation target. That early
+intent reconciliation is valid only with `mutation.state=not-attempted`, every
+mutation observation null, `readback.state=not-run`, and every readback
+observation null or empty. A claimed later mutation or readback makes the
+receipt invalid; it cannot be hidden behind the earlier unknown intent.
+This includes a simultaneous `mutation.state=outcome-unknown`.
+
+Evaluate this precedence atomically:
+
+| Condition | Required result |
+| --- | --- |
+| Direct user revision while unrelated evidence or skill intervention is pending | Capture the protected revision; preserve the pending intervention; keep the affected mutation blocked until receiver adoption |
+| Malformed receipt, empty mandatory set, or duplicate mandatory or result field refs | `application=invalid` |
+| No authorized typed receiver rebind | `receiver_adoption.status=capability-unavailable`, `mutation.state=not-attempted`, `application=blocked` |
+| Receiver has not proven the exact revision and fingerprint | `receiver_adoption.status=not-proven`, `mutation.state=not-attempted`, `application=blocked` |
+| Receiver reports a revision or protected-fingerprint conflict | `receiver_adoption.status=conflict`, `mutation.state=not-attempted`, `application=blocked` |
+| Mutation outcome is unknown, regardless of another policy defect | `mutation.state=outcome-unknown`, `application=reconciliation-required` |
+| Intent creation outcome is unknown, regardless of another policy defect | `prewrite_intent.status=outcome-unknown`, `mutation.state=not-attempted`, `application=reconciliation-required` |
+| Unknown mutation carries a different operation ID, intent operation ID, or intent ref | `application=invalid` |
+| Mutation is attempted or committed without exact receiver adoption | `application=policy-drift` |
+| Receiver acknowledgement names a different receiver, revision, or fingerprint | `application=invalid` |
+| Operation-policy fingerprint or keyed fingerprint envelope is malformed or differs at adoption, intent, or readback | `application=invalid` |
+| No existing authorized immutable intent store | `prewrite_intent.status=capability-unavailable`, `mutation.state=not-attempted`, `application=blocked` |
+| Created intent lacks exact store schema, store identity, authorization, either operation ID, or immutability evidence | `application=invalid` |
+| Pre-write intent does not bind the exact receiver acknowledgement or prove `after-adoption` | `application=policy-drift` before mutation; committed mutation is invalid |
+| Exact receiver adoption is proven but no mutation is attempted | `mutation.state=not-attempted`, `application=blocked` |
+| Mutation receipt does not bind the exact destination, subject, operation ID, or pre-write intent | `application=invalid` |
+| Committed mutation lacks exact object identity, post-mutation cutoff, or complete readback | `readback.state=not-run` or `readback.state=unavailable`, `application=reconciliation-required` |
+| Readback does not bind the exact mutation operation ID and receipt or prove `after-mutation` | `application=policy-drift` |
+| Any mandatory field is missing, extra, mismatched, or has a different observed fingerprint | `application=policy-drift` |
+| Any field result is unavailable, even with another field mismatch or extra result | `application=reconciliation-required` |
+| Exact receiver adoption, committed mutation, object identity, cutoff, and every keyed field result match | `readback.state=complete`, `application=applied` |
+
+This receipt is a supervision verdict, not mutation authority, intent-store
+authority, or a canonical store implementation. Keep private field values and
+raw provider payloads out of it.
 
 ## Canonical Checkpoint Adoption
 
@@ -544,12 +809,18 @@ After compaction or a later wake:
    delivery state, and acknowledgement state. Load and validate the immutable
    payload before accepting an acknowledgement; never infer it from activity or
    reconstruct it from prose.
-10. After emitting a transition, advance that target's report fingerprint.
-11. Resume the single recorded next action.
+10. Preserve each nonterminal `protected_policy_application` separately. Load
+    its immutable recovery ref and exact revision, operation-policy fingerprint,
+    intent operation ID, and mutation operation ID before deciding whether a
+    write may be attempted or retried. An unknown outcome permits reconciliation
+    only, never a new write.
+11. After emitting a transition, advance that target's report fingerprint.
+12. Resume the single recorded next action.
 
 If the checkpoint is missing the supervisor task or host, a target, cursor,
 authorization, the `open_gates` field, a previously evidenced applicable gate,
-continuation owner, heartbeat logical key, or heartbeat lifecycle state,
+continuation owner, heartbeat logical key, heartbeat lifecycle state, or a
+previously active protected-policy application recovery record,
 perform one bounded read to repair that field. A present empty `open_gates`
 list is valid after a complete zero-eligible inventory and must not be
 repopulated from prose. Do not replay the entire supervision history. While

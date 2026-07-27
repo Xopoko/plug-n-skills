@@ -134,7 +134,7 @@ replaced to match the repository source, and repeated runs converge.
 | `build-swift-apps` | Building, debugging, profiling, testing, packaging, and releasing Swift apps across iOS and macOS. |
 | `capability-workbench` | Capability discovery, synthesis, plugin packaging, agent guidance files, trigger metadata, Codex catalog-budget and exact evidence-coverage audits, install-scope decisions, vetting, repair, icon workflows, install/cache checks, and separate runtime-discovery checks. |
 | `claude-code` | Claude Code CLI operations, print-mode automation, diagnostics, plugin and MCP lifecycle, hooks, settings, agents, sessions, and worktrees. |
-| `codex-cli` | Codex CLI operations, automation, producer-native deferred completion, diagnostics, live thread supervision, version-aware skill handoffs with source/runtime separation, evidence corrections, aggregate claim boundaries, plugin and MCP lifecycle, normalized session trace audits, and local environment actions. |
+| `codex-cli` | Codex CLI operations, automation, producer-native deferred completion, diagnostics, live thread supervision with protected-policy gates, version-aware skill handoffs with source/runtime separation, evidence corrections, aggregate claim boundaries, plugin and MCP lifecycle, normalized session trace audits, and local environment actions. |
 | `scheduled-automation` | Local scheduler diagnostics, real-runtime proof, safe canaries, correlated run receipts, missed-run analysis, and rollback-aware repair. |
 | `gitlab-review` | Race-safe GitLab merge request review response, reviewer-owned resolution, idempotent thread replies, and exact-head handoff proof. |
 | `stacked-delivery` | Dependency-safe stacked change delivery with exact parent-head binding, descendant invalidation, node-local proof, post-rewrite proof-record freshness, distinct provenance and publication-authority gates, safe landing order, and guarded handoff receipts. |
@@ -170,7 +170,7 @@ instructions.
 | Reference files | 236 | - | Longer ledgers, contracts, scorecards, and source notes. |
 | Helper and validator scripts | 85 | - | Deterministic plugin-local helpers. |
 | Startup metadata | 166 skills | 13,369 | Skill name, description, and file pointer for routing. |
-| On-demand skill bodies | 166 skills | 119,388 | Instruction bodies after frontmatter, loaded only when selected. |
+| On-demand skill bodies | 166 skills | 120,010 | Instruction bodies after frontmatter, loaded only when selected. |
 
 Regenerate the report after skill edits:
 
@@ -193,7 +193,7 @@ Token columns are `startup metadata / on-demand body`.
 | `scientific-research` | 1 | 4 | 1 | 91 | 2,024 |
 | `context-density` | 1 | 9 | 8 | 137 | 2,806 |
 | `capability-workbench` | 10 | 15 | 23 | 958 | 13,076 |
-| `codex-cli` | 8 | 5 | 3 | 688 | 9,640 |
+| `codex-cli` | 8 | 5 | 3 | 688 | 10,262 |
 | `scheduled-automation` | 1 | 5 | 0 | 103 | 1,158 |
 | `gitlab-review` | 1 | 3 | 1 | 117 | 1,083 |
 | `stacked-delivery` | 1 | 4 | 1 | 123 | 1,933 |
@@ -215,7 +215,7 @@ Token columns are `startup metadata / on-demand body`.
 | `scientific-research` | Disciplined scholarly research workflow: discovery, source routing, DOI dedup, claim ledgers, and evidence quality gates across arXiv/OpenAlex/Crossref/Europe PMC/Semantic Scholar/NCBI/CORE/OpenCitations. |
 | `context-density` | Context design, prompt-contract optimization, typed state validation, research-backed acceptance gates, compression validation, and structural handoff for agent skills, plugins, prompts, docs, and workflows. |
 | `capability-workbench` | Agent-agnostic capability workbench for discovery, synthesis, portfolio architecture, trigger metadata, Codex catalog-budget and evidence-coverage audits, agent guidance, vetting, repair, installation, packaging, and imagegen-backed plugin icons. |
-| `codex-cli` | Codex CLI operations, automation, producer-native deferred completion, diagnostics, live thread supervision with version-aware skill handoffs, plugin and MCP lifecycle, normalized session trace audits, and local environment actions. |
+| `codex-cli` | Codex CLI operations, automation, producer-native deferred completion, diagnostics, live thread supervision with protected-policy gates and version-aware skill handoffs, plugin and MCP lifecycle, normalized session trace audits, and local environment actions. |
 | `scheduled-automation` | Local scheduler diagnostics, real-runtime proof, safe canaries, correlated run receipts, and missed-run analysis for launchd, systemd timers, cron, and Windows Task Scheduler. |
 | `gitlab-review` | Race-safe GitLab merge request review response with complete discussion inventory, reviewer-owned resolution, idempotent replies, and exact-head handoff proof. |
 | `stacked-delivery` | Dependency-safe delivery for stacked pull requests, merge requests, and dependent changes with exact parent-head binding, descendant invalidation, per-node proof, post-rewrite proof-record freshness, provenance and publication-authority boundaries, safe landing order, and guarded handoff receipts. |
@@ -377,7 +377,7 @@ Token cells are shown as `startup/body`.
 | `codex-exec-automation` | 97/1,018 | Use when preparing, running, debugging, or reviewing non-interactive Codex CLI automation with `codex exec`, `codex exec resume`, `codex review`, JSONL events, output schemas, last-message files, cwd/profile/config flags, sandbox and approval modes, or CI-style agent runs. |
 | `codex-log-reader` | 93/1,279 | Use when locating, summarizing, auditing, or debugging Codex session rollout JSONL logs by CODEX_THREAD_ID, cwd, query, issue key, project path, child or inherited-history symptoms, malformed or huge log symptoms, permission concerns, or "what happened in this Codex thread" questions. |
 | `codex-plugin-mcp-manager` | 77/895 | Use when managing Codex CLI plugins, plugin marketplaces, local marketplace refreshes, cache visibility, MCP server list/get/add/remove/login/logout, MCP bearer token environment variables, or plugin/MCP installation failures. |
-| `codex-thread-supervisor` | 86/2,535 | Use for live Codex task or thread supervision by ID: cursor transitions, attention gates, bounded claims, checkpoint adoption, authorized skill or evidence handoffs, and privacy-safe capability mining. Not for rollout forensics, current-turn subagents, or external jobs. |
+| `codex-thread-supervisor` | 86/3,157 | Use for live Codex task or thread supervision by ID: cursor transitions, attention gates, bounded claims, checkpoint adoption, authorized skill or evidence handoffs, and privacy-safe capability mining. Not for rollout forensics, current-turn subagents, or external jobs. |
 
 #### `scheduled-automation`
 
