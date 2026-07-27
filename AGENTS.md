@@ -209,6 +209,26 @@ python3 scripts/token-report.py --format json
 Validation failures caused by real source files are blockers. Ignored local
 scratch directories should stay outside the validation surface.
 
+## Pull Request Merge Gate
+
+Merge authority and merge readiness are separate. Before an automated
+contributor merges a pull request, bind every required observation below to
+the same immutable pull-request head `H`:
+
+- required CI for `H` is terminal and successful; running, skipped, cancelled,
+  failed, or unbound checks do not satisfy the gate;
+- a completed Codex review explicitly covers `H`;
+- a completed Copilot review explicitly covers `H`;
+- after both bot reviews finish, perform a complete final reread of all review
+  comments and threads for `H`, and address every actionable finding.
+
+Immediately before merge, reread the pull-request head and the complete
+comment/thread inventory. Any head change, or any new or edited actionable
+comment after the final reread, invalidates readiness. Re-run the affected CI
+and bot-review gates on the new head, then repeat the final reread. If either
+bot is unavailable or its current-head receipt cannot be proven, hold the pull
+request; do not merge.
+
 ## Git Hygiene
 
 - Inspect `git status --short --ignored` before editing and before finishing.
