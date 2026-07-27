@@ -34,8 +34,8 @@ For an existing repository, read the local project before answering:
 - Shared-to-platform bridges, `expect`/`actual`, cinterop, Swift API shape, SKIE, KMP-NativeCoroutines, SwiftPM export, XCFrameworks, KDoctor, or iOS developer experience: use `kmp-interop-bridges`.
 - Compose Multiplatform screens, state, resources, navigation, external URI effects, platform entry points, previews, performance, or accessibility: use `kmp-compose-ui`.
 - KMP data layers, repositories, source of truth, sync, offline-first, database choice, DTO/domain mapping, cache invalidation, or main-safety: use `kmp-data-layer`.
-- Library/tool/service selection across persistence, networking, DI, navigation, logging, observability, code quality, docs, resources, images, monetization, or reference templates: use `kmp-ecosystem-selection`.
-- KMP test strategy, `commonTest`, `kotlin.test`, Compose UI tests, screenshot tests, test doubles, refactor safety, review gates, or regression harnesses: use `kmp-testing-quality`.
+- Library/tool/service selection across persistence, networking, DI framework or library choice, navigation, logging, observability, code quality, docs, resources, images, monetization, or reference templates: use `kmp-ecosystem-selection`.
+- KMP test strategy, `commonTest`, `kotlin.test`, Compose UI tests, screenshot tests, DI fixture or container missing-binding failures, test doubles, refactor safety, review gates, or regression harnesses: use `kmp-testing-quality`.
 - Performance, observability, Compose jank, Kotlin/Native memory, GC logs, binary size, Gradle build time, Compose compiler metrics, baseline profiles, or release-mode measurement: use `kmp-performance-observability`.
 - Secrets, tokens, secure storage, privacy, logging redaction, Ktor auth, TLS/certificate pinning, runtime app protection, or platform security boundaries: use `kmp-security-privacy`.
 - Maven publishing, Gradle metadata, XCFramework, SwiftPM export, KMMBridge, CI matrices, artifact signing boundaries, app-store build gates, or release automation: use `kmp-publishing-ci`.

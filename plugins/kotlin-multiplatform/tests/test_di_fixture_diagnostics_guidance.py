@@ -6,6 +6,7 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
 SKILL = ROOT / "skills" / "kmp-testing-quality" / "SKILL.md"
+ROUTER = ROOT / "skills" / "kotlin-multiplatform" / "SKILL.md"
 
 
 class DiFixtureDiagnosticsGuidanceTest(unittest.TestCase):
@@ -40,6 +41,29 @@ class DiFixtureDiagnosticsGuidanceTest(unittest.TestCase):
         self.assertTrue(text.isascii())
         self.assertNotIn("/Users/", text)
         self.assertNotIn("\\Users\\", text)
+
+    def test_di_fixture_failures_route_to_testing_not_library_selection(self):
+        skill = SKILL.read_text(encoding="utf-8")
+        frontmatter = skill.split("---", 2)[1].lower()
+        opening = skill.split("---", 2)[2].split("## Strategy", 1)[0].lower()
+        router = " ".join(
+            ROUTER.read_text(encoding="utf-8").split()
+        ).lower()
+
+        self.assertIn(
+            "diagnosing kmp test failures, especially di fixture or container "
+            "missing bindings",
+            frontmatter,
+        )
+        self.assertIn(
+            "dependency-injection fixture or container binding failures",
+            opening,
+        )
+        self.assertIn("di framework or library choice", router)
+        self.assertIn(
+            "di fixture or container missing-binding failures",
+            router,
+        )
 
 
 if __name__ == "__main__":

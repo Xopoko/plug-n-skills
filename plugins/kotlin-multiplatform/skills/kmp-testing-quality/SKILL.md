@@ -1,11 +1,14 @@
 ---
 name: kmp-testing-quality
-description: Design and review KMP testing strategy, commonTest, kotlin.test, platform tests, Compose Multiplatform UI tests, screenshot tests, test doubles, refactor safety, code review gates, and regression validation.
+description: Use when diagnosing KMP test failures, especially DI fixture or container missing bindings, or designing and reviewing commonTest, kotlin.test, platform or Compose UI and screenshot tests, test doubles, refactor safety, review gates, and regressions.
 ---
 
 # KMP Testing And Quality
 
-Use for KMP test strategy/review: `commonTest`, `kotlin.test`, platform tests, Compose Multiplatform UI tests, screenshot tests, test doubles, refactor safety, code review gates, regression validation.
+Use for KMP test strategy, review, and failure diagnosis: `commonTest`,
+`kotlin.test`, platform tests, Compose Multiplatform UI tests, screenshot tests,
+test doubles, dependency-injection fixture or container binding failures,
+refactor safety, code review gates, and regression validation.
 
 Bundled commands use `$PLUGIN_ROOT` (`$env:PLUGIN_ROOT` in PowerShell; same
 path suffix). Set it once from the host's plugin-root variable when available,
