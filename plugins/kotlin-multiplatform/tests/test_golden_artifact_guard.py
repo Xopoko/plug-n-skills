@@ -101,6 +101,8 @@ def write_raw_single_member_archive(
     local_flags: int | None = None,
     local_method: int | None = None,
     include_descriptor: bool = False,
+    archive_comment: bytes = b"",
+    member_comment: bytes = b"",
 ) -> None:
     name = b"goldens/a.png"
     declared_payload = rgba_png(1, 1)
@@ -153,13 +155,13 @@ def write_raw_single_member_archive(
         len(declared_payload),
         len(name),
         0,
-        0,
+        len(member_comment),
         0,
         0,
         REGULAR_MODE << 16,
         0,
     )
-    central += name
+    central += name + member_comment
     eocd = struct.pack(
         "<4s4H2IH",
         b"PK\x05\x06",
@@ -169,9 +171,9 @@ def write_raw_single_member_archive(
         1,
         len(central),
         len(local),
-        0,
+        len(archive_comment),
     )
-    path.write_bytes(local + central + eocd)
+    path.write_bytes(local + central + eocd + archive_comment)
 
 
 def invoke_guard(
@@ -561,6 +563,74 @@ class GoldenArtifactGuardTest(unittest.TestCase):
             self.assertEqual(0, result.returncode)
             self.assertEqual("accepted", receipt["status"])
 
+    def test_rejects_archive_and_member_comments(self):
+        cases = (
+            ("archive", {"archive_comment": b"opaque producer metadata"}),
+            ("member", {"member_comment": b"opaque member metadata"}),
+        )
+        for label, arguments in cases:
+            with self.subTest(label=label), tempfile.TemporaryDirectory() as temp_dir:
+                directory = Path(temp_dir)
+                archive_path = directory / "candidate.zip"
+                allowlist_path = directory / "allowlist.txt"
+                write_raw_single_member_archive(archive_path, **arguments)
+                allowlist_path.write_text("goldens/a.png\n", encoding="utf-8")
+
+                result, receipt = invoke_guard(archive_path, allowlist_path)
+
+                self.assertEqual(2, result.returncode)
+                self.assertEqual(
+                    "unsupported_zip_comment",
+                    receipt["errors"][0]["code"],
+                )
+
+    def test_preflights_all_local_records_before_reading_member_payloads(self):
+        with tempfile.TemporaryDirectory() as temp_dir:
+            directory = Path(temp_dir)
+            archive_path = directory / "candidate.zip"
+            write_archive(
+                archive_path,
+                [
+                    ("goldens/a.png", rgba_png(), REGULAR_MODE),
+                    ("goldens/b.png", rgba_png(), REGULAR_MODE),
+                ],
+            )
+            with zipfile.ZipFile(archive_path, "r") as archive:
+                second_header_offset = archive.infolist()[1].header_offset
+            payload = bytearray(archive_path.read_bytes())
+            struct.pack_into(
+                "<H",
+                payload,
+                second_header_offset + 8,
+                zipfile.ZIP_STORED,
+            )
+            archive_path.write_bytes(payload)
+
+            with mock.patch.object(
+                GUARD_MODULE, "read_member_payload"
+            ) as read_member_payload:
+                with self.assertRaises(GUARD_MODULE.GuardProblem) as raised:
+                    GUARD_MODULE.inspect_archive(
+                        archive_path,
+                        ["goldens/a.png", "goldens/b.png"],
+                        hashlib.sha256(
+                            b"goldens/a.png\ngoldens/b.png\n"
+                        ).hexdigest(),
+                        expected_archive_sha256=None,
+                        max_archive_bytes=1024 * 1024,
+                        max_entry_bytes=1024 * 1024,
+                        max_total_bytes=1024 * 1024,
+                        max_compression_ratio=200.0,
+                        max_pixels=1_000_000,
+                        max_decoded_bytes=4 * 1024 * 1024,
+                        max_total_pixels=1_000_000,
+                        max_total_decoded_bytes=4 * 1024 * 1024,
+                        max_files=8,
+                    )
+
+            self.assertEqual("local_central_header_mismatch", raised.exception.code)
+            read_member_payload.assert_not_called()
+
     def test_rejects_malformed_or_nonportable_png_payloads(self):
         valid = bytearray(rgba_png())
         idat_marker = valid.index(b"IDAT")
@@ -826,6 +896,8 @@ class GoldenArtifactGuardTest(unittest.TestCase):
             "or authorize a visual change",
             "8-bit truecolor or truecolor-with-alpha",
             "golden_artifact_guard.py",
+            "downstream consumer extraction or import staging directory",
+            "remove only the partial directory created for that attempt",
         ):
             self.assertIn(phrase, reference)
 

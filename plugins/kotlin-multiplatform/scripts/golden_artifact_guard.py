@@ -213,8 +213,13 @@ def preflight_zip(
         declared_entries,
         central_size,
         central_offset,
-        _,
+        archive_comment_size,
     ) = fields
+    if archive_comment_size != 0:
+        fail(
+            "unsupported_zip_comment",
+            "ZIP archive comments are outside the bounded metadata contract",
+        )
     if disk_number != 0 or central_disk != 0 or entries_on_disk != declared_entries:
         fail("multi_disk_archive", "multi-disk ZIP archives are not accepted")
     if (
@@ -250,6 +255,11 @@ def preflight_zip(
         comment_size = values[12]
         disk_start = values[13]
         local_offset = values[16]
+        if comment_size != 0:
+            fail(
+                "unsupported_zip_comment",
+                "ZIP member comments are outside the bounded metadata contract",
+            )
         if (
             compressed_size == 0xFFFFFFFF
             or expanded_size == 0xFFFFFFFF

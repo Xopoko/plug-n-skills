@@ -94,10 +94,15 @@ extract files, establish trusted authorship, or authorize a visual change.
 Acceptance is intentionally narrow: single-disk non-ZIP64 archives and 8-bit
 truecolor or truecolor-with-alpha PNGs with portable metadata only. Normalize
 other valid encodings in the trusted generator rather than weakening the
-artifact boundary during review.
+artifact boundary during review. ZIP archive and member comments are not
+accepted because they are outside the bounded metadata contract. Every local
+record is validated before any member payload is decoded.
 
 ## Review And Cleanup
 
+- Do not create a downstream consumer extraction or import staging directory
+  before the guard accepts the archive. If that later step fails or is
+  interrupted, remove only the partial directory created for that attempt.
 - Inspect archive entries before extraction. Reject absolute or parent paths,
   links, special files, case-fold collisions, duplicate paths, and payloads
   outside declared size limits. Extract to an isolated temporary directory and
