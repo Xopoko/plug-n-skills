@@ -103,7 +103,10 @@ class RepoStructureTest(unittest.TestCase):
 
     def test_pull_request_merge_gate_is_current_head_bound(self):
         guidance = (ROOT / "AGENTS.md").read_text()
-        section = guidance.split("## Pull Request Merge Gate", 1)[1].split("## ", 1)[0]
+        heading = "## Pull Request Merge Gate"
+        _, found_heading, remainder = guidance.partition(heading)
+        self.assertEqual(found_heading, heading, "missing Pull Request Merge Gate")
+        section = remainder.partition("## ")[0]
         normalized = " ".join(re.findall(r"[a-z0-9]+", section.lower()))
 
         section.encode("ascii")
