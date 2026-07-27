@@ -169,8 +169,8 @@ instructions.
 | Skill entrypoints | 166 | - | `SKILL.md` files exposed through plugin metadata. |
 | Reference files | 236 | - | Longer ledgers, contracts, scorecards, and source notes. |
 | Helper and validator scripts | 85 | - | Deterministic plugin-local helpers. |
-| Startup metadata | 166 skills | 13,339 | Skill name, description, and file pointer for routing. |
-| On-demand skill bodies | 166 skills | 119,090 | Instruction bodies after frontmatter, loaded only when selected. |
+| Startup metadata | 166 skills | 13,369 | Skill name, description, and file pointer for routing. |
+| On-demand skill bodies | 166 skills | 119,388 | Instruction bodies after frontmatter, loaded only when selected. |
 
 Regenerate the report after skill edits:
 
@@ -200,7 +200,7 @@ Token columns are `startup metadata / on-demand body`.
 | `git-worktree-safety` | 2 | 2 | 2 | 382 | 2,469 |
 | `claude-code` | 6 | 2 | 1 | 528 | 4,669 |
 | `architecture-intelligence` | 9 | 8 | 2 | 645 | 7,585 |
-| `design-intelligence` | 7 | 2 | 1 | 472 | 5,101 |
+| `design-intelligence` | 7 | 2 | 1 | 502 | 5,399 |
 | `game-design-intelligence` | 6 | 2 | 1 | 536 | 2,916 |
 | `kotlin-multiplatform` | 14 | 22 | 2 | 1,141 | 14,462 |
 | `spec-driven-development` | 6 | 0 | 2 | 333 | 3,267 |
@@ -433,13 +433,13 @@ Token cells are shown as `startup/body`.
 
 | Skill | Tokens | Description |
 | --- | ---: | --- |
-| `design-intelligence` | 69/844 | Route UX/product judgment to focused skills for framing, IA, interaction, usability, accessibility, visual communication, design-system governance, and heuristics. Not for Figma, CSS, automation, or assets. |
+| `design-intelligence` | 69/852 | Route UX/product judgment to focused skills for framing, IA, interaction, usability, accessibility, visual communication, design-system governance, and heuristics. Not for Figma, CSS, automation, or assets. |
 | `design-system-governance` | 72/764 | Govern reusable design decisions, patterns, components, accessibility proof, contribution models, maturity, drift, and system adoption. Do not use for CSS implementation, Figma libraries, or token tooling unless requested. |
 | `interaction-design` | 64/768 | Design or critique flows, task sequences, affordances, feedback, states, error prevention, recovery, undo, progressive disclosure, input burden, keyboard/touch behavior, and interaction psychology. |
 | `interface-architecture` | 58/748 | Design or critique information architecture, navigation, taxonomy, labeling, screen structure, content priority, findability, search and browse strategy, and information hierarchy. |
 | `product-framing` | 68/505 | Frame product and UX decisions before interface work: strategy, user needs, Jobs-to-be-Done, outcome mapping, opportunity-solution trees, HEART/GSM, problem statements, assumptions, discovery plans. |
 | `usability-accessibility-review` | 71/742 | Review screens, flows, specs, or product ideas for usability heuristics, cognitive walkthrough failures, WCAG/APG/COGA accessibility risks, inclusive design, ethical UX, and dark patterns. |
-| `visual-communication` | 70/730 | Improve hierarchy, scannability, visual emphasis, readability, grouping, density, attention, trust, and perceptual clarity. Do not use for CSS recipes, Figma operation, or decorative visual styling. |
+| `visual-communication` | 100/1,020 | Use when reviewing UI screenshots, golden images, visual diffs, or visual hierarchy for scannability, emphasis, readability, grouping, density, contrast, and perceptual clarity, especially when capture state or test-harness artifacts may be mistaken for product defects. Do not use for screenshot generation/export, CSS recipes, Figma operation, or decorative styling. |
 
 #### `game-design-intelligence`
 

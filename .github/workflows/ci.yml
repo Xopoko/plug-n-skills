@@ -21,6 +21,8 @@ jobs:
         run: python3 -m unittest discover -s scripts/tests
       - name: architecture-intelligence plugin tests
         run: python3 -m unittest discover -s plugins/architecture-intelligence/tests
+      - name: design-intelligence plugin tests
+        run: python3 -m unittest discover -s plugins/design-intelligence/tests
       - name: kotlin-multiplatform plugin tests
         run: python3 -m unittest discover -s plugins/kotlin-multiplatform/tests
       - name: context-density plugin tests

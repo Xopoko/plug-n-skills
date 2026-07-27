@@ -1,6 +1,6 @@
 ---
 name: visual-communication
-description: "Improve hierarchy, scannability, visual emphasis, readability, grouping, density, attention, trust, and perceptual clarity. Do not use for CSS recipes, Figma operation, or decorative visual styling."
+description: "Use when reviewing UI screenshots, golden images, visual diffs, or visual hierarchy for scannability, emphasis, readability, grouping, density, contrast, and perceptual clarity, especially when capture state or test-harness artifacts may be mistaken for product defects. Do not use for screenshot generation/export, CSS recipes, Figma operation, or decorative styling."
 ---
 
 # Visual Communication
@@ -50,6 +50,25 @@ Ground recommendations in perception and task comprehension. Heuristic source ->
 - Empty and error states: explain system status, teach the model, preserve agency, and offer a direct next action.
 - Responsive or adaptive layouts: preserve priority, grouping, labels, controls, and state visibility across viewport, zoom, localization, and density changes.
 
+## Screenshot Evidence Boundary
+
+Before treating a screenshot, golden image, or visual diff as product evidence:
+
+- bind it to the exact rendered build or artifact, its provenance to the source revision, and the capture harness; source-only binding is valid only when the inspected renderer directly establishes that relationship;
+- record sanitized pixel-changing state: viewport and density, theme, locale and font scale, navigation destination, scroll position, expanded or focused controls, input and data state, animation or clock state, and capture order;
+- compare only equivalent states, or label the comparison non-equivalent;
+- inspect scripted interaction order when the symptom could come from capture state.
+
+Separate what the pixels prove from why it happened.
+A clipped or displaced element proves the rendered symptom in that captured state; it does not by itself prove a product layout defect.
+Keep the cause `unknown` until affirmative evidence establishes it; classify `harness` or `product` only when source, runtime, or capture evidence supports that cause.
+A harness defect can still invalidate a visual acceptance artifact.
+
+Use synthetic or allowlisted data where possible and redact secrets, personal or account identifiers, private routes, and tokens from captures.
+Keep unavoidable raw evidence private; do not publish or share it without explicit authorization.
+
+For stateful flows, preserve a minimal evidence triplet: precondition, interaction, capture. If any member is unavailable, state the evidence limit instead of inferring the missing state.
+
 ## Recommendations
 
 Prefer before decoration:
@@ -75,7 +94,7 @@ Produce:
 3. **Attention conflicts**: where visual emphasis competes with user goals.
 4. **Readability risks**: density, contrast, line length, labels, numbers, states.
 5. **Recommended changes**: ordered by communication impact.
-6. **Validation**: screenshot comparison, first-click test, comprehension test, task success, or accessibility check.
+6. **Validation**: capture-state-bound screenshot comparison, first-click test, comprehension test, task success, or accessibility check.
 
 For durable visual hierarchy decisions, use `design_intelligence.decision.v1` from `references/contracts.md`.
 
