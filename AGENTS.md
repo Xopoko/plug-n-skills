@@ -229,6 +229,11 @@ and bot-review gates on the new head, then repeat the final reread. If either
 bot is unavailable or its current-head receipt cannot be proven, hold the pull
 request; do not merge.
 
+Perform the merge only with an expected-head compare-and-swap bound to `H`, or
+an equivalent server-side condition that rejects atomically if the current
+pull-request head differs from `H`. A separate pre-merge reread is not enough.
+Never fall back to an unguarded merge primitive.
+
 ## Git Hygiene
 
 - Inspect `git status --short --ignored` before editing and before finishing.

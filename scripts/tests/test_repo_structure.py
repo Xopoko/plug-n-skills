@@ -137,6 +137,12 @@ class RepoStructureTest(unittest.TestCase):
                 r"if either bot is unavailable or its current head receipt "
                 r"cannot be proven hold the pull request do not merge"
             ),
+            (
+                r"perform the merge only with an expected head compare and swap "
+                r"bound to h.*server side condition.*rejects atomically.*current "
+                r"pull request head differs from h.*pre merge reread is not enough.*"
+                r"never fall back to an unguarded merge primitive"
+            ),
         ):
             self.assertRegex(normalized, required_contract)
 
