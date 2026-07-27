@@ -105,16 +105,19 @@ Before accepting an affected target's external mutation:
    the mutation receipt to it. Require the fixed store schema, exact store,
    existing authorization, preallocated intent-store and owning-system mutation
    operation IDs, and immutability evidence. Retain both IDs in the immutable
-   intent before the external write. If that store is unavailable, keep the
-   external mutation blocked; never emulate it with an ordinary local write.
+   intent before the external write. Require the owning-system mutation receipt
+   to name the canonical object produced or targeted by that exact operation.
+   If that store is unavailable, keep the external mutation blocked; never
+   emulate it with an ordinary local write.
 3. Read back the exact external object and one keyed, evidence-bound result for
    every mandatory field after the write. Use only the closed HMAC fingerprint
    envelope; raw values and bare digests are malformed. Preallocate the
    owning-system operation ID, bind it to the destination, subject, and intent,
    and bind the readback to both that operation ID and the exact mutation
-   receipt with owning-system ordering evidence. Missing, extra, or duplicate
-   field results fail closed. Object existence, a related field, target
-   activity, or intent is not policy adoption.
+   receipt with owning-system ordering evidence. Require the readback object ID
+   to equal the independently recovered mutation result object ID. Missing,
+   extra, or duplicate field results fail closed. Object existence, a related
+   field, target activity, or intent is not policy adoption.
 4. Keep missing or mismatched fields as `policy-drift`. Any unknown mutation
    or intent outcome, or incomplete/unavailable/ambiguous readback, is
    `reconciliation-required` after receipt shape and durable operation IDs
@@ -134,8 +137,73 @@ the direct user revision nor proves receiver adoption. It still retains its
 ordinary delivery and acknowledgement rules. See the protected policy
 application receipt and failure schedule in the supervision contract.
 Before yielding or compaction, persist the separate immutable application
-recovery ref plus both operation IDs; never hide them in the evidence-delta
-revision or ordinary pending-intervention slot.
+recovery ref plus both operation IDs in the v2 protected-policy application
+state, keyed by a stable application ID that the v2 recovery record also binds.
+A recovery record is one closed shape that also binds the receiver, exact
+authorized intent-store schema/ref/authorization, canonical intent ref,
+destination, subject, owning-system operation namespace, operation-policy
+fingerprint, and exact `checkpoint_state`; reject missing or extra fields, any
+smaller checkpoint projection, or null state, fingerprint, receiver, store,
+authorization, intent, destination, subject, or namespace bindings. Reject
+duplicate namespace-plus-operation-ID pairs across active and retired
+applications. Keep application state on the contract's closed monotonic graph.
+When a recovery head changes, its immutable successor must name the previous
+recovery ref as predecessor while retaining the same application ID and policy
+revision. Resolve the full recovery chain to its root and validate every
+intermediate record; a successor preserves the prior chain as an exact prefix.
+Keep the operation namespace and required operation-policy fingerprint
+immutable. Once either operation ID is allocated, retain its exact value in
+every successor. Require each successor's stored `checkpoint_state` to be one
+exact edge on the closed graph and equal the checkpoint entry state at the
+head. Validate every closed lifecycle, checkpoint-state, terminal-outcome, and
+reconciliation state enum as a bounded string before membership checks so
+malformed composite values fail closed. Resolve every non-null reconciliation
+ref as the exact owning-system
+receipt for its predecessor-successor edge. Require it if and only if an
+unknown predecessor state advances; otherwise treat it as spurious. A
+checkpoint state change appends exactly one successor. A later ordinary advance
+uses another state-bearing successor without reusing the prior reconciliation.
+An
+intent- or mutation-outcome-unknown state is sticky: it can change or retire
+only through an exact owning-system reconciliation receipt binding the before
+and after state, recovery refs, and retained operation IDs.
+A later protected revision gets a separate entry and never replaces, coalesces,
+or serializes capture behind an earlier nonterminal or unknown application.
+Its first recovery record has null predecessor and reconciliation refs; only a
+later checkpoint transition may advance that recovery head.
+Keep at most eight complete active entries inline; on the ninth, replace the
+inline cache with one content-addressed typed active index containing every
+entry. Remove an entry only after an append-only retired-index tombstone and
+independently resolved terminal receipt bind its application ID, revision, and
+recovery ref. Every new tombstone must correspond to an entry active in the
+immediately preceding checkpoint. Resolve the terminal producer authority and
+exact v2 application receipt, evaluate that receipt independently, and require
+the evaluated result to equal the terminal label; require reconciliation when
+the prior state was unknown. Require the receipt and tombstone to name the
+exact recovery head whose stored state is `terminal`. Retirement from a
+nonterminal state appends exactly that one terminal successor; no intermediate
+recovery may hide the real edge. That head carries any required unknown-state
+reconciliation, and its reconciliation ref must equal the terminal receipt's
+ref. Resolve the terminal recovery and application
+receipt through the same immutable evidence store; partial, built-in, or
+substituted recovery evidence cannot authorize retirement. Never reuse any of
+those identities. Never hide these entries in the evidence-delta revision or
+ordinary pending-intervention slot.
+
+Treat a `codex.thread_supervision.v1` checkpoint as legacy input, never as an
+empty v2 application state. Migrate from the complete v1 checkpoint root and
+select exactly one nested target by thread and host. Migrate a provisional
+singular application only through an immutable typed migration record and a new
+v2 recovery record, binding the canonical checkpoint fingerprint, exact target,
+operation namespace, old and new identities, and the exact migrated checkpoint
+state. A v1 checkpoint without that
+field may become empty only with independent source-contract and immutable
+inventory proofs bound to that exact checkpoint fingerprint, target, and
+inventory cutoff; its typed evidence count must be the exact JSON integer zero,
+not a boolean or floating-point substitute. Validate the branch-specific
+migration or pre-feature proof ref as a bounded non-null scalar before evidence
+lookup; a null-key evidence entry never supplies a missing ref. Otherwise fail
+closed and do not resume a mutation.
 
 ## Watch Transitions
 

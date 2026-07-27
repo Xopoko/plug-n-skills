@@ -9,7 +9,7 @@ Keep the checkpoint compact and machine-readable when possible:
 
 ```json
 {
-  "schema": "codex.thread_supervision.v1",
+  "schema": "codex.thread_supervision.v2",
   "goal": "bound supervision goal",
   "terminal_condition": "evidence-backed stop condition",
   "reporting_cadence": "transition-only or user-selected cadence",
@@ -59,14 +59,23 @@ Keep the checkpoint compact and machine-readable when possible:
       "open_gates": [],
       "immutable_evidence": [],
       "protected_contract_fingerprint": "goal-policy-boundary-fingerprint",
-      "protected_policy_application": {
-        "schema": "codex.protected_policy_application_checkpoint.v1",
-        "state": "revision-captured|adoption-pending|intent-pending|intent-outcome-unknown|mutation-pending|mutation-outcome-unknown|readback-pending|terminal",
-        "policy_revision_id": "opaque-policy-revision-or-null",
-        "operation_policy_fingerprint": "opaque-operation-policy-fingerprint-or-null",
-        "recovery_ref": "opaque-protected-policy-application-recovery-ref",
-        "intent_operation_id": "opaque-intent-operation-id-or-null",
-        "mutation_operation_id": "opaque-mutation-operation-id-or-null"
+      "protected_policy_application_state": {
+        "schema": "codex.protected_policy_application_state.v1",
+        "active_count": 1,
+        "active_inline": [
+          {
+            "schema": "codex.protected_policy_application_checkpoint.v2",
+            "application_id": "stable-opaque-application-id",
+            "state": "mutation-outcome-unknown",
+            "policy_revision_id": "opaque-user-authorized-revision",
+            "operation_policy_fingerprint": "sha256:9dd14cec80c2351a274e120744602902aed7dfcb68f1fa8b9b21655cf17f6649",
+            "recovery_ref": "opaque-protected-policy-application-recovery-ref",
+            "intent_operation_id": "opaque-preallocated-intent-operation-id",
+            "mutation_operation_id": "opaque-preallocated-mutation-operation-id"
+          }
+        ],
+        "active_index_ref": null,
+        "retired_index_ref": null
       },
       "current_contract_revision": null,
       "recent_revision_refs": [],
@@ -105,8 +114,12 @@ result is reconciled.
 
 Keep only current claims, gates, and evidence needed for the next decision.
 Limit each inline list to eight entries and keep at most five active capability
-candidate references. Externalize superseded history to private evidence
-artifacts rather than growing the checkpoint.
+candidate references. `protected_policy_application_state.active_inline` is
+complete only while `active_count <= 8`. When the ninth application is captured,
+set `active_inline=[]` and persist every active entry, in capture order, in the
+typed content-addressed record named by `active_index_ref`; never truncate the
+active set. Externalize superseded history to private evidence artifacts rather
+than growing the checkpoint.
 
 `open_gates` contains only currently applicable blockers. Bind every entry to a
 current live subject or explicit policy requirement, eligibility evidence, and
@@ -155,13 +168,187 @@ private-data boundary, and task constraints. Evidence revisions never modify
 it. Fingerprint that protected state separately so the receiver can reject a
 message formed against different authority.
 
-`protected_policy_application` is `null` when no affected policy application is
-active. Otherwise it is a separate recovery record; never overload
-`current_contract_revision` or `pending_intervention`. Persist its immutable
-content-addressed private `recovery_ref` before each adoption, intent, mutation,
-or readback attempt. When either write outcome is unknown, retain the exact
-policy revision, operation-policy fingerprint, intent operation ID, and mutation
-operation ID until owning-system reconciliation reaches a terminal state.
+`protected_policy_application_state.active_count=0`, `active_inline=[]`, and
+`active_index_ref=null` mean no affected policy application is active.
+Otherwise the inline entries or resolved active index form one append-only,
+capture-ordered collection with a unique `application_id`, policy revision, and
+recovery ref per entry; never overload `current_contract_revision` or
+`pending_intervention`. The active index has schema
+`codex.protected_policy_application_active_index.v1`, exactly `active_count`
+entries, and no duplicate application, revision, or recovery identity. Its
+content-addressed ref changes on append or terminal removal.
+
+A later revision is appended without replacing, coalescing, or reusing an
+earlier nonterminal record. Persist each immutable content-addressed private
+`recovery_ref` before its adoption, intent, mutation, or readback attempt. Its
+typed `codex.protected_policy_application_recovery.v2` record binds the same
+application ID and policy revision, its exact `checkpoint_state`, the
+operation-policy fingerprint, the receiver, exact authorized intent-store
+schema/ref/authorization, canonical intent ref, destination, subject,
+owning-system operation namespace, and both operation IDs. This is one closed
+record shape: reject missing or extra fields and never substitute a smaller
+checkpoint projection. State, policy fingerprint, receiver, store,
+authorization, intent, destination, subject, and operation namespace bindings
+are bounded and non-null in every record; only operation IDs and the two
+chain-edge refs may start null where the lifecycle permits. The pair of
+operation namespace and operation ID is globally unique across active and
+retired applications. When a recovery head changes, the new record names the
+previous
+`recovery_ref` as its predecessor; the stable application identity is the
+application ID plus policy revision, not the recovery-head ref. Validate every
+intermediate recovery record. The application, revision, receiver, store,
+intent, destination, subject, operation namespace, and required operation-policy
+fingerprint never change within the chain. Either operation ID may be allocated
+once where the closed lifecycle permits it; every later successor retains that
+exact value.
+Every successor's `checkpoint_state` must be one exact edge on the closed state
+graph, and the checkpoint entry state must equal its recovery head's state.
+Treat every lifecycle, checkpoint-state, terminal-outcome, and reconciliation
+state enum as a bounded string before membership checks; malformed composite
+values fail closed rather than aborting validation.
+Every non-null reconciliation ref resolves to the exact owning-system receipt
+for that predecessor-successor edge. Require a reconciliation ref if and only
+if an unknown predecessor state advances; it binds both recovery refs and their
+exact stored states. Any other reconciliation ref is unused or spurious and
+fails closed. A checkpoint transition that changes state appends exactly one
+successor, so an intermediate edge cannot hide the real before/after pair. A
+later ordinary advance appends another state-bearing successor and remains
+valid without reusing the prior reconciliation.
+A newly appended application starts with a root recovery record: both
+`predecessor_ref` and `reconciliation_receipt_ref` are null. Only a later
+checkpoint transition may advance that recovery head.
+
+Application state follows this closed monotonic graph:
+
+- `revision-captured -> adoption-pending -> intent-pending`;
+- `intent-pending -> intent-outcome-unknown|mutation-pending`;
+- `mutation-pending -> mutation-outcome-unknown|readback-pending`;
+- `intent-outcome-unknown -> mutation-pending` and
+  `mutation-outcome-unknown -> readback-pending` only after reconciliation;
+- any nonterminal state may become `terminal`; `terminal` cannot reopen.
+
+A state may remain unchanged. It cannot move backwards or skip an unlisted
+edge. When either write outcome is unknown, retain that exact application ID,
+policy revision, operation-policy fingerprint, operation namespace, intent
+operation ID, and mutation operation ID. An unknown state is sticky: it may
+change or retire only through an exact
+`codex.protected_policy_application_reconciliation.v1` receipt issued by the
+owning system. The receipt binds the application and revision, before and after
+states, before and after recovery refs, and both operation IDs. A later
+revision may be captured and rebound, but it cannot authorize retrying or
+discarding an earlier unknown operation.
+
+Only independently proven terminal evidence may remove an active entry.
+`retired_index_ref` names the newest immutable
+`codex.protected_policy_application_retired_index.v1` record. Each record binds
+its predecessor ref and at most eight typed terminal tombstones; the chain is
+append-only. Every tombstone binds one application ID, policy revision,
+recovery ref, and terminal receipt ref, and that terminal receipt independently
+echoes all four identities. Active and retired identities are globally unique.
+Never drop or reuse an application ID, revision ID, recovery ref, or
+operation-namespace-plus-operation-ID pair. A transition may add a tombstone
+only for an entry that was active in the immediately preceding checkpoint.
+The terminal application receipt and tombstone name the exact recovery head
+whose `checkpoint_state` is `terminal`. Retiring a nonterminal active entry
+appends exactly that one terminal successor; no intermediate recovery may hide
+the actual predecessor-terminal edge. If the predecessor state was unknown,
+that terminal head itself carries the required reconciliation edge, and the
+terminal receipt's reconciliation ref equals the head's ref.
+Resolve the terminal receipt's producer authority and its exact v2 application
+receipt, evaluate that application receipt independently, and require its
+closed result to equal `terminal_application`. If the predecessor state was
+unknown, also resolve the owning-system reconciliation receipt. Resolve the
+terminal recovery and application receipt through the same immutable evidence
+store; a separate built-in or substituted recovery cannot authorize retirement.
+
+### Checkpoint schema migration
+
+Never interpret a v1 checkpoint directly as v2. Migration consumes the complete
+v1 checkpoint root and selects exactly one nested `targets[]` entry by both
+thread ID and host ID. A v1 target that contains the provisional singular
+`protected_policy_application` field may be migrated only after loading its
+immutable recovery record and persisting a typed
+`codex.protected_policy_application_migration.v1` record. That migration binds
+the canonical full-checkpoint fingerprint, exact target identity, legacy
+recovery ref, revision and operation IDs to a new stable application ID,
+operation namespace, and new v2 recovery ref whose record echoes the same
+identities plus the exact migrated checkpoint state. The fingerprint is
+`sha256:` plus lowercase SHA-256 of strict UTF-8
+JSON with recursively sorted object keys, no insignificant whitespace, array
+order preserved, and non-JSON constants rejected. A present `null` singular
+field migrates to the explicit empty v2 state. A v1 checkpoint without the
+singular field may migrate empty only when
+an independently resolved source-contract revision proves that exact
+checkpoint fingerprint predates protected-policy applications and an exact
+cutoff-bound immutable evidence inventory for that target contains no
+application recovery record. Its typed evidence count is the exact JSON integer
+zero, never a boolean or floating-point substitute. Replaying either proof
+against another checkpoint or target fails closed. Missing proof, malformed
+legacy state, both singular and v2 state, or an unresolved migration write fails
+closed; do not resume mutation. Validate the branch-specific migration or
+pre-feature proof ref as a
+bounded non-null scalar before evidence lookup. A null-key evidence-map entry
+never supplies a missing ref.
+
+The private indexes and terminal proof use these closed projections:
+
+```json
+{
+  "active_index": {
+    "schema": "codex.protected_policy_application_active_index.v1",
+    "active_count": 1,
+    "applications": [
+      {
+        "schema": "codex.protected_policy_application_checkpoint.v2",
+        "application_id": "stable-opaque-application-id",
+        "state": "mutation-outcome-unknown",
+        "policy_revision_id": "opaque-policy-revision",
+        "operation_policy_fingerprint": "opaque-operation-policy-fingerprint",
+        "recovery_ref": "opaque-v2-recovery-ref",
+        "intent_operation_id": "opaque-intent-operation-id",
+        "mutation_operation_id": "opaque-mutation-operation-id"
+      }
+    ]
+  },
+  "retired_index": {
+    "schema": "codex.protected_policy_application_retired_index.v1",
+    "predecessor_ref": null,
+    "tombstones": [
+      {
+        "schema": "codex.protected_policy_application_terminal.v1",
+        "application_id": "stable-opaque-application-id",
+        "policy_revision_id": "opaque-policy-revision",
+        "recovery_ref": "opaque-v2-recovery-ref",
+        "terminal_receipt_ref": "opaque-terminal-receipt-ref"
+      }
+    ]
+  },
+  "terminal_receipt": {
+    "schema": "codex.protected_policy_application_terminal_receipt.v1",
+    "producer": "codex-thread-supervisor",
+    "producer_authority_ref": "opaque-terminal-producer-authority-ref",
+    "application_id": "stable-opaque-application-id",
+    "policy_revision_id": "opaque-policy-revision",
+    "recovery_ref": "opaque-v2-recovery-ref",
+    "application_receipt_ref": "opaque-v2-application-receipt-ref",
+    "reconciliation_receipt_ref": "opaque-owning-system-reconciliation-ref-or-null",
+    "terminal_application": "applied"
+  }
+}
+```
+
+The active-index object above illustrates one entry's closed shape; a checkpoint
+references this index only when its real count exceeds eight. Each
+`applications` item is the exact checkpoint-entry object, not prose or a partial
+identifier. Each retired-index record has one to eight tombstones, and
+`terminal_application` is exactly one of
+`invalid|blocked|applied|policy-drift`. Resolve and validate the predecessor
+chain before accepting its identity set. A repacked list without the prior ref
+is not a successor. Resolve `producer_authority_ref` and require it to authorize
+this producer, terminal receipt, and exact application receipt. Evaluate the
+resolved application receipt rather than trusting the terminal label. A
+terminal receipt is not sufficient unless its tombstone identity was active in
+the immediately preceding checkpoint.
 
 ## Protected Policy Application
 
@@ -221,14 +408,15 @@ This example is a complete `applied` receipt:
 
 ```json
 {
-  "schema": "codex.protected_policy_application.v1",
+  "schema": "codex.protected_policy_application.v2",
+  "application_id": "stable-opaque-application-id",
   "policy_revision_id": "opaque-user-authorized-revision",
   "authorizer": "user",
   "from_protected_contract_fingerprint": "prior-protected-fingerprint",
   "to_protected_contract_fingerprint": "current-protected-fingerprint",
   "receiver_thread_id": "opaque-receiver-thread-id",
   "operation_policy_fingerprint": "sha256:9dd14cec80c2351a274e120744602902aed7dfcb68f1fa8b9b21655cf17f6649",
-  "recovery_ref": "opaque-protected-policy-application-recovery-ref",
+  "recovery_ref": "opaque-protected-policy-application-terminal-recovery-ref",
   "receiver_adoption": {
     "status": "adopted",
     "receiver_thread_id": "opaque-receiver-thread-id",
@@ -277,6 +465,7 @@ This example is a complete `applied` receipt:
     "operation_id": "opaque-preallocated-mutation-operation-id",
     "destination_ref": "opaque-external-system-ref",
     "subject_ref": "opaque-action-intent-or-object-ref",
+    "result_object_ref": "opaque-object-id",
     "receipt_ref": "opaque-owning-system-write-receipt",
     "prewrite_intent_operation_id": "opaque-preallocated-intent-operation-id",
     "prewrite_intent_ref": "opaque-immutable-prewrite-intent-ref",
@@ -340,8 +529,12 @@ authorization, immutability, and `after-adoption`, and bind that exact receiver,
 acknowledgement, policy fingerprint, and preallocated owning-system mutation
 operation ID. The independently recovered mutation receipt must bind the exact
 destination, subject, retained mutation operation ID, intent operation ID, and
-intent ref. A complete readback proves
-`after-mutation`, binds that exact mutation operation ID and receipt, and
+intent ref plus the canonical object produced or targeted by that mutation.
+`mutation.result_object_ref` echoes that owning-system object identity. A
+complete readback proves `after-mutation`, binds that exact mutation operation
+ID and receipt, and has `readback.object_ref` exactly equal to the recovered
+mutation result object. Merely reading another object with matching fields is
+not causal evidence. The readback
 contains exactly one result for every mandatory field and no others. Every
 matched result has independently recoverable expectation and owning-system
 observation evidence and an observed keyed fingerprint envelope equal to the
@@ -356,10 +549,13 @@ cutoff for the mutation; and object, mutation identity, cutoff, field ref,
 fingerprint envelope, and status for field readback. An unresolved,
 substituted, or differently bound ref cannot support `application=applied`.
 Independently load `recovery_ref` from the private immutable recovery store. Its
-typed record binds the policy revision, receiver, operation-policy fingerprint,
-exact authorized intent-store schema/ref/authorization, canonical intent ref,
-destination, subject, and both preallocated operation IDs. The receipt cannot
-replace that record or supply an alternate resolver.
+`codex.protected_policy_application_recovery.v2` record binds the application
+ID, policy revision, exact checkpoint state, receiver, operation-policy
+fingerprint, exact authorized intent-store schema/ref/authorization, canonical
+intent ref, destination, subject, owning-system operation namespace, both
+preallocated operation IDs, its predecessor recovery ref, and any
+reconciliation receipt ref. The receipt cannot replace that record or supply
+an alternate resolver.
 After receipt shape, closed states, bounded scalar formats, and durable
 operation IDs are valid, an unknown intent or mutation outcome takes precedence
 over every semantic policy or evidence mismatch. Reconcile it before
@@ -400,9 +596,9 @@ Evaluate this precedence atomically:
 | Created intent lacks exact store schema, store identity, authorization, either operation ID, or immutability evidence | `application=invalid` |
 | Pre-write intent does not bind the exact receiver acknowledgement or prove `after-adoption` | `application=policy-drift` before mutation; committed mutation is invalid |
 | Exact receiver adoption is proven but no mutation is attempted | `mutation.state=not-attempted`, `application=blocked` |
-| Mutation receipt does not bind the exact destination, subject, operation ID, or pre-write intent | `application=invalid` |
+| Mutation receipt does not bind the exact destination, subject, operation ID, pre-write intent, or result object | `application=invalid` |
 | Committed mutation lacks exact object identity, post-mutation cutoff, or complete readback | `readback.state=not-run` or `readback.state=unavailable`, `application=reconciliation-required` |
-| Readback does not bind the exact mutation operation ID and receipt or prove `after-mutation` | `application=policy-drift` |
+| Readback object differs from the recovered mutation result object, does not bind the exact operation ID and receipt, or does not prove `after-mutation` | `application=policy-drift` |
 | Any mandatory field is missing, extra, mismatched, or has a different observed fingerprint | `application=policy-drift` |
 | Any field result is unavailable, even with another field mismatch or extra result | `application=reconciliation-required` |
 | Exact receiver adoption, committed mutation, object identity, cutoff, and every keyed field result match | `readback.state=complete`, `application=applied` |
@@ -809,18 +1005,33 @@ After compaction or a later wake:
    delivery state, and acknowledgement state. Load and validate the immutable
    payload before accepting an acknowledgement; never infer it from activity or
    reconstruct it from prose.
-10. Preserve each nonterminal `protected_policy_application` separately. Load
-    its immutable recovery ref and exact revision, operation-policy fingerprint,
-    intent operation ID, and mutation operation ID before deciding whether a
-    write may be attempted or retried. An unknown outcome permits reconciliation
-    only, never a new write.
-11. After emitting a transition, advance that target's report fingerprint.
-12. Resume the single recorded next action.
+10. Resolve and validate `protected_policy_application_state`. When
+    `active_count <= 8`, require the inline list to be the complete active set
+    and `active_index_ref` to be null. When it is larger, require an empty inline
+    list and load the complete typed active index. Load the full retired-index
+    predecessor chain. Reject duplicate or reused application, revision,
+    recovery, and operation-namespace-plus-operation-ID identities across both
+    sets. Preserve every active entry separately; append a later revision
+    without replacing an earlier entry. Resolve every active and retired
+    recovery chain to its root, then require every updated recovery head to
+    preserve that exact prefix and reach its prior recovery ref. Enforce the
+    closed monotonic application-state graph. An unknown outcome permits only
+    exact owning-system reconciliation, never a new write.
+11. Remove an active entry only when a new retired-index record has the prior
+    retired ref as predecessor and every new tombstone names an application
+    active in the immediately preceding checkpoint. Resolve the terminal
+    receipt's producer authority, exact v2 application receipt, v2 recovery
+    record, and any required unknown-state reconciliation; evaluate the
+    application receipt independently and require all evidence to bind that
+    exact application, revision, and recovery identity.
+12. After emitting a transition, advance that target's report fingerprint.
+13. Resume the single recorded next action.
 
 If the checkpoint is missing the supervisor task or host, a target, cursor,
 authorization, the `open_gates` field, a previously evidenced applicable gate,
 continuation owner, heartbeat logical key, heartbeat lifecycle state, or a
-previously active protected-policy application recovery record,
+previously active protected-policy application recovery record, state, active
+index, retired-index chain, or collection entry,
 perform one bounded read to repair that field. A present empty `open_gates`
 list is valid after a complete zero-eligible inventory and must not be
 repopulated from prose. Do not replay the entire supervision history. While

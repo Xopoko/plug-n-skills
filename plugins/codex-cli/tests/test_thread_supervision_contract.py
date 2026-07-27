@@ -77,6 +77,1327 @@ def bounded_policy_scalar(value: object) -> bool:
         return False
 
 
+POLICY_APPLICATION_STATES = {
+    "revision-captured",
+    "adoption-pending",
+    "intent-pending",
+    "intent-outcome-unknown",
+    "mutation-pending",
+    "mutation-outcome-unknown",
+    "readback-pending",
+    "terminal",
+}
+POLICY_APPLICATION_TRANSITIONS = {
+    "revision-captured": {"revision-captured", "adoption-pending", "terminal"},
+    "adoption-pending": {"adoption-pending", "intent-pending", "terminal"},
+    "intent-pending": {
+        "intent-pending",
+        "intent-outcome-unknown",
+        "mutation-pending",
+        "terminal",
+    },
+    "intent-outcome-unknown": {
+        "intent-outcome-unknown",
+        "mutation-pending",
+        "terminal",
+    },
+    "mutation-pending": {
+        "mutation-pending",
+        "mutation-outcome-unknown",
+        "readback-pending",
+        "terminal",
+    },
+    "mutation-outcome-unknown": {
+        "mutation-outcome-unknown",
+        "readback-pending",
+        "terminal",
+    },
+    "readback-pending": {"readback-pending", "terminal"},
+    "terminal": {"terminal"},
+}
+UNKNOWN_POLICY_APPLICATION_STATES = {
+    "intent-outcome-unknown",
+    "mutation-outcome-unknown",
+}
+POLICY_RECOVERY_FIELDS = {
+    "schema",
+    "application_id",
+    "policy_revision_id",
+    "checkpoint_state",
+    "receiver_thread_id",
+    "operation_policy_fingerprint",
+    "store_schema",
+    "store_ref",
+    "store_authorization_ref",
+    "intent_ref",
+    "destination_ref",
+    "subject_ref",
+    "intent_operation_id",
+    "mutation_operation_id",
+    "operation_namespace_ref",
+    "predecessor_ref",
+    "reconciliation_receipt_ref",
+}
+POLICY_RECOVERY_IMMUTABLE_FIELDS = (
+    "receiver_thread_id",
+    "operation_policy_fingerprint",
+    "store_schema",
+    "store_ref",
+    "store_authorization_ref",
+    "intent_ref",
+    "destination_ref",
+    "subject_ref",
+    "intent_operation_id",
+    "mutation_operation_id",
+)
+
+
+def bounded_policy_enum(value: object, allowed: set[str]) -> bool:
+    return bounded_policy_scalar(value) and value in allowed
+
+
+def exact_policy_count(value: object) -> bool:
+    return type(value) is int and value >= 0
+
+
+def valid_policy_application_entry(item: object) -> bool:
+    if not isinstance(item, dict) or set(item) != {
+        "schema",
+        "application_id",
+        "state",
+        "policy_revision_id",
+        "operation_policy_fingerprint",
+        "recovery_ref",
+        "intent_operation_id",
+        "mutation_operation_id",
+    }:
+        return False
+    if item["schema"] != "codex.protected_policy_application_checkpoint.v2":
+        return False
+    if not bounded_policy_enum(item["state"], POLICY_APPLICATION_STATES):
+        return False
+    for field in (
+        "application_id",
+        "policy_revision_id",
+        "recovery_ref",
+    ):
+        if not bounded_policy_scalar(item[field]):
+            return False
+    if not bounded_policy_scalar(item["operation_policy_fingerprint"]):
+        return False
+    for field in (
+        "intent_operation_id",
+        "mutation_operation_id",
+    ):
+        if item[field] is not None and not bounded_policy_scalar(item[field]):
+            return False
+    if item["state"] in {
+        "intent-pending",
+        "intent-outcome-unknown",
+        "mutation-pending",
+        "mutation-outcome-unknown",
+        "readback-pending",
+    } and (
+        not bounded_policy_scalar(item["intent_operation_id"])
+        or not bounded_policy_scalar(item["mutation_operation_id"])
+    ):
+        return False
+    return True
+
+
+def valid_policy_application_collection(value: object) -> bool:
+    if not isinstance(value, list):
+        return False
+    application_ids = set()
+    revision_ids = set()
+    recovery_refs = set()
+    for item in value:
+        if not valid_policy_application_entry(item):
+            return False
+        if (
+            item["application_id"] in application_ids
+            or item["policy_revision_id"] in revision_ids
+            or item["recovery_ref"] in recovery_refs
+        ):
+            return False
+        application_ids.add(item["application_id"])
+        revision_ids.add(item["policy_revision_id"])
+        recovery_refs.add(item["recovery_ref"])
+    return True
+
+
+def policy_application_identity(item: dict) -> tuple[str, str]:
+    return (
+        item["application_id"],
+        item["policy_revision_id"],
+    )
+
+
+def valid_policy_recovery_record(
+    recovery: object,
+    application_id: str,
+    policy_revision_id: str,
+) -> bool:
+    if (
+        not isinstance(recovery, dict)
+        or set(recovery) != POLICY_RECOVERY_FIELDS
+        or recovery.get("schema")
+        != "codex.protected_policy_application_recovery.v2"
+        or recovery.get("application_id") != application_id
+        or recovery.get("policy_revision_id") != policy_revision_id
+        or not bounded_policy_enum(
+            recovery.get("checkpoint_state"), POLICY_APPLICATION_STATES
+        )
+        or not bounded_policy_scalar(recovery.get("operation_namespace_ref"))
+    ):
+        return False
+    for field in (
+        "receiver_thread_id",
+        "store_ref",
+        "store_authorization_ref",
+        "intent_ref",
+        "destination_ref",
+        "subject_ref",
+    ):
+        if not bounded_policy_scalar(recovery.get(field)):
+            return False
+    for field in (
+        "intent_operation_id",
+        "mutation_operation_id",
+        "predecessor_ref",
+        "reconciliation_receipt_ref",
+    ):
+        if recovery.get(field) is not None and not bounded_policy_scalar(
+            recovery.get(field)
+        ):
+            return False
+    if not bounded_policy_scalar(
+        recovery.get("operation_policy_fingerprint")
+    ):
+        return False
+    if recovery.get(
+        "store_schema"
+    ) != "codex.authorized_immutable_intent_store.v1":
+        return False
+    return True
+
+
+def policy_recovery_head(
+    item: dict, evidence: dict[str, dict]
+) -> dict | None:
+    recovery = evidence.get(item["recovery_ref"])
+    if (
+        not valid_policy_recovery_record(
+            recovery,
+            item["application_id"],
+            item["policy_revision_id"],
+        )
+        or recovery.get("operation_policy_fingerprint")
+        != item.get("operation_policy_fingerprint")
+        or recovery.get("checkpoint_state") != item.get("state")
+        or recovery.get("intent_operation_id")
+        != item.get("intent_operation_id")
+        or recovery.get("mutation_operation_id")
+        != item.get("mutation_operation_id")
+    ):
+        return None
+    return recovery
+
+
+def resolve_policy_recovery_chain(
+    item: dict, evidence: dict[str, dict]
+) -> list[tuple[str, dict]] | None:
+    head = policy_recovery_head(item, evidence)
+    if head is None:
+        return None
+    reverse_chain = []
+    seen = set()
+    ref = item["recovery_ref"]
+    while bounded_policy_scalar(ref) and ref not in seen:
+        seen.add(ref)
+        recovery = evidence.get(ref)
+        if not valid_policy_recovery_record(
+            recovery,
+            item["application_id"],
+            item["policy_revision_id"],
+        ):
+            return None
+        reverse_chain.append((ref, recovery))
+        predecessor_ref = recovery.get("predecessor_ref")
+        if predecessor_ref is None:
+            break
+        ref = predecessor_ref
+    else:
+        return None
+
+    chain = list(reversed(reverse_chain))
+    if chain[0][1].get("reconciliation_receipt_ref") is not None:
+        return None
+    prior_ref, prior = chain[0]
+    for successor_ref, successor in chain[1:]:
+        if successor.get("predecessor_ref") != prior_ref:
+            return None
+        if (
+            successor.get("operation_namespace_ref")
+            != prior.get("operation_namespace_ref")
+        ):
+            return None
+        for field in POLICY_RECOVERY_IMMUTABLE_FIELDS:
+            prior_value = prior.get(field)
+            successor_value = successor.get(field)
+            if prior_value is not None and successor_value != prior_value:
+                return None
+        prior_state = prior.get("checkpoint_state")
+        successor_state = successor.get("checkpoint_state")
+        if not bounded_policy_enum(
+            prior_state, POLICY_APPLICATION_STATES
+        ) or not bounded_policy_enum(
+            successor_state, POLICY_APPLICATION_TRANSITIONS[prior_state]
+        ):
+            return None
+        reconciliation_ref = successor.get("reconciliation_receipt_ref")
+        reconciliation_required = (
+            prior_state in UNKNOWN_POLICY_APPLICATION_STATES
+            and successor_state != prior_state
+        )
+        if (reconciliation_ref is not None) != reconciliation_required:
+            return None
+        if reconciliation_required:
+            reconciliation = evidence.get(reconciliation_ref)
+            if (
+                not isinstance(reconciliation, dict)
+                or set(reconciliation)
+                != {
+                    "schema",
+                    "authority",
+                    "application_id",
+                    "policy_revision_id",
+                    "from_state",
+                    "to_state",
+                    "from_recovery_ref",
+                    "to_recovery_ref",
+                    "intent_operation_id",
+                    "mutation_operation_id",
+                }
+                or reconciliation["schema"]
+                != "codex.protected_policy_application_reconciliation.v1"
+                or reconciliation["authority"] != "owning-system"
+                or reconciliation["application_id"] != item["application_id"]
+                or reconciliation["policy_revision_id"]
+                != item["policy_revision_id"]
+                or reconciliation["from_state"] != prior_state
+                or reconciliation["to_state"] != successor_state
+                or reconciliation["from_recovery_ref"] != prior_ref
+                or reconciliation["to_recovery_ref"] != successor_ref
+                or reconciliation["intent_operation_id"]
+                != successor.get("intent_operation_id")
+                or reconciliation["mutation_operation_id"]
+                != successor.get("mutation_operation_id")
+            ):
+                return None
+        prior_ref, prior = successor_ref, successor
+    return chain if chain[-1][1] == head else None
+
+
+def policy_recovery_chain_reaches(
+    before_item: dict,
+    after_item: dict,
+    evidence: dict[str, dict],
+) -> bool:
+    if policy_application_identity(before_item) != policy_application_identity(
+        after_item
+    ):
+        return False
+    before_chain = resolve_policy_recovery_chain(before_item, evidence)
+    after_chain = resolve_policy_recovery_chain(after_item, evidence)
+    if before_chain is None or after_chain is None:
+        return False
+    before_refs = [ref for ref, _ in before_chain]
+    after_refs = [ref for ref, _ in after_chain]
+    return after_refs[: len(before_refs)] == before_refs
+
+
+def policy_recovery_appends_exact_successor(
+    before_item: dict,
+    after_item: dict,
+    evidence: dict[str, dict],
+) -> bool:
+    if policy_application_identity(before_item) != policy_application_identity(
+        after_item
+    ):
+        return False
+    before_chain = resolve_policy_recovery_chain(before_item, evidence)
+    after_chain = resolve_policy_recovery_chain(after_item, evidence)
+    if before_chain is None or after_chain is None:
+        return False
+    before_refs = [ref for ref, _ in before_chain]
+    after_refs = [ref for ref, _ in after_chain]
+    return (
+        len(after_refs) == len(before_refs) + 1
+        and after_refs[:-1] == before_refs
+        and after_chain[-1][1].get("predecessor_ref")
+        == before_item["recovery_ref"]
+    )
+
+
+def resolve_retired_policy_applications(
+    ref: object, evidence: dict[str, dict]
+) -> list[dict] | None:
+    if ref is None:
+        return []
+    records = []
+    seen_refs = set()
+    while ref is not None:
+        if not bounded_policy_scalar(ref) or ref in seen_refs:
+            return None
+        seen_refs.add(ref)
+        record = evidence.get(ref)
+        if not isinstance(record, dict) or set(record) != {
+            "schema",
+            "predecessor_ref",
+            "tombstones",
+        }:
+            return None
+        if record["schema"] != (
+            "codex.protected_policy_application_retired_index.v1"
+        ):
+            return None
+        tombstones = record["tombstones"]
+        if (
+            not isinstance(tombstones, list)
+            or not tombstones
+            or len(tombstones) > 8
+        ):
+            return None
+        for tombstone in tombstones:
+            if not isinstance(tombstone, dict) or set(tombstone) != {
+                "schema",
+                "application_id",
+                "policy_revision_id",
+                "recovery_ref",
+                "terminal_receipt_ref",
+            }:
+                return None
+            if tombstone["schema"] != (
+                "codex.protected_policy_application_terminal.v1"
+            ):
+                return None
+            if not all(
+                bounded_policy_scalar(tombstone[field])
+                for field in (
+                    "application_id",
+                    "policy_revision_id",
+                    "recovery_ref",
+                    "terminal_receipt_ref",
+                )
+            ):
+                return None
+            terminal = evidence.get(tombstone["terminal_receipt_ref"])
+            if not isinstance(terminal, dict) or set(terminal) != {
+                "schema",
+                "producer",
+                "producer_authority_ref",
+                "application_id",
+                "policy_revision_id",
+                "recovery_ref",
+                "application_receipt_ref",
+                "reconciliation_receipt_ref",
+                "terminal_application",
+            }:
+                return None
+            if terminal["schema"] != (
+                "codex.protected_policy_application_terminal_receipt.v1"
+            ):
+                return None
+            if not bounded_policy_enum(
+                terminal["terminal_application"],
+                {"invalid", "blocked", "applied", "policy-drift"},
+            ):
+                return None
+            if (
+                terminal["producer"] != "codex-thread-supervisor"
+                or not bounded_policy_scalar(
+                    terminal["producer_authority_ref"]
+                )
+                or not bounded_policy_scalar(
+                    terminal["application_receipt_ref"]
+                )
+                or (
+                    terminal["reconciliation_receipt_ref"] is not None
+                    and not bounded_policy_scalar(
+                        terminal["reconciliation_receipt_ref"]
+                    )
+                )
+            ):
+                return None
+            if any(
+                terminal[field] != tombstone[field]
+                for field in (
+                    "application_id",
+                    "policy_revision_id",
+                    "recovery_ref",
+                )
+            ):
+                return None
+            authority = evidence.get(terminal["producer_authority_ref"])
+            if authority != {
+                "schema": (
+                    "codex.protected_policy_application_terminal_authority.v1"
+                ),
+                "producer": terminal["producer"],
+                "terminal_receipt_ref": tombstone["terminal_receipt_ref"],
+                "application_receipt_ref": terminal[
+                    "application_receipt_ref"
+                ],
+            }:
+                return None
+            application_receipt = evidence.get(
+                terminal["application_receipt_ref"]
+            )
+            if (
+                not isinstance(application_receipt, dict)
+                or application_receipt.get("application_id")
+                != tombstone["application_id"]
+                or application_receipt.get("policy_revision_id")
+                != tombstone["policy_revision_id"]
+                or application_receipt.get("recovery_ref")
+                != tombstone["recovery_ref"]
+                or evaluate_protected_policy_application(
+                    application_receipt, evidence
+                )
+                != terminal["terminal_application"]
+            ):
+                return None
+            terminal_item = terminal_recovery_item(tombstone, evidence)
+            terminal_recovery = (
+                policy_recovery_head(terminal_item, evidence)
+                if terminal_item is not None
+                else None
+            )
+            if (
+                terminal_recovery is None
+                or terminal["reconciliation_receipt_ref"]
+                != terminal_recovery.get("reconciliation_receipt_ref")
+            ):
+                return None
+            if (
+                terminal["reconciliation_receipt_ref"] is not None
+                and not valid_terminal_reconciliation_receipt(
+                    tombstone, evidence
+                )
+            ):
+                return None
+        records.append(tombstones)
+        predecessor = record["predecessor_ref"]
+        if predecessor is not None and not bounded_policy_scalar(predecessor):
+            return None
+        ref = predecessor
+    return [
+        tombstone
+        for record_tombstones in reversed(records)
+        for tombstone in record_tombstones
+    ]
+
+
+def retired_policy_chain_reaches(
+    newest_ref: object,
+    predecessor_ref: object,
+    evidence: dict[str, dict],
+) -> bool:
+    if newest_ref == predecessor_ref:
+        return True
+    seen_refs = set()
+    ref = newest_ref
+    while ref is not None:
+        if not bounded_policy_scalar(ref) or ref in seen_refs:
+            return False
+        seen_refs.add(ref)
+        record = evidence.get(ref)
+        if not isinstance(record, dict):
+            return False
+        ref = record.get("predecessor_ref")
+        if ref == predecessor_ref:
+            return True
+    return False
+
+
+def resolve_active_policy_applications(
+    state: object, evidence: dict[str, dict]
+) -> list[dict] | None:
+    if not isinstance(state, dict) or set(state) != {
+        "schema",
+        "active_count",
+        "active_inline",
+        "active_index_ref",
+        "retired_index_ref",
+    }:
+        return None
+    if state["schema"] != "codex.protected_policy_application_state.v1":
+        return None
+    count = state["active_count"]
+    if not exact_policy_count(count):
+        return None
+    if count <= 8:
+        if state["active_index_ref"] is not None:
+            return None
+        active = state["active_inline"]
+        if not isinstance(active, list) or len(active) != count:
+            return None
+    else:
+        if state["active_inline"] != [] or not bounded_policy_scalar(
+            state["active_index_ref"]
+        ):
+            return None
+        index = evidence.get(state["active_index_ref"])
+        if not isinstance(index, dict) or set(index) != {
+            "schema",
+            "active_count",
+            "applications",
+        }:
+            return None
+        if (
+            index["schema"]
+            != "codex.protected_policy_application_active_index.v1"
+            or not exact_policy_count(index["active_count"])
+            or index["active_count"] != count
+        ):
+            return None
+        active = index["applications"]
+        if not isinstance(active, list) or len(active) != count:
+            return None
+    return active if valid_policy_application_collection(active) else None
+
+
+def valid_policy_application_state(
+    state: object, evidence: dict[str, dict]
+) -> bool:
+    active = resolve_active_policy_applications(state, evidence)
+    if active is None or not isinstance(state, dict):
+        return False
+    retired = resolve_retired_policy_applications(
+        state["retired_index_ref"], evidence
+    )
+    if retired is None:
+        return False
+    if any(
+        resolve_policy_recovery_chain(item, evidence) is None
+        for item in active
+    ):
+        return False
+    recoveries = [policy_recovery_head(item, evidence) for item in active]
+    for item in retired:
+        recovery = evidence.get(item["recovery_ref"])
+        if (
+            not valid_policy_recovery_record(
+                recovery,
+                item["application_id"],
+                item["policy_revision_id"],
+            )
+        ):
+            return False
+        retired_item = {
+            "schema": "codex.protected_policy_application_checkpoint.v2",
+            "application_id": item["application_id"],
+            "state": "terminal",
+            "policy_revision_id": item["policy_revision_id"],
+            "operation_policy_fingerprint": recovery.get(
+                "operation_policy_fingerprint"
+            ),
+            "recovery_ref": item["recovery_ref"],
+            "intent_operation_id": recovery.get("intent_operation_id"),
+            "mutation_operation_id": recovery.get("mutation_operation_id"),
+        }
+        if (
+            not valid_policy_application_entry(retired_item)
+            or resolve_policy_recovery_chain(retired_item, evidence) is None
+        ):
+            return False
+        recoveries.append(recovery)
+    active_ids = [policy_application_identity(item) for item in active]
+    retired_ids = [
+        (item["application_id"], item["policy_revision_id"])
+        for item in retired
+    ]
+    all_ids = active_ids + retired_ids
+    recovery_refs = [item["recovery_ref"] for item in active + retired]
+    if not (
+        len({item[0] for item in all_ids}) == len(all_ids)
+        and len({item[1] for item in all_ids}) == len(all_ids)
+        and len(set(recovery_refs)) == len(recovery_refs)
+    ):
+        return False
+    operation_keys = []
+    for recovery in recoveries:
+        namespace = recovery["operation_namespace_ref"]
+        for field in ("intent_operation_id", "mutation_operation_id"):
+            operation_id = recovery.get(field)
+            if operation_id is not None:
+                if not bounded_policy_scalar(operation_id):
+                    return False
+                operation_keys.append((namespace, operation_id))
+    return len(set(operation_keys)) == len(operation_keys)
+
+
+def valid_policy_reconciliation_transition(
+    before_item: dict,
+    after_item: dict,
+    evidence: dict[str, dict],
+) -> bool:
+    after_recovery = policy_recovery_head(after_item, evidence)
+    if after_recovery is None:
+        return False
+    reconciliation_ref = after_recovery.get("reconciliation_receipt_ref")
+    reconciliation = evidence.get(reconciliation_ref)
+    return reconciliation == {
+        "schema": "codex.protected_policy_application_reconciliation.v1",
+        "authority": "owning-system",
+        "application_id": before_item["application_id"],
+        "policy_revision_id": before_item["policy_revision_id"],
+        "from_state": before_item["state"],
+        "to_state": after_item["state"],
+        "from_recovery_ref": before_item["recovery_ref"],
+        "to_recovery_ref": after_item["recovery_ref"],
+        "intent_operation_id": after_item["intent_operation_id"],
+        "mutation_operation_id": after_item["mutation_operation_id"],
+    }
+
+
+def valid_terminal_reconciliation(
+    before_item: dict,
+    tombstone: dict,
+    evidence: dict[str, dict],
+) -> bool:
+    terminal = evidence.get(tombstone["terminal_receipt_ref"])
+    if not isinstance(terminal, dict):
+        return False
+    reconciliation_ref = terminal.get("reconciliation_receipt_ref")
+    if not bounded_policy_scalar(reconciliation_ref):
+        return False
+    reconciliation = evidence.get(reconciliation_ref)
+    recovery = evidence.get(tombstone["recovery_ref"])
+    if not isinstance(recovery, dict):
+        return False
+    return (
+        terminal.get("reconciliation_receipt_ref")
+        == recovery.get("reconciliation_receipt_ref")
+        and reconciliation
+        == {
+            "schema": (
+                "codex.protected_policy_application_reconciliation.v1"
+            ),
+            "authority": "owning-system",
+            "application_id": before_item["application_id"],
+            "policy_revision_id": before_item["policy_revision_id"],
+            "from_state": before_item["state"],
+            "to_state": "terminal",
+            "from_recovery_ref": before_item["recovery_ref"],
+            "to_recovery_ref": tombstone["recovery_ref"],
+            "intent_operation_id": recovery.get("intent_operation_id"),
+            "mutation_operation_id": recovery.get("mutation_operation_id"),
+        }
+        and valid_terminal_reconciliation_receipt(tombstone, evidence)
+    )
+
+
+def terminal_recovery_item(
+    tombstone: dict, evidence: dict[str, dict]
+) -> dict | None:
+    recovery = evidence.get(tombstone["recovery_ref"])
+    if not isinstance(recovery, dict):
+        return None
+    item = {
+        "schema": "codex.protected_policy_application_checkpoint.v2",
+        "application_id": tombstone["application_id"],
+        "state": "terminal",
+        "policy_revision_id": tombstone["policy_revision_id"],
+        "operation_policy_fingerprint": recovery.get(
+            "operation_policy_fingerprint"
+        ),
+        "recovery_ref": tombstone["recovery_ref"],
+        "intent_operation_id": recovery.get("intent_operation_id"),
+        "mutation_operation_id": recovery.get("mutation_operation_id"),
+    }
+    return item if valid_policy_application_entry(item) else None
+
+
+def valid_terminal_reconciliation_receipt(
+    tombstone: dict, evidence: dict[str, dict]
+) -> bool:
+    terminal = evidence.get(tombstone["terminal_receipt_ref"])
+    if not isinstance(terminal, dict):
+        return False
+    reconciliation_ref = terminal.get("reconciliation_receipt_ref")
+    if not bounded_policy_scalar(reconciliation_ref):
+        return False
+    reconciliation = evidence.get(reconciliation_ref)
+    if not isinstance(reconciliation, dict) or set(reconciliation) != {
+        "schema",
+        "authority",
+        "application_id",
+        "policy_revision_id",
+        "from_state",
+        "to_state",
+        "from_recovery_ref",
+        "to_recovery_ref",
+        "intent_operation_id",
+        "mutation_operation_id",
+    }:
+        return False
+    if (
+        reconciliation["schema"]
+        != "codex.protected_policy_application_reconciliation.v1"
+        or reconciliation["authority"] != "owning-system"
+        or not all(
+            bounded_policy_scalar(reconciliation[field])
+            for field in (
+                "application_id",
+                "policy_revision_id",
+                "from_state",
+                "to_state",
+                "from_recovery_ref",
+                "to_recovery_ref",
+                "intent_operation_id",
+                "mutation_operation_id",
+            )
+        )
+        or reconciliation["application_id"] != tombstone["application_id"]
+        or reconciliation["policy_revision_id"]
+        != tombstone["policy_revision_id"]
+        or not bounded_policy_enum(
+            reconciliation["from_state"],
+            UNKNOWN_POLICY_APPLICATION_STATES,
+        )
+        or reconciliation["to_state"] != "terminal"
+        or reconciliation["to_recovery_ref"] != tombstone["recovery_ref"]
+    ):
+        return False
+    from_recovery = evidence.get(reconciliation["from_recovery_ref"])
+    before_item = {
+        "schema": "codex.protected_policy_application_checkpoint.v2",
+        "application_id": tombstone["application_id"],
+        "state": reconciliation["from_state"],
+        "policy_revision_id": tombstone["policy_revision_id"],
+        "operation_policy_fingerprint": (
+            from_recovery.get("operation_policy_fingerprint")
+            if isinstance(from_recovery, dict)
+            else None
+        ),
+        "recovery_ref": reconciliation["from_recovery_ref"],
+        "intent_operation_id": (
+            from_recovery.get("intent_operation_id")
+            if isinstance(from_recovery, dict)
+            else None
+        ),
+        "mutation_operation_id": (
+            from_recovery.get("mutation_operation_id")
+            if isinstance(from_recovery, dict)
+            else None
+        ),
+    }
+    after_item = terminal_recovery_item(tombstone, evidence)
+    after_recovery = (
+        policy_recovery_head(after_item, evidence)
+        if after_item is not None
+        else None
+    )
+    return (
+        valid_policy_application_entry(before_item)
+        and after_item is not None
+        and after_recovery is not None
+        and terminal.get("reconciliation_receipt_ref")
+        == after_recovery.get("reconciliation_receipt_ref")
+        and reconciliation["intent_operation_id"]
+        == after_item["intent_operation_id"]
+        and reconciliation["mutation_operation_id"]
+        == after_item["mutation_operation_id"]
+        and policy_recovery_appends_exact_successor(
+            before_item, after_item, evidence
+        )
+    )
+
+
+def valid_policy_application_transition(
+    before: object, after: object, evidence: dict[str, dict]
+) -> bool:
+    if not valid_policy_application_state(
+        before, evidence
+    ) or not valid_policy_application_state(after, evidence):
+        return False
+    before_active = resolve_active_policy_applications(before, evidence)
+    after_active = resolve_active_policy_applications(after, evidence)
+    before_retired = resolve_retired_policy_applications(
+        before["retired_index_ref"], evidence
+    )
+    after_retired = resolve_retired_policy_applications(
+        after["retired_index_ref"], evidence
+    )
+    if any(
+        value is None
+        for value in (
+            before_active,
+            after_active,
+            before_retired,
+            after_retired,
+        )
+    ):
+        return False
+    if not retired_policy_chain_reaches(
+        after["retired_index_ref"],
+        before["retired_index_ref"],
+        evidence,
+    ):
+        return False
+    before_active_ids = [
+        policy_application_identity(item) for item in before_active
+    ]
+    after_active_ids = [
+        policy_application_identity(item) for item in after_active
+    ]
+    before_retired_records = [
+        (
+            item["application_id"],
+            item["policy_revision_id"],
+            item["recovery_ref"],
+            item["terminal_receipt_ref"],
+        )
+        for item in before_retired
+    ]
+    after_retired_records = [
+        (
+            item["application_id"],
+            item["policy_revision_id"],
+            item["recovery_ref"],
+            item["terminal_receipt_ref"],
+        )
+        for item in after_retired
+    ]
+    if (
+        after_retired_records[: len(before_retired_records)]
+        != before_retired_records
+    ):
+        return False
+    before_retired_ids = {
+        (item["application_id"], item["policy_revision_id"])
+        for item in before_retired
+    }
+    after_retired_set = {
+        (item["application_id"], item["policy_revision_id"])
+        for item in after_retired
+    }
+    before_active_set = set(before_active_ids)
+    new_tombstone_ids = {
+        (item["application_id"], item["policy_revision_id"])
+        for item in after_retired[len(before_retired) :]
+    }
+    if not new_tombstone_ids.issubset(before_active_set):
+        return False
+    before_by_id = {
+        policy_application_identity(item): item for item in before_active
+    }
+    for tombstone in after_retired[len(before_retired) :]:
+        identity = (
+            tombstone["application_id"],
+            tombstone["policy_revision_id"],
+        )
+        before_item = before_by_id[identity]
+        terminal_item = terminal_recovery_item(tombstone, evidence)
+        if terminal_item is None or not policy_recovery_chain_reaches(
+            before_item, terminal_item, evidence
+        ):
+            return False
+        if (
+            before_item["state"] != terminal_item["state"]
+            and not policy_recovery_appends_exact_successor(
+                before_item, terminal_item, evidence
+            )
+        ):
+            return False
+        if (
+            before_item["state"] in UNKNOWN_POLICY_APPLICATION_STATES
+            and not valid_terminal_reconciliation(
+                before_item, tombstone, evidence
+            )
+        ):
+            return False
+    survivors = [
+        identity
+        for identity in before_active_ids
+        if identity not in after_retired_set
+    ]
+    if after_active_ids[: len(survivors)] != survivors:
+        return False
+    if any(
+        identity not in set(after_active_ids) | after_retired_set
+        for identity in before_active_ids
+    ):
+        return False
+    if any(identity in after_active_ids for identity in before_retired_ids):
+        return False
+    if not all(
+        identity not in set(before_active_ids) | set(before_retired_ids)
+        for identity in after_active_ids[len(survivors) :]
+    ):
+        return False
+    after_by_id = {
+        policy_application_identity(item): item for item in after_active
+    }
+    for identity in after_active_ids[len(survivors) :]:
+        recovery = policy_recovery_head(after_by_id[identity], evidence)
+        if recovery is None or any(
+            recovery.get(field) is not None
+            for field in ("predecessor_ref", "reconciliation_receipt_ref")
+        ):
+            return False
+    for identity in survivors:
+        before_item = before_by_id[identity]
+        after_item = after_by_id[identity]
+        if not bounded_policy_enum(
+            after_item["state"],
+            POLICY_APPLICATION_TRANSITIONS[before_item["state"]],
+        ):
+            return False
+        if not policy_recovery_chain_reaches(
+            before_item, after_item, evidence
+        ):
+            return False
+        before_chain = resolve_policy_recovery_chain(before_item, evidence)
+        after_chain = resolve_policy_recovery_chain(after_item, evidence)
+        if before_chain is None or after_chain is None:
+            return False
+        appended_recoveries = after_chain[len(before_chain) :]
+        state_changed = after_item["state"] != before_item["state"]
+        if state_changed and len(appended_recoveries) != 1:
+            return False
+        required_reconciliation = (
+            before_item["state"] in UNKNOWN_POLICY_APPLICATION_STATES
+            and state_changed
+        )
+        if (
+            required_reconciliation
+            and not valid_policy_reconciliation_transition(
+                before_item, after_item, evidence
+            )
+        ):
+            return False
+    return True
+
+
+def empty_policy_application_state() -> dict:
+    return {
+        "schema": "codex.protected_policy_application_state.v1",
+        "active_count": 0,
+        "active_inline": [],
+        "active_index_ref": None,
+        "retired_index_ref": None,
+    }
+
+
+def checkpoint_recovery_projection(
+    item: dict,
+    *,
+    inherited_recovery: dict | None = None,
+    predecessor_ref: str | None = None,
+    reconciliation_receipt_ref: str | None = None,
+    operation_namespace_ref: str | None = None,
+) -> dict:
+    inherited = inherited_recovery or {}
+    return {
+        "schema": "codex.protected_policy_application_recovery.v2",
+        "application_id": item["application_id"],
+        "policy_revision_id": item["policy_revision_id"],
+        "checkpoint_state": item["state"],
+        "receiver_thread_id": inherited.get(
+            "receiver_thread_id",
+            f"synthetic-receiver-{item['application_id']}",
+        ),
+        "operation_policy_fingerprint": item[
+            "operation_policy_fingerprint"
+        ],
+        "store_schema": inherited.get(
+            "store_schema",
+            "codex.authorized_immutable_intent_store.v1",
+        ),
+        "store_ref": inherited.get(
+            "store_ref", f"synthetic-store-{item['application_id']}"
+        ),
+        "store_authorization_ref": inherited.get(
+            "store_authorization_ref",
+            f"synthetic-store-authorization-{item['application_id']}",
+        ),
+        "intent_ref": inherited.get(
+            "intent_ref", f"synthetic-intent-{item['application_id']}"
+        ),
+        "destination_ref": inherited.get(
+            "destination_ref",
+            f"synthetic-destination-{item['application_id']}",
+        ),
+        "subject_ref": inherited.get(
+            "subject_ref", f"synthetic-subject-{item['application_id']}"
+        ),
+        "intent_operation_id": item["intent_operation_id"],
+        "mutation_operation_id": item["mutation_operation_id"],
+        "operation_namespace_ref": (
+            operation_namespace_ref
+            or inherited.get("operation_namespace_ref")
+            or "synthetic-operation-namespace"
+        ),
+        "predecessor_ref": predecessor_ref,
+        "reconciliation_receipt_ref": reconciliation_receipt_ref,
+    }
+
+
+def checkpoint_fingerprint(checkpoint: dict) -> str | None:
+    try:
+        payload = json.dumps(
+            checkpoint,
+            sort_keys=True,
+            separators=(",", ":"),
+            ensure_ascii=False,
+            allow_nan=False,
+        ).encode("utf-8")
+    except (TypeError, ValueError, UnicodeEncodeError):
+        return None
+    return "sha256:" + hashlib.sha256(payload).hexdigest()
+
+
+def migrate_v1_policy_application_state(
+    checkpoint: dict,
+    evidence: dict[str, dict],
+    *,
+    target_thread_id: str,
+    target_host_id: str,
+    migration_ref: str | None = None,
+    pre_feature_proof_ref: str | None = None,
+) -> dict | None:
+    if (
+        not isinstance(checkpoint, dict)
+        or not isinstance(evidence, dict)
+        or not bounded_policy_scalar(target_thread_id)
+        or not bounded_policy_scalar(target_host_id)
+        or (
+            migration_ref is not None
+            and not bounded_policy_scalar(migration_ref)
+        )
+        or (
+            pre_feature_proof_ref is not None
+            and not bounded_policy_scalar(pre_feature_proof_ref)
+        )
+        or checkpoint.get("schema") != "codex.thread_supervision.v1"
+        or not isinstance(checkpoint.get("targets"), list)
+    ):
+        return None
+    targets = [
+        item
+        for item in checkpoint["targets"]
+        if isinstance(item, dict)
+        and item.get("thread_id") == target_thread_id
+        and item.get("host_id") == target_host_id
+    ]
+    if len(targets) != 1:
+        return None
+    target = targets[0]
+    if "protected_policy_application_state" in target:
+        return None
+    fingerprint = checkpoint_fingerprint(checkpoint)
+    if fingerprint is None:
+        return None
+    if "protected_policy_application" not in target:
+        if not bounded_policy_scalar(pre_feature_proof_ref):
+            return None
+        proof = evidence.get(pre_feature_proof_ref)
+        if not isinstance(proof, dict):
+            return None
+        source_ref = proof.get("source_contract_revision_ref")
+        inventory_ref = proof.get("evidence_inventory_ref")
+        if not bounded_policy_scalar(
+            source_ref
+        ) or not bounded_policy_scalar(inventory_ref):
+            return None
+        source = evidence.get(source_ref)
+        inventory = evidence.get(inventory_ref)
+        if (
+            not exact_policy_count(
+                proof.get("protected_policy_application_evidence_count")
+            )
+            or proof.get("protected_policy_application_evidence_count") != 0
+            or proof
+            != {
+                "schema": "codex.thread_supervision_pre_feature_proof.v1",
+                "checkpoint_fingerprint": fingerprint,
+                "target_thread_id": target_thread_id,
+                "target_host_id": target_host_id,
+                "source_contract_revision_ref": source_ref,
+                "evidence_inventory_ref": inventory_ref,
+                "protected_policy_application_evidence_count": 0,
+            }
+        ):
+            return None
+        if source != {
+            "schema": "codex.thread_supervision_source_contract.v1",
+            "checkpoint_fingerprint": fingerprint,
+            "contract_revision": "known-pre-feature-v1",
+            "protected_policy_feature": "absent",
+        }:
+            return None
+        if not isinstance(inventory, dict):
+            return None
+        if inventory != {
+            "schema": "codex.thread_supervision_evidence_inventory.v1",
+            "checkpoint_fingerprint": fingerprint,
+            "target_thread_id": target_thread_id,
+            "target_host_id": target_host_id,
+            "cutoff": inventory.get("cutoff"),
+            "application_recovery_refs": [],
+        } or not bounded_policy_scalar(inventory.get("cutoff")):
+            return None
+        return empty_policy_application_state()
+    legacy = target["protected_policy_application"]
+    if legacy is None:
+        return empty_policy_application_state()
+    if not bounded_policy_scalar(migration_ref):
+        return None
+    if not isinstance(legacy, dict) or set(legacy) != {
+        "schema",
+        "state",
+        "policy_revision_id",
+        "operation_policy_fingerprint",
+        "recovery_ref",
+        "intent_operation_id",
+        "mutation_operation_id",
+    }:
+        return None
+    if (
+        legacy["schema"] != "codex.protected_policy_application_checkpoint.v1"
+        or not bounded_policy_enum(
+            legacy["state"], POLICY_APPLICATION_STATES
+        )
+    ):
+        return None
+    for field in (
+        "policy_revision_id",
+        "recovery_ref",
+    ):
+        if not bounded_policy_scalar(legacy[field]):
+            return None
+    for field in (
+        "operation_policy_fingerprint",
+        "intent_operation_id",
+        "mutation_operation_id",
+    ):
+        if legacy[field] is not None and not bounded_policy_scalar(
+            legacy[field]
+        ):
+            return None
+    legacy_recovery = evidence.get(legacy["recovery_ref"])
+    if (
+        not isinstance(legacy_recovery, dict)
+        or set(legacy_recovery)
+        != {
+            "schema",
+            "policy_revision_id",
+            "receiver_thread_id",
+            "operation_policy_fingerprint",
+            "store_schema",
+            "store_ref",
+            "store_authorization_ref",
+            "intent_ref",
+            "destination_ref",
+            "subject_ref",
+            "intent_operation_id",
+            "mutation_operation_id",
+        }
+        or legacy_recovery["schema"]
+        != "codex.protected_policy_application_recovery.v1"
+        or any(
+            legacy_recovery[field] != legacy[field]
+            for field in (
+                "policy_revision_id",
+                "operation_policy_fingerprint",
+                "intent_operation_id",
+                "mutation_operation_id",
+            )
+        )
+    ):
+        return None
+    migration = evidence.get(migration_ref)
+    if not isinstance(migration, dict) or set(migration) != {
+        "schema",
+        "source_checkpoint_schema",
+        "checkpoint_fingerprint",
+        "target_thread_id",
+        "target_host_id",
+        "legacy_recovery_ref",
+        "migrated_recovery_ref",
+        "operation_namespace_ref",
+        "application_id",
+        "policy_revision_id",
+        "intent_operation_id",
+        "mutation_operation_id",
+    }:
+        return None
+    if not all(
+        bounded_policy_scalar(migration[field])
+        for field in (
+            "checkpoint_fingerprint",
+            "target_thread_id",
+            "target_host_id",
+            "legacy_recovery_ref",
+            "migrated_recovery_ref",
+            "operation_namespace_ref",
+            "application_id",
+            "policy_revision_id",
+        )
+    ) or any(
+        migration[field] is not None
+        and not bounded_policy_scalar(migration[field])
+        for field in ("intent_operation_id", "mutation_operation_id")
+    ):
+        return None
+    expected = {
+        "schema": "codex.protected_policy_application_migration.v1",
+        "source_checkpoint_schema": "codex.thread_supervision.v1",
+        "checkpoint_fingerprint": fingerprint,
+        "target_thread_id": target_thread_id,
+        "target_host_id": target_host_id,
+        "legacy_recovery_ref": legacy["recovery_ref"],
+        "migrated_recovery_ref": migration["migrated_recovery_ref"],
+        "operation_namespace_ref": migration["operation_namespace_ref"],
+        "application_id": migration["application_id"],
+        "policy_revision_id": legacy["policy_revision_id"],
+        "intent_operation_id": legacy["intent_operation_id"],
+        "mutation_operation_id": legacy["mutation_operation_id"],
+    }
+    if migration != expected:
+        return None
+    migrated_recovery = evidence.get(migration["migrated_recovery_ref"])
+    expected_migrated_recovery = {
+        **legacy_recovery,
+        "schema": "codex.protected_policy_application_recovery.v2",
+        "application_id": migration["application_id"],
+        "checkpoint_state": legacy["state"],
+        "operation_namespace_ref": migration["operation_namespace_ref"],
+        "predecessor_ref": None,
+        "reconciliation_receipt_ref": None,
+    }
+    if migrated_recovery != expected_migrated_recovery:
+        return None
+    entry = {
+        "schema": "codex.protected_policy_application_checkpoint.v2",
+        "application_id": migration["application_id"],
+        "state": legacy["state"],
+        "policy_revision_id": legacy["policy_revision_id"],
+        "operation_policy_fingerprint": legacy[
+            "operation_policy_fingerprint"
+        ],
+        "recovery_ref": migration["migrated_recovery_ref"],
+        "intent_operation_id": legacy["intent_operation_id"],
+        "mutation_operation_id": legacy["mutation_operation_id"],
+    }
+    state = empty_policy_application_state()
+    state.update({"active_count": 1, "active_inline": [entry]})
+    return state if valid_policy_application_state(state, evidence) else None
+
+
 def valid_keyed_fingerprint(value: object) -> bool:
     return (
         isinstance(value, dict)
@@ -146,20 +1467,57 @@ def trusted_policy_evidence() -> dict[str, dict]:
         ],
     }
     policy_fingerprint = operation_policy_fingerprint(policy)
+    root_recovery_ref = "opaque-protected-policy-application-recovery-ref"
+    terminal_recovery_ref = (
+        "opaque-protected-policy-application-terminal-recovery-ref"
+    )
+    terminal_reconciliation_ref = (
+        "opaque-protected-policy-application-terminal-reconciliation-ref"
+    )
+    root_recovery = {
+        "schema": "codex.protected_policy_application_recovery.v2",
+        "application_id": "stable-opaque-application-id",
+        "policy_revision_id": "opaque-user-authorized-revision",
+        "checkpoint_state": "mutation-outcome-unknown",
+        "receiver_thread_id": "opaque-receiver-thread-id",
+        "operation_policy_fingerprint": policy_fingerprint,
+        "store_schema": "codex.authorized_immutable_intent_store.v1",
+        "store_ref": "opaque-authorized-intent-store-ref",
+        "store_authorization_ref": (
+            "opaque-intent-store-authorization-ref"
+        ),
+        "intent_ref": "opaque-immutable-prewrite-intent-ref",
+        "destination_ref": "opaque-external-system-ref",
+        "subject_ref": "opaque-action-intent-or-object-ref",
+        "intent_operation_id": "opaque-preallocated-intent-operation-id",
+        "mutation_operation_id": (
+            "opaque-preallocated-mutation-operation-id"
+        ),
+        "operation_namespace_ref": (
+            "opaque-owning-system-operation-namespace"
+        ),
+        "predecessor_ref": None,
+        "reconciliation_receipt_ref": None,
+    }
     return {
-        "opaque-protected-policy-application-recovery-ref": {
-            "schema": "codex.protected_policy_application_recovery.v1",
-            "policy_revision_id": "opaque-user-authorized-revision",
-            "receiver_thread_id": "opaque-receiver-thread-id",
-            "operation_policy_fingerprint": policy_fingerprint,
-            "store_schema": "codex.authorized_immutable_intent_store.v1",
-            "store_ref": "opaque-authorized-intent-store-ref",
-            "store_authorization_ref": (
-                "opaque-intent-store-authorization-ref"
+        root_recovery_ref: root_recovery,
+        terminal_recovery_ref: {
+            **root_recovery,
+            "checkpoint_state": "terminal",
+            "predecessor_ref": root_recovery_ref,
+            "reconciliation_receipt_ref": terminal_reconciliation_ref,
+        },
+        terminal_reconciliation_ref: {
+            "schema": (
+                "codex.protected_policy_application_reconciliation.v1"
             ),
-            "intent_ref": "opaque-immutable-prewrite-intent-ref",
-            "destination_ref": "opaque-external-system-ref",
-            "subject_ref": "opaque-action-intent-or-object-ref",
+            "authority": "owning-system",
+            "application_id": "stable-opaque-application-id",
+            "policy_revision_id": "opaque-user-authorized-revision",
+            "from_state": "mutation-outcome-unknown",
+            "to_state": "terminal",
+            "from_recovery_ref": root_recovery_ref,
+            "to_recovery_ref": terminal_recovery_ref,
             "intent_operation_id": (
                 "opaque-preallocated-intent-operation-id"
             ),
@@ -231,6 +1589,7 @@ def trusted_policy_evidence() -> dict[str, dict]:
             "operation_id": "opaque-preallocated-mutation-operation-id",
             "destination_ref": "opaque-external-system-ref",
             "subject_ref": "opaque-action-intent-or-object-ref",
+            "result_object_ref": "opaque-object-id",
             "prewrite_intent_operation_id": (
                 "opaque-preallocated-intent-operation-id"
             ),
@@ -267,11 +1626,15 @@ def trusted_policy_evidence() -> dict[str, dict]:
     }
 
 
-def evaluate_protected_policy_application(receipt: dict) -> str:
-    evidence = trusted_policy_evidence()
+def evaluate_protected_policy_application(
+    receipt: dict,
+    evidence: dict[str, dict] | None = None,
+) -> str:
+    evidence = trusted_policy_evidence() if evidence is None else evidence
     try:
         if set(receipt) != {
             "schema",
+            "application_id",
             "policy_revision_id",
             "authorizer",
             "from_protected_contract_fingerprint",
@@ -287,7 +1650,7 @@ def evaluate_protected_policy_application(receipt: dict) -> str:
             "application",
         }:
             return "invalid"
-        if receipt["schema"] != "codex.protected_policy_application.v1":
+        if receipt["schema"] != "codex.protected_policy_application.v2":
             return "invalid"
         if receipt["authorizer"] != "user":
             return "invalid"
@@ -300,6 +1663,7 @@ def evaluate_protected_policy_application(receipt: dict) -> str:
         }:
             return "invalid"
         for field in (
+            "application_id",
             "policy_revision_id",
             "from_protected_contract_fingerprint",
             "to_protected_contract_fingerprint",
@@ -363,7 +1727,9 @@ def evaluate_protected_policy_application(receipt: dict) -> str:
             or set(recovery)
             != {
                 "schema",
+                "application_id",
                 "policy_revision_id",
+                "checkpoint_state",
                 "receiver_thread_id",
                 "operation_policy_fingerprint",
                 "store_schema",
@@ -374,12 +1740,17 @@ def evaluate_protected_policy_application(receipt: dict) -> str:
                 "subject_ref",
                 "intent_operation_id",
                 "mutation_operation_id",
+                "operation_namespace_ref",
+                "predecessor_ref",
+                "reconciliation_receipt_ref",
             }
             or recovery["schema"]
-            != "codex.protected_policy_application_recovery.v1"
+            != "codex.protected_policy_application_recovery.v2"
+            or recovery["checkpoint_state"] != "terminal"
         ):
             return "invalid"
         for field in (
+            "application_id",
             "policy_revision_id",
             "receiver_thread_id",
             "operation_policy_fingerprint",
@@ -391,8 +1762,14 @@ def evaluate_protected_policy_application(receipt: dict) -> str:
             "subject_ref",
             "intent_operation_id",
             "mutation_operation_id",
+            "operation_namespace_ref",
         ):
             if not bounded_policy_scalar(recovery[field]):
+                return "invalid"
+        for field in ("predecessor_ref", "reconciliation_receipt_ref"):
+            if recovery[field] is not None and not bounded_policy_scalar(
+                recovery[field]
+            ):
                 return "invalid"
         if not valid_sha256_fingerprint(
             recovery["operation_policy_fingerprint"]
@@ -462,6 +1839,7 @@ def evaluate_protected_policy_application(receipt: dict) -> str:
             "operation_id",
             "destination_ref",
             "subject_ref",
+            "result_object_ref",
             "receipt_ref",
             "prewrite_intent_operation_id",
             "prewrite_intent_ref",
@@ -479,6 +1857,7 @@ def evaluate_protected_policy_application(receipt: dict) -> str:
             "operation_id",
             "destination_ref",
             "subject_ref",
+            "result_object_ref",
             "receipt_ref",
             "prewrite_intent_operation_id",
             "prewrite_intent_ref",
@@ -628,6 +2007,7 @@ def evaluate_protected_policy_application(receipt: dict) -> str:
             "operation_id": recovery["mutation_operation_id"],
             "destination_ref": recovery["destination_ref"],
             "subject_ref": recovery["subject_ref"],
+            "result_object_ref": mutation["result_object_ref"],
             "prewrite_intent_operation_id": recovery[
                 "intent_operation_id"
             ],
@@ -636,6 +2016,7 @@ def evaluate_protected_policy_application(receipt: dict) -> str:
         }
         mutation_receipt_is_trusted = (
             bounded_policy_scalar(mutation["receipt_ref"])
+            and bounded_policy_scalar(mutation["result_object_ref"])
             and evidence.get(mutation["receipt_ref"])
             == expected_mutation_receipt
             and mutation["operation_id"]
@@ -659,6 +2040,7 @@ def evaluate_protected_policy_application(receipt: dict) -> str:
                     "operation_id",
                     "destination_ref",
                     "subject_ref",
+                    "result_object_ref",
                     "receipt_ref",
                     "prewrite_intent_operation_id",
                     "prewrite_intent_ref",
@@ -735,7 +2117,8 @@ def evaluate_protected_policy_application(receipt: dict) -> str:
                 return "invalid"
             return "reconciliation-required"
         if (
-            recovery["policy_revision_id"] != receipt["policy_revision_id"]
+            recovery["application_id"] != receipt["application_id"]
+            or recovery["policy_revision_id"] != receipt["policy_revision_id"]
             or recovery["receiver_thread_id"]
             != receipt["receiver_thread_id"]
             or recovery["operation_policy_fingerprint"]
@@ -892,6 +2275,8 @@ def evaluate_protected_policy_application(receipt: dict) -> str:
 
         if not readback["object_ref"] or not readback["cutoff"]:
             return "reconciliation-required"
+        if readback["object_ref"] != mutation["result_object_ref"]:
+            return "policy-drift"
         if (
             readback["mutation_operation_id"] != mutation["operation_id"]
             or readback["mutation_receipt_ref"] != mutation["receipt_ref"]
@@ -1011,6 +2396,7 @@ def skill_handoff_ack_example(text: str) -> dict:
 class ThreadSupervisionContractTests(unittest.TestCase):
     def test_checkpoint_binds_one_supervisor_owned_continuation(self):
         contract = checkpoint_example(REFERENCE.read_text(encoding="utf-8"))
+        self.assertEqual(contract["schema"], "codex.thread_supervision.v2")
         continuation = contract["continuation_owner"]
         heartbeat = contract["heartbeat"]
         self.assertTrue(contract["supervisor_host_id"])
@@ -1029,13 +2415,79 @@ class ThreadSupervisionContractTests(unittest.TestCase):
         self.assertIn("result-unknown", heartbeat["state"].split("|"))
         self.assertIn("idle", contract["targets"][0]["state"].split("|"))
         self.assertIn("terminal", contract["targets"][0]["state"].split("|"))
-        policy_application = contract["targets"][0][
-            "protected_policy_application"
+        policy_state = contract["targets"][0][
+            "protected_policy_application_state"
         ]
+        policy_applications = resolve_active_policy_applications(
+            policy_state, {}
+        )
+        self.assertIsNotNone(policy_applications)
+        self.assertEqual(len(policy_applications), 1)
+        policy_application = policy_applications[0]
+        recovery_evidence = {
+            policy_application["recovery_ref"]: trusted_policy_evidence()[
+                policy_application["recovery_ref"]
+            ]
+        }
+        self.assertTrue(
+            valid_policy_application_state(policy_state, recovery_evidence)
+        )
+        for malformed_state in ([], {}):
+            malformed_checkpoint = copy.deepcopy(policy_state)
+            malformed_checkpoint["active_inline"][0]["state"] = (
+                malformed_state
+            )
+            malformed_recovery = copy.deepcopy(recovery_evidence)
+            malformed_recovery[policy_application["recovery_ref"]][
+                "checkpoint_state"
+            ] = malformed_state
+            with self.subTest(malformed_state=type(malformed_state).__name__):
+                self.assertFalse(
+                    valid_policy_application_state(
+                        malformed_checkpoint, recovery_evidence
+                    )
+                )
+                self.assertFalse(
+                    valid_policy_application_state(
+                        policy_state, malformed_recovery
+                    )
+                )
+        partial_recovery_evidence = copy.deepcopy(recovery_evidence)
+        del partial_recovery_evidence[policy_application["recovery_ref"]][
+            "receiver_thread_id"
+        ]
+        self.assertFalse(
+            valid_policy_application_state(
+                policy_state, partial_recovery_evidence
+            )
+        )
+        for required_recovery_field in (
+            "receiver_thread_id",
+            "store_schema",
+            "store_ref",
+            "store_authorization_ref",
+            "intent_ref",
+            "destination_ref",
+            "subject_ref",
+            "operation_namespace_ref",
+        ):
+            null_binding_evidence = copy.deepcopy(recovery_evidence)
+            null_binding_evidence[policy_application["recovery_ref"]][
+                required_recovery_field
+            ] = None
+            with self.subTest(
+                required_recovery_field=required_recovery_field
+            ):
+                self.assertFalse(
+                    valid_policy_application_state(
+                        policy_state, null_binding_evidence
+                    )
+                )
         self.assertEqual(
             set(policy_application),
             {
                 "schema",
+                "application_id",
                 "state",
                 "policy_revision_id",
                 "operation_policy_fingerprint",
@@ -1046,19 +2498,1195 @@ class ThreadSupervisionContractTests(unittest.TestCase):
         )
         self.assertEqual(
             policy_application["schema"],
-            "codex.protected_policy_application_checkpoint.v1",
+            "codex.protected_policy_application_checkpoint.v2",
         )
-        self.assertIn(
-            "mutation-outcome-unknown",
-            policy_application["state"].split("|"),
-        )
-        self.assertIn(
-            "intent-outcome-unknown",
-            policy_application["state"].split("|"),
+        self.assertEqual(
+            policy_application["state"], "mutation-outcome-unknown"
         )
         self.assertTrue(policy_application["recovery_ref"])
         self.assertTrue(policy_application["intent_operation_id"])
         self.assertTrue(policy_application["mutation_operation_id"])
+        later_application = copy.deepcopy(policy_application)
+        later_application.update(
+            {
+                "application_id": "later-application-id",
+                "state": "revision-captured",
+                "policy_revision_id": "later-policy-revision",
+                "recovery_ref": "later-private-recovery-ref",
+                "intent_operation_id": None,
+                "mutation_operation_id": None,
+            }
+        )
+        before = copy.deepcopy(policy_state)
+        in_flight = [copy.deepcopy(policy_application), later_application]
+        operation_namespace = recovery_evidence[
+            policy_application["recovery_ref"]
+        ]["operation_namespace_ref"]
+        recovery_evidence[later_application["recovery_ref"]] = (
+            checkpoint_recovery_projection(
+                later_application,
+                operation_namespace_ref=operation_namespace,
+            )
+        )
+        after = copy.deepcopy(policy_state)
+        after.update({"active_count": 2, "active_inline": in_flight})
+        self.assertTrue(
+            valid_policy_application_state(after, recovery_evidence)
+        )
+        self.assertTrue(
+            valid_policy_application_transition(
+                before, after, recovery_evidence
+            )
+        )
+        grafted_after = copy.deepcopy(after)
+        grafted_b = grafted_after["active_inline"][1]
+        grafted_b["recovery_ref"] = "grafted-new-application-recovery"
+        grafted_evidence = {
+            **recovery_evidence,
+            grafted_b["recovery_ref"]: checkpoint_recovery_projection(
+                grafted_b,
+                predecessor_ref=policy_application["recovery_ref"],
+                operation_namespace_ref=operation_namespace,
+            ),
+        }
+        self.assertFalse(
+            valid_policy_application_state(grafted_after, grafted_evidence)
+        )
+        self.assertFalse(
+            valid_policy_application_transition(
+                before, grafted_after, grafted_evidence
+            )
+        )
+        self.assertEqual(
+            resolve_active_policy_applications(after, {})[0]["state"],
+            "mutation-outcome-unknown",
+        )
+        reset_unknown = copy.deepcopy(after)
+        reset_unknown["active_inline"][0]["state"] = "revision-captured"
+        self.assertFalse(
+            valid_policy_application_transition(
+                after, reset_unknown, recovery_evidence
+            )
+        )
+        unknown_without_ids = copy.deepcopy(after)
+        unknown_without_ids["active_inline"][0].update(
+            {"intent_operation_id": None, "mutation_operation_id": None}
+        )
+        self.assertFalse(
+            valid_policy_application_state(
+                unknown_without_ids, recovery_evidence
+            )
+        )
+        for lifecycle_state in POLICY_APPLICATION_STATES:
+            null_fingerprint_state = copy.deepcopy(policy_state)
+            null_fingerprint_item = null_fingerprint_state[
+                "active_inline"
+            ][0]
+            null_fingerprint_item.update(
+                {
+                    "state": lifecycle_state,
+                    "operation_policy_fingerprint": None,
+                }
+            )
+            null_fingerprint_evidence = copy.deepcopy(recovery_evidence)
+            null_fingerprint_recovery = null_fingerprint_evidence[
+                policy_application["recovery_ref"]
+            ]
+            null_fingerprint_recovery.update(
+                {
+                    "checkpoint_state": lifecycle_state,
+                    "operation_policy_fingerprint": None,
+                }
+            )
+            with self.subTest(lifecycle_state=lifecycle_state):
+                self.assertFalse(
+                    valid_policy_application_state(
+                        null_fingerprint_state,
+                        null_fingerprint_evidence,
+                    )
+                )
+        reconciled_a = copy.deepcopy(policy_application)
+        reconciled_a.update(
+            {
+                "state": "readback-pending",
+                "recovery_ref": "reconciled-a-recovery-ref",
+            }
+        )
+        reconciliation_ref = "reconciled-a-receipt"
+        reconciliation_evidence = {
+            **recovery_evidence,
+            reconciled_a["recovery_ref"]: checkpoint_recovery_projection(
+                reconciled_a,
+                inherited_recovery=recovery_evidence[
+                    policy_application["recovery_ref"]
+                ],
+                predecessor_ref=policy_application["recovery_ref"],
+                reconciliation_receipt_ref=reconciliation_ref,
+                operation_namespace_ref=operation_namespace,
+            ),
+            reconciliation_ref: {
+                "schema": (
+                    "codex.protected_policy_application_reconciliation.v1"
+                ),
+                "authority": "owning-system",
+                "application_id": policy_application["application_id"],
+                "policy_revision_id": policy_application[
+                    "policy_revision_id"
+                ],
+                "from_state": "mutation-outcome-unknown",
+                "to_state": "readback-pending",
+                "from_recovery_ref": policy_application["recovery_ref"],
+                "to_recovery_ref": reconciled_a["recovery_ref"],
+                "intent_operation_id": reconciled_a[
+                    "intent_operation_id"
+                ],
+                "mutation_operation_id": reconciled_a[
+                    "mutation_operation_id"
+                ],
+            },
+        }
+        reconciled_state = copy.deepcopy(after)
+        reconciled_state["active_inline"][0] = reconciled_a
+        self.assertTrue(
+            valid_policy_application_transition(
+                after, reconciled_state, reconciliation_evidence
+            )
+        )
+        completed_after_reconciliation = copy.deepcopy(reconciled_state)
+        completed_item = completed_after_reconciliation[
+            "active_inline"
+        ][0]
+        completed_item.update(
+            {
+                "state": "terminal",
+                "recovery_ref": "post-reconciliation-terminal-recovery",
+            }
+        )
+        completed_evidence = {
+            **reconciliation_evidence,
+            completed_item["recovery_ref"]: checkpoint_recovery_projection(
+                completed_item,
+                inherited_recovery=reconciliation_evidence[
+                    reconciled_a["recovery_ref"]
+                ],
+                predecessor_ref=reconciled_a["recovery_ref"],
+                operation_namespace_ref=operation_namespace,
+            ),
+        }
+        self.assertTrue(
+            valid_policy_application_state(
+                completed_after_reconciliation, completed_evidence
+            )
+        )
+        self.assertTrue(
+            valid_policy_application_transition(
+                reconciled_state,
+                completed_after_reconciliation,
+                completed_evidence,
+            )
+        )
+        missing_reconciliation = copy.deepcopy(reconciliation_evidence)
+        del missing_reconciliation[reconciliation_ref]
+        self.assertFalse(
+            valid_policy_application_transition(
+                after, reconciled_state, missing_reconciliation
+            )
+        )
+        spurious_reconciliation_state = copy.deepcopy(after)
+        spurious_item = spurious_reconciliation_state["active_inline"][0]
+        spurious_item["recovery_ref"] = (
+            "spurious-reconciliation-recovery"
+        )
+        spurious_ref = "spurious-reconciliation-receipt"
+        spurious_evidence = {
+            **recovery_evidence,
+            spurious_item["recovery_ref"]: checkpoint_recovery_projection(
+                spurious_item,
+                inherited_recovery=recovery_evidence[
+                    policy_application["recovery_ref"]
+                ],
+                predecessor_ref=policy_application["recovery_ref"],
+                reconciliation_receipt_ref=spurious_ref,
+                operation_namespace_ref=operation_namespace,
+            ),
+            spurious_ref: {
+                "schema": (
+                    "codex.protected_policy_application_reconciliation.v1"
+                ),
+                "authority": "owning-system",
+                "application_id": policy_application["application_id"],
+                "policy_revision_id": policy_application[
+                    "policy_revision_id"
+                ],
+                "from_state": "mutation-outcome-unknown",
+                "to_state": "readback-pending",
+                "from_recovery_ref": policy_application["recovery_ref"],
+                "to_recovery_ref": spurious_item["recovery_ref"],
+                "intent_operation_id": spurious_item[
+                    "intent_operation_id"
+                ],
+                "mutation_operation_id": spurious_item[
+                    "mutation_operation_id"
+                ],
+            },
+        }
+        self.assertFalse(
+            valid_policy_application_state(
+                spurious_reconciliation_state, spurious_evidence
+            )
+        )
+        self.assertFalse(
+            valid_policy_application_transition(
+                after,
+                spurious_reconciliation_state,
+                spurious_evidence,
+            )
+        )
+        hidden_before = copy.deepcopy(policy_state)
+        hidden_after = copy.deepcopy(hidden_before)
+        hidden_after_item = hidden_after["active_inline"][0]
+        hidden_after_item.update(
+            {
+                "state": "readback-pending",
+                "recovery_ref": "hidden-reconciliation-head",
+            }
+        )
+        hidden_intermediate_ref = "hidden-reconciliation-intermediate"
+        hidden_receipt_ref = "hidden-reconciliation-receipt"
+        hidden_intermediate_item = copy.deepcopy(hidden_after_item)
+        hidden_intermediate_item["recovery_ref"] = hidden_intermediate_ref
+        hidden_evidence = {
+            **recovery_evidence,
+            hidden_intermediate_ref: checkpoint_recovery_projection(
+                hidden_intermediate_item,
+                inherited_recovery=recovery_evidence[
+                    policy_application["recovery_ref"]
+                ],
+                predecessor_ref=policy_application["recovery_ref"],
+                reconciliation_receipt_ref=hidden_receipt_ref,
+                operation_namespace_ref=operation_namespace,
+            ),
+            hidden_after_item["recovery_ref"]: (
+                checkpoint_recovery_projection(
+                    hidden_after_item,
+                    inherited_recovery=recovery_evidence[
+                        policy_application["recovery_ref"]
+                    ],
+                    predecessor_ref=hidden_intermediate_ref,
+                    operation_namespace_ref=operation_namespace,
+                )
+            ),
+            hidden_receipt_ref: {
+                "schema": (
+                    "codex.protected_policy_application_reconciliation.v1"
+                ),
+                "authority": "owning-system",
+                "application_id": policy_application["application_id"],
+                "policy_revision_id": policy_application[
+                    "policy_revision_id"
+                ],
+                "from_state": "mutation-outcome-unknown",
+                "to_state": "readback-pending",
+                "from_recovery_ref": policy_application["recovery_ref"],
+                "to_recovery_ref": hidden_intermediate_ref,
+                "intent_operation_id": policy_application[
+                    "intent_operation_id"
+                ],
+                "mutation_operation_id": policy_application[
+                    "mutation_operation_id"
+                ],
+            },
+        }
+        self.assertTrue(
+            valid_policy_application_state(hidden_before, hidden_evidence)
+        )
+        self.assertTrue(
+            valid_policy_application_state(hidden_after, hidden_evidence)
+        )
+        self.assertFalse(
+            valid_policy_application_transition(
+                hidden_before, hidden_after, hidden_evidence
+            )
+        )
+        hidden_state_mismatch = copy.deepcopy(hidden_after)
+        hidden_state_mismatch["active_inline"][0][
+            "state"
+        ] = "revision-captured"
+        self.assertFalse(
+            valid_policy_application_state(
+                hidden_state_mismatch, hidden_evidence
+            )
+        )
+        for field, replacement in (
+            ("operation_policy_fingerprint", "rotated-policy-fingerprint"),
+            ("intent_operation_id", "rotated-intent-operation-id"),
+            ("mutation_operation_id", "rotated-mutation-operation-id"),
+            ("operation_namespace_ref", "rotated-operation-namespace"),
+        ):
+            rotated_state = copy.deepcopy(after)
+            rotated_item = rotated_state["active_inline"][0]
+            rotated_item["recovery_ref"] = f"rotated-{field}-recovery"
+            if field != "operation_namespace_ref":
+                rotated_item[field] = replacement
+            rotated_evidence = {
+                **recovery_evidence,
+                rotated_item["recovery_ref"]: (
+                    checkpoint_recovery_projection(
+                        rotated_item,
+                        inherited_recovery=recovery_evidence[
+                            policy_application["recovery_ref"]
+                        ],
+                        predecessor_ref=policy_application["recovery_ref"],
+                        operation_namespace_ref=(
+                            replacement
+                            if field == "operation_namespace_ref"
+                            else operation_namespace
+                        ),
+                    )
+                ),
+            }
+            self.assertFalse(
+                valid_policy_application_state(
+                    rotated_state, rotated_evidence
+                )
+            )
+            self.assertFalse(
+                valid_policy_application_transition(
+                    after, rotated_state, rotated_evidence
+                )
+            )
+
+        reused_operations = copy.deepcopy(after)
+        reused_b = reused_operations["active_inline"][1]
+        reused_b.update(
+            {
+                "recovery_ref": "later-reused-operation-recovery",
+                "intent_operation_id": policy_application[
+                    "intent_operation_id"
+                ],
+                "mutation_operation_id": policy_application[
+                    "mutation_operation_id"
+                ],
+            }
+        )
+        reused_operation_evidence = {
+            **recovery_evidence,
+            reused_b["recovery_ref"]: checkpoint_recovery_projection(
+                reused_b,
+                operation_namespace_ref=operation_namespace,
+            ),
+        }
+        self.assertFalse(
+            valid_policy_application_state(
+                reused_operations, reused_operation_evidence
+            )
+        )
+
+        evolved_b = copy.deepcopy(later_application)
+        evolved_b.update(
+            {
+                "state": "adoption-pending",
+                "recovery_ref": "later-private-recovery-ref-v2",
+                "intent_operation_id": "later-intent-operation-id",
+                "mutation_operation_id": "later-mutation-operation-id",
+            }
+        )
+        evolved_after = copy.deepcopy(after)
+        evolved_after["active_inline"][1] = evolved_b
+        evolved_evidence = {
+            **recovery_evidence,
+            evolved_b["recovery_ref"]: checkpoint_recovery_projection(
+                evolved_b,
+                inherited_recovery=recovery_evidence[
+                    later_application["recovery_ref"]
+                ],
+                predecessor_ref=later_application["recovery_ref"],
+                operation_namespace_ref=operation_namespace,
+            ),
+        }
+        self.assertTrue(
+            valid_policy_application_transition(
+                after, evolved_after, evolved_evidence
+            )
+        )
+        self.assertEqual(
+            {item["application_id"] for item in in_flight},
+            {"stable-opaque-application-id", "later-application-id"},
+        )
+        self.assertEqual(
+            {item["recovery_ref"] for item in in_flight},
+            {
+                "opaque-protected-policy-application-recovery-ref",
+                "later-private-recovery-ref",
+            },
+        )
+        duplicate_application = copy.deepcopy(later_application)
+        duplicate_application["application_id"] = policy_application[
+            "application_id"
+        ]
+        duplicate_application["policy_revision_id"] = "third-policy-revision"
+        duplicate_application["recovery_ref"] = "third-private-recovery-ref"
+        self.assertFalse(
+            valid_policy_application_collection(
+                [policy_application, duplicate_application]
+            )
+        )
+        duplicate_revision = copy.deepcopy(later_application)
+        duplicate_revision["application_id"] = "third-application-id"
+        duplicate_revision["recovery_ref"] = "third-private-recovery-ref"
+        duplicate_revision["policy_revision_id"] = policy_application[
+            "policy_revision_id"
+        ]
+        self.assertFalse(
+            valid_policy_application_collection(
+                [policy_application, duplicate_revision]
+            )
+        )
+        duplicate_recovery = copy.deepcopy(later_application)
+        duplicate_recovery["application_id"] = "third-application-id"
+        duplicate_recovery["policy_revision_id"] = "third-policy-revision"
+        duplicate_recovery["recovery_ref"] = policy_application["recovery_ref"]
+        self.assertFalse(
+            valid_policy_application_collection(
+                [policy_application, duplicate_recovery]
+            )
+        )
+
+        replaced_unknown = copy.deepcopy(after)
+        replaced_unknown.update(
+            {"active_count": 1, "active_inline": [later_application]}
+        )
+        self.assertFalse(
+            valid_policy_application_transition(
+                before, replaced_unknown, recovery_evidence
+            )
+        )
+
+        terminal_application_receipt = protected_policy_application_example(
+            REFERENCE.read_text(encoding="utf-8")
+        )
+        terminal_recovery_ref = terminal_application_receipt["recovery_ref"]
+        terminal_reconciliation_ref = (
+            trusted_policy_evidence()[terminal_recovery_ref][
+                "reconciliation_receipt_ref"
+            ]
+        )
+        terminal_evidence = {
+            **trusted_policy_evidence(),
+            **recovery_evidence,
+            "terminal-application-receipt-a": terminal_application_receipt,
+            "terminal-authority-a": {
+                "schema": (
+                    "codex.protected_policy_application_terminal_authority.v1"
+                ),
+                "producer": "codex-thread-supervisor",
+                "terminal_receipt_ref": "terminal-receipt-a",
+                "application_receipt_ref": "terminal-application-receipt-a",
+            },
+            "terminal-receipt-a": {
+                "schema": (
+                    "codex.protected_policy_application_terminal_receipt.v1"
+                ),
+                "producer": "codex-thread-supervisor",
+                "producer_authority_ref": "terminal-authority-a",
+                "application_id": policy_application["application_id"],
+                "policy_revision_id": policy_application[
+                    "policy_revision_id"
+                ],
+                "recovery_ref": terminal_recovery_ref,
+                "application_receipt_ref": "terminal-application-receipt-a",
+                "reconciliation_receipt_ref": terminal_reconciliation_ref,
+                "terminal_application": "applied",
+            },
+            "retired-index-a": {
+                "schema": (
+                    "codex.protected_policy_application_retired_index.v1"
+                ),
+                "predecessor_ref": None,
+                "tombstones": [
+                    {
+                        "schema": (
+                            "codex.protected_policy_application_terminal.v1"
+                        ),
+                        "application_id": policy_application[
+                            "application_id"
+                        ],
+                        "policy_revision_id": policy_application[
+                            "policy_revision_id"
+                        ],
+                        "recovery_ref": terminal_recovery_ref,
+                        "terminal_receipt_ref": "terminal-receipt-a",
+                    }
+                ],
+            },
+        }
+        terminal_after = copy.deepcopy(after)
+        terminal_after.update(
+            {
+                "active_count": 1,
+                "active_inline": [later_application],
+                "retired_index_ref": "retired-index-a",
+            }
+        )
+        self.assertTrue(
+            valid_policy_application_transition(
+                after, terminal_after, terminal_evidence
+            )
+        )
+        for malformed_enum in ([], {}):
+            malformed_terminal_outcome = copy.deepcopy(terminal_evidence)
+            malformed_terminal_outcome["terminal-receipt-a"][
+                "terminal_application"
+            ] = malformed_enum
+            malformed_reconciliation_state = copy.deepcopy(terminal_evidence)
+            malformed_reconciliation_state[terminal_reconciliation_ref][
+                "from_state"
+            ] = malformed_enum
+            with self.subTest(
+                malformed_terminal_enum=type(malformed_enum).__name__
+            ):
+                self.assertFalse(
+                    valid_policy_application_state(
+                        terminal_after, malformed_terminal_outcome
+                    )
+                )
+                self.assertFalse(
+                    valid_policy_application_state(
+                        terminal_after, malformed_reconciliation_state
+                    )
+                )
+        malformed_reconciliation_ref = copy.deepcopy(terminal_evidence)
+        malformed_reconciliation_ref[terminal_reconciliation_ref][
+            "from_recovery_ref"
+        ] = []
+        malformed_terminal_reconciliation_ref = copy.deepcopy(
+            terminal_evidence
+        )
+        malformed_terminal_reconciliation_ref["terminal-receipt-a"][
+            "reconciliation_receipt_ref"
+        ] = []
+        self.assertFalse(
+            valid_policy_application_state(
+                terminal_after, malformed_reconciliation_ref
+            )
+        )
+        self.assertFalse(
+            valid_policy_application_state(
+                terminal_after, malformed_terminal_reconciliation_ref
+            )
+        )
+
+        substituted_terminal_envelope = copy.deepcopy(terminal_evidence)
+        substituted_terminal_reconciliation_ref = (
+            "substituted-terminal-envelope-reconciliation"
+        )
+        substituted_terminal_envelope[
+            substituted_terminal_reconciliation_ref
+        ] = copy.deepcopy(
+            substituted_terminal_envelope[terminal_reconciliation_ref]
+        )
+        substituted_terminal_envelope["terminal-receipt-a"][
+            "reconciliation_receipt_ref"
+        ] = substituted_terminal_reconciliation_ref
+        self.assertFalse(
+            valid_policy_application_state(
+                terminal_after, substituted_terminal_envelope
+            )
+        )
+        self.assertFalse(
+            valid_policy_application_transition(
+                after, terminal_after, substituted_terminal_envelope
+            )
+        )
+        missing_terminal_envelope = copy.deepcopy(terminal_evidence)
+        missing_terminal_envelope["terminal-receipt-a"][
+            "reconciliation_receipt_ref"
+        ] = None
+        self.assertFalse(
+            valid_policy_application_state(
+                terminal_after, missing_terminal_envelope
+            )
+        )
+        self.assertFalse(
+            valid_policy_application_transition(
+                terminal_after,
+                terminal_after,
+                missing_terminal_envelope,
+            )
+        )
+
+        hidden_terminal_edge_evidence = copy.deepcopy(terminal_evidence)
+        hidden_terminal_edge_ref = "hidden-terminal-edge-recovery"
+        hidden_terminal_edge_head = hidden_terminal_edge_evidence[
+            terminal_recovery_ref
+        ]
+        hidden_terminal_edge_evidence[hidden_terminal_edge_ref] = {
+            **hidden_terminal_edge_head,
+            "predecessor_ref": policy_application["recovery_ref"],
+            "reconciliation_receipt_ref": terminal_reconciliation_ref,
+        }
+        hidden_terminal_edge_head.update(
+            {
+                "predecessor_ref": hidden_terminal_edge_ref,
+                "reconciliation_receipt_ref": None,
+            }
+        )
+        hidden_terminal_edge_evidence[terminal_reconciliation_ref][
+            "to_recovery_ref"
+        ] = hidden_terminal_edge_ref
+        envelope_reconciliation_ref = (
+            "hidden-terminal-envelope-reconciliation"
+        )
+        hidden_terminal_edge_evidence[envelope_reconciliation_ref] = {
+            "schema": (
+                "codex.protected_policy_application_reconciliation.v1"
+            ),
+            "authority": "owning-system",
+            "application_id": policy_application["application_id"],
+            "policy_revision_id": policy_application["policy_revision_id"],
+            "from_state": "mutation-outcome-unknown",
+            "to_state": "terminal",
+            "from_recovery_ref": policy_application["recovery_ref"],
+            "to_recovery_ref": terminal_recovery_ref,
+            "intent_operation_id": policy_application["intent_operation_id"],
+            "mutation_operation_id": policy_application[
+                "mutation_operation_id"
+            ],
+        }
+        hidden_terminal_edge_evidence["terminal-receipt-a"][
+            "reconciliation_receipt_ref"
+        ] = envelope_reconciliation_ref
+        self.assertFalse(
+            valid_policy_application_state(
+                terminal_after, hidden_terminal_edge_evidence
+            )
+        )
+        self.assertFalse(
+            valid_policy_application_transition(
+                after, terminal_after, hidden_terminal_edge_evidence
+            )
+        )
+
+        hidden_readback_terminal_evidence = {
+            **copy.deepcopy(terminal_evidence),
+            **copy.deepcopy(reconciliation_evidence),
+        }
+        hidden_readback_terminal_ref = "hidden-readback-terminal-recovery"
+        hidden_readback_head = hidden_readback_terminal_evidence[
+            terminal_recovery_ref
+        ]
+        hidden_readback_terminal_evidence[hidden_readback_terminal_ref] = {
+            **hidden_readback_head,
+            "predecessor_ref": reconciled_a["recovery_ref"],
+            "reconciliation_receipt_ref": None,
+        }
+        hidden_readback_head.update(
+            {
+                "predecessor_ref": hidden_readback_terminal_ref,
+                "reconciliation_receipt_ref": None,
+            }
+        )
+        hidden_readback_terminal_evidence["terminal-receipt-a"][
+            "reconciliation_receipt_ref"
+        ] = None
+        self.assertTrue(
+            valid_policy_application_state(
+                terminal_after, hidden_readback_terminal_evidence
+            )
+        )
+        self.assertFalse(
+            valid_policy_application_transition(
+                reconciled_state,
+                terminal_after,
+                hidden_readback_terminal_evidence,
+            )
+        )
+        hidden_terminal_evidence = copy.deepcopy(terminal_evidence)
+        hidden_terminal_intermediate_ref = (
+            "hidden-terminal-reconciliation-recovery"
+        )
+        hidden_terminal_recovery = hidden_terminal_evidence[
+            terminal_recovery_ref
+        ]
+        hidden_terminal_evidence[
+            hidden_terminal_intermediate_ref
+        ] = {
+            **hidden_terminal_recovery,
+            "predecessor_ref": policy_application["recovery_ref"],
+        }
+        hidden_terminal_recovery.update(
+            {
+                "predecessor_ref": hidden_terminal_intermediate_ref,
+                "reconciliation_receipt_ref": None,
+            }
+        )
+        hidden_terminal_evidence[terminal_reconciliation_ref][
+            "to_recovery_ref"
+        ] = hidden_terminal_intermediate_ref
+        self.assertFalse(
+            valid_policy_application_state(
+                terminal_after, hidden_terminal_evidence
+            )
+        )
+        self.assertFalse(
+            valid_policy_application_transition(
+                after, terminal_after, hidden_terminal_evidence
+            )
+        )
+        self.assertFalse(
+            valid_policy_application_transition(after, terminal_after, {})
+        )
+        missing_terminal_application = copy.deepcopy(terminal_evidence)
+        del missing_terminal_application["terminal-application-receipt-a"]
+        self.assertFalse(
+            valid_policy_application_transition(
+                after, terminal_after, missing_terminal_application
+            )
+        )
+        partial_terminal_recovery = copy.deepcopy(terminal_evidence)
+        del partial_terminal_recovery[terminal_recovery_ref][
+            "receiver_thread_id"
+        ]
+        self.assertFalse(
+            valid_policy_application_transition(
+                after, terminal_after, partial_terminal_recovery
+            )
+        )
+        reused_retired = copy.deepcopy(terminal_after)
+        reused_retired.update(
+            {
+                "active_count": 2,
+                "active_inline": [later_application, policy_application],
+            }
+        )
+        self.assertFalse(
+            valid_policy_application_state(reused_retired, terminal_evidence)
+        )
+        forked_evidence = {
+            "forked-retired-index": {"predecessor_ref": None}
+        }
+        self.assertFalse(
+            retired_policy_chain_reaches(
+                "forked-retired-index",
+                "retired-index-a",
+                forked_evidence,
+            )
+        )
+
+        overflow = []
+        for index in range(9):
+            entry = copy.deepcopy(later_application)
+            entry.update(
+                {
+                    "application_id": f"overflow-application-{index}",
+                    "policy_revision_id": f"overflow-revision-{index}",
+                    "recovery_ref": f"overflow-recovery-{index}",
+                }
+            )
+            overflow.append(entry)
+        overflow_evidence = {
+            "active-index-nine": {
+                "schema": (
+                    "codex.protected_policy_application_active_index.v1"
+                ),
+                "active_count": 9,
+                "applications": overflow,
+            }
+        }
+        overflow_evidence.update(
+            {
+                entry["recovery_ref"]: checkpoint_recovery_projection(entry)
+                for entry in overflow
+            }
+        )
+        overflow_state = {
+            "schema": "codex.protected_policy_application_state.v1",
+            "active_count": 9,
+            "active_inline": [],
+            "active_index_ref": "active-index-nine",
+            "retired_index_ref": None,
+        }
+        self.assertTrue(
+            valid_policy_application_state(overflow_state, overflow_evidence)
+        )
+        for malformed_count in (True, 9.0):
+            malformed_count_state = copy.deepcopy(overflow_state)
+            malformed_count_state["active_count"] = malformed_count
+            with self.subTest(malformed_active_count=malformed_count):
+                self.assertFalse(
+                    valid_policy_application_state(
+                        malformed_count_state, overflow_evidence
+                    )
+                )
+        malformed_index_count = copy.deepcopy(overflow_evidence)
+        malformed_index_count["active-index-nine"]["active_count"] = 9.0
+        self.assertFalse(
+            valid_policy_application_state(
+                overflow_state, malformed_index_count
+            )
+        )
+        invalid_inline_overflow = copy.deepcopy(overflow_state)
+        invalid_inline_overflow.update(
+            {"active_inline": overflow, "active_index_ref": None}
+        )
+        self.assertFalse(
+            valid_policy_application_state(
+                invalid_inline_overflow, overflow_evidence
+            )
+        )
+
+    def test_v1_policy_application_migration_is_explicit_and_fail_closed(self):
+        target_thread_id = "legacy-thread-id"
+        target_host_id = "legacy-host-id"
+        legacy_application = {
+            "schema": "codex.protected_policy_application_checkpoint.v1",
+            "state": "mutation-outcome-unknown",
+            "policy_revision_id": "legacy-revision",
+            "operation_policy_fingerprint": "legacy-policy-fingerprint",
+            "recovery_ref": "legacy-recovery-ref",
+            "intent_operation_id": "legacy-intent-operation",
+            "mutation_operation_id": "legacy-mutation-operation",
+        }
+        legacy = {
+            "schema": "codex.thread_supervision.v1",
+            "targets": [
+                {
+                    "thread_id": target_thread_id,
+                    "host_id": target_host_id,
+                    "protected_policy_application": legacy_application,
+                }
+            ],
+        }
+        legacy_fingerprint = checkpoint_fingerprint(legacy)
+        migration_ref = "legacy-migration-ref"
+        migrated_recovery_ref = "migrated-recovery-ref"
+        legacy_recovery = {
+            "schema": "codex.protected_policy_application_recovery.v1",
+            "policy_revision_id": "legacy-revision",
+            "receiver_thread_id": "legacy-receiver-thread",
+            "operation_policy_fingerprint": "legacy-policy-fingerprint",
+            "store_schema": "codex.authorized_immutable_intent_store.v1",
+            "store_ref": "legacy-store-ref",
+            "store_authorization_ref": "legacy-store-authorization-ref",
+            "intent_ref": "legacy-intent-ref",
+            "destination_ref": "legacy-destination-ref",
+            "subject_ref": "legacy-subject-ref",
+            "intent_operation_id": "legacy-intent-operation",
+            "mutation_operation_id": "legacy-mutation-operation",
+        }
+        evidence = {
+            "legacy-recovery-ref": legacy_recovery,
+            migration_ref: {
+                "schema": (
+                    "codex.protected_policy_application_migration.v1"
+                ),
+                "source_checkpoint_schema": "codex.thread_supervision.v1",
+                "checkpoint_fingerprint": legacy_fingerprint,
+                "target_thread_id": target_thread_id,
+                "target_host_id": target_host_id,
+                "legacy_recovery_ref": "legacy-recovery-ref",
+                "migrated_recovery_ref": migrated_recovery_ref,
+                "operation_namespace_ref": "legacy-operation-namespace",
+                "application_id": "migrated-application-id",
+                "policy_revision_id": "legacy-revision",
+                "intent_operation_id": "legacy-intent-operation",
+                "mutation_operation_id": "legacy-mutation-operation",
+            },
+            migrated_recovery_ref: {
+                **legacy_recovery,
+                "schema": "codex.protected_policy_application_recovery.v2",
+                "application_id": "migrated-application-id",
+                "checkpoint_state": "mutation-outcome-unknown",
+                "operation_namespace_ref": "legacy-operation-namespace",
+                "predecessor_ref": None,
+                "reconciliation_receipt_ref": None,
+            },
+        }
+        migrated = migrate_v1_policy_application_state(
+            legacy,
+            evidence,
+            target_thread_id=target_thread_id,
+            target_host_id=target_host_id,
+            migration_ref=migration_ref,
+        )
+        self.assertIsNotNone(migrated)
+        active = resolve_active_policy_applications(migrated, evidence)
+        self.assertEqual(active[0]["state"], "mutation-outcome-unknown")
+        self.assertEqual(
+            active[0]["recovery_ref"], migrated_recovery_ref
+        )
+        for malformed_state in ([], {}):
+            malformed_legacy_state = copy.deepcopy(legacy)
+            malformed_legacy_state["targets"][0][
+                "protected_policy_application"
+            ]["state"] = malformed_state
+            with self.subTest(
+                malformed_legacy_state=type(malformed_state).__name__
+            ):
+                self.assertIsNone(
+                    migrate_v1_policy_application_state(
+                        malformed_legacy_state,
+                        evidence,
+                        target_thread_id=target_thread_id,
+                        target_host_id=target_host_id,
+                        migration_ref=migration_ref,
+                    )
+                )
+        self.assertIsNone(
+            migrate_v1_policy_application_state(
+                legacy,
+                evidence,
+                target_thread_id="",
+                target_host_id=target_host_id,
+                migration_ref=migration_ref,
+            )
+        )
+        self.assertIsNone(
+            migrate_v1_policy_application_state(
+                legacy,
+                evidence,
+                target_thread_id=target_thread_id,
+                target_host_id=target_host_id,
+            )
+        )
+        none_key_migration_evidence = copy.deepcopy(evidence)
+        none_key_migration_evidence[None] = (
+            none_key_migration_evidence.pop(migration_ref)
+        )
+        self.assertIsNone(
+            migrate_v1_policy_application_state(
+                legacy,
+                none_key_migration_evidence,
+                target_thread_id=target_thread_id,
+                target_host_id=target_host_id,
+            )
+        )
+        for malformed_migration_field in (
+            "checkpoint_fingerprint",
+            "target_thread_id",
+            "target_host_id",
+            "legacy_recovery_ref",
+            "migrated_recovery_ref",
+            "operation_namespace_ref",
+            "application_id",
+            "policy_revision_id",
+            "intent_operation_id",
+            "mutation_operation_id",
+        ):
+            malformed_migration_evidence = copy.deepcopy(evidence)
+            malformed_migration_evidence[migration_ref][
+                malformed_migration_field
+            ] = []
+            with self.subTest(
+                malformed_migration_field=malformed_migration_field
+            ):
+                self.assertIsNone(
+                    migrate_v1_policy_application_state(
+                        legacy,
+                        malformed_migration_evidence,
+                        target_thread_id=target_thread_id,
+                        target_host_id=target_host_id,
+                        migration_ref=migration_ref,
+                    )
+                )
+        missing_legacy_recovery = copy.deepcopy(evidence)
+        del missing_legacy_recovery["legacy-recovery-ref"]
+        self.assertIsNone(
+            migrate_v1_policy_application_state(
+                legacy,
+                missing_legacy_recovery,
+                target_thread_id=target_thread_id,
+                target_host_id=target_host_id,
+                migration_ref=migration_ref,
+            )
+        )
+        null_legacy_binding = copy.deepcopy(evidence)
+        null_legacy_binding["legacy-recovery-ref"][
+            "receiver_thread_id"
+        ] = None
+        null_legacy_binding[migrated_recovery_ref][
+            "receiver_thread_id"
+        ] = None
+        self.assertIsNone(
+            migrate_v1_policy_application_state(
+                legacy,
+                null_legacy_binding,
+                target_thread_id=target_thread_id,
+                target_host_id=target_host_id,
+                migration_ref=migration_ref,
+            )
+        )
+        null_fingerprint_legacy = copy.deepcopy(legacy)
+        null_fingerprint_legacy["targets"][0][
+            "protected_policy_application"
+        ]["operation_policy_fingerprint"] = None
+        null_fingerprint_migration_evidence = copy.deepcopy(evidence)
+        null_fingerprint_migration_evidence["legacy-recovery-ref"][
+            "operation_policy_fingerprint"
+        ] = None
+        null_fingerprint_migration_evidence[migrated_recovery_ref][
+            "operation_policy_fingerprint"
+        ] = None
+        null_fingerprint_migration_evidence[migration_ref][
+            "checkpoint_fingerprint"
+        ] = checkpoint_fingerprint(null_fingerprint_legacy)
+        self.assertIsNone(
+            migrate_v1_policy_application_state(
+                null_fingerprint_legacy,
+                null_fingerprint_migration_evidence,
+                target_thread_id=target_thread_id,
+                target_host_id=target_host_id,
+                migration_ref=migration_ref,
+            )
+        )
+        both_shapes = copy.deepcopy(legacy)
+        both_shapes["targets"][0][
+            "protected_policy_application_state"
+        ] = empty_policy_application_state()
+        self.assertIsNone(
+            migrate_v1_policy_application_state(
+                both_shapes,
+                evidence,
+                target_thread_id=target_thread_id,
+                target_host_id=target_host_id,
+                migration_ref=migration_ref,
+            )
+        )
+        explicit_empty = {
+            "schema": "codex.thread_supervision.v1",
+            "targets": [
+                {
+                    "thread_id": target_thread_id,
+                    "host_id": target_host_id,
+                    "protected_policy_application": None,
+                }
+            ],
+        }
+        self.assertEqual(
+            migrate_v1_policy_application_state(
+                explicit_empty,
+                {},
+                target_thread_id=target_thread_id,
+                target_host_id=target_host_id,
+            ),
+            empty_policy_application_state(),
+        )
+        missing_field = {
+            "schema": "codex.thread_supervision.v1",
+            "targets": [
+                {
+                    "thread_id": target_thread_id,
+                    "host_id": target_host_id,
+                }
+            ],
+        }
+        self.assertIsNone(
+            migrate_v1_policy_application_state(
+                missing_field,
+                {},
+                target_thread_id=target_thread_id,
+                target_host_id=target_host_id,
+            )
+        )
+        pre_feature_proof_ref = "pre-feature-proof"
+        source_revision_ref = "pre-feature-source-revision"
+        inventory_ref = "pre-feature-inventory"
+        missing_fingerprint = checkpoint_fingerprint(missing_field)
+        pre_feature_evidence = {
+            pre_feature_proof_ref: {
+                "schema": (
+                    "codex.thread_supervision_pre_feature_proof.v1"
+                ),
+                "checkpoint_fingerprint": missing_fingerprint,
+                "target_thread_id": target_thread_id,
+                "target_host_id": target_host_id,
+                "source_contract_revision_ref": source_revision_ref,
+                "evidence_inventory_ref": inventory_ref,
+                "protected_policy_application_evidence_count": 0,
+            },
+            source_revision_ref: {
+                "schema": "codex.thread_supervision_source_contract.v1",
+                "checkpoint_fingerprint": missing_fingerprint,
+                "contract_revision": "known-pre-feature-v1",
+                "protected_policy_feature": "absent",
+            },
+            inventory_ref: {
+                "schema": "codex.thread_supervision_evidence_inventory.v1",
+                "checkpoint_fingerprint": missing_fingerprint,
+                "target_thread_id": target_thread_id,
+                "target_host_id": target_host_id,
+                "cutoff": "legacy-inventory-cutoff",
+                "application_recovery_refs": [],
+            },
+        }
+        none_key_proof_evidence = copy.deepcopy(pre_feature_evidence)
+        none_key_proof_evidence[None] = none_key_proof_evidence.pop(
+            pre_feature_proof_ref
+        )
+        self.assertIsNone(
+            migrate_v1_policy_application_state(
+                missing_field,
+                none_key_proof_evidence,
+                target_thread_id=target_thread_id,
+                target_host_id=target_host_id,
+            )
+        )
+        self.assertEqual(
+            migrate_v1_policy_application_state(
+                missing_field,
+                pre_feature_evidence,
+                target_thread_id=target_thread_id,
+                target_host_id=target_host_id,
+                pre_feature_proof_ref=pre_feature_proof_ref,
+            ),
+            empty_policy_application_state(),
+        )
+        for malformed_count in (False, 0.0):
+            malformed_count_evidence = copy.deepcopy(pre_feature_evidence)
+            malformed_count_evidence[pre_feature_proof_ref][
+                "protected_policy_application_evidence_count"
+            ] = malformed_count
+            with self.subTest(malformed_evidence_count=malformed_count):
+                self.assertIsNone(
+                    migrate_v1_policy_application_state(
+                        missing_field,
+                        malformed_count_evidence,
+                        target_thread_id=target_thread_id,
+                        target_host_id=target_host_id,
+                        pre_feature_proof_ref=pre_feature_proof_ref,
+                    )
+                )
+        unrelated_checkpoint = copy.deepcopy(missing_field)
+        unrelated_checkpoint["goal"] = "different-checkpoint-content"
+        self.assertIsNone(
+            migrate_v1_policy_application_state(
+                unrelated_checkpoint,
+                pre_feature_evidence,
+                target_thread_id=target_thread_id,
+                target_host_id=target_host_id,
+                pre_feature_proof_ref=pre_feature_proof_ref,
+            )
+        )
+        non_json_checkpoint = copy.deepcopy(missing_field)
+        non_json_checkpoint["goal"] = float("nan")
+        self.assertIsNone(
+            migrate_v1_policy_application_state(
+                non_json_checkpoint,
+                pre_feature_evidence,
+                target_thread_id=target_thread_id,
+                target_host_id=target_host_id,
+                pre_feature_proof_ref=pre_feature_proof_ref,
+            )
+        )
+        self.assertIsNone(
+            migrate_v1_policy_application_state(
+                legacy,
+                pre_feature_evidence,
+                target_thread_id=target_thread_id,
+                target_host_id=target_host_id,
+                pre_feature_proof_ref=pre_feature_proof_ref,
+            )
+        )
 
     def test_skill_keeps_one_continuation_owner_and_never_blocks_on_no_change(self):
         compact = " ".join(SKILL.read_text(encoding="utf-8").split()).lower()
@@ -1317,12 +3945,13 @@ class ThreadSupervisionContractTests(unittest.TestCase):
         reference = REFERENCE.read_text(encoding="utf-8")
         receipt = protected_policy_application_example(reference)
         self.assertEqual(
-            receipt["schema"], "codex.protected_policy_application.v1"
+            receipt["schema"], "codex.protected_policy_application.v2"
         )
         self.assertEqual(
             set(receipt),
             {
                 "schema",
+                "application_id",
                 "policy_revision_id",
                 "authorizer",
                 "from_protected_contract_fingerprint",
@@ -1342,7 +3971,16 @@ class ThreadSupervisionContractTests(unittest.TestCase):
         recovery = trusted_policy_evidence()[receipt["recovery_ref"]]
         self.assertEqual(
             recovery["schema"],
-            "codex.protected_policy_application_recovery.v1",
+            "codex.protected_policy_application_recovery.v2",
+        )
+        self.assertEqual(
+            recovery["application_id"], receipt["application_id"]
+        )
+        wrong_application_id = copy.deepcopy(receipt)
+        wrong_application_id["application_id"] = "different-application-id"
+        self.assertEqual(
+            evaluate_protected_policy_application(wrong_application_id),
+            "invalid",
         )
         self.assertEqual(
             recovery["intent_operation_id"],
@@ -1422,6 +4060,7 @@ class ThreadSupervisionContractTests(unittest.TestCase):
                 "operation_id",
                 "destination_ref",
                 "subject_ref",
+                "result_object_ref",
                 "receipt_ref",
                 "prewrite_intent_operation_id",
                 "prewrite_intent_ref",
@@ -1442,6 +4081,16 @@ class ThreadSupervisionContractTests(unittest.TestCase):
             },
         )
         self.assertEqual(receipt["readback"]["state"], "complete")
+        self.assertEqual(
+            receipt["mutation"]["result_object_ref"],
+            receipt["readback"]["object_ref"],
+        )
+        self.assertEqual(
+            trusted_policy_evidence()[receipt["mutation"]["receipt_ref"]][
+                "result_object_ref"
+            ],
+            receipt["readback"]["object_ref"],
+        )
         self.assertEqual(
             set(receipt["readback"]["field_results"][0]),
             {
@@ -1571,6 +4220,24 @@ class ThreadSupervisionContractTests(unittest.TestCase):
         self.assertEqual(
             evaluate_protected_policy_application(wrong_mutation_destination),
             "invalid",
+        )
+
+        wrong_mutation_result_object = copy.deepcopy(receipt)
+        wrong_mutation_result_object["mutation"][
+            "result_object_ref"
+        ] = "different-object"
+        self.assertEqual(
+            evaluate_protected_policy_application(
+                wrong_mutation_result_object
+            ),
+            "invalid",
+        )
+
+        wrong_readback_object = copy.deepcopy(receipt)
+        wrong_readback_object["readback"]["object_ref"] = "different-object"
+        self.assertEqual(
+            evaluate_protected_policy_application(wrong_readback_object),
+            "policy-drift",
         )
 
         unauthorized_store = copy.deepcopy(receipt)
@@ -1792,6 +4459,7 @@ class ThreadSupervisionContractTests(unittest.TestCase):
                     "operation_id": None,
                     "destination_ref": None,
                     "subject_ref": None,
+                    "result_object_ref": None,
                     "receipt_ref": None,
                     "prewrite_intent_operation_id": None,
                     "prewrite_intent_ref": None,
@@ -2246,9 +4914,9 @@ class ThreadSupervisionContractTests(unittest.TestCase):
             "no existing authorized immutable intent store",
             "created intent lacks exact store schema, store identity, authorization, either operation id, or immutability evidence",
             "pre-write intent does not bind the exact receiver acknowledgement or prove `after-adoption`",
-            "mutation receipt does not bind the exact destination, subject, operation id, or pre-write intent",
+            "mutation receipt does not bind the exact destination, subject, operation id, pre-write intent, or result object",
             "committed mutation lacks exact object identity, post-mutation cutoff, or complete readback",
-            "readback does not bind the exact mutation operation id and receipt or prove `after-mutation`",
+            "readback object differs from the recovered mutation result object, does not bind the exact operation id and receipt, or does not prove `after-mutation`",
             "any mandatory field is missing, extra, mismatched, or has a different observed fingerprint",
             "any field result is unavailable, even with another field mismatch or extra result",
             "exact receiver adoption, committed mutation, object identity, cutoff, and every keyed field result match",
@@ -2272,6 +4940,7 @@ class ThreadSupervisionContractTests(unittest.TestCase):
             "existing authorization, preallocated intent-store and owning-system mutation operation ids",
             "retain both ids in the immutable intent",
             "immutability evidence",
+            "canonical object produced or targeted by that exact operation",
             "if that store is unavailable",
             "never emulate it with an ordinary local write",
             "bind the mutation receipt to it",
@@ -2280,6 +4949,7 @@ class ThreadSupervisionContractTests(unittest.TestCase):
             "raw values and bare digests are malformed",
             "preallocate the owning-system operation id",
             "bind the readback to both that operation id and the exact mutation receipt",
+            "readback object id to equal the independently recovered mutation result object id",
             "owning-system ordering evidence",
             "missing, extra, or duplicate field results fail closed",
             "object existence",
@@ -2297,6 +4967,54 @@ class ThreadSupervisionContractTests(unittest.TestCase):
             "regardless of another semantic policy defect",
             "unrelated pending evidence or skill intervention neither blocks",
             "nor proves receiver adoption",
+            "v2 protected-policy application state, keyed by a stable application id",
+            "v2 recovery record also binds",
+            "one closed shape that also binds the receiver",
+            "reject missing or extra fields, any smaller checkpoint projection",
+            "or null state, fingerprint, receiver, store, authorization, intent, destination, subject, or namespace bindings",
+            "owning-system operation namespace",
+            "duplicate namespace-plus-operation-id pairs",
+            "closed monotonic graph",
+            "immutable successor must name the previous recovery ref as predecessor",
+            "resolve the full recovery chain to its root",
+            "successor preserves the prior chain as an exact prefix",
+            "validate every intermediate record",
+            "operation namespace and required operation-policy fingerprint immutable",
+            "once either operation id is allocated",
+            "successor's stored `checkpoint_state` to be one exact edge",
+            "equal the checkpoint entry state at the head",
+            "validate every closed lifecycle, checkpoint-state, terminal-outcome, and reconciliation state enum as a bounded string",
+            "require it if and only if an unknown predecessor state advances",
+            "checkpoint state change appends exactly one successor",
+            "later ordinary advance uses another state-bearing successor",
+            "outcome-unknown state is sticky",
+            "exact owning-system reconciliation receipt",
+            "later protected revision gets a separate entry",
+            "first recovery record has null predecessor and reconciliation refs",
+            "never replaces, coalesces, or serializes capture behind",
+            "on the ninth, replace the inline cache with one content-addressed typed active index containing every entry",
+            "append-only retired-index tombstone",
+            "entry active in the immediately preceding checkpoint",
+            "resolve the terminal producer authority and exact v2 application receipt",
+            "evaluated result to equal the terminal label",
+            "exact recovery head whose stored state is `terminal`",
+            "retirement from a nonterminal state appends exactly that one terminal successor",
+            "that head carries any required unknown-state reconciliation",
+            "its reconciliation ref must equal the terminal receipt's ref",
+            "through the same immutable evidence store",
+            "partial, built-in, or substituted recovery evidence cannot authorize retirement",
+            "never reuse any of those identities",
+            "treat a `codex.thread_supervision.v1` checkpoint as legacy input",
+            "complete v1 checkpoint root",
+            "select exactly one nested target by thread and host",
+            "immutable typed migration record and a new v2 recovery record",
+            "canonical checkpoint fingerprint, exact target",
+            "exact migrated checkpoint state",
+            "source-contract and immutable inventory proofs bound to that exact checkpoint fingerprint",
+            "typed evidence count must be the exact json integer zero",
+            "validate the branch-specific migration or pre-feature proof ref as a bounded non-null scalar",
+            "a null-key evidence entry never supplies a missing ref",
+            "otherwise fail closed",
         ):
             self.assertIn(invariant, skill)
 
@@ -2340,6 +5058,8 @@ class ThreadSupervisionContractTests(unittest.TestCase):
             "authorization, immutability, and `after-adoption`",
             "a complete readback proves `after-mutation`",
             "binds that exact mutation operation id and receipt",
+            "readback.object_ref` exactly equal to the recovered mutation result object",
+            "reading another object with matching fields is not causal evidence",
             "contains exactly one result for every mandatory field and no others",
             "resolve evidence through the owning receiver, intent store, or external system",
             "normalized resolved records must exactly echo their subject bindings",
@@ -2353,10 +5073,63 @@ class ThreadSupervisionContractTests(unittest.TestCase):
             "after receipt shape, closed states, bounded scalar formats, and durable operation ids are valid",
             "unknown intent or mutation outcome takes precedence over every semantic policy or evidence mismatch",
             "whose unknown state or operation identity cannot be trusted remains `invalid`",
-            "`protected_policy_application` is `null` when no affected policy application is active",
+            "`protected_policy_application_state.active_count=0`",
+            "inline entries or resolved active index form one append-only",
+            "no duplicate application, revision, or recovery identity",
+            "record binds the same application id and policy revision",
+            "one closed record shape: reject missing or extra fields",
+            "never substitute a smaller checkpoint projection",
+            "state, policy fingerprint, receiver, store",
+            "are bounded and non-null in every record",
+            "owning-system operation namespace",
+            "operation namespace and operation id is globally unique",
+            "new record names the previous `recovery_ref` as its predecessor",
+            "validate every intermediate recovery record",
+            "required operation-policy fingerprint never change within the chain",
+            "either operation id may be allocated once",
+            "successor's `checkpoint_state` must be one exact edge",
+            "checkpoint entry state must equal its recovery head's state",
+            "treat every lifecycle, checkpoint-state, terminal-outcome, and reconciliation state enum as a bounded string",
+            "reconciliation ref if and only if an unknown predecessor state advances",
+            "any other reconciliation ref is unused or spurious",
+            "state-bearing successor and remains valid without reusing the prior reconciliation",
+            "newly appended application starts with a root recovery record",
+            "closed monotonic graph",
+            "an unknown state is sticky",
+            "codex.protected_policy_application_reconciliation.v1",
+            "later revision is appended without replacing",
+            "only independently proven terminal evidence may remove an active entry",
+            "active and retired identities are globally unique",
+            "operation-namespace-plus-operation-id pair",
+            "entry that was active in the immediately preceding checkpoint",
+            "exact recovery head whose `checkpoint_state` is `terminal`",
+            "retiring a nonterminal active entry appends exactly that one terminal successor",
+            "terminal head itself carries the required reconciliation edge",
+            "terminal receipt's reconciliation ref equals the head's ref",
+            "resolve the terminal receipt's producer authority",
+            "evaluate that application receipt independently",
+            "through the same immutable evidence store",
+            "a separate built-in or substituted recovery cannot authorize retirement",
+            "never drop or reuse an application id, revision id, recovery ref",
+            "never interpret a v1 checkpoint directly as v2",
+            "migration consumes the complete v1 checkpoint root",
+            "selects exactly one nested `targets[]` entry",
+            "provisional singular `protected_policy_application` field",
+            "codex.protected_policy_application_migration.v1",
+            "canonical full-checkpoint fingerprint, exact target identity",
+            "exact migrated checkpoint state",
+            "non-json constants rejected",
+            "exact cutoff-bound immutable evidence inventory",
+            "typed evidence count is the exact json integer zero",
+            "replaying either proof against another checkpoint or target fails closed",
+            "validate the branch-specific migration or pre-feature proof ref as a bounded non-null scalar",
+            "a null-key evidence-map entry never supplies a missing ref",
+            "resolve every active and retired recovery chain to its root",
+            "preserve that exact prefix",
+            "missing proof, malformed legacy state",
             "never overload `current_contract_revision` or `pending_intervention`",
-            "persist its immutable content-addressed private `recovery_ref` before each adoption, intent, mutation, or readback attempt",
-            "unknown outcome permits reconciliation only, never a new write",
+            "persist each immutable content-addressed private `recovery_ref` before its adoption, intent, mutation, or readback attempt",
+            "unknown outcome permits only exact owning-system reconciliation, never a new write",
             "keep the affected mutation blocked until receiver adoption",
             "`application=policy-drift`",
             "`application=reconciliation-required`",
