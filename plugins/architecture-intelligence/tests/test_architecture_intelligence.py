@@ -479,6 +479,15 @@ class ArchitectureValidatorTest(unittest.TestCase):
             subprocess.run(["git", "init", "-b", "main"], cwd=root, check=True, stdout=subprocess.DEVNULL)
             subprocess.run(["git", "config", "user.email", "test@example.com"], cwd=root, check=True)
             subprocess.run(["git", "config", "user.name", "Test"], cwd=root, check=True)
+            subprocess.run(["git", "config", "commit.gpgsign", "false"], cwd=root, check=True)
+            signing = subprocess.run(
+                ["git", "config", "--local", "--get", "commit.gpgsign"],
+                cwd=root,
+                check=True,
+                capture_output=True,
+                text=True,
+            )
+            self.assertEqual("false", signing.stdout.strip())
             (root / "src").mkdir()
             (root / "docs").mkdir()
             (root / "src" / "app.py").write_text("print('one')\n", encoding="utf-8")
