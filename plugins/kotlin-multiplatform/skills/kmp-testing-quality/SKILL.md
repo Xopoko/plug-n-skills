@@ -110,6 +110,31 @@ sequence, failure triage, and exact evidence requirements.
 - Security-sensitive flows: token refresh, logout, stale credentials, redaction, retry-loop guards.
 - Performance-sensitive state reducers/mappers where deterministic tests catch regressions cheaply.
 
+## DI Fixture Failure Triage
+
+Treat a generic dependency-injection exception as a symptom, not as proof of
+which binding is missing. Do not add a guessed fallback from the nearest
+constructor, wrapper type, or previous failure.
+
+- Reproduce the smallest failing test with the project-pinned task, exact test
+  filter, and full exception chain or stack trace before changing the graph.
+- Identify the exact requested type, qualifier, scope, parameter path, and
+  active module set. Distinguish the production graph from test-only modules,
+  overrides, scopes, factories, and runtime-provided parameters.
+- Add a test-only binding only when the observed missing edge belongs to the
+  harness and the production entry point already provides it. Otherwise repair
+  the owning module or parameter wiring; never add an unrelated production
+  fallback merely to silence the container.
+- Remove every disproven diagnostic binding before the next candidate. Rerun
+  the focused test first, then the relevant suite; a new exception is a new
+  failure, not proof that the original correction was right.
+- When the full diagnostic exists only in CI and publication is explicitly
+  authorized, use a diagnostic-only immutable revision that changes only the
+  minimum logging or test selection. Without that authority, prepare the
+  minimal local diagnostic diff and hand off exact commands; do not commit,
+  push, or trigger CI. A terminal failure identifies evidence; it is not a
+  source fix. Remove the diagnostic configuration before final acceptance.
+
 ## Screenshot Goldens In CI
 
 When CI records or refreshes screenshot baselines, local rendering is blocked,
