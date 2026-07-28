@@ -419,11 +419,23 @@ observation, and evidence map with matching envelopes is still invalid. For a
 verified `missing` result, the same owning-system resolver proves absence and
 the observed fingerprint remains null; absence never fabricates an HMAC.
 
-Fingerprint `operation_policy` as
-`sha256:` plus lowercase SHA-256 of its UTF-8 JSON with recursively sorted
-object keys, no insignificant whitespace, and array order preserved. Reject
-non-JSON constants such as `NaN` and positive or negative infinity rather than
-hashing a language-specific extension. Persist an
+For a schema-valid `operation_policy`, let `C` be its
+`codex.protected-policy-operation-json.v1` canonical bytes and fingerprint it
+as `sha256:` plus lowercase hexadecimal SHA-256 of `C`. The recipe label names
+the encoding and is not part of `C`. Reject duplicate object names at JSON
+ingress and validate the exact closed schema before encoding. V1 object names
+are only the schema's fixed ASCII names; emit them recursively in ascending
+ASCII-byte order, with no whitespace or BOM, and preserve array order. In
+strings, escape quotation mark and reverse solidus as `\"` and `\\`; use
+`\b`, `\t`, `\n`, `\f`, and `\r` for those five controls; encode every other
+U+0000 through U+001F control as lowercase `\u00xx`; never escape solidus; and
+emit every other Unicode scalar literally before UTF-8 encoding. Preserve the
+exact Unicode scalar sequence without normalization and reject unpaired
+surrogates. The closed schema admits only objects, arrays, and strings, so
+reject null, booleans, and all numbers. Canonicalize parsed values: literal
+non-ASCII and equivalent valid `\uXXXX` or surrogate-pair input escapes produce
+the same `C`; canonically equivalent but distinct scalar sequences such as NFC
+and NFD remain distinct. Persist an
 immutable pre-write intent after receiver adoption and before the mutation only
 through an existing authorized intent store. Never create or emulate that store
 with an ordinary write under supervision authority. If it is unavailable, keep
@@ -435,7 +447,7 @@ ID, receiver identity and acknowledgement, operation-policy fingerprint, and
 immutability evidence. The external mutation uses that retained mutation
 operation ID and binds it to the exact destination, subject, intent operation,
 and intent ref. These operation IDs remain available when a write receipt is
-missing after an unknown outcome. The terminal readback binds both the exact
+missing after an unknown outcome. The complete readback binds both the exact
 mutation operation ID and mutation receipt plus
 owning-system evidence that the readback is post-mutation. Presence of these
 refs is insufficient: independently resolve them and verify the named store,
@@ -569,6 +581,10 @@ operation ID. The independently recovered mutation receipt must bind the exact
 destination, subject, retained mutation operation ID, intent operation ID, and
 intent ref plus the canonical object produced or targeted by that mutation.
 `mutation.result_object_ref` echoes that owning-system object identity. A
+claimed `mutation.state=committed` must carry that exact receipt ref and a
+non-empty commit cutoff; either missing field makes the receipt invalid. If an
+attempt has no durable commit receipt, retain `outcome-unknown` and its matching
+nonterminal recovery head instead of claiming committed reconciliation. A
 complete readback proves `after-mutation`, binds that exact mutation operation
 ID and receipt, and has `readback.object_ref` exactly equal to the recovered
 mutation result object. Merely reading another object with matching fields is
@@ -634,6 +650,15 @@ mutation observation null, `readback.state=not-run`, and every readback
 observation null or empty. A claimed later mutation or readback makes the
 receipt invalid; it cannot be hidden behind the earlier unknown intent.
 This includes a simultaneous `mutation.state=outcome-unknown`.
+Any committed mutation whose readback is not yet complete or contains an
+unavailable field must bind the active `readback-pending` recovery head.
+For a complete readback, an unavailable field reaches reconciliation only
+after the exact object, mutation operation and receipt, `after-mutation`
+ordering evidence, exact mandatory-field set, and owning-system unavailability
+evidence are independently valid. A missing or conflicting causal binding
+remains policy drift; the unavailable status cannot mask it.
+Reserve `terminal` for a closed result whose terminal receipt can be retained
+or retired; a recoverable readback cannot claim that state.
 Every blocked pre-adoption or capability-unavailable state is canonical:
 intent must remain unwritten, mutation must be cleanly `not-attempted`, and
 readback must be cleanly `not-run`. Creating the intent before exact receiver
@@ -670,12 +695,12 @@ Evaluate this precedence atomically:
 | Created intent lacks exact store schema, store identity, authorization, either operation ID, or immutability evidence | `application=invalid` |
 | Pre-write intent does not bind the exact receiver acknowledgement or prove `after-adoption` | `application=policy-drift` before mutation; committed mutation is invalid |
 | Exact receiver adoption is proven but no mutation is attempted | `mutation.state=not-attempted`, `application=blocked` |
-| Mutation receipt does not bind the exact destination, subject, operation ID, pre-write intent, or result object | `application=invalid` |
-| Committed mutation has canonical clean `not-run` or mutation-bound `unavailable` readback, or a complete readback has unavailable fields | `application=reconciliation-required` |
+| Committed mutation lacks its exact receipt or cutoff, or the mutation receipt does not bind the exact destination, subject, operation ID, pre-write intent, or result object | `application=invalid` |
 | A non-complete readback carries object, cutoff, ordering, or field-result observations | `application=invalid` |
 | Readback object differs from the recovered mutation result object, does not bind the exact operation ID and receipt, or does not prove `after-mutation` | `application=policy-drift` |
+| Committed mutation has canonical clean `not-run` or mutation-bound `unavailable` readback, or a causally bound complete readback has independently proven unavailable fields | `checkpoint_state=readback-pending`, `application=reconciliation-required` |
 | Any mandatory field is missing, extra, mismatched, or has a different observed fingerprint | `application=policy-drift` |
-| Any field result is unavailable, even with another field mismatch or extra result | `application=reconciliation-required` |
+| An independently proven field result is unavailable after exact causal binding and exact result-set validation | `application=reconciliation-required`; another missing, extra, or mismatched result remains `policy-drift` |
 | Exact receiver adoption, committed mutation, object identity, cutoff, and every keyed field result match | `readback.state=complete`, `application=applied` |
 
 This receipt is a supervision verdict, not mutation authority, intent-store

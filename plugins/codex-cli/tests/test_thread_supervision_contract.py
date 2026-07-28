@@ -16,6 +16,25 @@ HANDOFF_REFERENCE = ROOT / "references" / "thread-skill-handoff-contract.md"
 MAX_POLICY_SCALAR_BYTES = 1024
 
 
+def strict_json_loads(text: str) -> object:
+    def reject_duplicate_names(pairs: list[tuple[str, object]]) -> dict:
+        value = {}
+        for key, item in pairs:
+            if key in value:
+                raise ValueError(f"duplicate JSON object name: {key}")
+            value[key] = item
+        return value
+
+    def reject_non_json_constant(value: str) -> object:
+        raise ValueError(f"non-JSON constant: {value}")
+
+    return json.loads(
+        text,
+        object_pairs_hook=reject_duplicate_names,
+        parse_constant=reject_non_json_constant,
+    )
+
+
 def checkpoint_example(text: str) -> dict:
     match = re.search(r"## Checkpoint.*?```json\n(.*?)\n```", text, re.DOTALL)
     if match is None:
@@ -43,7 +62,7 @@ def protected_policy_application_example(text: str) -> dict:
     )
     if match is None:
         raise AssertionError("protected policy application JSON example not found")
-    return json.loads(match.group(1))
+    return strict_json_loads(match.group(1))
 
 
 def protected_policy_failure_schedule(text: str) -> dict[str, str]:
@@ -1687,14 +1706,63 @@ def valid_fingerprint_field_ref(value: object) -> bool:
     return bounded_policy_scalar(value) and "\x00" not in value
 
 
-def operation_policy_fingerprint(policy: dict) -> str:
-    payload = json.dumps(
+def canonical_operation_policy_json(policy: dict) -> bytes:
+    if (
+        not isinstance(policy, dict)
+        or set(policy)
+        != {
+            "destination_ref",
+            "subject_ref",
+            "operation",
+            "eligibility_cutoff",
+            "mandatory_fields",
+        }
+        or policy["operation"]
+        not in {"create", "update", "transition", "other-authorized"}
+        or any(
+            not bounded_policy_scalar(policy[field])
+            for field in (
+                "destination_ref",
+                "subject_ref",
+                "eligibility_cutoff",
+            )
+        )
+        or not isinstance(policy["mandatory_fields"], list)
+        or not policy["mandatory_fields"]
+    ):
+        raise ValueError("operation policy is not schema-valid")
+    seen_fields = set()
+    for item in policy["mandatory_fields"]:
+        if (
+            not isinstance(item, dict)
+            or set(item)
+            != {
+                "field_ref",
+                "expected_value_fingerprint",
+                "expectation_evidence_ref",
+            }
+            or not valid_fingerprint_field_ref(item["field_ref"])
+            or item["field_ref"] in seen_fields
+            or not valid_keyed_fingerprint(
+                item["expected_value_fingerprint"]
+            )
+            or not bounded_policy_scalar(
+                item["expectation_evidence_ref"]
+            )
+        ):
+            raise ValueError("operation policy is not schema-valid")
+        seen_fields.add(item["field_ref"])
+    return json.dumps(
         policy,
         sort_keys=True,
         separators=(",", ":"),
         ensure_ascii=False,
         allow_nan=False,
     ).encode("utf-8")
+
+
+def operation_policy_fingerprint(policy: dict) -> str:
+    payload = canonical_operation_policy_json(policy)
     return "sha256:" + hashlib.sha256(payload).hexdigest()
 
 
@@ -1812,6 +1880,18 @@ def trusted_fingerprint_provenance(
             "readback_cutoff": "opaque-post-mutation-cutoff",
             "normalized_value": None,
         },
+        "opaque-owning-system-unavailable-readback-ref": {
+            "purpose": "observation",
+            "status": "unavailable",
+            "subject_ref": TRUSTED_POLICY_SUBJECT_REF,
+            "field_ref": TRUSTED_POLICY_FIELD_REF,
+            "object_ref": "opaque-object-id",
+            "mutation_operation_id": (
+                "opaque-preallocated-mutation-operation-id"
+            ),
+            "readback_cutoff": "opaque-post-mutation-cutoff",
+            "normalized_value": None,
+        },
     }
     source = trusted_sources.get(evidence_ref)
     if not isinstance(source, dict):
@@ -1883,6 +1963,9 @@ def trusted_policy_evidence() -> dict[str, dict]:
     mutation_pending_recovery_ref = (
         "opaque-protected-policy-application-mutation-pending-recovery-ref"
     )
+    readback_pending_recovery_ref = (
+        "opaque-protected-policy-application-readback-pending-recovery-ref"
+    )
     root_recovery_ref = "opaque-protected-policy-application-recovery-ref"
     terminal_recovery_ref = (
         "opaque-protected-policy-application-terminal-recovery-ref"
@@ -1945,12 +2028,18 @@ def trusted_policy_evidence() -> dict[str, dict]:
         "checkpoint_state": "mutation-outcome-unknown",
         "predecessor_ref": mutation_pending_recovery_ref,
     }
+    readback_pending_recovery = {
+        **mutation_pending_recovery,
+        "checkpoint_state": "readback-pending",
+        "predecessor_ref": mutation_pending_recovery_ref,
+    }
     return {
         revision_recovery_ref: revision_recovery,
         adoption_recovery_ref: adoption_recovery,
         intent_pending_recovery_ref: intent_pending_recovery,
         intent_unknown_recovery_ref: intent_unknown_recovery,
         mutation_pending_recovery_ref: mutation_pending_recovery,
+        readback_pending_recovery_ref: readback_pending_recovery,
         root_recovery_ref: mutation_unknown_recovery,
         terminal_recovery_ref: {
             **mutation_unknown_recovery,
@@ -2074,6 +2163,17 @@ def trusted_policy_evidence() -> dict[str, dict]:
             "value_fingerprint": value_fingerprint,
             "status": "matched",
         },
+        "opaque-owning-system-unavailable-readback-ref": {
+            "schema": "codex.field_observation_evidence.v1",
+            "object_ref": "opaque-object-id",
+            "mutation_operation_id": (
+                "opaque-preallocated-mutation-operation-id"
+            ),
+            "readback_cutoff": "opaque-post-mutation-cutoff",
+            "field_ref": "opaque-domain-field-ref",
+            "value_fingerprint": None,
+            "status": "unavailable",
+        },
     }
 
 
@@ -2087,6 +2187,10 @@ def trusted_policy_recovery_store() -> dict[str, dict]:
             "opaque-protected-policy-application-intent-pending-recovery-ref",
             "opaque-protected-policy-application-intent-unknown-recovery-ref",
             "opaque-protected-policy-application-mutation-pending-recovery-ref",
+            (
+                "opaque-protected-policy-application-"
+                "readback-pending-recovery-ref"
+            ),
             "opaque-protected-policy-application-recovery-ref",
             "opaque-protected-policy-application-terminal-recovery-ref",
             (
@@ -2415,18 +2519,6 @@ def _compute_protected_policy_application(
             )
         ):
             return "invalid"
-        expected_recovery_state = (
-            "intent-outcome-unknown"
-            if intent_status == "outcome-unknown"
-            else (
-                "mutation-outcome-unknown"
-                if mutation_state == "outcome-unknown"
-                else "terminal"
-            )
-        )
-        if recovery["checkpoint_state"] != expected_recovery_state:
-            return "invalid"
-
         readback = receipt["readback"]
         if set(readback) != {
             "state",
@@ -2488,6 +2580,30 @@ def _compute_protected_policy_application(
                 ):
                     return "invalid"
             observed_by_field[field_ref] = result
+
+        readback_is_incomplete_or_unavailable = (
+            readback["state"] != "complete"
+            or any(
+                item["status"] == "unavailable"
+                for item in observed_by_field.values()
+            )
+        )
+        expected_recovery_state = (
+            "intent-outcome-unknown"
+            if intent_status == "outcome-unknown"
+            else (
+                "mutation-outcome-unknown"
+                if mutation_state == "outcome-unknown"
+                else (
+                    "readback-pending"
+                    if mutation_state == "committed"
+                    and readback_is_incomplete_or_unavailable
+                    else "terminal"
+                )
+            )
+        )
+        if recovery["checkpoint_state"] != expected_recovery_state:
+            return "invalid"
 
         mutation_identity_is_trusted = (
             bounded_policy_scalar(mutation["operation_id"])
@@ -2642,13 +2758,6 @@ def _compute_protected_policy_application(
             return "invalid"
         if mutation_state == "outcome-unknown":
             return "reconciliation-required"
-        readback_is_incomplete_or_unavailable = (
-            readback["state"] != "complete"
-            or any(
-                item["status"] == "unavailable"
-                for item in observed_by_field.values()
-            )
-        )
         if intent_status == "created" and not (
             intent["store_schema"]
             == "codex.authorized_immutable_intent_store.v1"
@@ -2795,7 +2904,7 @@ def _compute_protected_policy_application(
 
         if (
             mutation_state == "committed"
-            and readback_is_incomplete_or_unavailable
+            and readback["state"] != "complete"
         ):
             readback_identity_conflicts = (
                 readback["mutation_operation_id"] is not None
@@ -2832,12 +2941,22 @@ def _compute_protected_policy_application(
         ):
             return "invalid"
         if not mutation["receipt_ref"] or not mutation["cutoff"]:
-            return "reconciliation-required"
+            return "invalid"
         if not mutation_receipt_is_trusted:
             return "invalid"
 
-        if not readback["object_ref"] or not readback["cutoff"]:
-            return "reconciliation-required"
+        if not all(
+            bounded_policy_scalar(readback[field])
+            for field in (
+                "object_ref",
+                "cutoff",
+                "mutation_operation_id",
+                "mutation_receipt_ref",
+                "relation",
+                "ordering_evidence_ref",
+            )
+        ):
+            return "policy-drift"
         if readback["object_ref"] != mutation["result_object_ref"]:
             return "policy-drift"
         if (
@@ -2847,8 +2966,6 @@ def _compute_protected_policy_application(
             return "policy-drift"
         if readback["relation"] != "after-mutation":
             return "policy-drift"
-        if not readback["ordering_evidence_ref"]:
-            return "reconciliation-required"
         expected_readback_ordering = {
             "schema": "codex.ordering_evidence.v1",
             "relation": "after-mutation",
@@ -2865,6 +2982,7 @@ def _compute_protected_policy_application(
 
         if set(observed_by_field) != set(expected_by_field):
             return "policy-drift"
+        readback_has_unavailable_field = False
         for field_ref, result in observed_by_field.items():
             policy_item = next(
                 item
@@ -2919,10 +3037,15 @@ def _compute_protected_policy_application(
                 )
             ):
                 return "invalid"
+            if result["status"] == "unavailable":
+                readback_has_unavailable_field = True
+                continue
             if result["status"] != "matched":
                 return "policy-drift"
             if observed != expected_by_field[field_ref]:
                 return "policy-drift"
+        if readback_has_unavailable_field:
+            return "reconciliation-required"
         return "applied"
     except (AttributeError, KeyError, TypeError, ValueError):
         return "invalid"
@@ -3710,6 +3833,15 @@ class ThreadSupervisionContractTests(unittest.TestCase):
         self.assertTrue(
             valid_policy_application_transition(
                 after, terminal_after, terminal_evidence
+            )
+        )
+        nonterminal_terminal_outcome = copy.deepcopy(terminal_evidence)
+        nonterminal_terminal_outcome["terminal-receipt-a"][
+            "terminal_application"
+        ] = "reconciliation-required"
+        self.assertFalse(
+            valid_policy_application_state(
+                terminal_after, nonterminal_terminal_outcome
             )
         )
         for malformed_enum in ([], {}):
@@ -4931,6 +5063,110 @@ class ThreadSupervisionContractTests(unittest.TestCase):
     def test_protected_policy_application_blocks_stale_mutations(self):
         reference = REFERENCE.read_text(encoding="utf-8")
         receipt = protected_policy_application_example(reference)
+        duplicate_name_example = re.search(
+            r"## Protected Policy Application.*?```json\n(.*?)\n```",
+            reference,
+            re.DOTALL,
+        )
+        self.assertIsNotNone(duplicate_name_example)
+        duplicate_name_json = duplicate_name_example.group(1).replace(
+            '"destination_ref": '
+            '"opaque-external-system-ref",',
+            '"destination_ref": '
+            '"opaque-external-system-ref",\n'
+            '    "destination_ref": '
+            '"different-opaque-external-system-ref",',
+            1,
+        )
+        self.assertNotEqual(
+            duplicate_name_json,
+            duplicate_name_example.group(1),
+        )
+        with self.assertRaises(ValueError):
+            strict_json_loads(duplicate_name_json)
+        unicode_policy = {
+            "subject_ref": "\u00e9",
+            "mandatory_fields": [
+                {
+                    "expectation_evidence_ref": "proof\u96ea",
+                    "expected_value_fingerprint": {
+                        "scheme": "hmac-sha256",
+                        "key_ref_fingerprint": (
+                            "sha256:"
+                            "1807dbf17817a8d83d0b098f063b16bd"
+                            "2d904809e8cf0731ffa3ff2c68aa30dd"
+                        ),
+                        "digest": (
+                            "8fab1805ae51245c10795c447a58e0196"
+                            "bc67352e4e2e8ba663979929778238c"
+                        ),
+                    },
+                    "field_ref": "field\U0001f600",
+                }
+            ],
+            "eligibility_cutoff": "e\u0301",
+            "operation": "create",
+            "destination_ref": (
+                "d\u0000\u0001\b\t\n\f\r\"/\\caf\u00e9\u96ea"
+                "\U0001f600\u2028\u2029"
+            ),
+        }
+        expected_canonical_hex = (
+            "7b2264657374696e6174696f6e5f726566223a22645c75303030305c7530303031"
+            "5c625c745c6e5c665c725c222f5c5c636166c3a9e99baaf09f9880e280a8e280"
+            "a9222c22656c69676962696c6974795f6375746f6666223a2265cc81222c226d61"
+            "6e6461746f72795f6669656c6473223a5b7b226578706563746174696f6e5f6576"
+            "6964656e63655f726566223a2270726f6f66e99baa222c2265787065637465645f"
+            "76616c75655f66696e6765727072696e74223a7b22646967657374223a22386661"
+            "623138303561653531323435633130373935633434376135386530313936626336"
+            "37333532653465326538626136363339373939323937373832333863222c226b65"
+            "795f7265665f66696e6765727072696e74223a227368613235363a313830376462"
+            "663137383137613864383364306230393866303633623136626432643930343830"
+            "39653863663037333166666133666632633638616133306464222c22736368656d"
+            "65223a22686d61632d736861323536227d2c226669656c645f726566223a226669"
+            "656c64f09f9880227d5d2c226f7065726174696f6e223a22637265617465222c22"
+            "7375626a6563745f726566223a22c3a9227d"
+        )
+        canonical_unicode = canonical_operation_policy_json(unicode_policy)
+        self.assertEqual(
+            canonical_unicode,
+            bytes.fromhex(expected_canonical_hex),
+        )
+        self.assertEqual(
+            operation_policy_fingerprint(unicode_policy),
+            "sha256:"
+            "736ab4a8bd83267f275978d713efe95c7"
+            "1c9f42398dc02e9e16cfc50c8fee2e1",
+        )
+        escaped_input_policy = copy.deepcopy(unicode_policy)
+        escaped_input_policy["subject_ref"] = json.loads('"\\u00e9"')
+        escaped_input_policy["mandatory_fields"][0]["field_ref"] = (
+            json.loads('"field\\ud83d\\ude00"')
+        )
+        self.assertEqual(
+            canonical_operation_policy_json(escaped_input_policy),
+            canonical_unicode,
+        )
+        nfc_policy = copy.deepcopy(receipt["operation_policy"])
+        nfd_policy = copy.deepcopy(receipt["operation_policy"])
+        nfc_policy["subject_ref"] = "\u00e9"
+        nfd_policy["subject_ref"] = "e\u0301"
+        self.assertNotEqual(
+            operation_policy_fingerprint(nfc_policy),
+            operation_policy_fingerprint(nfd_policy),
+        )
+        for forbidden_scalar in (None, True, 1, 1.0):
+            forbidden_policy = copy.deepcopy(receipt["operation_policy"])
+            forbidden_policy["eligibility_cutoff"] = forbidden_scalar
+            with self.subTest(
+                forbidden_canonical_scalar=repr(forbidden_scalar)
+            ):
+                with self.assertRaises(ValueError):
+                    canonical_operation_policy_json(forbidden_policy)
+        surrogate_policy = copy.deepcopy(receipt["operation_policy"])
+        surrogate_policy["subject_ref"] = "\ud800"
+        with self.assertRaises(ValueError):
+            canonical_operation_policy_json(surrogate_policy)
         for non_json_number in (
             float("nan"),
             float("inf"),
@@ -5111,6 +5347,20 @@ class ThreadSupervisionContractTests(unittest.TestCase):
         self.assertEqual(
             evaluate_fixture_at_current_head(receipt), "applied"
         )
+        for missing_committed_field in ("receipt_ref", "cutoff"):
+            committed_without_proof = copy.deepcopy(receipt)
+            committed_without_proof["mutation"][
+                missing_committed_field
+            ] = None
+            with self.subTest(
+                committed_mutation_missing=missing_committed_field
+            ):
+                self.assertEqual(
+                    evaluate_fixture_at_current_head(
+                        committed_without_proof
+                    ),
+                    "invalid",
+                )
         self.assertEqual(
             receipt["operation_policy"]["mandatory_fields"][0][
                 "expected_value_fingerprint"
@@ -5514,9 +5764,16 @@ class ThreadSupervisionContractTests(unittest.TestCase):
                 "observed_value_fingerprint"
             ] = copy.deepcopy(fingerprint)
             malformed_fingerprint["operation_policy_fingerprint"] = (
-                operation_policy_fingerprint(
-                    malformed_fingerprint["operation_policy"]
-                )
+                "sha256:"
+                + hashlib.sha256(
+                    json.dumps(
+                        malformed_fingerprint["operation_policy"],
+                        sort_keys=True,
+                        separators=(",", ":"),
+                        ensure_ascii=False,
+                        allow_nan=False,
+                    ).encode("utf-8")
+                ).hexdigest()
             )
             malformed_fingerprint["receiver_adoption"][
                 "operation_policy_fingerprint"
@@ -5736,6 +5993,11 @@ class ThreadSupervisionContractTests(unittest.TestCase):
         )
 
         def mark_readback_not_run(candidate):
+            if candidate["mutation"]["state"] == "committed":
+                candidate["recovery_ref"] = (
+                    "opaque-protected-policy-application-"
+                    "readback-pending-recovery-ref"
+                )
             candidate["readback"].update(
                 {
                     "state": "not-run",
@@ -5981,6 +6243,19 @@ class ThreadSupervisionContractTests(unittest.TestCase):
         self.assertEqual(
             evaluate_fixture_at_current_head(
                 mutation_unknown_with_intent_head
+            ),
+            "invalid",
+        )
+        mutation_unknown_with_readback_head = copy.deepcopy(
+            nonadopted_unknown
+        )
+        mutation_unknown_with_readback_head["recovery_ref"] = (
+            "opaque-protected-policy-application-"
+            "readback-pending-recovery-ref"
+        )
+        self.assertEqual(
+            evaluate_fixture_at_current_head(
+                mutation_unknown_with_readback_head
             ),
             "invalid",
         )
@@ -6285,6 +6560,19 @@ class ThreadSupervisionContractTests(unittest.TestCase):
             ),
             "invalid",
         )
+        intent_unknown_with_readback_head = copy.deepcopy(
+            intent_outcome_unknown
+        )
+        intent_unknown_with_readback_head["recovery_ref"] = (
+            "opaque-protected-policy-application-"
+            "readback-pending-recovery-ref"
+        )
+        self.assertEqual(
+            evaluate_fixture_at_current_head(
+                intent_unknown_with_readback_head
+            ),
+            "invalid",
+        )
         declared_results = {
             "invalid",
             "blocked",
@@ -6477,14 +6765,98 @@ class ThreadSupervisionContractTests(unittest.TestCase):
             )
 
         unavailable = copy.deepcopy(receipt)
-        unavailable["readback"]["field_results"][0]["status"] = "unavailable"
+        unavailable["readback"]["field_results"][0].update(
+            {
+                "observed_value_fingerprint": None,
+                "evidence_ref": (
+                    "opaque-owning-system-unavailable-readback-ref"
+                ),
+                "status": "unavailable",
+            }
+        )
+        unavailable["recovery_ref"] = (
+            "opaque-protected-policy-application-"
+            "readback-pending-recovery-ref"
+        )
         unavailable["application"] = "reconciliation-required"
         self.assertEqual(
             evaluate_fixture_at_current_head(unavailable),
             "reconciliation-required",
         )
+        unavailable_with_terminal_head = copy.deepcopy(unavailable)
+        unavailable_with_terminal_head["recovery_ref"] = (
+            "opaque-protected-policy-application-terminal-recovery-ref"
+        )
+        self.assertEqual(
+            evaluate_fixture_at_current_head(
+                unavailable_with_terminal_head
+            ),
+            "invalid",
+        )
+        complete_with_pending_head = copy.deepcopy(receipt)
+        complete_with_pending_head["recovery_ref"] = (
+            "opaque-protected-policy-application-"
+            "readback-pending-recovery-ref"
+        )
+        self.assertEqual(
+            evaluate_fixture_at_current_head(complete_with_pending_head),
+            "invalid",
+        )
+        unavailable_without_complete_binding = copy.deepcopy(unavailable)
+        unavailable_without_complete_binding["readback"].update(
+            {
+                "object_ref": None,
+                "cutoff": None,
+                "mutation_operation_id": None,
+                "mutation_receipt_ref": None,
+                "relation": None,
+                "ordering_evidence_ref": None,
+            }
+        )
+        unavailable_without_complete_binding["application"] = "policy-drift"
+        self.assertEqual(
+            evaluate_fixture_at_current_head(
+                unavailable_without_complete_binding
+            ),
+            "policy-drift",
+        )
+        for field, value in (
+            ("object_ref", "different-object-ref"),
+            ("cutoff", "different-readback-cutoff"),
+            ("mutation_operation_id", "different-operation-id"),
+            ("mutation_receipt_ref", "different-receipt-ref"),
+            ("relation", "different-relation"),
+            ("ordering_evidence_ref", "different-ordering-ref"),
+        ):
+            unavailable_with_wrong_binding = copy.deepcopy(unavailable)
+            unavailable_with_wrong_binding["readback"][field] = value
+            unavailable_with_wrong_binding["application"] = "policy-drift"
+            with self.subTest(
+                unavailable_complete_readback_binding=field
+            ):
+                self.assertEqual(
+                    evaluate_fixture_at_current_head(
+                        unavailable_with_wrong_binding
+                    ),
+                    "policy-drift",
+                )
+        unavailable_with_untrusted_evidence = copy.deepcopy(unavailable)
+        unavailable_with_untrusted_evidence["readback"]["field_results"][0][
+            "evidence_ref"
+        ] = "untrusted-unavailability-evidence-ref"
+        unavailable_with_untrusted_evidence["application"] = "invalid"
+        self.assertEqual(
+            evaluate_fixture_at_current_head(
+                unavailable_with_untrusted_evidence
+            ),
+            "invalid",
+        )
         for contradictory_state in ("not-run", "unavailable"):
             contradictory_readback = copy.deepcopy(receipt)
+            contradictory_readback["recovery_ref"] = (
+                "opaque-protected-policy-application-"
+                "readback-pending-recovery-ref"
+            )
             contradictory_readback["readback"][
                 "state"
             ] = contradictory_state
@@ -6498,6 +6870,10 @@ class ThreadSupervisionContractTests(unittest.TestCase):
                     "invalid",
                 )
         canonical_not_run = copy.deepcopy(receipt)
+        canonical_not_run["recovery_ref"] = (
+            "opaque-protected-policy-application-"
+            "readback-pending-recovery-ref"
+        )
         canonical_not_run["readback"].update(
             {
                 "state": "not-run",
@@ -6515,7 +6891,19 @@ class ThreadSupervisionContractTests(unittest.TestCase):
             evaluate_fixture_at_current_head(canonical_not_run),
             "reconciliation-required",
         )
+        not_run_with_terminal_head = copy.deepcopy(canonical_not_run)
+        not_run_with_terminal_head["recovery_ref"] = (
+            "opaque-protected-policy-application-terminal-recovery-ref"
+        )
+        self.assertEqual(
+            evaluate_fixture_at_current_head(not_run_with_terminal_head),
+            "invalid",
+        )
         canonical_unavailable = copy.deepcopy(receipt)
+        canonical_unavailable["recovery_ref"] = (
+            "opaque-protected-policy-application-"
+            "readback-pending-recovery-ref"
+        )
         canonical_unavailable["readback"].update(
             {
                 "state": "unavailable",
@@ -6536,6 +6924,18 @@ class ThreadSupervisionContractTests(unittest.TestCase):
         self.assertEqual(
             evaluate_fixture_at_current_head(canonical_unavailable),
             "reconciliation-required",
+        )
+        canonical_unavailable_with_terminal_head = copy.deepcopy(
+            canonical_unavailable
+        )
+        canonical_unavailable_with_terminal_head["recovery_ref"] = (
+            "opaque-protected-policy-application-terminal-recovery-ref"
+        )
+        self.assertEqual(
+            evaluate_fixture_at_current_head(
+                canonical_unavailable_with_terminal_head
+            ),
+            "invalid",
         )
         unavailable_with_stale_policy_body = copy.deepcopy(unavailable)
         unavailable_with_stale_policy_body["operation_policy"][
@@ -6601,9 +7001,10 @@ class ThreadSupervisionContractTests(unittest.TestCase):
         extra_result["field_ref"] = "different-field"
         extra_result["status"] = "matched"
         unavailable_with_extra["readback"]["field_results"].append(extra_result)
+        unavailable_with_extra["application"] = "policy-drift"
         self.assertEqual(
             evaluate_fixture_at_current_head(unavailable_with_extra),
-            "reconciliation-required",
+            "policy-drift",
         )
 
         unavailable_with_policy_mismatch = copy.deepcopy(unavailable)
@@ -6618,18 +7019,7 @@ class ThreadSupervisionContractTests(unittest.TestCase):
         )
 
         incomplete_with_policy_mismatch = copy.deepcopy(receipt)
-        incomplete_with_policy_mismatch["readback"].update(
-            {
-                "state": "not-run",
-                "object_ref": None,
-                "cutoff": None,
-                "mutation_operation_id": None,
-                "mutation_receipt_ref": None,
-                "relation": None,
-                "ordering_evidence_ref": None,
-                "field_results": [],
-            }
-        )
+        mark_readback_not_run(incomplete_with_policy_mismatch)
         incomplete_with_policy_mismatch["operation_policy_fingerprint"] = (
             "sha256:" + "0" * 64
         )
@@ -6655,9 +7045,7 @@ class ThreadSupervisionContractTests(unittest.TestCase):
             "invalid",
         )
         incomplete_with_stale_policy_body = copy.deepcopy(receipt)
-        incomplete_with_stale_policy_body["readback"].update(
-            incomplete_with_policy_mismatch["readback"]
-        )
+        mark_readback_not_run(incomplete_with_stale_policy_body)
         incomplete_with_stale_policy_body["operation_policy"][
             "operation"
         ] = "transition"
@@ -6672,11 +7060,14 @@ class ThreadSupervisionContractTests(unittest.TestCase):
         unavailable_with_conflicting_operation["readback"][
             "mutation_operation_id"
         ] = "different-operation-id"
+        unavailable_with_conflicting_operation["application"] = (
+            "policy-drift"
+        )
         self.assertEqual(
             evaluate_fixture_at_current_head(
                 unavailable_with_conflicting_operation
             ),
-            "invalid",
+            "policy-drift",
         )
 
         unavailable_with_coordinated_intent_ref = copy.deepcopy(unavailable)
@@ -6729,18 +7120,36 @@ class ThreadSupervisionContractTests(unittest.TestCase):
             "no existing authorized immutable intent store",
             "created intent lacks exact store schema, store identity, authorization, either operation id, or immutability evidence",
             "pre-write intent does not bind the exact receiver acknowledgement or prove `after-adoption`",
-            "mutation receipt does not bind the exact destination, subject, operation id, pre-write intent, or result object",
-            "committed mutation has canonical clean `not-run` or mutation-bound `unavailable` readback, or a complete readback has unavailable fields",
+            "committed mutation lacks its exact receipt or cutoff, or the mutation receipt does not bind the exact destination, subject, operation id, pre-write intent, or result object",
+            "committed mutation has canonical clean `not-run` or mutation-bound `unavailable` readback, or a causally bound complete readback has independently proven unavailable fields",
             "a non-complete readback carries object, cutoff, ordering, or field-result observations",
             "readback object differs from the recovered mutation result object, does not bind the exact operation id and receipt, or does not prove `after-mutation`",
             "any mandatory field is missing, extra, mismatched, or has a different observed fingerprint",
-            "any field result is unavailable, even with another field mismatch or extra result",
+            "an independently proven field result is unavailable after exact causal binding and exact result-set validation",
             "exact receiver adoption, committed mutation, object identity, cutoff, and every keyed field result match",
         ):
             self.assertIn(condition, schedule)
         self.assertNotIn(
             "mutation outcome is unknown, regardless of another policy defect",
             schedule,
+        )
+        self.assertEqual(
+            schedule[
+                "committed mutation has canonical clean `not-run` or "
+                "mutation-bound `unavailable` readback, or a causally "
+                "bound complete readback has independently proven "
+                "unavailable fields"
+            ],
+            "`checkpoint_state=readback-pending`, "
+            "`application=reconciliation-required`",
+        )
+        self.assertIn(
+            "an unavailable field reaches reconciliation only after the "
+            "exact object, mutation operation and receipt, "
+            "`after-mutation` ordering evidence, exact mandatory-field "
+            "set, and owning-system unavailability evidence are "
+            "independently valid",
+            " ".join(reference.split()).lower(),
         )
 
         skill_text = SKILL.read_text(encoding="utf-8")
@@ -6827,6 +7236,14 @@ class ThreadSupervisionContractTests(unittest.TestCase):
             "a raw value or bare digest is malformed",
             "domain-separated message that binds the schema and field ref",
             "never use an unsalted digest for a low-entropy field",
+            "`codex.protected-policy-operation-json.v1`",
+            "the encoding and is not part of `c`",
+            "fixed ascii names",
+            "never escape solidus",
+            "without normalization and reject unpaired surrogates",
+            "canonicalize parsed values: literal non-ascii and equivalent "
+            "valid `\\uxxxx` or surrogate-pair input escapes produce the same `c`",
+            "reject null, booleans, and all numbers",
             "opaque owning-system evidence ref",
             "envelope equality and receipt- or evidence-supplied provenance are never verification",
             "configured verifier whose trust root is selected outside the receipt and its evidence map",
@@ -6849,7 +7266,7 @@ class ThreadSupervisionContractTests(unittest.TestCase):
             "preallocated owning-system mutation operation id",
             "immutability evidence",
             "external mutation uses that retained mutation operation id",
-            "terminal readback binds both the exact mutation operation id and mutation receipt",
+            "complete readback binds both the exact mutation operation id and mutation receipt",
             "independently resolve them",
             "non-empty string of at most 1024 utf-8 bytes",
             "reject oversized strings, objects, arrays, numbers, and booleans",
@@ -6874,6 +7291,8 @@ class ThreadSupervisionContractTests(unittest.TestCase):
             "the receipt cannot replace that record or supply an alternate resolver",
             "claimed later mutation or readback makes the receipt invalid",
             "simultaneous `mutation.state=outcome-unknown`",
+            "must bind the active `readback-pending` recovery head",
+            "reserve `terminal` for a closed result",
             "after receipt shape, closed states, bounded scalar formats, exact recovery-to-receipt application",
             "recomputed operation-policy, destination, and subject bindings",
             "unknown intent or mutation outcome takes precedence over every later semantic policy or evidence mismatch",
