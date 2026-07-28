@@ -253,7 +253,8 @@ whose `checkpoint_state` is `terminal`. Retiring a nonterminal active entry
 appends exactly that one terminal successor; no intermediate recovery may hide
 the actual predecessor-terminal edge. If the predecessor state was unknown,
 that terminal head itself carries the required reconciliation edge, and the
-terminal receipt's reconciliation ref equals the head's ref.
+terminal receipt's reconciliation ref equals the head recovery record's
+`reconciliation_receipt_ref`.
 Resolve the terminal receipt's producer authority and its exact v2 application
 receipt, evaluate that application receipt independently, and require its
 closed result to equal `terminal_application`. If the predecessor state was

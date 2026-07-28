@@ -5484,108 +5484,71 @@ class ThreadSupervisionContractTests(unittest.TestCase):
         ):
             self.assertIn(condition, schedule)
 
-        skill = " ".join(SKILL.read_text(encoding="utf-8").split()).lower()
+        skill_text = SKILL.read_text(encoding="utf-8")
+        skill = " ".join(skill_text.split()).lower()
+        rebind_section_match = re.search(
+            r"## Rebind Protected Policy Before External Mutations\n"
+            r"(.*?)(?=\n## |\Z)",
+            skill_text,
+            re.DOTALL,
+        )
+        self.assertIsNotNone(rebind_section_match)
+        rebind_section = rebind_section_match.group(1)
+        rebind_compact = " ".join(rebind_section.split()).lower()
+        self.assertLess(
+            rebind_compact.index("when direct user input"),
+            rebind_compact.index("before accepting"),
+        )
+        self.assertEqual(
+            re.findall(r"(?m)^([0-9]+)\. ", rebind_section),
+            ["1", "2", "3", "4"],
+        )
+        ordered_gate_anchors = (
+            "1. require receiver-owned adoption",
+            "2. bind the authorized operation",
+            "3. bind the owning-system receipt",
+            "4. before any `reconciliation-required` result",
+        )
+        gate_positions = [
+            rebind_compact.index(anchor) for anchor in ordered_gate_anchors
+        ]
+        self.assertEqual(gate_positions, sorted(gate_positions))
+        self.assertIn(
+            "incomplete, unavailable, or ambiguous readback is "
+            "`reconciliation-required` subject to gate 4, never success",
+            rebind_compact,
+        )
         for invariant in (
             "## rebind protected policy before external mutations",
             "capture a new protected policy revision",
             "do not encode that control-plane change as an evidence delta",
             "receiver-owned adoption of the exact policy revision",
-            "acknowledgement ref and receiver cutoff",
-            "if no authorized typed rebind exists",
             "keep the mutation blocked as `capability-unavailable`",
             "bind the authorized operation, destination, subject, cutoff",
             "every mandatory field",
-            "receiver-bound immutable pre-write intent",
-            "only through an existing authorized intent store",
-            "fixed store schema, exact store",
-            "existing authorization, preallocated intent-store and owning-system mutation operation ids",
-            "retain both ids in the immutable intent",
-            "immutability evidence",
-            "canonical object produced or targeted by that exact operation",
-            "if that store is unavailable",
-            "never emulate it with an ordinary local write",
-            "bind the mutation receipt to it",
-            "read back the exact external object and one keyed, evidence-bound result",
-            "closed hmac fingerprint envelope",
-            "raw values and bare digests are malformed",
-            "preallocate the owning-system operation id",
-            "bind the readback to both that operation id and the exact mutation receipt",
-            "readback object id to equal the independently recovered mutation result object id",
-            "owning-system ordering evidence",
-            "missing, extra, or duplicate field results fail closed",
-            "matching hmac envelopes or evidence echoes are also insufficient",
-            "configured verifier whose trust root is outside the receipt/evidence map",
-            "resolve the authorized key and normalized expectation or observation",
-            "recompute the domain-separated hmac",
-            "compare the key ref and digest in constant time",
-            "reject u+0000 in every hmac field ref",
-            "verified missing field uses owning-system absence proof and a null fingerprint",
-            "object existence",
-            "is not policy adoption",
+            "immutable pre-write intent in the existing authorized intent store",
+            "preallocate and retain both intent-store and owning-system operation ids",
+            "never emulate an unavailable store",
+            "owning-system receipt and exact object readback",
+            "trust root outside receipt/evidence echoes",
             "`policy-drift`",
             "`reconciliation-required`",
-            "any unknown mutation or intent outcome",
-            "only after receipt shape, exact recovery application/revision/receiver/recomputed-policy/destination/subject identity",
-            "reconcile by the preallocated operation id",
-            "both retained intent identities to exactly match the immutable recovery record",
-            "unknown intent write to match its recovered authorized store namespace",
-            "mutation remains exactly `not-attempted` with no mutation or readback observations",
-            "simultaneous unknown mutation is invalid",
-            "independently resolve the canonical owning-system mutation receipt",
-            "presence alone is insufficient",
-            "regardless of another semantic policy defect",
-            "unrelated pending evidence or skill intervention neither blocks",
+            "exact private recovery identity and retained operation ids independently of the generic evidence map",
+            "unknown outcomes remain sticky",
+            "stable application id, immutable recovery ref, and both operation ids",
+            "`checkpoint` and `protected policy application` sections",
+            "never duplicate or relax those schema rules here",
+            "unrelated pending evidence or skill handoff neither blocks",
             "nor proves receiver adoption",
-            "v2 protected-policy application state, keyed by a stable application id",
-            "v2 recovery record also binds",
-            "one closed shape that also binds the receiver",
-            "reject missing or extra fields, any smaller checkpoint projection",
-            "or null state, fingerprint, receiver, store, authorization, intent, destination, subject, or namespace bindings",
-            "owning-system operation namespace",
-            "duplicate namespace-plus-operation-id pairs",
-            "closed monotonic graph",
-            "immutable successor must name the previous recovery ref as predecessor",
-            "resolve the full recovery chain to its root",
-            "successor preserves the prior chain as an exact prefix",
-            "validate every intermediate record",
-            "operation namespace and required operation-policy fingerprint immutable",
-            "once either operation id is allocated",
-            "successor's stored `checkpoint_state` to be one exact edge",
-            "equal the checkpoint entry state at the head",
-            "validate every closed lifecycle, checkpoint-state, terminal-outcome, and reconciliation state enum as a bounded string",
-            "require it if and only if an unknown predecessor state advances",
-            "checkpoint state change appends exactly one successor",
-            "later ordinary advance uses another state-bearing successor",
-            "outcome-unknown state is sticky",
-            "exact owning-system reconciliation receipt",
-            "later protected revision gets a separate entry",
-            "first recovery record has null predecessor and reconciliation refs",
-            "never replaces, coalesces, or serializes capture behind",
-            "on the ninth, replace the inline cache with one content-addressed typed active index containing every entry",
-            "append-only retired-index tombstone",
-            "entry active in the immediately preceding checkpoint",
-            "resolve the terminal producer authority and exact v2 application receipt",
-            "evaluated result to equal the terminal label",
-            "exact recovery head whose stored state is `terminal`",
-            "retirement from a nonterminal state appends exactly that one terminal successor",
-            "that head carries any required unknown-state reconciliation",
-            "its reconciliation ref must equal the terminal receipt's ref",
-            "through the same immutable evidence store",
-            "partial, built-in, or substituted recovery evidence cannot authorize retirement",
-            "never reuse any of those identities",
-            "treat a `codex.thread_supervision.v1` checkpoint as legacy input",
-            "complete v1 checkpoint root",
-            "select exactly one nested target by thread and host",
-            "immutable typed migration record and a new v2 recovery record",
-            "canonical checkpoint fingerprint, exact target",
-            "exact migrated checkpoint state",
-            "source-contract and immutable inventory proofs bound to that exact checkpoint fingerprint",
-            "typed evidence count must be the exact json integer zero",
-            "validate the branch-specific migration or pre-feature proof ref as a bounded non-null scalar",
-            "a null-key evidence entry never supplies a missing ref",
-            "otherwise fail closed",
         ):
             self.assertIn(invariant, skill)
+        self.assertLess(len(skill_text.encode("utf-8")), 18000)
+        for reference_only_detail in (
+            "on the ninth, replace the inline cache",
+            "codex.protected_policy_application_reconciliation.v1",
+            "typed evidence count must be the exact json integer zero",
+        ):
+            self.assertNotIn(reference_only_detail, skill)
 
         compact = " ".join(reference.split()).lower()
         for invariant in (
@@ -5638,7 +5601,7 @@ class ThreadSupervisionContractTests(unittest.TestCase):
             "authorization, immutability, and `after-adoption`",
             "a complete readback proves `after-mutation`",
             "binds that exact mutation operation id and receipt",
-            "readback.object_ref` exactly equal to the recovered mutation result object",
+            "`readback.object_ref` exactly equal to the recovered mutation result object",
             "reading another object with matching fields is not causal evidence",
             "contains exactly one result for every mandatory field and no others",
             "resolve evidence through the owning receiver, intent store, or external system",
@@ -5686,7 +5649,7 @@ class ThreadSupervisionContractTests(unittest.TestCase):
             "exact recovery head whose `checkpoint_state` is `terminal`",
             "retiring a nonterminal active entry appends exactly that one terminal successor",
             "terminal head itself carries the required reconciliation edge",
-            "terminal receipt's reconciliation ref equals the head's ref",
+            "terminal receipt's reconciliation ref equals the head recovery record's `reconciliation_receipt_ref`",
             "resolve the terminal receipt's producer authority",
             "evaluate that application receipt independently",
             "through the same immutable evidence store",
