@@ -597,6 +597,13 @@ mutation observation null, `readback.state=not-run`, and every readback
 observation null or empty. A claimed later mutation or readback makes the
 receipt invalid; it cannot be hidden behind the earlier unknown intent.
 This includes a simultaneous `mutation.state=outcome-unknown`.
+Every blocked pre-adoption or capability-unavailable state is canonical:
+intent must remain unwritten, mutation must be cleanly `not-attempted`, and
+readback must be cleanly `not-run`. Creating the intent before exact receiver
+adoption is `policy-drift`; carrying any mutation or readback observation while
+claiming `not-attempted` is `invalid`.
+Incomplete or unavailable readback reaches reconciliation only after exact
+receiver adoption and pre-write intent ordering and evidence are valid.
 
 Evaluate this precedence atomically:
 
@@ -604,9 +611,11 @@ Evaluate this precedence atomically:
 | --- | --- |
 | Direct user revision while unrelated evidence or skill intervention is pending | Capture the protected revision; preserve the pending intervention; keep the affected mutation blocked until receiver adoption |
 | Malformed receipt, empty mandatory set, or duplicate mandatory or result field refs | `application=invalid` |
-| No authorized typed receiver rebind | `receiver_adoption.status=capability-unavailable`, `mutation.state=not-attempted`, `application=blocked` |
-| Receiver has not proven the exact revision and fingerprint | `receiver_adoption.status=not-proven`, `mutation.state=not-attempted`, `application=blocked` |
-| Receiver reports a revision or protected-fingerprint conflict | `receiver_adoption.status=conflict`, `mutation.state=not-attempted`, `application=blocked` |
+| No authorized typed receiver rebind with no intent, mutation, or readback observation | `receiver_adoption.status=capability-unavailable`, `mutation.state=not-attempted`, `application=blocked` |
+| Receiver has not proven the exact revision and fingerprint, and intent, mutation, and readback remain unwritten | `receiver_adoption.status=not-proven`, `mutation.state=not-attempted`, `application=blocked` |
+| Receiver reports a revision or protected-fingerprint conflict while intent, mutation, and readback remain unwritten | `receiver_adoption.status=conflict`, `mutation.state=not-attempted`, `application=blocked` |
+| Intent is created before exact receiver adoption | `application=policy-drift` |
+| A not-attempted mutation carries any mutation or readback observation | `application=invalid` |
 | Mutation outcome is unknown, regardless of another policy defect | `mutation.state=outcome-unknown`, `application=reconciliation-required` |
 | Intent creation outcome is unknown, regardless of another policy defect | `prewrite_intent.status=outcome-unknown`, `mutation.state=not-attempted`, `application=reconciliation-required` |
 | Recovery application, revision, receiver, operation-policy, destination, or subject binding differs, or the claimed policy fingerprint does not equal canonical policy recomputation | `application=invalid` before any reconciliation request |

@@ -92,11 +92,11 @@ When direct user input changes a protected goal, authority, task constraint, or
 required external-object field, capture a new protected policy revision. Do not
 encode that control-plane change as an evidence delta.
 
-Before accepting an affected target's external mutation:
+Before accepting an external mutation:
 
-1. Require receiver-owned adoption of the exact policy revision and protected
-   fingerprint, bound to the receiver identity and acknowledgement. If no
-   authorized typed rebind exists, keep the mutation blocked as
+1. Require receiver-owned adoption of exact revision and protected fingerprint,
+   bound to receiver identity and acknowledgement. Without an authorized typed
+   rebind, block only clean no-intent/no-mutation/no-readback as
    `capability-unavailable`.
 2. Bind the authorized operation, destination, subject, cutoff, and every
    mandatory field to an immutable pre-write intent in the existing authorized

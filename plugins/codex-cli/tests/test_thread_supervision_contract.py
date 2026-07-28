@@ -2226,6 +2226,27 @@ def evaluate_protected_policy_application(
             )
             and readback["field_results"] == []
         )
+        intent_is_cleanly_unwritten = (
+            intent_status in {"not-created", "capability-unavailable"}
+            and all(
+                intent[field] is None
+                for field in (
+                    "store_schema",
+                    "store_ref",
+                    "store_authorization_ref",
+                    "operation_id",
+                    "mutation_operation_id",
+                    "intent_ref",
+                    "receiver_thread_id",
+                    "receiver_acknowledgement_ref",
+                    "operation_policy_fingerprint",
+                    "relation",
+                    "ordering_evidence_ref",
+                    "immutability_evidence_ref",
+                    "cutoff",
+                )
+            )
+        )
         if intent_status == "outcome-unknown" and not (
             bounded_policy_scalar(intent["store_ref"])
             and bounded_policy_scalar(intent["operation_id"])
@@ -2258,27 +2279,6 @@ def evaluate_protected_policy_application(
                 for item in observed_by_field.values()
             )
         )
-        if (
-            mutation_state == "committed"
-            and readback_is_incomplete_or_unavailable
-        ):
-            readback_identity_conflicts = (
-                readback["mutation_operation_id"] is not None
-                and readback["mutation_operation_id"]
-                != mutation["operation_id"]
-            ) or (
-                readback["mutation_receipt_ref"] is not None
-                and readback["mutation_receipt_ref"]
-                != mutation["receipt_ref"]
-            )
-            if (
-                not mutation_identity_is_trusted
-                or not mutation_receipt_is_trusted
-                or not bounded_policy_scalar(mutation["cutoff"])
-                or readback_identity_conflicts
-            ):
-                return "invalid"
-            return "reconciliation-required"
         if intent_status == "created" and not (
             intent["store_schema"]
             == "codex.authorized_immutable_intent_store.v1"
@@ -2300,8 +2300,21 @@ def evaluate_protected_policy_application(
             and intent["intent_ref"] == recovery["intent_ref"]
         ):
             return "invalid"
+        if mutation_state == "not-attempted" and not (
+            mutation_is_cleanly_not_attempted
+            and readback_is_cleanly_not_run
+        ):
+            return "invalid"
         if adoption_status != "adopted":
-            return "blocked" if mutation_state == "not-attempted" else "policy-drift"
+            if intent_status == "created":
+                return "policy-drift"
+            if (
+                intent_is_cleanly_unwritten
+                and mutation_is_cleanly_not_attempted
+                and readback_is_cleanly_not_run
+            ):
+                return "blocked"
+            return "invalid" if mutation_state == "not-attempted" else "policy-drift"
         if (
             adoption["receiver_thread_id"] != receipt["receiver_thread_id"]
             or adoption["policy_revision_id"] != receipt["policy_revision_id"]
@@ -2337,7 +2350,13 @@ def evaluate_protected_policy_application(
             return "invalid"
 
         if intent_status in {"not-created", "capability-unavailable"}:
-            return "blocked" if mutation_state == "not-attempted" else "policy-drift"
+            if (
+                intent_is_cleanly_unwritten
+                and mutation_is_cleanly_not_attempted
+                and readback_is_cleanly_not_run
+            ):
+                return "blocked"
+            return "invalid" if mutation_state == "not-attempted" else "policy-drift"
 
         intent_matches = (
             intent["receiver_thread_id"] == receipt["receiver_thread_id"]
@@ -2404,8 +2423,35 @@ def evaluate_protected_policy_application(
         ):
             return "invalid"
 
+        if (
+            mutation_state == "committed"
+            and readback_is_incomplete_or_unavailable
+        ):
+            readback_identity_conflicts = (
+                readback["mutation_operation_id"] is not None
+                and readback["mutation_operation_id"]
+                != mutation["operation_id"]
+            ) or (
+                readback["mutation_receipt_ref"] is not None
+                and readback["mutation_receipt_ref"]
+                != mutation["receipt_ref"]
+            )
+            if (
+                not mutation_identity_is_trusted
+                or not mutation_receipt_is_trusted
+                or not bounded_policy_scalar(mutation["cutoff"])
+                or readback_identity_conflicts
+            ):
+                return "invalid"
+            return "reconciliation-required"
+
         if mutation_state == "not-attempted":
-            return "blocked"
+            return (
+                "blocked"
+                if mutation_is_cleanly_not_attempted
+                and readback_is_cleanly_not_run
+                else "invalid"
+            )
         if (
             mutation["operation_id"] != intent["mutation_operation_id"]
             or mutation["destination_ref"] != policy["destination_ref"]
@@ -4883,6 +4929,20 @@ class ThreadSupervisionContractTests(unittest.TestCase):
             "invalid",
         )
 
+        def mark_readback_not_run(candidate):
+            candidate["readback"].update(
+                {
+                    "state": "not-run",
+                    "object_ref": None,
+                    "cutoff": None,
+                    "mutation_operation_id": None,
+                    "mutation_receipt_ref": None,
+                    "relation": None,
+                    "ordering_evidence_ref": None,
+                    "field_results": [],
+                }
+            )
+
         def mark_not_attempted(candidate):
             candidate["mutation"].update(
                 {
@@ -4897,24 +4957,153 @@ class ThreadSupervisionContractTests(unittest.TestCase):
                     "cutoff": None,
                 }
             )
-            candidate["readback"].update(
+            mark_readback_not_run(candidate)
+
+        def mark_intent_unwritten(candidate, status="not-created"):
+            candidate["prewrite_intent"].update(
                 {
-                    "state": "not-run",
-                    "object_ref": None,
-                    "cutoff": None,
+                    "status": status,
+                    "store_schema": None,
+                    "store_ref": None,
+                    "store_authorization_ref": None,
+                    "operation_id": None,
                     "mutation_operation_id": None,
-                    "mutation_receipt_ref": None,
+                    "intent_ref": None,
+                    "receiver_thread_id": None,
+                    "receiver_acknowledgement_ref": None,
+                    "operation_policy_fingerprint": None,
                     "relation": None,
                     "ordering_evidence_ref": None,
-                    "field_results": [],
+                    "immutability_evidence_ref": None,
+                    "cutoff": None,
                 }
             )
 
-        stale_receiver = copy.deepcopy(receipt)
-        stale_receiver["receiver_adoption"]["status"] = "not-proven"
-        mark_not_attempted(stale_receiver)
+        adopted_intent_without_mutation = copy.deepcopy(receipt)
+        mark_not_attempted(adopted_intent_without_mutation)
+        self.assertEqual(
+            evaluate_protected_policy_application(
+                adopted_intent_without_mutation
+            ),
+            "blocked",
+        )
+
+        intent_before_adoption = copy.deepcopy(receipt)
+        intent_before_adoption["receiver_adoption"]["status"] = "not-proven"
+        mark_not_attempted(intent_before_adoption)
+        self.assertEqual(
+            evaluate_protected_policy_application(intent_before_adoption),
+            "policy-drift",
+        )
+
+        incomplete_before_adoption = copy.deepcopy(receipt)
+        incomplete_before_adoption["receiver_adoption"]["status"] = (
+            "not-proven"
+        )
+        mark_readback_not_run(incomplete_before_adoption)
+        self.assertEqual(
+            evaluate_protected_policy_application(
+                incomplete_before_adoption
+            ),
+            "policy-drift",
+        )
+
+        incomplete_with_adoption_mismatch = copy.deepcopy(receipt)
+        incomplete_with_adoption_mismatch["receiver_adoption"][
+            "policy_revision_id"
+        ] = "different-policy-revision"
+        mark_readback_not_run(incomplete_with_adoption_mismatch)
+        self.assertEqual(
+            evaluate_protected_policy_application(
+                incomplete_with_adoption_mismatch
+            ),
+            "invalid",
+        )
+
+        incomplete_with_intent_ordering_drift = copy.deepcopy(receipt)
+        incomplete_with_intent_ordering_drift["prewrite_intent"][
+            "relation"
+        ] = "before-adoption"
+        mark_readback_not_run(incomplete_with_intent_ordering_drift)
+        self.assertEqual(
+            evaluate_protected_policy_application(
+                incomplete_with_intent_ordering_drift
+            ),
+            "invalid",
+        )
+
+        for evidence_gate, evidence_ref in (
+            (
+                "receiver adoption",
+                receipt["receiver_adoption"]["acknowledgement_ref"],
+            ),
+            (
+                "intent store authorization",
+                receipt["prewrite_intent"]["store_authorization_ref"],
+            ),
+            (
+                "intent ordering",
+                receipt["prewrite_intent"]["ordering_evidence_ref"],
+            ),
+            (
+                "intent immutability",
+                receipt["prewrite_intent"]["immutability_evidence_ref"],
+            ),
+            (
+                "intent record",
+                receipt["prewrite_intent"]["intent_ref"],
+            ),
+        ):
+            for evidence_state in ("missing", "forged"):
+                incomplete_with_untrusted_gate = copy.deepcopy(receipt)
+                mark_readback_not_run(incomplete_with_untrusted_gate)
+                untrusted_evidence = trusted_policy_evidence()
+                if evidence_state == "missing":
+                    untrusted_evidence.pop(evidence_ref)
+                else:
+                    untrusted_evidence[evidence_ref] = {
+                        "schema": "forged-evidence"
+                    }
+                with self.subTest(
+                    incomplete_evidence_gate=evidence_gate,
+                    evidence_state=evidence_state,
+                ):
+                    self.assertEqual(
+                        evaluate_protected_policy_application(
+                            incomplete_with_untrusted_gate,
+                            untrusted_evidence,
+                        ),
+                        "invalid",
+                    )
+
+        stale_receiver = copy.deepcopy(intent_before_adoption)
+        mark_intent_unwritten(stale_receiver)
         self.assertEqual(
             evaluate_protected_policy_application(stale_receiver), "blocked"
+        )
+
+        not_attempted_with_mutation_observation = copy.deepcopy(receipt)
+        mark_not_attempted(not_attempted_with_mutation_observation)
+        not_attempted_with_mutation_observation["mutation"][
+            "operation_id"
+        ] = receipt["mutation"]["operation_id"]
+        self.assertEqual(
+            evaluate_protected_policy_application(
+                not_attempted_with_mutation_observation
+            ),
+            "invalid",
+        )
+
+        not_attempted_with_readback_observation = copy.deepcopy(receipt)
+        mark_not_attempted(not_attempted_with_readback_observation)
+        not_attempted_with_readback_observation["readback"][
+            "object_ref"
+        ] = receipt["readback"]["object_ref"]
+        self.assertEqual(
+            evaluate_protected_policy_application(
+                not_attempted_with_readback_observation
+            ),
+            "invalid",
         )
 
         malformed_stale_receiver = copy.deepcopy(stale_receiver)
@@ -5458,12 +5647,15 @@ class ThreadSupervisionContractTests(unittest.TestCase):
         )
 
         schedule = protected_policy_failure_schedule(reference)
-        self.assertEqual(len(schedule), 23)
+        self.assertEqual(len(schedule), 25)
         for condition in (
             "direct user revision while unrelated evidence or skill intervention is pending",
             "malformed receipt, empty mandatory set, or duplicate mandatory or result field refs",
-            "no authorized typed receiver rebind",
-            "receiver reports a revision or protected-fingerprint conflict",
+            "no authorized typed receiver rebind with no intent, mutation, or readback observation",
+            "receiver has not proven the exact revision and fingerprint, and intent, mutation, and readback remain unwritten",
+            "receiver reports a revision or protected-fingerprint conflict while intent, mutation, and readback remain unwritten",
+            "intent is created before exact receiver adoption",
+            "a not-attempted mutation carries any mutation or readback observation",
             "mutation outcome is unknown, regardless of another policy defect",
             "intent creation outcome is unknown, regardless of another policy defect",
             "recovery application, revision, receiver, operation-policy, destination, or subject binding differs, or the claimed policy fingerprint does not equal canonical policy recomputation",
@@ -5522,8 +5714,9 @@ class ThreadSupervisionContractTests(unittest.TestCase):
             "## rebind protected policy before external mutations",
             "capture a new protected policy revision",
             "do not encode that control-plane change as an evidence delta",
-            "receiver-owned adoption of the exact policy revision",
-            "keep the mutation blocked as `capability-unavailable`",
+            "receiver-owned adoption of exact revision",
+            "block only clean no-intent/no-mutation/no-readback as "
+            "`capability-unavailable`",
             "bind the authorized operation, destination, subject, cutoff",
             "every mandatory field",
             "immutable pre-write intent in the existing authorized intent store",
