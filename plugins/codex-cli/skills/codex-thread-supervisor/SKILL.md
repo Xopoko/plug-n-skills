@@ -117,13 +117,24 @@ Before accepting an affected target's external mutation:
    receipt with owning-system ordering evidence. Require the readback object ID
    to equal the independently recovered mutation result object ID. Missing,
    extra, or duplicate field results fail closed. Object existence, a related
-   field, target activity, or intent is not policy adoption.
+   field, target activity, or intent is not policy adoption. Matching HMAC
+   envelopes or evidence echoes are also insufficient: use a configured
+   verifier whose trust root is outside the receipt/evidence map to resolve the
+   authorized key and normalized expectation or observation, bind the exact
+   field ref, recompute the domain-separated HMAC, and compare the key ref and
+   digest in constant time without retaining the private value. Reject U+0000
+   in every HMAC field ref before v1 NUL-delimited derivation. A verified
+   missing field uses owning-system absence proof and a null fingerprint; it
+   does not synthesize an HMAC.
 4. Keep missing or mismatched fields as `policy-drift`. Any unknown mutation
    or intent outcome, or incomplete/unavailable/ambiguous readback, is
-   `reconciliation-required` after receipt shape and durable operation IDs
-   validate, regardless of another semantic policy defect. Reconcile by the
-   preallocated operation ID; require the mutation operation ID and both
-   retained intent identities to exactly match the immutable recovery record,
+   `reconciliation-required` only after receipt shape, exact recovery
+   application/revision/receiver/recomputed-policy/destination/subject
+   identity, and
+   durable operation IDs validate, regardless of another semantic policy
+   defect that occurs later. Reconcile by the preallocated operation ID;
+   require the mutation operation ID and both retained intent identities to
+   exactly match the immutable recovery record,
    and require an unknown intent write to match its recovered authorized store
    namespace while mutation remains exactly `not-attempted` with no mutation or
    readback observations; a simultaneous unknown mutation is invalid. Before
@@ -131,6 +142,9 @@ Before accepting an affected target's external mutation:
    independently resolve the canonical owning-system mutation receipt.
    Presence alone is insufficient. Do not infer success from a retained
    receipt field.
+   Treat the generic evidence map as non-authoritative for recovery: load the
+   private immutable recovery record independently, and reject coordinated
+   receipt/evidence-map substitutions.
 
 An unrelated pending evidence or skill intervention neither blocks recording
 the direct user revision nor proves receiver adoption. It still retains its

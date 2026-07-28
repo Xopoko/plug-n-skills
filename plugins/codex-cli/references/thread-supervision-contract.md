@@ -383,6 +383,22 @@ subject, and digest. Object existence, a related field, actor intent, target
 activity, or a pending intervention acknowledgement is not proof of policy
 application.
 
+Envelope equality and receipt- or evidence-supplied provenance are never
+verification. Invoke a configured verifier whose trust root is selected outside
+the receipt and its evidence map. That verifier resolves the authorized key
+reference, independently obtains the normalized expectation or owning-system
+observation bound to the evidence ref and field ref, recomputes
+`HMAC-SHA-256(key, "codex.protected-policy-field.v1" || NUL ||
+UTF8(field_ref) || NUL || normalized_value)`, and compares both the
+key-reference fingerprint and digest in constant time. The verifier retains the
+key and normalized value privately. Because NUL is the v1 delimiter,
+`field_ref` must not contain U+0000 in policy, result, or verifier-source
+records; reject it before derivation. Normalized values remain arbitrary bytes.
+A caller-coordinated expectation,
+observation, and evidence map with matching envelopes is still invalid. For a
+verified `missing` result, the same owning-system resolver proves absence and
+the observed fingerprint remains null; absence never fabricates an HMAC.
+
 Fingerprint `operation_policy` as
 `sha256:` plus lowercase SHA-256 of its UTF-8 JSON with recursively sorted
 object keys, no insignificant whitespace, and array order preserved. Persist an
@@ -555,12 +571,16 @@ fingerprint, exact authorized intent-store schema/ref/authorization, canonical
 intent ref, destination, subject, owning-system operation namespace, both
 preallocated operation IDs, its predecessor recovery ref, and any
 reconciliation receipt ref. The receipt cannot replace that record or supply
-an alternate resolver.
-After receipt shape, closed states, bounded scalar formats, and durable
-operation IDs are valid, an unknown intent or mutation outcome takes precedence
-over every semantic policy or evidence mismatch. Reconcile it before
-classifying the remaining defect or permitting a retry. A malformed receipt
-whose unknown state or operation identity cannot be trusted remains `invalid`.
+an alternate resolver. The generic evidence map is not a recovery resolver:
+changing a receipt, its evidence echoes, and map entries under `recovery_ref`
+cannot replace the independently loaded private record.
+After receipt shape, closed states, bounded scalar formats, exact
+recovery-to-receipt application, revision, receiver, recomputed
+operation-policy, destination, and subject bindings, and durable operation IDs
+are valid, an unknown intent or mutation outcome takes precedence over every
+later semantic policy or evidence mismatch. Reconcile it before classifying
+the remaining defect or permitting a retry. A malformed receipt whose unknown state,
+recovery identity, or operation identity cannot be trusted remains `invalid`.
 For an unknown mutation, the mutation operation ID, retained intent operation
 ID, and retained intent ref must exactly equal the corresponding identities in
 the immutable intent recovery record. Presence alone is insufficient. For a
@@ -588,10 +608,12 @@ Evaluate this precedence atomically:
 | Receiver reports a revision or protected-fingerprint conflict | `receiver_adoption.status=conflict`, `mutation.state=not-attempted`, `application=blocked` |
 | Mutation outcome is unknown, regardless of another policy defect | `mutation.state=outcome-unknown`, `application=reconciliation-required` |
 | Intent creation outcome is unknown, regardless of another policy defect | `prewrite_intent.status=outcome-unknown`, `mutation.state=not-attempted`, `application=reconciliation-required` |
+| Recovery application, revision, receiver, operation-policy, destination, or subject binding differs, or the claimed policy fingerprint does not equal canonical policy recomputation | `application=invalid` before any reconciliation request |
 | Unknown mutation carries a different operation ID, intent operation ID, or intent ref | `application=invalid` |
 | Mutation is attempted or committed without exact receiver adoption | `application=policy-drift` |
 | Receiver acknowledgement names a different receiver, revision, or fingerprint | `application=invalid` |
 | Operation-policy fingerprint or keyed fingerprint envelope is malformed or differs at adoption, intent, or readback | `application=invalid` |
+| Matching fingerprint envelopes or evidence echoes lack independent authorized-verifier recomputation | `application=invalid` |
 | No existing authorized immutable intent store | `prewrite_intent.status=capability-unavailable`, `mutation.state=not-attempted`, `application=blocked` |
 | Created intent lacks exact store schema, store identity, authorization, either operation ID, or immutability evidence | `application=invalid` |
 | Pre-write intent does not bind the exact receiver acknowledgement or prove `after-adoption` | `application=policy-drift` before mutation; committed mutation is invalid |

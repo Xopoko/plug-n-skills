@@ -1420,6 +1420,10 @@ def valid_sha256_fingerprint(value: object) -> bool:
     )
 
 
+def valid_fingerprint_field_ref(value: object) -> bool:
+    return bounded_policy_scalar(value) and "\x00" not in value
+
+
 def operation_policy_fingerprint(policy: dict) -> str:
     payload = json.dumps(
         policy,
@@ -1430,23 +1434,156 @@ def operation_policy_fingerprint(policy: dict) -> str:
     return "sha256:" + hashlib.sha256(payload).hexdigest()
 
 
-def trusted_keyed_fingerprint() -> dict[str, str]:
-    key_ref = hashlib.sha256(b"test-only-authorized-key-ref-v1").hexdigest()
-    message = (
-        b"codex.protected-policy-field.v1\x00"
-        b"opaque-domain-field-ref\x00"
-        b"synthetic-normalized-field-value"
+TRUSTED_HMAC_DOMAIN = b"codex.protected-policy-field.v1"
+TRUSTED_HMAC_KEY_REF = b"test-only-authorized-key-ref-v1"
+TRUSTED_HMAC_KEY_MATERIAL = b"test-only-authorized-hmac-key-material-v1"
+TRUSTED_POLICY_SUBJECT_REF = "opaque-action-intent-or-object-ref"
+TRUSTED_POLICY_FIELD_REF = "opaque-domain-field-ref"
+TRUSTED_POLICY_NORMALIZED_VALUE = b"synthetic-normalized-field-value"
+
+
+def keyed_fingerprint_message(
+    field_ref: str,
+    normalized_value: bytes,
+) -> bytes:
+    if not valid_fingerprint_field_ref(field_ref):
+        raise ValueError("fingerprint field ref is not canonical")
+    return (
+        TRUSTED_HMAC_DOMAIN
+        + b"\x00"
+        + field_ref.encode("utf-8")
+        + b"\x00"
+        + normalized_value
     )
+
+
+def keyed_fingerprint_for(
+    *,
+    field_ref: str,
+    normalized_value: bytes,
+    key_ref: bytes = TRUSTED_HMAC_KEY_REF,
+    key_material: bytes = TRUSTED_HMAC_KEY_MATERIAL,
+) -> dict[str, str]:
     digest = hmac.new(
-        b"test-only-authorized-hmac-key-material-v1",
-        message,
+        key_material,
+        keyed_fingerprint_message(field_ref, normalized_value),
         hashlib.sha256,
     ).hexdigest()
     return {
         "scheme": "hmac-sha256",
-        "key_ref_fingerprint": f"sha256:{key_ref}",
+        "key_ref_fingerprint": (
+            "sha256:" + hashlib.sha256(key_ref).hexdigest()
+        ),
         "digest": digest,
     }
+
+
+def trusted_keyed_fingerprint() -> dict[str, str]:
+    return keyed_fingerprint_for(
+        field_ref=TRUSTED_POLICY_FIELD_REF,
+        normalized_value=TRUSTED_POLICY_NORMALIZED_VALUE,
+    )
+
+
+def trusted_fingerprint_provenance(
+    *,
+    purpose: str,
+    evidence_ref: str,
+    subject_ref: str,
+    field_ref: str,
+    fingerprint: object,
+    object_ref: str | None = None,
+    mutation_operation_id: str | None = None,
+    readback_cutoff: str | None = None,
+    status: str | None = None,
+) -> bool:
+    if not valid_fingerprint_field_ref(field_ref):
+        return False
+    if status is None:
+        status = "expected" if purpose == "expectation" else "matched"
+    trusted_sources = {
+        "opaque-keyed-expectation-proof-ref": {
+            "purpose": "expectation",
+            "status": "expected",
+            "subject_ref": TRUSTED_POLICY_SUBJECT_REF,
+            "field_ref": TRUSTED_POLICY_FIELD_REF,
+            "object_ref": None,
+            "mutation_operation_id": None,
+            "readback_cutoff": None,
+            "normalized_value": TRUSTED_POLICY_NORMALIZED_VALUE,
+        },
+        "opaque-owning-system-readback-ref": {
+            "purpose": "observation",
+            "status": "matched",
+            "subject_ref": TRUSTED_POLICY_SUBJECT_REF,
+            "field_ref": TRUSTED_POLICY_FIELD_REF,
+            "object_ref": "opaque-object-id",
+            "mutation_operation_id": (
+                "opaque-preallocated-mutation-operation-id"
+            ),
+            "readback_cutoff": "opaque-post-mutation-cutoff",
+            "normalized_value": TRUSTED_POLICY_NORMALIZED_VALUE,
+        },
+        "opaque-owning-system-different-readback-ref": {
+            "purpose": "observation",
+            "status": "mismatched",
+            "subject_ref": TRUSTED_POLICY_SUBJECT_REF,
+            "field_ref": TRUSTED_POLICY_FIELD_REF,
+            "object_ref": "opaque-object-id",
+            "mutation_operation_id": (
+                "opaque-preallocated-mutation-operation-id"
+            ),
+            "readback_cutoff": "opaque-post-mutation-cutoff",
+            "normalized_value": b"different-synthetic-normalized-field-value",
+        },
+        "opaque-owning-system-missing-readback-ref": {
+            "purpose": "observation",
+            "status": "missing",
+            "subject_ref": TRUSTED_POLICY_SUBJECT_REF,
+            "field_ref": TRUSTED_POLICY_FIELD_REF,
+            "object_ref": "opaque-object-id",
+            "mutation_operation_id": (
+                "opaque-preallocated-mutation-operation-id"
+            ),
+            "readback_cutoff": "opaque-post-mutation-cutoff",
+            "normalized_value": None,
+        },
+    }
+    source = trusted_sources.get(evidence_ref)
+    if not isinstance(source, dict):
+        return False
+    normalized_value = source.get("normalized_value")
+    if normalized_value is not None and not isinstance(
+        normalized_value, bytes
+    ):
+        return False
+    source_context = {
+        key: value
+        for key, value in source.items()
+        if key != "normalized_value"
+    }
+    if source_context != {
+        "purpose": purpose,
+        "status": status,
+        "subject_ref": subject_ref,
+        "field_ref": field_ref,
+        "object_ref": object_ref,
+        "mutation_operation_id": mutation_operation_id,
+        "readback_cutoff": readback_cutoff,
+    }:
+        return False
+    if normalized_value is None:
+        return fingerprint is None
+    if not valid_keyed_fingerprint(fingerprint):
+        return False
+    expected = keyed_fingerprint_for(
+        field_ref=field_ref,
+        normalized_value=normalized_value,
+    )
+    return hmac.compare_digest(
+        fingerprint["key_ref_fingerprint"],
+        expected["key_ref_fingerprint"],
+    ) and hmac.compare_digest(fingerprint["digest"], expected["digest"])
 
 
 def trusted_policy_evidence() -> dict[str, dict]:
@@ -1626,6 +1763,17 @@ def trusted_policy_evidence() -> dict[str, dict]:
     }
 
 
+def trusted_policy_recovery_store() -> dict[str, dict]:
+    evidence = trusted_policy_evidence()
+    return {
+        recovery_ref: copy.deepcopy(evidence[recovery_ref])
+        for recovery_ref in (
+            "opaque-protected-policy-application-recovery-ref",
+            "opaque-protected-policy-application-terminal-recovery-ref",
+        )
+    }
+
+
 def evaluate_protected_policy_application(
     receipt: dict,
     evidence: dict[str, dict] | None = None,
@@ -1711,7 +1859,7 @@ def evaluate_protected_policy_application(
             field_ref = item["field_ref"]
             expected = item["expected_value_fingerprint"]
             if (
-                not bounded_policy_scalar(field_ref)
+                not valid_fingerprint_field_ref(field_ref)
                 or not valid_keyed_fingerprint(expected)
                 or not bounded_policy_scalar(item["expectation_evidence_ref"])
                 or field_ref in expected_by_field
@@ -1721,7 +1869,9 @@ def evaluate_protected_policy_application(
         computed_operation_policy_fingerprint = operation_policy_fingerprint(
             policy
         )
-        recovery = evidence.get(receipt["recovery_ref"])
+        recovery = trusted_policy_recovery_store().get(
+            receipt["recovery_ref"]
+        )
         if (
             not isinstance(recovery, dict)
             or set(recovery)
@@ -1789,6 +1939,19 @@ def evaluate_protected_policy_application(
         if (
             evidence.get(recovery["store_authorization_ref"])
             != expected_recovery_store_authorization
+        ):
+            return "invalid"
+        if (
+            recovery["application_id"] != receipt["application_id"]
+            or recovery["policy_revision_id"] != receipt["policy_revision_id"]
+            or recovery["receiver_thread_id"]
+            != receipt["receiver_thread_id"]
+            or recovery["operation_policy_fingerprint"]
+            != receipt["operation_policy_fingerprint"]
+            or receipt["operation_policy_fingerprint"]
+            != computed_operation_policy_fingerprint
+            or recovery["destination_ref"] != policy["destination_ref"]
+            or recovery["subject_ref"] != policy["subject_ref"]
         ):
             return "invalid"
 
@@ -1958,7 +2121,7 @@ def evaluate_protected_policy_application(
             }:
                 return "invalid"
             field_ref = result["field_ref"]
-            if not bounded_policy_scalar(field_ref):
+            if not valid_fingerprint_field_ref(field_ref):
                 return "invalid"
             if field_ref in observed_by_field:
                 return "invalid"
@@ -2116,22 +2279,6 @@ def evaluate_protected_policy_application(
             ):
                 return "invalid"
             return "reconciliation-required"
-        if (
-            recovery["application_id"] != receipt["application_id"]
-            or recovery["policy_revision_id"] != receipt["policy_revision_id"]
-            or recovery["receiver_thread_id"]
-            != receipt["receiver_thread_id"]
-            or recovery["operation_policy_fingerprint"]
-            != receipt["operation_policy_fingerprint"]
-            or recovery["destination_ref"] != policy["destination_ref"]
-            or recovery["subject_ref"] != policy["subject_ref"]
-        ):
-            return "invalid"
-        if (
-            receipt["operation_policy_fingerprint"]
-            != computed_operation_policy_fingerprint
-        ):
-            return "invalid"
         if intent_status == "created" and not (
             intent["store_schema"]
             == "codex.authorized_immutable_intent_store.v1"
@@ -2319,17 +2466,18 @@ def evaluate_protected_policy_application(
             if (
                 evidence.get(policy_item["expectation_evidence_ref"])
                 != expected_expectation_evidence
+                or not trusted_fingerprint_provenance(
+                    purpose="expectation",
+                    evidence_ref=policy_item["expectation_evidence_ref"],
+                    subject_ref=policy["subject_ref"],
+                    field_ref=field_ref,
+                    fingerprint=expected_by_field[field_ref],
+                )
             ):
                 return "invalid"
-            if result["status"] != "matched":
-                return "policy-drift"
             if not bounded_policy_scalar(result["evidence_ref"]):
                 return "invalid"
             observed = result["observed_value_fingerprint"]
-            if not valid_keyed_fingerprint(observed):
-                return "invalid"
-            if observed != expected_by_field[field_ref]:
-                return "policy-drift"
             expected_observation_evidence = {
                 "schema": "codex.field_observation_evidence.v1",
                 "object_ref": readback["object_ref"],
@@ -2342,8 +2490,23 @@ def evaluate_protected_policy_application(
             if (
                 evidence.get(result["evidence_ref"])
                 != expected_observation_evidence
+                or not trusted_fingerprint_provenance(
+                    purpose="observation",
+                    evidence_ref=result["evidence_ref"],
+                    subject_ref=policy["subject_ref"],
+                    field_ref=field_ref,
+                    fingerprint=observed,
+                    object_ref=readback["object_ref"],
+                    mutation_operation_id=mutation["operation_id"],
+                    readback_cutoff=readback["cutoff"],
+                    status=result["status"],
+                )
             ):
                 return "invalid"
+            if result["status"] != "matched":
+                return "policy-drift"
+            if observed != expected_by_field[field_ref]:
+                return "policy-drift"
         return "applied" if receipt["application"] == "applied" else "invalid"
     except (AttributeError, KeyError, TypeError):
         return "invalid"
@@ -4109,6 +4272,109 @@ class ThreadSupervisionContractTests(unittest.TestCase):
             ],
             trusted_keyed_fingerprint(),
         )
+        self.assertTrue(
+            trusted_fingerprint_provenance(
+                purpose="expectation",
+                evidence_ref="opaque-keyed-expectation-proof-ref",
+                subject_ref=receipt["operation_policy"]["subject_ref"],
+                field_ref=TRUSTED_POLICY_FIELD_REF,
+                fingerprint=trusted_keyed_fingerprint(),
+            )
+        )
+        self.assertTrue(
+            trusted_fingerprint_provenance(
+                purpose="observation",
+                evidence_ref="opaque-owning-system-readback-ref",
+                subject_ref=receipt["operation_policy"]["subject_ref"],
+                field_ref=TRUSTED_POLICY_FIELD_REF,
+                fingerprint=trusted_keyed_fingerprint(),
+                object_ref=receipt["readback"]["object_ref"],
+                mutation_operation_id=receipt["mutation"]["operation_id"],
+                readback_cutoff=receipt["readback"]["cutoff"],
+            )
+        )
+        for label, overrides in (
+            ("different purpose", {"purpose": "observation"}),
+            ("different subject", {"subject_ref": "different-subject"}),
+            ("different field", {"field_ref": "different-field"}),
+            ("different evidence", {"evidence_ref": "different-evidence"}),
+        ):
+            verifier_arguments = {
+                "purpose": "expectation",
+                "evidence_ref": "opaque-keyed-expectation-proof-ref",
+                "subject_ref": receipt["operation_policy"]["subject_ref"],
+                "field_ref": TRUSTED_POLICY_FIELD_REF,
+                "fingerprint": trusted_keyed_fingerprint(),
+            }
+            verifier_arguments.update(overrides)
+            with self.subTest(fingerprint_provenance=label):
+                self.assertFalse(
+                    trusted_fingerprint_provenance(**verifier_arguments)
+                )
+        for label, field, value in (
+            (
+                "different key",
+                "key_ref_fingerprint",
+                "sha256:" + "4" * 64,
+            ),
+            ("different digest", "digest", "5" * 64),
+        ):
+            forged_fingerprint = trusted_keyed_fingerprint()
+            forged_fingerprint[field] = value
+            with self.subTest(fingerprint_provenance=label):
+                self.assertFalse(
+                    trusted_fingerprint_provenance(
+                        purpose="expectation",
+                        evidence_ref="opaque-keyed-expectation-proof-ref",
+                        subject_ref=receipt["operation_policy"]["subject_ref"],
+                        field_ref=TRUSTED_POLICY_FIELD_REF,
+                        fingerprint=forged_fingerprint,
+                    )
+                )
+        wrong_domain_fingerprint = trusted_keyed_fingerprint()
+        wrong_domain_fingerprint["digest"] = hmac.new(
+            TRUSTED_HMAC_KEY_MATERIAL,
+            (
+                b"different.protected-policy-field.v1\x00"
+                + TRUSTED_POLICY_FIELD_REF.encode("utf-8")
+                + b"\x00"
+                + TRUSTED_POLICY_NORMALIZED_VALUE
+            ),
+            hashlib.sha256,
+        ).hexdigest()
+        wrong_field_fingerprint = keyed_fingerprint_for(
+            field_ref="different-field",
+            normalized_value=TRUSTED_POLICY_NORMALIZED_VALUE,
+        )
+        for label, fingerprint in (
+            ("different domain", wrong_domain_fingerprint),
+            ("different field derivation", wrong_field_fingerprint),
+        ):
+            with self.subTest(fingerprint_provenance=label):
+                self.assertFalse(
+                    trusted_fingerprint_provenance(
+                        purpose="expectation",
+                        evidence_ref="opaque-keyed-expectation-proof-ref",
+                        subject_ref=receipt["operation_policy"]["subject_ref"],
+                        field_ref=TRUSTED_POLICY_FIELD_REF,
+                        fingerprint=fingerprint,
+                    )
+                )
+        ambiguous_field_ref = "field-a\x00value-part"
+        canonical_message = keyed_fingerprint_message(
+            "field-a",
+            b"value-part\x00tail",
+        )
+        ambiguous_unchecked_message = (
+            TRUSTED_HMAC_DOMAIN
+            + b"\x00"
+            + ambiguous_field_ref.encode("utf-8")
+            + b"\x00tail"
+        )
+        self.assertEqual(canonical_message, ambiguous_unchecked_message)
+        self.assertFalse(valid_fingerprint_field_ref(ambiguous_field_ref))
+        with self.assertRaises(ValueError):
+            keyed_fingerprint_message(ambiguous_field_ref, b"tail")
         self.assertEqual(
             receipt["operation_policy_fingerprint"],
             trusted_policy_evidence()["opaque-receiver-owned-ack-ref"][
@@ -4364,7 +4630,18 @@ class ThreadSupervisionContractTests(unittest.TestCase):
             "observed_value_fingerprint"
         ]["digest"] = "3" * 64
         self.assertEqual(
-            evaluate_protected_policy_application(mismatched), "policy-drift"
+            evaluate_protected_policy_application(mismatched), "invalid"
+        )
+
+        nul_field_ref = copy.deepcopy(receipt)
+        nul_field_ref["operation_policy"]["mandatory_fields"][0][
+            "field_ref"
+        ] = "opaque-domain\x00field-ref"
+        nul_field_ref["readback"]["field_results"][0][
+            "field_ref"
+        ] = "opaque-domain\x00field-ref"
+        self.assertEqual(
+            evaluate_protected_policy_application(nul_field_ref), "invalid"
         )
 
         for label, fingerprint in (
@@ -4434,6 +4711,19 @@ class ThreadSupervisionContractTests(unittest.TestCase):
         forged_evidence["opaque-receiver-owned-ack-ref"][
             "operation_policy_fingerprint"
         ] = forged_policy_fingerprint
+        for recovery_ref in (
+            "opaque-protected-policy-application-recovery-ref",
+            "opaque-protected-policy-application-terminal-recovery-ref",
+        ):
+            forged_evidence[recovery_ref][
+                "operation_policy_fingerprint"
+            ] = forged_policy_fingerprint
+        forged_evidence["opaque-intent-immutability-proof-ref"][
+            "operation_policy_fingerprint"
+        ] = forged_policy_fingerprint
+        forged_evidence["opaque-immutable-prewrite-intent-ref"][
+            "operation_policy_fingerprint"
+        ] = forged_policy_fingerprint
         forged_evidence["opaque-keyed-expectation-proof-ref"][
             "operation_policy_fingerprint"
         ] = forged_policy_fingerprint
@@ -4444,11 +4734,152 @@ class ThreadSupervisionContractTests(unittest.TestCase):
                 "expected_value_fingerprint"
             ]
         )
-        # Receipt-supplied or caller-forged records cannot replace the fixed
-        # receiver/store/provider resolver used by the acceptance oracle.
-        self.assertNotEqual(forged_evidence, trusted_policy_evidence())
+        forged_evidence["opaque-owning-system-readback-ref"][
+            "value_fingerprint"
+        ] = copy.deepcopy(
+            forged_keyed_receipt["readback"]["field_results"][0][
+                "observed_value_fingerprint"
+            ]
+        )
+        # Matching receipt and evidence echoes cannot replace the independent
+        # verifier's authorized key, source binding, and HMAC recomputation.
         self.assertEqual(
-            evaluate_protected_policy_application(forged_keyed_receipt),
+            evaluate_protected_policy_application(
+                forged_keyed_receipt,
+                forged_evidence,
+            ),
+            "invalid",
+        )
+
+        coordinated_policy_body = copy.deepcopy(receipt)
+        coordinated_policy_body["operation_policy"]["operation"] = "update"
+        coordinated_policy_fingerprint = operation_policy_fingerprint(
+            coordinated_policy_body["operation_policy"]
+        )
+        coordinated_policy_body[
+            "operation_policy_fingerprint"
+        ] = coordinated_policy_fingerprint
+        coordinated_policy_body["receiver_adoption"][
+            "operation_policy_fingerprint"
+        ] = coordinated_policy_fingerprint
+        coordinated_policy_body["prewrite_intent"][
+            "operation_policy_fingerprint"
+        ] = coordinated_policy_fingerprint
+        coordinated_policy_evidence = copy.deepcopy(
+            trusted_policy_evidence()
+        )
+        for evidence_ref in (
+            "opaque-receiver-owned-ack-ref",
+            "opaque-intent-immutability-proof-ref",
+            "opaque-immutable-prewrite-intent-ref",
+            "opaque-keyed-expectation-proof-ref",
+            "opaque-protected-policy-application-recovery-ref",
+            "opaque-protected-policy-application-terminal-recovery-ref",
+        ):
+            coordinated_policy_evidence[evidence_ref][
+                "operation_policy_fingerprint"
+            ] = coordinated_policy_fingerprint
+        # The generic evidence map cannot replace the independently loaded
+        # private immutable recovery record, even when every echo agrees.
+        self.assertEqual(
+            evaluate_protected_policy_application(
+                coordinated_policy_body,
+                coordinated_policy_evidence,
+            ),
+            "invalid",
+        )
+
+        different_observation_fingerprint = keyed_fingerprint_for(
+            field_ref=TRUSTED_POLICY_FIELD_REF,
+            normalized_value=(
+                b"different-synthetic-normalized-field-value"
+            ),
+        )
+        verified_field_drift = copy.deepcopy(receipt)
+        verified_field_drift["readback"]["field_results"][0].update(
+            {
+                "observed_value_fingerprint": (
+                    different_observation_fingerprint
+                ),
+                "evidence_ref": (
+                    "opaque-owning-system-different-readback-ref"
+                ),
+                "status": "mismatched",
+            }
+        )
+        verified_field_drift_evidence = copy.deepcopy(
+            trusted_policy_evidence()
+        )
+        verified_field_drift_evidence[
+            "opaque-owning-system-different-readback-ref"
+        ] = {
+            "schema": "codex.field_observation_evidence.v1",
+            "object_ref": receipt["readback"]["object_ref"],
+            "mutation_operation_id": receipt["mutation"]["operation_id"],
+            "readback_cutoff": receipt["readback"]["cutoff"],
+            "field_ref": TRUSTED_POLICY_FIELD_REF,
+            "value_fingerprint": different_observation_fingerprint,
+            "status": "mismatched",
+        }
+        self.assertEqual(
+            evaluate_protected_policy_application(
+                verified_field_drift,
+                verified_field_drift_evidence,
+            ),
+            "policy-drift",
+        )
+
+        verified_missing_field = copy.deepcopy(receipt)
+        verified_missing_field["readback"]["field_results"][0].update(
+            {
+                "observed_value_fingerprint": None,
+                "evidence_ref": "opaque-owning-system-missing-readback-ref",
+                "status": "missing",
+            }
+        )
+        verified_missing_evidence = copy.deepcopy(trusted_policy_evidence())
+        verified_missing_evidence[
+            "opaque-owning-system-missing-readback-ref"
+        ] = {
+            "schema": "codex.field_observation_evidence.v1",
+            "object_ref": receipt["readback"]["object_ref"],
+            "mutation_operation_id": receipt["mutation"]["operation_id"],
+            "readback_cutoff": receipt["readback"]["cutoff"],
+            "field_ref": TRUSTED_POLICY_FIELD_REF,
+            "value_fingerprint": None,
+            "status": "missing",
+        }
+        self.assertEqual(
+            evaluate_protected_policy_application(
+                verified_missing_field,
+                verified_missing_evidence,
+            ),
+            "policy-drift",
+        )
+
+        unverified_observation_echo = copy.deepcopy(verified_field_drift)
+        unverified_observation_echo["readback"]["field_results"][0].update(
+            {
+                "observed_value_fingerprint": trusted_keyed_fingerprint(),
+                "status": "matched",
+            }
+        )
+        unverified_observation_evidence = copy.deepcopy(
+            verified_field_drift_evidence
+        )
+        unverified_observation_evidence[
+            "opaque-owning-system-different-readback-ref"
+        ].update(
+            {
+                "value_fingerprint": trusted_keyed_fingerprint(),
+                "status": "matched",
+            }
+        )
+        self.assertEqual(
+            evaluate_protected_policy_application(
+                unverified_observation_echo,
+                unverified_observation_evidence,
+            ),
             "invalid",
         )
 
@@ -4524,6 +4955,26 @@ class ThreadSupervisionContractTests(unittest.TestCase):
             evaluate_protected_policy_application(nonadopted_unknown),
             "reconciliation-required",
         )
+        unknown_with_wrong_application = copy.deepcopy(nonadopted_unknown)
+        unknown_with_wrong_application["application_id"] = (
+            "different-application-id"
+        )
+        self.assertEqual(
+            evaluate_protected_policy_application(
+                unknown_with_wrong_application
+            ),
+            "invalid",
+        )
+        unknown_with_stale_policy_body = copy.deepcopy(nonadopted_unknown)
+        unknown_with_stale_policy_body["operation_policy"][
+            "operation"
+        ] = "update"
+        self.assertEqual(
+            evaluate_protected_policy_application(
+                unknown_with_stale_policy_body
+            ),
+            "invalid",
+        )
 
         unknown_with_policy_mismatch = copy.deepcopy(nonadopted_unknown)
         unknown_with_policy_mismatch["operation_policy_fingerprint"] = (
@@ -4533,7 +4984,7 @@ class ThreadSupervisionContractTests(unittest.TestCase):
             evaluate_protected_policy_application(
                 unknown_with_policy_mismatch
             ),
-            "reconciliation-required",
+            "invalid",
         )
 
         unknown_with_binding_mismatch = copy.deepcopy(nonadopted_unknown)
@@ -4663,6 +5114,30 @@ class ThreadSupervisionContractTests(unittest.TestCase):
             evaluate_protected_policy_application(intent_outcome_unknown),
             "reconciliation-required",
         )
+        intent_unknown_with_wrong_application = copy.deepcopy(
+            intent_outcome_unknown
+        )
+        intent_unknown_with_wrong_application["application_id"] = (
+            "different-application-id"
+        )
+        self.assertEqual(
+            evaluate_protected_policy_application(
+                intent_unknown_with_wrong_application
+            ),
+            "invalid",
+        )
+        intent_unknown_with_stale_policy_body = copy.deepcopy(
+            intent_outcome_unknown
+        )
+        intent_unknown_with_stale_policy_body["operation_policy"][
+            "eligibility_cutoff"
+        ] = "different-eligibility-cutoff"
+        self.assertEqual(
+            evaluate_protected_policy_application(
+                intent_unknown_with_stale_policy_body
+            ),
+            "invalid",
+        )
 
         intent_unknown_with_policy_mismatch = copy.deepcopy(
             intent_outcome_unknown
@@ -4674,7 +5149,7 @@ class ThreadSupervisionContractTests(unittest.TestCase):
             evaluate_protected_policy_application(
                 intent_unknown_with_policy_mismatch
             ),
-            "reconciliation-required",
+            "invalid",
         )
 
         missing_intent_operation = copy.deepcopy(intent_outcome_unknown)
@@ -4812,6 +5287,62 @@ class ThreadSupervisionContractTests(unittest.TestCase):
             evaluate_protected_policy_application(unavailable),
             "reconciliation-required",
         )
+        unavailable_with_stale_policy_body = copy.deepcopy(unavailable)
+        unavailable_with_stale_policy_body["operation_policy"][
+            "mandatory_fields"
+        ][0]["expectation_evidence_ref"] = (
+            "different-expectation-evidence-ref"
+        )
+        self.assertEqual(
+            evaluate_protected_policy_application(
+                unavailable_with_stale_policy_body
+            ),
+            "invalid",
+        )
+        for label, path, value in (
+            (
+                "application",
+                ("application_id",),
+                "different-application-id",
+            ),
+            (
+                "revision",
+                ("policy_revision_id",),
+                "different-policy-revision",
+            ),
+            (
+                "receiver",
+                ("receiver_thread_id",),
+                "different-receiver",
+            ),
+            (
+                "policy fingerprint",
+                ("operation_policy_fingerprint",),
+                "sha256:" + "0" * 64,
+            ),
+            (
+                "destination",
+                ("operation_policy", "destination_ref"),
+                "different-destination",
+            ),
+            (
+                "subject",
+                ("operation_policy", "subject_ref"),
+                "different-subject",
+            ),
+        ):
+            untrusted_reconciliation_target = copy.deepcopy(unavailable)
+            target = untrusted_reconciliation_target
+            for component in path[:-1]:
+                target = target[component]
+            target[path[-1]] = value
+            with self.subTest(recovery_identity=label):
+                self.assertEqual(
+                    evaluate_protected_policy_application(
+                        untrusted_reconciliation_target
+                    ),
+                    "invalid",
+                )
 
         unavailable_with_extra = copy.deepcopy(unavailable)
         extra_result = copy.deepcopy(
@@ -4833,7 +5364,7 @@ class ThreadSupervisionContractTests(unittest.TestCase):
             evaluate_protected_policy_application(
                 unavailable_with_policy_mismatch
             ),
-            "reconciliation-required",
+            "invalid",
         )
 
         incomplete_with_policy_mismatch = copy.deepcopy(receipt)
@@ -4856,7 +5387,35 @@ class ThreadSupervisionContractTests(unittest.TestCase):
             evaluate_protected_policy_application(
                 incomplete_with_policy_mismatch
             ),
-            "reconciliation-required",
+            "invalid",
+        )
+        incomplete_with_wrong_application = copy.deepcopy(
+            incomplete_with_policy_mismatch
+        )
+        incomplete_with_wrong_application[
+            "operation_policy_fingerprint"
+        ] = receipt["operation_policy_fingerprint"]
+        incomplete_with_wrong_application["application_id"] = (
+            "different-application-id"
+        )
+        self.assertEqual(
+            evaluate_protected_policy_application(
+                incomplete_with_wrong_application
+            ),
+            "invalid",
+        )
+        incomplete_with_stale_policy_body = copy.deepcopy(receipt)
+        incomplete_with_stale_policy_body["readback"].update(
+            incomplete_with_policy_mismatch["readback"]
+        )
+        incomplete_with_stale_policy_body["operation_policy"][
+            "operation"
+        ] = "transition"
+        self.assertEqual(
+            evaluate_protected_policy_application(
+                incomplete_with_stale_policy_body
+            ),
+            "invalid",
         )
 
         unavailable_with_conflicting_operation = copy.deepcopy(unavailable)
@@ -4899,7 +5458,7 @@ class ThreadSupervisionContractTests(unittest.TestCase):
         )
 
         schedule = protected_policy_failure_schedule(reference)
-        self.assertEqual(len(schedule), 21)
+        self.assertEqual(len(schedule), 23)
         for condition in (
             "direct user revision while unrelated evidence or skill intervention is pending",
             "malformed receipt, empty mandatory set, or duplicate mandatory or result field refs",
@@ -4907,10 +5466,12 @@ class ThreadSupervisionContractTests(unittest.TestCase):
             "receiver reports a revision or protected-fingerprint conflict",
             "mutation outcome is unknown, regardless of another policy defect",
             "intent creation outcome is unknown, regardless of another policy defect",
+            "recovery application, revision, receiver, operation-policy, destination, or subject binding differs, or the claimed policy fingerprint does not equal canonical policy recomputation",
             "unknown mutation carries a different operation id, intent operation id, or intent ref",
             "mutation is attempted or committed without exact receiver adoption",
             "receiver acknowledgement names a different receiver, revision, or fingerprint",
             "operation-policy fingerprint or keyed fingerprint envelope is malformed or differs at adoption, intent, or readback",
+            "matching fingerprint envelopes or evidence echoes lack independent authorized-verifier recomputation",
             "no existing authorized immutable intent store",
             "created intent lacks exact store schema, store identity, authorization, either operation id, or immutability evidence",
             "pre-write intent does not bind the exact receiver acknowledgement or prove `after-adoption`",
@@ -4952,11 +5513,19 @@ class ThreadSupervisionContractTests(unittest.TestCase):
             "readback object id to equal the independently recovered mutation result object id",
             "owning-system ordering evidence",
             "missing, extra, or duplicate field results fail closed",
+            "matching hmac envelopes or evidence echoes are also insufficient",
+            "configured verifier whose trust root is outside the receipt/evidence map",
+            "resolve the authorized key and normalized expectation or observation",
+            "recompute the domain-separated hmac",
+            "compare the key ref and digest in constant time",
+            "reject u+0000 in every hmac field ref",
+            "verified missing field uses owning-system absence proof and a null fingerprint",
             "object existence",
             "is not policy adoption",
             "`policy-drift`",
             "`reconciliation-required`",
             "any unknown mutation or intent outcome",
+            "only after receipt shape, exact recovery application/revision/receiver/recomputed-policy/destination/subject identity",
             "reconcile by the preallocated operation id",
             "both retained intent identities to exactly match the immutable recovery record",
             "unknown intent write to match its recovered authorized store namespace",
@@ -5035,6 +5604,17 @@ class ThreadSupervisionContractTests(unittest.TestCase):
             "domain-separated message that binds the schema and field ref",
             "never use an unsalted digest for a low-entropy field",
             "opaque owning-system evidence ref",
+            "envelope equality and receipt- or evidence-supplied provenance are never verification",
+            "configured verifier whose trust root is selected outside the receipt and its evidence map",
+            "independently obtains the normalized expectation or owning-system observation",
+            "compares both the key-reference fingerprint and digest in constant time",
+            "`field_ref` must not contain u+0000",
+            "reject it before derivation",
+            "normalized values remain arbitrary bytes",
+            "caller-coordinated expectation, observation, and evidence map with matching envelopes is still invalid",
+            "verified `missing` result",
+            "observed fingerprint remains null",
+            "absence never fabricates an hmac",
             "persist an immutable pre-write intent after receiver adoption and before the mutation",
             "only through an existing authorized intent store",
             "never create or emulate that store with an ordinary write",
@@ -5070,9 +5650,10 @@ class ThreadSupervisionContractTests(unittest.TestCase):
             "the receipt cannot replace that record or supply an alternate resolver",
             "claimed later mutation or readback makes the receipt invalid",
             "simultaneous `mutation.state=outcome-unknown`",
-            "after receipt shape, closed states, bounded scalar formats, and durable operation ids are valid",
-            "unknown intent or mutation outcome takes precedence over every semantic policy or evidence mismatch",
-            "whose unknown state or operation identity cannot be trusted remains `invalid`",
+            "after receipt shape, closed states, bounded scalar formats, exact recovery-to-receipt application",
+            "recomputed operation-policy, destination, and subject bindings",
+            "unknown intent or mutation outcome takes precedence over every later semantic policy or evidence mismatch",
+            "whose unknown state, recovery identity, or operation identity cannot be trusted remains `invalid`",
             "`protected_policy_application_state.active_count=0`",
             "inline entries or resolved active index form one append-only",
             "no duplicate application, revision, or recovery identity",
