@@ -86,6 +86,42 @@ Keep pair, lineage, protection, commit, readback, and adoption as independent
 closed verdicts. Separate producer and adoption receipts. Details are in
 `$PLUGIN_ROOT/references/thread-supervision-contract.md`.
 
+## Rebind Protected Policy Before External Mutations
+
+When direct user input changes a protected goal, authority, task constraint, or
+required external-object field, capture a new protected policy revision. Do not
+encode that control-plane change as an evidence delta.
+
+Before accepting an external mutation:
+
+1. Require receiver-owned adoption of exact revision and protected fingerprint,
+   bound to receiver identity and acknowledgement. Without that authorized
+   typed rebind, keep the mutation blocked. Use `capability-unavailable` only
+   when intent, mutation, and readback are all canonically clean; any observed
+   later state follows the fail-closed contract.
+2. Bind the authorized operation, destination, subject, cutoff, and every
+   mandatory field to an immutable pre-write intent in the existing authorized
+   intent store. Preallocate and retain both intent-store and owning-system
+   operation IDs before the write; never emulate an unavailable store.
+3. Bind the owning-system receipt and exact object readback to those identities.
+   Verify every mandatory field from a trust root outside receipt/evidence
+   echoes. Missing/mismatched fields are `policy-drift`;
+   incomplete, unavailable, or ambiguous readback is
+   `reconciliation-required` subject to gate 4, never success.
+4. Before any `reconciliation-required` result, validate the exact private
+   recovery identity and retained operation IDs independently of the generic
+   evidence map. Unknown outcomes remain sticky and must be reconciled by those
+   exact identities before retry, retirement, or another mutation.
+
+Before yielding or compaction, persist the stable application ID, immutable
+recovery ref, and both operation IDs. Apply the closed recovery-chain,
+active/retired-index, terminal-retirement, fingerprint, and v1-migration gates
+from the `Checkpoint` and `Protected Policy Application` sections of
+`$PLUGIN_ROOT/references/thread-supervision-contract.md`; never duplicate or
+relax those schema rules here. An unrelated pending evidence
+or skill handoff neither blocks recording the direct revision nor proves
+receiver adoption.
+
 ## Watch Transitions
 
 - Wait on up to eight targets in one `wait_threads` call. For more targets, use
