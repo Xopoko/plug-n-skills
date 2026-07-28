@@ -2502,6 +2502,8 @@ def _compute_protected_policy_application(
             and bounded_policy_scalar(intent["mutation_operation_id"])
             and bounded_policy_scalar(intent["intent_ref"])
             and mutation["operation_id"] == intent["mutation_operation_id"]
+            and mutation["destination_ref"] == recovery["destination_ref"]
+            and mutation["subject_ref"] == recovery["subject_ref"]
             and mutation["prewrite_intent_operation_id"]
             == intent["operation_id"]
             and mutation["prewrite_intent_ref"] == intent["intent_ref"]
@@ -6036,18 +6038,46 @@ class ThreadSupervisionContractTests(unittest.TestCase):
             "invalid",
         )
 
-        unknown_with_binding_mismatch = copy.deepcopy(nonadopted_unknown)
-        unknown_with_binding_mismatch["mutation"][
-            "destination_ref"
-        ] = "different-destination"
-        unknown_with_binding_mismatch["prewrite_intent"][
+        unknown_with_later_semantic_mismatch = copy.deepcopy(
+            nonadopted_unknown
+        )
+        unknown_with_later_semantic_mismatch["prewrite_intent"][
             "store_schema"
         ] = "different-store-schema"
         self.assertEqual(
             evaluate_fixture_at_current_head(
-                unknown_with_binding_mismatch
+                unknown_with_later_semantic_mismatch
             ),
             "reconciliation-required",
+        )
+        for field in ("destination_ref", "subject_ref"):
+            unknown_with_wrong_mutation_binding = copy.deepcopy(
+                nonadopted_unknown
+            )
+            unknown_with_wrong_mutation_binding["mutation"][field] = (
+                f"different-{field.replace('_ref', '')}"
+            )
+            with self.subTest(unknown_mutation_binding=field):
+                self.assertEqual(
+                    evaluate_fixture_at_current_head(
+                        unknown_with_wrong_mutation_binding
+                    ),
+                    "invalid",
+                )
+        unknown_with_binding_and_later_semantic_mismatch = copy.deepcopy(
+            nonadopted_unknown
+        )
+        unknown_with_binding_and_later_semantic_mismatch["mutation"][
+            "destination_ref"
+        ] = "different-destination"
+        unknown_with_binding_and_later_semantic_mismatch[
+            "prewrite_intent"
+        ]["store_schema"] = "different-store-schema"
+        self.assertEqual(
+            evaluate_fixture_at_current_head(
+                unknown_with_binding_and_later_semantic_mismatch
+            ),
+            "invalid",
         )
 
         unknown_with_malformed_fingerprint = copy.deepcopy(nonadopted_unknown)
@@ -6688,10 +6718,10 @@ class ThreadSupervisionContractTests(unittest.TestCase):
             "receiver reports a revision or protected-fingerprint conflict while intent, mutation, and readback remain unwritten",
             "intent is created before exact receiver adoption",
             "a not-attempted mutation carries any mutation or readback observation",
-            "mutation outcome is unknown, regardless of another policy defect",
+            "mutation outcome is unknown after exact recovery and mutation identity validation, regardless of a later semantic or evidence defect",
             "intent creation outcome is unknown, regardless of another policy defect",
             "recovery application, revision, receiver, operation-policy, destination, or subject binding differs, or the claimed policy fingerprint does not equal canonical policy recomputation",
-            "unknown mutation carries a different operation id, intent operation id, or intent ref",
+            "unknown mutation carries a different destination, subject, operation id, intent operation id, or intent ref",
             "mutation is attempted or committed without exact receiver adoption",
             "receiver acknowledgement names a different receiver, revision, or fingerprint",
             "operation-policy fingerprint or keyed fingerprint envelope is malformed or differs at adoption, intent, or readback",
@@ -6708,6 +6738,10 @@ class ThreadSupervisionContractTests(unittest.TestCase):
             "exact receiver adoption, committed mutation, object identity, cutoff, and every keyed field result match",
         ):
             self.assertIn(condition, schedule)
+        self.assertNotIn(
+            "mutation outcome is unknown, regardless of another policy defect",
+            schedule,
+        )
 
         skill_text = SKILL.read_text(encoding="utf-8")
         skill = " ".join(skill_text.split()).lower()

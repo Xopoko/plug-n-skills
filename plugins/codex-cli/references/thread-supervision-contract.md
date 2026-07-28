@@ -612,14 +612,15 @@ are valid, an unknown intent or mutation outcome takes precedence over every
 later semantic policy or evidence mismatch. Reconcile it before classifying
 the remaining defect or permitting a retry. A malformed receipt whose unknown state,
 recovery identity, or operation identity cannot be trusted remains `invalid`.
-For an unknown mutation, the mutation operation ID, retained intent operation
-ID, and retained intent ref must exactly equal the corresponding identities in
-the immutable intent recovery record. Presence alone is insufficient. For a
-committed mutation with incomplete or unavailable readback, retain that same
-trusted mutation-to-intent identity and independently resolve the canonical
-owning-system mutation receipt before returning reconciliation. Any conflicting
-readback operation or receipt identity is invalid rather than a reconciliation
-target. `readback.state=not-run` carries no readback observation at all.
+For an unknown mutation, the destination, subject, mutation operation ID,
+retained intent operation ID, and retained intent ref must exactly equal the
+corresponding identities in the immutable recovery record. Presence alone is
+insufficient. For a committed mutation with incomplete or unavailable
+readback, retain that same trusted mutation-to-intent identity and independently
+resolve the canonical owning-system mutation receipt before returning
+reconciliation. Any conflicting readback operation or receipt identity is
+invalid rather than a reconciliation target. `readback.state=not-run` carries
+no readback observation at all.
 `readback.state=unavailable` carries only the exact retained mutation operation
 ID and mutation receipt ref; object, cutoff, ordering, and field-result
 observations remain null or empty. Only `complete` may carry those observations.
@@ -657,10 +658,10 @@ Evaluate this precedence atomically:
 | Receiver reports a revision or protected-fingerprint conflict while intent, mutation, and readback remain unwritten | `receiver_adoption.status=conflict`, `mutation.state=not-attempted`, `application=blocked` |
 | Intent is created before exact receiver adoption | `application=policy-drift` |
 | A not-attempted mutation carries any mutation or readback observation | `application=invalid` |
-| Mutation outcome is unknown, regardless of another policy defect | `mutation.state=outcome-unknown`, `application=reconciliation-required` |
+| Mutation outcome is unknown after exact recovery and mutation identity validation, regardless of a later semantic or evidence defect | `mutation.state=outcome-unknown`, `application=reconciliation-required` |
 | Intent creation outcome is unknown, regardless of another policy defect | `prewrite_intent.status=outcome-unknown`, `mutation.state=not-attempted`, `application=reconciliation-required` |
 | Recovery application, revision, receiver, operation-policy, destination, or subject binding differs, or the claimed policy fingerprint does not equal canonical policy recomputation | `application=invalid` before any reconciliation request |
-| Unknown mutation carries a different operation ID, intent operation ID, or intent ref | `application=invalid` |
+| Unknown mutation carries a different destination, subject, operation ID, intent operation ID, or intent ref | `application=invalid` |
 | Mutation is attempted or committed without exact receiver adoption | `application=policy-drift` |
 | Receiver acknowledgement names a different receiver, revision, or fingerprint | `application=invalid` |
 | Operation-policy fingerprint or keyed fingerprint envelope is malformed or differs at adoption, intent, or readback | `application=invalid` |
