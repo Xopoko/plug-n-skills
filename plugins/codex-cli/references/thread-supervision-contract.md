@@ -619,7 +619,13 @@ committed mutation with incomplete or unavailable readback, retain that same
 trusted mutation-to-intent identity and independently resolve the canonical
 owning-system mutation receipt before returning reconciliation. Any conflicting
 readback operation or receipt identity is invalid rather than a reconciliation
-target. An unknown intent-store write must use the exact recovered store schema,
+target. `readback.state=not-run` carries no readback observation at all.
+`readback.state=unavailable` carries only the exact retained mutation operation
+ID and mutation receipt ref; object, cutoff, ordering, and field-result
+observations remain null or empty. Only `complete` may carry those observations.
+A non-complete state with populated observation fields is contradictory and
+invalid, not a reconciliation target. An unknown intent-store write must use
+the exact recovered store schema,
 store ref, authorization ref, and preallocated intent operation ID; a
 receipt-supplied store namespace is not a reconciliation target. That early
 intent reconciliation is valid only with `mutation.state=not-attempted`, every
@@ -664,7 +670,8 @@ Evaluate this precedence atomically:
 | Pre-write intent does not bind the exact receiver acknowledgement or prove `after-adoption` | `application=policy-drift` before mutation; committed mutation is invalid |
 | Exact receiver adoption is proven but no mutation is attempted | `mutation.state=not-attempted`, `application=blocked` |
 | Mutation receipt does not bind the exact destination, subject, operation ID, pre-write intent, or result object | `application=invalid` |
-| Committed mutation lacks exact object identity, post-mutation cutoff, or complete readback | `readback.state=not-run` or `readback.state=unavailable`, `application=reconciliation-required` |
+| Committed mutation has canonical clean `not-run` or mutation-bound `unavailable` readback, or a complete readback has unavailable fields | `application=reconciliation-required` |
+| A non-complete readback carries object, cutoff, ordering, or field-result observations | `application=invalid` |
 | Readback object differs from the recovered mutation result object, does not bind the exact operation ID and receipt, or does not prove `after-mutation` | `application=policy-drift` |
 | Any mandatory field is missing, extra, mismatched, or has a different observed fingerprint | `application=policy-drift` |
 | Any field result is unavailable, even with another field mismatch or extra result | `application=reconciliation-required` |

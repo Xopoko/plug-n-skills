@@ -2571,6 +2571,29 @@ def _compute_protected_policy_application(
             )
             and readback["field_results"] == []
         )
+        readback_is_canonically_unavailable = (
+            readback["state"] == "unavailable"
+            and readback["mutation_operation_id"] == mutation["operation_id"]
+            and readback["mutation_receipt_ref"] == mutation["receipt_ref"]
+            and all(
+                readback[field] is None
+                for field in (
+                    "object_ref",
+                    "cutoff",
+                    "relation",
+                    "ordering_evidence_ref",
+                )
+            )
+            and readback["field_results"] == []
+        )
+        if (
+            readback["state"] == "not-run"
+            and not readback_is_cleanly_not_run
+        ) or (
+            readback["state"] == "unavailable"
+            and not readback_is_canonically_unavailable
+        ):
+            return "invalid"
         intent_is_cleanly_unwritten = (
             intent_status in {"not-created", "capability-unavailable"}
             and all(
@@ -6430,6 +6453,60 @@ class ThreadSupervisionContractTests(unittest.TestCase):
             evaluate_fixture_at_current_head(unavailable),
             "reconciliation-required",
         )
+        for contradictory_state in ("not-run", "unavailable"):
+            contradictory_readback = copy.deepcopy(receipt)
+            contradictory_readback["readback"][
+                "state"
+            ] = contradictory_state
+            with self.subTest(
+                contradictory_readback_state=contradictory_state
+            ):
+                self.assertEqual(
+                    evaluate_fixture_at_current_head(
+                        contradictory_readback
+                    ),
+                    "invalid",
+                )
+        canonical_not_run = copy.deepcopy(receipt)
+        canonical_not_run["readback"].update(
+            {
+                "state": "not-run",
+                "object_ref": None,
+                "cutoff": None,
+                "mutation_operation_id": None,
+                "mutation_receipt_ref": None,
+                "relation": None,
+                "ordering_evidence_ref": None,
+                "field_results": [],
+            }
+        )
+        canonical_not_run["application"] = "reconciliation-required"
+        self.assertEqual(
+            evaluate_fixture_at_current_head(canonical_not_run),
+            "reconciliation-required",
+        )
+        canonical_unavailable = copy.deepcopy(receipt)
+        canonical_unavailable["readback"].update(
+            {
+                "state": "unavailable",
+                "object_ref": None,
+                "cutoff": None,
+                "mutation_operation_id": canonical_unavailable["mutation"][
+                    "operation_id"
+                ],
+                "mutation_receipt_ref": canonical_unavailable["mutation"][
+                    "receipt_ref"
+                ],
+                "relation": None,
+                "ordering_evidence_ref": None,
+                "field_results": [],
+            }
+        )
+        canonical_unavailable["application"] = "reconciliation-required"
+        self.assertEqual(
+            evaluate_fixture_at_current_head(canonical_unavailable),
+            "reconciliation-required",
+        )
         unavailable_with_stale_policy_body = copy.deepcopy(unavailable)
         unavailable_with_stale_policy_body["operation_policy"][
             "mandatory_fields"
@@ -6601,7 +6678,7 @@ class ThreadSupervisionContractTests(unittest.TestCase):
         )
 
         schedule = protected_policy_failure_schedule(reference)
-        self.assertEqual(len(schedule), 26)
+        self.assertEqual(len(schedule), 27)
         for condition in (
             "direct user revision while unrelated evidence or skill intervention is pending",
             "malformed receipt, empty mandatory set, or duplicate mandatory or result field refs",
@@ -6623,7 +6700,8 @@ class ThreadSupervisionContractTests(unittest.TestCase):
             "created intent lacks exact store schema, store identity, authorization, either operation id, or immutability evidence",
             "pre-write intent does not bind the exact receiver acknowledgement or prove `after-adoption`",
             "mutation receipt does not bind the exact destination, subject, operation id, pre-write intent, or result object",
-            "committed mutation lacks exact object identity, post-mutation cutoff, or complete readback",
+            "committed mutation has canonical clean `not-run` or mutation-bound `unavailable` readback, or a complete readback has unavailable fields",
+            "a non-complete readback carries object, cutoff, ordering, or field-result observations",
             "readback object differs from the recovered mutation result object, does not bind the exact operation id and receipt, or does not prove `after-mutation`",
             "any mandatory field is missing, extra, mismatched, or has a different observed fingerprint",
             "any field result is unavailable, even with another field mismatch or extra result",
@@ -6670,8 +6748,9 @@ class ThreadSupervisionContractTests(unittest.TestCase):
             "capture a new protected policy revision",
             "do not encode that control-plane change as an evidence delta",
             "receiver-owned adoption of exact revision",
-            "block only clean no-intent/no-mutation/no-readback as "
-            "`capability-unavailable`",
+            "use `capability-unavailable` only when intent, mutation, and "
+            "readback are all canonically clean",
+            "any observed later state follows the fail-closed contract",
             "bind the authorized operation, destination, subject, cutoff",
             "every mandatory field",
             "immutable pre-write intent in the existing authorized intent store",

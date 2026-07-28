@@ -10,8 +10,8 @@ evidence.
 - `codex-exec-automation`: non-interactive `codex exec` and `codex review` runs.
 - `codex-deferred-completion`: one validated producer-native terminal receipt without model-driven polling.
 - `codex-thread-supervisor`: live multi-thread observation, transition waits,
-  canonical checkpoint adoption guardrails, protected-policy application
-  gates, version-skew-aware skill handoffs with source/runtime separation,
+  canonical checkpoint adoption guardrails, protected-policy gates,
+  version-skew-aware skill handoffs with source/runtime separation,
   versioned evidence corrections, aggregate claim boundaries, and privacy-safe
   capability mining.
 - `codex-plugin-mcp-manager`: plugin marketplaces, installed plugins, and MCP servers.

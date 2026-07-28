@@ -95,9 +95,10 @@ encode that control-plane change as an evidence delta.
 Before accepting an external mutation:
 
 1. Require receiver-owned adoption of exact revision and protected fingerprint,
-   bound to receiver identity and acknowledgement. Without an authorized typed
-   rebind, block only clean no-intent/no-mutation/no-readback as
-   `capability-unavailable`.
+   bound to receiver identity and acknowledgement. Without that authorized
+   typed rebind, keep the mutation blocked. Use `capability-unavailable` only
+   when intent, mutation, and readback are all canonically clean; any observed
+   later state follows the fail-closed contract.
 2. Bind the authorized operation, destination, subject, cutoff, and every
    mandatory field to an immutable pre-write intent in the existing authorized
    intent store. Preallocate and retain both intent-store and owning-system
