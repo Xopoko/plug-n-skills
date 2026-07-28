@@ -135,6 +135,11 @@ POLICY_RECOVERY_FIELDS = {
     "intent_operation_id",
     "mutation_operation_id",
     "operation_namespace_ref",
+    "migration_ref",
+    "migration_source_checkpoint_ref",
+    "migration_checkpoint_fingerprint",
+    "migration_target_thread_id",
+    "migration_target_host_id",
     "predecessor_ref",
     "reconciliation_receipt_ref",
 }
@@ -149,6 +154,11 @@ POLICY_RECOVERY_IMMUTABLE_FIELDS = (
     "subject_ref",
     "intent_operation_id",
     "mutation_operation_id",
+    "migration_ref",
+    "migration_source_checkpoint_ref",
+    "migration_checkpoint_fingerprint",
+    "migration_target_thread_id",
+    "migration_target_host_id",
 )
 
 
@@ -264,6 +274,11 @@ def valid_policy_recovery_record(
     for field in (
         "intent_operation_id",
         "mutation_operation_id",
+        "migration_ref",
+        "migration_source_checkpoint_ref",
+        "migration_checkpoint_fingerprint",
+        "migration_target_thread_id",
+        "migration_target_host_id",
         "predecessor_ref",
         "reconciliation_receipt_ref",
     ):
@@ -271,6 +286,26 @@ def valid_policy_recovery_record(
             recovery.get(field)
         ):
             return False
+    migration_values = (
+        recovery.get("migration_ref"),
+        recovery.get("migration_source_checkpoint_ref"),
+        recovery.get("migration_checkpoint_fingerprint"),
+        recovery.get("migration_target_thread_id"),
+        recovery.get("migration_target_host_id"),
+    )
+    if not (
+        all(value is None for value in migration_values)
+        or (
+            all(bounded_policy_scalar(value) for value in migration_values)
+            and valid_sha256_fingerprint(
+                recovery.get("migration_ref")
+            )
+            and valid_sha256_fingerprint(
+                recovery.get("migration_checkpoint_fingerprint")
+            )
+        )
+    ):
+        return False
     if not bounded_policy_scalar(
         recovery.get("operation_policy_fingerprint")
     ):
@@ -304,6 +339,170 @@ def policy_recovery_head(
     return recovery
 
 
+def valid_migrated_policy_recovery_root(
+    item: dict,
+    root_ref: str,
+    recovery: dict,
+    evidence: dict[str, dict],
+) -> bool:
+    migration_ref = recovery.get("migration_ref")
+    if not valid_sha256_fingerprint(migration_ref):
+        return False
+    migration = evidence.get(migration_ref)
+    if (
+        not isinstance(migration, dict)
+        or checkpoint_fingerprint(migration) != migration_ref
+    ):
+        return False
+    if set(migration) != {
+        "schema",
+        "source_checkpoint_schema",
+        "checkpoint_fingerprint",
+        "source_checkpoint_ref",
+        "target_thread_id",
+        "target_host_id",
+        "legacy_recovery_ref",
+        "migrated_recovery_ref",
+        "operation_namespace_ref",
+        "application_id",
+        "policy_revision_id",
+        "intent_operation_id",
+        "mutation_operation_id",
+    }:
+        return False
+    if (
+        migration["schema"]
+        != "codex.protected_policy_application_migration.v1"
+        or migration["source_checkpoint_schema"]
+        != "codex.thread_supervision.v1"
+        or migration["migrated_recovery_ref"] != root_ref
+        or not valid_sha256_fingerprint(
+            migration["checkpoint_fingerprint"]
+        )
+        or any(
+            not bounded_policy_scalar(migration[field])
+            for field in (
+                "target_thread_id",
+                "target_host_id",
+                "source_checkpoint_ref",
+                "legacy_recovery_ref",
+                "migrated_recovery_ref",
+                "operation_namespace_ref",
+                "application_id",
+                "policy_revision_id",
+            )
+        )
+        or any(
+            migration[field] is not None
+            and not bounded_policy_scalar(migration[field])
+            for field in (
+                "intent_operation_id",
+                "mutation_operation_id",
+            )
+        )
+        or migration["application_id"] != recovery["application_id"]
+        or migration["policy_revision_id"]
+        != recovery["policy_revision_id"]
+        or migration["intent_operation_id"]
+        != recovery["intent_operation_id"]
+        or migration["mutation_operation_id"]
+        != recovery["mutation_operation_id"]
+        or migration["operation_namespace_ref"]
+        != recovery["operation_namespace_ref"]
+        or migration["checkpoint_fingerprint"]
+        != recovery["migration_checkpoint_fingerprint"]
+        or migration["source_checkpoint_ref"]
+        != recovery["migration_source_checkpoint_ref"]
+        or migration["target_thread_id"]
+        != recovery["migration_target_thread_id"]
+        or migration["target_host_id"]
+        != recovery["migration_target_host_id"]
+    ):
+        return False
+    legacy = evidence.get(migration["legacy_recovery_ref"])
+    if not isinstance(legacy, dict) or set(legacy) != {
+        "schema",
+        "policy_revision_id",
+        "receiver_thread_id",
+        "operation_policy_fingerprint",
+        "store_schema",
+        "store_ref",
+        "store_authorization_ref",
+        "intent_ref",
+        "destination_ref",
+        "subject_ref",
+        "intent_operation_id",
+        "mutation_operation_id",
+    }:
+        return False
+    source_checkpoint = evidence.get(migration["source_checkpoint_ref"])
+    source_targets = (
+        [
+            target
+            for target in source_checkpoint.get("targets", [])
+            if isinstance(target, dict)
+            and target.get("thread_id") == migration["target_thread_id"]
+            and target.get("host_id") == migration["target_host_id"]
+        ]
+        if isinstance(source_checkpoint, dict)
+        else []
+    )
+    expected_legacy_application = {
+        "schema": "codex.protected_policy_application_checkpoint.v1",
+        "state": recovery["checkpoint_state"],
+        "policy_revision_id": migration["policy_revision_id"],
+        "operation_policy_fingerprint": legacy[
+            "operation_policy_fingerprint"
+        ],
+        "recovery_ref": migration["legacy_recovery_ref"],
+        "intent_operation_id": migration["intent_operation_id"],
+        "mutation_operation_id": migration["mutation_operation_id"],
+    }
+    if (
+        len(source_targets) != 1
+        or source_checkpoint.get("schema")
+        != "codex.thread_supervision.v1"
+        or checkpoint_fingerprint(source_checkpoint)
+        != migration["checkpoint_fingerprint"]
+        or source_targets[0].get("protected_policy_application")
+        != expected_legacy_application
+        or "protected_policy_application_state" in source_targets[0]
+    ):
+        return False
+    expected_recovery = {
+        **legacy,
+        "schema": "codex.protected_policy_application_recovery.v2",
+        "application_id": migration["application_id"],
+        "checkpoint_state": recovery["checkpoint_state"],
+        "operation_namespace_ref": migration[
+            "operation_namespace_ref"
+        ],
+        "migration_ref": migration_ref,
+        "migration_source_checkpoint_ref": migration[
+            "source_checkpoint_ref"
+        ],
+        "migration_checkpoint_fingerprint": migration[
+            "checkpoint_fingerprint"
+        ],
+        "migration_target_thread_id": migration["target_thread_id"],
+        "migration_target_host_id": migration["target_host_id"],
+        "predecessor_ref": None,
+        "reconciliation_receipt_ref": None,
+    }
+    return (
+        legacy["schema"]
+        == "codex.protected_policy_application_recovery.v1"
+        and legacy["policy_revision_id"] == recovery["policy_revision_id"]
+        and legacy["operation_policy_fingerprint"]
+        == recovery["operation_policy_fingerprint"]
+        and legacy["intent_operation_id"]
+        == recovery["intent_operation_id"]
+        and legacy["mutation_operation_id"]
+        == recovery["mutation_operation_id"]
+        and recovery == expected_recovery
+    )
+
+
 def resolve_policy_recovery_chain(
     item: dict, evidence: dict[str, dict]
 ) -> list[tuple[str, dict]] | None:
@@ -333,6 +532,27 @@ def resolve_policy_recovery_chain(
     chain = list(reversed(reverse_chain))
     if chain[0][1].get("reconciliation_receipt_ref") is not None:
         return None
+    root_ref, root = chain[0]
+    native_root = (
+        root.get("checkpoint_state") == "revision-captured"
+        and all(
+            root.get(field) is None
+            for field in (
+                "migration_ref",
+                "migration_source_checkpoint_ref",
+                "migration_checkpoint_fingerprint",
+                "migration_target_thread_id",
+                "migration_target_host_id",
+            )
+        )
+    )
+    if not native_root and not valid_migrated_policy_recovery_root(
+        item,
+        root_ref,
+        root,
+        evidence,
+    ):
+        return None
     prior_ref, prior = chain[0]
     for successor_ref, successor in chain[1:]:
         if successor.get("predecessor_ref") != prior_ref:
@@ -345,7 +565,14 @@ def resolve_policy_recovery_chain(
         for field in POLICY_RECOVERY_IMMUTABLE_FIELDS:
             prior_value = prior.get(field)
             successor_value = successor.get(field)
-            if prior_value is not None and successor_value != prior_value:
+            if (
+                field.startswith("migration_")
+                and successor_value != prior_value
+            ) or (
+                not field.startswith("migration_")
+                and prior_value is not None
+                and successor_value != prior_value
+            ):
                 return None
         prior_state = prior.get("checkpoint_state")
         successor_state = successor.get("checkpoint_state")
@@ -563,7 +790,9 @@ def resolve_retired_policy_applications(
                 or application_receipt.get("recovery_ref")
                 != tombstone["recovery_ref"]
                 or evaluate_protected_policy_application(
-                    application_receipt, evidence
+                    application_receipt,
+                    evidence,
+                    current_recovery_ref=tombstone["recovery_ref"],
                 )
                 != terminal["terminal_application"]
             ):
@@ -1042,10 +1271,15 @@ def valid_policy_application_transition(
         policy_application_identity(item): item for item in after_active
     }
     for identity in after_active_ids[len(survivors) :]:
-        recovery = policy_recovery_head(after_by_id[identity], evidence)
-        if recovery is None or any(
+        item = after_by_id[identity]
+        recovery = policy_recovery_head(item, evidence)
+        if (
+            item["state"] != "revision-captured"
+            or recovery is None
+            or any(
             recovery.get(field) is not None
             for field in ("predecessor_ref", "reconciliation_receipt_ref")
+            )
         ):
             return False
     for identity in survivors:
@@ -1141,6 +1375,19 @@ def checkpoint_recovery_projection(
             or inherited.get("operation_namespace_ref")
             or "synthetic-operation-namespace"
         ),
+        "migration_ref": inherited.get("migration_ref"),
+        "migration_source_checkpoint_ref": inherited.get(
+            "migration_source_checkpoint_ref"
+        ),
+        "migration_checkpoint_fingerprint": inherited.get(
+            "migration_checkpoint_fingerprint"
+        ),
+        "migration_target_thread_id": inherited.get(
+            "migration_target_thread_id"
+        ),
+        "migration_target_host_id": inherited.get(
+            "migration_target_host_id"
+        ),
         "predecessor_ref": predecessor_ref,
         "reconciliation_receipt_ref": reconciliation_receipt_ref,
     }
@@ -1176,7 +1423,7 @@ def migrate_v1_policy_application_state(
         or not bounded_policy_scalar(target_host_id)
         or (
             migration_ref is not None
-            and not bounded_policy_scalar(migration_ref)
+            and not valid_sha256_fingerprint(migration_ref)
         )
         or (
             pre_feature_proof_ref is not None
@@ -1254,7 +1501,7 @@ def migrate_v1_policy_application_state(
     legacy = target["protected_policy_application"]
     if legacy is None:
         return empty_policy_application_state()
-    if not bounded_policy_scalar(migration_ref):
+    if not valid_sha256_fingerprint(migration_ref):
         return None
     if not isinstance(legacy, dict) or set(legacy) != {
         "schema",
@@ -1324,6 +1571,7 @@ def migrate_v1_policy_application_state(
         "schema",
         "source_checkpoint_schema",
         "checkpoint_fingerprint",
+        "source_checkpoint_ref",
         "target_thread_id",
         "target_host_id",
         "legacy_recovery_ref",
@@ -1339,6 +1587,7 @@ def migrate_v1_policy_application_state(
         bounded_policy_scalar(migration[field])
         for field in (
             "checkpoint_fingerprint",
+            "source_checkpoint_ref",
             "target_thread_id",
             "target_host_id",
             "legacy_recovery_ref",
@@ -1357,6 +1606,7 @@ def migrate_v1_policy_application_state(
         "schema": "codex.protected_policy_application_migration.v1",
         "source_checkpoint_schema": "codex.thread_supervision.v1",
         "checkpoint_fingerprint": fingerprint,
+        "source_checkpoint_ref": migration["source_checkpoint_ref"],
         "target_thread_id": target_thread_id,
         "target_host_id": target_host_id,
         "legacy_recovery_ref": legacy["recovery_ref"],
@@ -1367,7 +1617,11 @@ def migrate_v1_policy_application_state(
         "intent_operation_id": legacy["intent_operation_id"],
         "mutation_operation_id": legacy["mutation_operation_id"],
     }
-    if migration != expected:
+    if (
+        migration != expected
+        or checkpoint_fingerprint(migration) != migration_ref
+        or evidence.get(migration["source_checkpoint_ref"]) != checkpoint
+    ):
         return None
     migrated_recovery = evidence.get(migration["migrated_recovery_ref"])
     expected_migrated_recovery = {
@@ -1376,6 +1630,15 @@ def migrate_v1_policy_application_state(
         "application_id": migration["application_id"],
         "checkpoint_state": legacy["state"],
         "operation_namespace_ref": migration["operation_namespace_ref"],
+        "migration_ref": migration_ref,
+        "migration_source_checkpoint_ref": migration[
+            "source_checkpoint_ref"
+        ],
+        "migration_checkpoint_fingerprint": migration[
+            "checkpoint_fingerprint"
+        ],
+        "migration_target_thread_id": migration["target_thread_id"],
+        "migration_target_host_id": migration["target_host_id"],
         "predecessor_ref": None,
         "reconciliation_receipt_ref": None,
     }
@@ -1430,6 +1693,7 @@ def operation_policy_fingerprint(policy: dict) -> str:
         sort_keys=True,
         separators=(",", ":"),
         ensure_ascii=False,
+        allow_nan=False,
     ).encode("utf-8")
     return "sha256:" + hashlib.sha256(payload).hexdigest()
 
@@ -1604,6 +1868,21 @@ def trusted_policy_evidence() -> dict[str, dict]:
         ],
     }
     policy_fingerprint = operation_policy_fingerprint(policy)
+    revision_recovery_ref = (
+        "opaque-protected-policy-application-revision-recovery-ref"
+    )
+    adoption_recovery_ref = (
+        "opaque-protected-policy-application-adoption-recovery-ref"
+    )
+    intent_pending_recovery_ref = (
+        "opaque-protected-policy-application-intent-pending-recovery-ref"
+    )
+    intent_unknown_recovery_ref = (
+        "opaque-protected-policy-application-intent-unknown-recovery-ref"
+    )
+    mutation_pending_recovery_ref = (
+        "opaque-protected-policy-application-mutation-pending-recovery-ref"
+    )
     root_recovery_ref = "opaque-protected-policy-application-recovery-ref"
     terminal_recovery_ref = (
         "opaque-protected-policy-application-terminal-recovery-ref"
@@ -1611,11 +1890,11 @@ def trusted_policy_evidence() -> dict[str, dict]:
     terminal_reconciliation_ref = (
         "opaque-protected-policy-application-terminal-reconciliation-ref"
     )
-    root_recovery = {
+    revision_recovery = {
         "schema": "codex.protected_policy_application_recovery.v2",
         "application_id": "stable-opaque-application-id",
         "policy_revision_id": "opaque-user-authorized-revision",
-        "checkpoint_state": "mutation-outcome-unknown",
+        "checkpoint_state": "revision-captured",
         "receiver_thread_id": "opaque-receiver-thread-id",
         "operation_policy_fingerprint": policy_fingerprint,
         "store_schema": "codex.authorized_immutable_intent_store.v1",
@@ -1633,13 +1912,48 @@ def trusted_policy_evidence() -> dict[str, dict]:
         "operation_namespace_ref": (
             "opaque-owning-system-operation-namespace"
         ),
+        "migration_ref": None,
+        "migration_source_checkpoint_ref": None,
+        "migration_checkpoint_fingerprint": None,
+        "migration_target_thread_id": None,
+        "migration_target_host_id": None,
         "predecessor_ref": None,
         "reconciliation_receipt_ref": None,
     }
+    adoption_recovery = {
+        **revision_recovery,
+        "checkpoint_state": "adoption-pending",
+        "predecessor_ref": revision_recovery_ref,
+    }
+    intent_pending_recovery = {
+        **adoption_recovery,
+        "checkpoint_state": "intent-pending",
+        "predecessor_ref": adoption_recovery_ref,
+    }
+    intent_unknown_recovery = {
+        **intent_pending_recovery,
+        "checkpoint_state": "intent-outcome-unknown",
+        "predecessor_ref": intent_pending_recovery_ref,
+    }
+    mutation_pending_recovery = {
+        **intent_pending_recovery,
+        "checkpoint_state": "mutation-pending",
+        "predecessor_ref": intent_pending_recovery_ref,
+    }
+    mutation_unknown_recovery = {
+        **mutation_pending_recovery,
+        "checkpoint_state": "mutation-outcome-unknown",
+        "predecessor_ref": mutation_pending_recovery_ref,
+    }
     return {
-        root_recovery_ref: root_recovery,
+        revision_recovery_ref: revision_recovery,
+        adoption_recovery_ref: adoption_recovery,
+        intent_pending_recovery_ref: intent_pending_recovery,
+        intent_unknown_recovery_ref: intent_unknown_recovery,
+        mutation_pending_recovery_ref: mutation_pending_recovery,
+        root_recovery_ref: mutation_unknown_recovery,
         terminal_recovery_ref: {
-            **root_recovery,
+            **mutation_unknown_recovery,
             "checkpoint_state": "terminal",
             "predecessor_ref": root_recovery_ref,
             "reconciliation_receipt_ref": terminal_reconciliation_ref,
@@ -1768,15 +2082,26 @@ def trusted_policy_recovery_store() -> dict[str, dict]:
     return {
         recovery_ref: copy.deepcopy(evidence[recovery_ref])
         for recovery_ref in (
+            "opaque-protected-policy-application-revision-recovery-ref",
+            "opaque-protected-policy-application-adoption-recovery-ref",
+            "opaque-protected-policy-application-intent-pending-recovery-ref",
+            "opaque-protected-policy-application-intent-unknown-recovery-ref",
+            "opaque-protected-policy-application-mutation-pending-recovery-ref",
             "opaque-protected-policy-application-recovery-ref",
             "opaque-protected-policy-application-terminal-recovery-ref",
+            (
+                "opaque-protected-policy-application-"
+                "terminal-reconciliation-ref"
+            ),
         )
     }
 
 
-def evaluate_protected_policy_application(
+def _compute_protected_policy_application(
     receipt: dict,
     evidence: dict[str, dict] | None = None,
+    *,
+    current_recovery_ref: object = None,
 ) -> str:
     evidence = trusted_policy_evidence() if evidence is None else evidence
     try:
@@ -1825,6 +2150,11 @@ def evaluate_protected_policy_application(
             receipt["operation_policy_fingerprint"]
         ):
             return "invalid"
+        if (
+            not bounded_policy_scalar(current_recovery_ref)
+            or receipt["recovery_ref"] != current_recovery_ref
+        ):
+            return "invalid"
 
         policy = receipt["operation_policy"]
         if set(policy) != {
@@ -1869,34 +2199,18 @@ def evaluate_protected_policy_application(
         computed_operation_policy_fingerprint = operation_policy_fingerprint(
             policy
         )
-        recovery = trusted_policy_recovery_store().get(
-            receipt["recovery_ref"]
-        )
+        recovery_store = trusted_policy_recovery_store()
+        recovery = recovery_store.get(receipt["recovery_ref"])
         if (
             not isinstance(recovery, dict)
-            or set(recovery)
-            != {
-                "schema",
-                "application_id",
-                "policy_revision_id",
-                "checkpoint_state",
-                "receiver_thread_id",
-                "operation_policy_fingerprint",
-                "store_schema",
-                "store_ref",
-                "store_authorization_ref",
-                "intent_ref",
-                "destination_ref",
-                "subject_ref",
-                "intent_operation_id",
-                "mutation_operation_id",
-                "operation_namespace_ref",
-                "predecessor_ref",
-                "reconciliation_receipt_ref",
-            }
+            or set(recovery) != POLICY_RECOVERY_FIELDS
             or recovery["schema"]
             != "codex.protected_policy_application_recovery.v2"
-            or recovery["checkpoint_state"] != "terminal"
+            or not valid_policy_recovery_record(
+                recovery,
+                receipt["application_id"],
+                receipt["policy_revision_id"],
+            )
         ):
             return "invalid"
         for field in (
@@ -1952,6 +2266,26 @@ def evaluate_protected_policy_application(
             != computed_operation_policy_fingerprint
             or recovery["destination_ref"] != policy["destination_ref"]
             or recovery["subject_ref"] != policy["subject_ref"]
+        ):
+            return "invalid"
+        recovery_item = {
+            "schema": "codex.protected_policy_application_checkpoint.v2",
+            "application_id": receipt["application_id"],
+            "state": recovery["checkpoint_state"],
+            "policy_revision_id": receipt["policy_revision_id"],
+            "operation_policy_fingerprint": receipt[
+                "operation_policy_fingerprint"
+            ],
+            "recovery_ref": receipt["recovery_ref"],
+            "intent_operation_id": recovery["intent_operation_id"],
+            "mutation_operation_id": recovery["mutation_operation_id"],
+        }
+        if (
+            not valid_policy_application_entry(recovery_item)
+            or resolve_policy_recovery_chain(
+                recovery_item, recovery_store
+            )
+            is None
         ):
             return "invalid"
 
@@ -2080,6 +2414,17 @@ def evaluate_protected_policy_application(
                 intent["operation_policy_fingerprint"]
             )
         ):
+            return "invalid"
+        expected_recovery_state = (
+            "intent-outcome-unknown"
+            if intent_status == "outcome-unknown"
+            else (
+                "mutation-outcome-unknown"
+                if mutation_state == "outcome-unknown"
+                else "terminal"
+            )
+        )
+        if recovery["checkpoint_state"] != expected_recovery_state:
             return "invalid"
 
         readback = receipt["readback"]
@@ -2553,9 +2898,50 @@ def evaluate_protected_policy_application(
                 return "policy-drift"
             if observed != expected_by_field[field_ref]:
                 return "policy-drift"
-        return "applied" if receipt["application"] == "applied" else "invalid"
-    except (AttributeError, KeyError, TypeError):
+        return "applied"
+    except (AttributeError, KeyError, TypeError, ValueError):
         return "invalid"
+
+
+def evaluate_protected_policy_application(
+    receipt: dict,
+    evidence: dict[str, dict] | None = None,
+    *,
+    current_recovery_ref: object = None,
+) -> str:
+    computed = _compute_protected_policy_application(
+        receipt,
+        evidence,
+        current_recovery_ref=current_recovery_ref,
+    )
+    if computed == "invalid":
+        return "invalid"
+    try:
+        return (
+            computed
+            if receipt["application"] == computed
+            else "invalid"
+        )
+    except (KeyError, TypeError):
+        return "invalid"
+
+
+def evaluate_fixture_at_current_head(
+    receipt: dict,
+    evidence: dict[str, dict] | None = None,
+) -> str:
+    # Test convenience only: these fixtures model a checkpoint whose
+    # independently resolved current head is the receipt's bound ref.
+    current_recovery_ref = (
+        receipt.get("recovery_ref")
+        if isinstance(receipt, dict)
+        else None
+    )
+    return evaluate_protected_policy_application(
+        receipt,
+        evidence,
+        current_recovery_ref=current_recovery_ref,
+    )
 
 
 def adoption_failure_schedule(text: str) -> dict[str, str]:
@@ -2633,11 +3019,7 @@ class ThreadSupervisionContractTests(unittest.TestCase):
         self.assertIsNotNone(policy_applications)
         self.assertEqual(len(policy_applications), 1)
         policy_application = policy_applications[0]
-        recovery_evidence = {
-            policy_application["recovery_ref"]: trusted_policy_evidence()[
-                policy_application["recovery_ref"]
-            ]
-        }
+        recovery_evidence = trusted_policy_recovery_store()
         self.assertTrue(
             valid_policy_application_state(policy_state, recovery_evidence)
         )
@@ -2692,6 +3074,27 @@ class ThreadSupervisionContractTests(unittest.TestCase):
                         policy_state, null_binding_evidence
                     )
                 )
+        grafted_migration_provenance = copy.deepcopy(recovery_evidence)
+        grafted_migration_provenance[
+            policy_application["recovery_ref"]
+        ].update(
+            {
+                "migration_ref": "sha256:" + "0" * 64,
+                "migration_source_checkpoint_ref": (
+                    "grafted-source-checkpoint-ref"
+                ),
+                "migration_checkpoint_fingerprint": (
+                    "sha256:" + "1" * 64
+                ),
+                "migration_target_thread_id": "grafted-target-thread",
+                "migration_target_host_id": "grafted-target-host",
+            }
+        )
+        self.assertFalse(
+            valid_policy_application_state(
+                policy_state, grafted_migration_provenance
+            )
+        )
         self.assertEqual(
             set(policy_application),
             {
@@ -2731,6 +3134,48 @@ class ThreadSupervisionContractTests(unittest.TestCase):
         operation_namespace = recovery_evidence[
             policy_application["recovery_ref"]
         ]["operation_namespace_ref"]
+        for lifecycle_state in POLICY_APPLICATION_STATES:
+            fresh_root = {
+                "schema": (
+                    "codex.protected_policy_application_checkpoint.v2"
+                ),
+                "application_id": f"fresh-root-{lifecycle_state}",
+                "state": lifecycle_state,
+                "policy_revision_id": f"fresh-revision-{lifecycle_state}",
+                "operation_policy_fingerprint": (
+                    f"fresh-policy-fingerprint-{lifecycle_state}"
+                ),
+                "recovery_ref": f"fresh-recovery-{lifecycle_state}",
+                "intent_operation_id": f"fresh-intent-{lifecycle_state}",
+                "mutation_operation_id": (
+                    f"fresh-mutation-{lifecycle_state}"
+                ),
+            }
+            fresh_evidence = {
+                fresh_root["recovery_ref"]: (
+                    checkpoint_recovery_projection(fresh_root)
+                )
+            }
+            fresh_state = empty_policy_application_state()
+            fresh_state.update(
+                {"active_count": 1, "active_inline": [fresh_root]}
+            )
+            expected = lifecycle_state == "revision-captured"
+            with self.subTest(fresh_root_state=lifecycle_state):
+                self.assertEqual(
+                    valid_policy_application_state(
+                        fresh_state, fresh_evidence
+                    ),
+                    expected,
+                )
+                self.assertEqual(
+                    valid_policy_application_transition(
+                        empty_policy_application_state(),
+                        fresh_state,
+                        fresh_evidence,
+                    ),
+                    expected,
+                )
         recovery_evidence[later_application["recovery_ref"]] = (
             checkpoint_recovery_projection(
                 later_application,
@@ -3518,6 +3963,18 @@ class ThreadSupervisionContractTests(unittest.TestCase):
         self.assertTrue(
             valid_policy_application_state(overflow_state, overflow_evidence)
         )
+        indexed_noninitial_root = copy.deepcopy(overflow_evidence)
+        indexed_noninitial_root["active-index-nine"]["applications"][0][
+            "state"
+        ] = "adoption-pending"
+        indexed_noninitial_root["overflow-recovery-0"][
+            "checkpoint_state"
+        ] = "adoption-pending"
+        self.assertFalse(
+            valid_policy_application_state(
+                overflow_state, indexed_noninitial_root
+            )
+        )
         for malformed_count in (True, 9.0):
             malformed_count_state = copy.deepcopy(overflow_state)
             malformed_count_state["active_count"] = malformed_count
@@ -3567,7 +4024,7 @@ class ThreadSupervisionContractTests(unittest.TestCase):
             ],
         }
         legacy_fingerprint = checkpoint_fingerprint(legacy)
-        migration_ref = "legacy-migration-ref"
+        source_checkpoint_ref = "legacy-source-checkpoint-ref"
         migrated_recovery_ref = "migrated-recovery-ref"
         legacy_recovery = {
             "schema": "codex.protected_policy_application_recovery.v1",
@@ -3583,30 +4040,41 @@ class ThreadSupervisionContractTests(unittest.TestCase):
             "intent_operation_id": "legacy-intent-operation",
             "mutation_operation_id": "legacy-mutation-operation",
         }
+        migration_record = {
+            "schema": (
+                "codex.protected_policy_application_migration.v1"
+            ),
+            "source_checkpoint_schema": "codex.thread_supervision.v1",
+            "checkpoint_fingerprint": legacy_fingerprint,
+            "source_checkpoint_ref": source_checkpoint_ref,
+            "target_thread_id": target_thread_id,
+            "target_host_id": target_host_id,
+            "legacy_recovery_ref": "legacy-recovery-ref",
+            "migrated_recovery_ref": migrated_recovery_ref,
+            "operation_namespace_ref": "legacy-operation-namespace",
+            "application_id": "migrated-application-id",
+            "policy_revision_id": "legacy-revision",
+            "intent_operation_id": "legacy-intent-operation",
+            "mutation_operation_id": "legacy-mutation-operation",
+        }
+        migration_ref = checkpoint_fingerprint(migration_record)
         evidence = {
+            source_checkpoint_ref: legacy,
             "legacy-recovery-ref": legacy_recovery,
-            migration_ref: {
-                "schema": (
-                    "codex.protected_policy_application_migration.v1"
-                ),
-                "source_checkpoint_schema": "codex.thread_supervision.v1",
-                "checkpoint_fingerprint": legacy_fingerprint,
-                "target_thread_id": target_thread_id,
-                "target_host_id": target_host_id,
-                "legacy_recovery_ref": "legacy-recovery-ref",
-                "migrated_recovery_ref": migrated_recovery_ref,
-                "operation_namespace_ref": "legacy-operation-namespace",
-                "application_id": "migrated-application-id",
-                "policy_revision_id": "legacy-revision",
-                "intent_operation_id": "legacy-intent-operation",
-                "mutation_operation_id": "legacy-mutation-operation",
-            },
+            migration_ref: migration_record,
             migrated_recovery_ref: {
                 **legacy_recovery,
                 "schema": "codex.protected_policy_application_recovery.v2",
                 "application_id": "migrated-application-id",
                 "checkpoint_state": "mutation-outcome-unknown",
                 "operation_namespace_ref": "legacy-operation-namespace",
+                "migration_ref": migration_ref,
+                "migration_source_checkpoint_ref": (
+                    source_checkpoint_ref
+                ),
+                "migration_checkpoint_fingerprint": legacy_fingerprint,
+                "migration_target_thread_id": target_thread_id,
+                "migration_target_host_id": target_host_id,
                 "predecessor_ref": None,
                 "reconciliation_receipt_ref": None,
             },
@@ -3623,6 +4091,279 @@ class ThreadSupervisionContractTests(unittest.TestCase):
         self.assertEqual(active[0]["state"], "mutation-outcome-unknown")
         self.assertEqual(
             active[0]["recovery_ref"], migrated_recovery_ref
+        )
+        self.assertTrue(
+            valid_policy_application_state(migrated, evidence)
+        )
+        missing_migration_attestation = copy.deepcopy(evidence)
+        del missing_migration_attestation[migration_ref]
+        self.assertFalse(
+            valid_policy_application_state(
+                migrated, missing_migration_attestation
+            )
+        )
+        misbound_migration_attestation = copy.deepcopy(evidence)
+        misbound_migration_attestation[migration_ref][
+            "application_id"
+        ] = "different-migrated-application"
+        self.assertFalse(
+            valid_policy_application_state(
+                migrated, misbound_migration_attestation
+            )
+        )
+        for coherently_rebound_field, coherently_rebound_value in (
+            ("schema", "attacker.untyped_migration.v1"),
+            ("migrated_recovery_ref", "different-migrated-recovery-ref"),
+        ):
+            coherently_rebound_record = copy.deepcopy(migration_record)
+            coherently_rebound_record[
+                coherently_rebound_field
+            ] = coherently_rebound_value
+            coherently_rebound_ref = checkpoint_fingerprint(
+                coherently_rebound_record
+            )
+            coherently_rebound_evidence = copy.deepcopy(evidence)
+            coherently_rebound_evidence[
+                coherently_rebound_ref
+            ] = coherently_rebound_record
+            coherently_rebound_evidence[migrated_recovery_ref][
+                "migration_ref"
+            ] = coherently_rebound_ref
+            with self.subTest(
+                coherently_rebound_migration_field=coherently_rebound_field
+            ):
+                self.assertFalse(
+                    valid_policy_application_state(
+                        migrated, coherently_rebound_evidence
+                    )
+                )
+        self.assertFalse(
+            valid_policy_application_transition(
+                empty_policy_application_state(),
+                migrated,
+                evidence,
+            )
+        )
+        migrated_item = active[0]
+        reconciled_item = copy.deepcopy(migrated_item)
+        reconciled_item.update(
+            {
+                "state": "readback-pending",
+                "recovery_ref": "migrated-readback-recovery-ref",
+            }
+        )
+        reconciliation_ref = "migrated-readback-reconciliation-ref"
+        advanced_evidence = {
+            **evidence,
+            reconciled_item["recovery_ref"]: (
+                checkpoint_recovery_projection(
+                    reconciled_item,
+                    inherited_recovery=evidence[migrated_recovery_ref],
+                    predecessor_ref=migrated_recovery_ref,
+                    reconciliation_receipt_ref=reconciliation_ref,
+                    operation_namespace_ref=(
+                        "legacy-operation-namespace"
+                    ),
+                )
+            ),
+            reconciliation_ref: {
+                "schema": (
+                    "codex.protected_policy_application_reconciliation.v1"
+                ),
+                "authority": "owning-system",
+                "application_id": migrated_item["application_id"],
+                "policy_revision_id": migrated_item[
+                    "policy_revision_id"
+                ],
+                "from_state": "mutation-outcome-unknown",
+                "to_state": "readback-pending",
+                "from_recovery_ref": migrated_recovery_ref,
+                "to_recovery_ref": reconciled_item["recovery_ref"],
+                "intent_operation_id": migrated_item[
+                    "intent_operation_id"
+                ],
+                "mutation_operation_id": migrated_item[
+                    "mutation_operation_id"
+                ],
+            },
+        }
+        reconciled_migrated = empty_policy_application_state()
+        reconciled_migrated.update(
+            {
+                "active_count": 1,
+                "active_inline": [reconciled_item],
+            }
+        )
+        self.assertTrue(
+            valid_policy_application_state(
+                reconciled_migrated, advanced_evidence
+            )
+        )
+        self.assertTrue(
+            valid_policy_application_transition(
+                migrated,
+                reconciled_migrated,
+                advanced_evidence,
+            )
+        )
+        captured_source_ref = "captured-source-checkpoint-ref"
+        captured_legacy_ref = "captured-legacy-recovery-ref"
+        captured_root_ref = "captured-migrated-recovery-ref"
+        captured_legacy = copy.deepcopy(legacy)
+        captured_legacy_application = captured_legacy["targets"][0][
+            "protected_policy_application"
+        ]
+        captured_legacy_application.update(
+            {
+                "state": "revision-captured",
+                "recovery_ref": captured_legacy_ref,
+                "intent_operation_id": None,
+                "mutation_operation_id": None,
+            }
+        )
+        captured_fingerprint = checkpoint_fingerprint(captured_legacy)
+        captured_legacy_recovery = copy.deepcopy(legacy_recovery)
+        captured_legacy_recovery.update(
+            {
+                "intent_operation_id": None,
+                "mutation_operation_id": None,
+            }
+        )
+        captured_migration = copy.deepcopy(migration_record)
+        captured_migration.update(
+            {
+                "checkpoint_fingerprint": captured_fingerprint,
+                "source_checkpoint_ref": captured_source_ref,
+                "legacy_recovery_ref": captured_legacy_ref,
+                "migrated_recovery_ref": captured_root_ref,
+                "application_id": "captured-migrated-application-id",
+                "intent_operation_id": None,
+                "mutation_operation_id": None,
+            }
+        )
+        captured_migration_ref = checkpoint_fingerprint(captured_migration)
+        captured_evidence = {
+            captured_source_ref: captured_legacy,
+            captured_legacy_ref: captured_legacy_recovery,
+            captured_migration_ref: captured_migration,
+            captured_root_ref: {
+                **captured_legacy_recovery,
+                "schema": "codex.protected_policy_application_recovery.v2",
+                "application_id": "captured-migrated-application-id",
+                "checkpoint_state": "revision-captured",
+                "operation_namespace_ref": "legacy-operation-namespace",
+                "migration_ref": captured_migration_ref,
+                "migration_source_checkpoint_ref": captured_source_ref,
+                "migration_checkpoint_fingerprint": captured_fingerprint,
+                "migration_target_thread_id": target_thread_id,
+                "migration_target_host_id": target_host_id,
+                "predecessor_ref": None,
+                "reconciliation_receipt_ref": None,
+            },
+        }
+        captured_state = migrate_v1_policy_application_state(
+            captured_legacy,
+            captured_evidence,
+            target_thread_id=target_thread_id,
+            target_host_id=target_host_id,
+            migration_ref=captured_migration_ref,
+        )
+        self.assertIsNotNone(captured_state)
+        captured_item = resolve_active_policy_applications(
+            captured_state, captured_evidence
+        )[0]
+        adoption_item = copy.deepcopy(captured_item)
+        adoption_item.update(
+            {
+                "state": "adoption-pending",
+                "recovery_ref": "captured-adoption-recovery-ref",
+            }
+        )
+        adoption_evidence = {
+            **captured_evidence,
+            adoption_item["recovery_ref"]: checkpoint_recovery_projection(
+                adoption_item,
+                inherited_recovery=captured_evidence[captured_root_ref],
+                predecessor_ref=captured_root_ref,
+            ),
+        }
+        adoption_state = empty_policy_application_state()
+        adoption_state.update(
+            {"active_count": 1, "active_inline": [adoption_item]}
+        )
+        self.assertTrue(
+            valid_policy_application_state(adoption_state, adoption_evidence)
+        )
+        self.assertTrue(
+            valid_policy_application_transition(
+                captured_state, adoption_state, adoption_evidence
+            )
+        )
+        intent_item = copy.deepcopy(adoption_item)
+        intent_item.update(
+            {
+                "state": "intent-pending",
+                "recovery_ref": "captured-intent-recovery-ref",
+                "intent_operation_id": "captured-intent-operation-id",
+                "mutation_operation_id": "captured-mutation-operation-id",
+            }
+        )
+        intent_evidence = {
+            **adoption_evidence,
+            intent_item["recovery_ref"]: checkpoint_recovery_projection(
+                intent_item,
+                inherited_recovery=adoption_evidence[
+                    adoption_item["recovery_ref"]
+                ],
+                predecessor_ref=adoption_item["recovery_ref"],
+            ),
+        }
+        intent_state = empty_policy_application_state()
+        intent_state.update(
+            {"active_count": 1, "active_inline": [intent_item]}
+        )
+        self.assertTrue(
+            valid_policy_application_state(intent_state, intent_evidence)
+        )
+        self.assertTrue(
+            valid_policy_application_transition(
+                adoption_state, intent_state, intent_evidence
+            )
+        )
+        for rebound_field, rebound_value in (
+            ("target_thread_id", "different-target-thread"),
+            ("target_host_id", "different-target-host"),
+            ("checkpoint_fingerprint", "sha256:" + "0" * 64),
+        ):
+            rebound_evidence = copy.deepcopy(evidence)
+            rebound_evidence[migration_ref][
+                rebound_field
+            ] = rebound_value
+            with self.subTest(rebound_migration_field=rebound_field):
+                self.assertFalse(
+                    valid_policy_application_state(
+                        migrated, rebound_evidence
+                    )
+                )
+        unrelated_migration = copy.deepcopy(evidence[migration_ref])
+        unrelated_migration.update(
+            {
+                "migrated_recovery_ref": (
+                    "unrelated-migrated-recovery-ref"
+                ),
+                "application_id": "unrelated-application-id",
+                "target_thread_id": "unrelated-thread-id",
+                "target_host_id": "unrelated-host-id",
+            }
+        )
+        evidence_with_unrelated_migration = {
+            **evidence,
+            "unrelated-migration-ref": unrelated_migration,
+        }
+        self.assertTrue(
+            valid_policy_application_state(
+                migrated, evidence_with_unrelated_migration
+            )
         )
         for malformed_state in ([], {}):
             malformed_legacy_state = copy.deepcopy(legacy)
@@ -3672,6 +4413,7 @@ class ThreadSupervisionContractTests(unittest.TestCase):
         )
         for malformed_migration_field in (
             "checkpoint_fingerprint",
+            "source_checkpoint_ref",
             "target_thread_id",
             "target_host_id",
             "legacy_recovery_ref",
@@ -3704,6 +4446,17 @@ class ThreadSupervisionContractTests(unittest.TestCase):
             migrate_v1_policy_application_state(
                 legacy,
                 missing_legacy_recovery,
+                target_thread_id=target_thread_id,
+                target_host_id=target_host_id,
+                migration_ref=migration_ref,
+            )
+        )
+        missing_source_checkpoint = copy.deepcopy(evidence)
+        del missing_source_checkpoint[source_checkpoint_ref]
+        self.assertIsNone(
+            migrate_v1_policy_application_state(
+                legacy,
+                missing_source_checkpoint,
                 target_thread_id=target_thread_id,
                 target_host_id=target_host_id,
                 migration_ref=migration_ref,
@@ -4153,6 +4906,27 @@ class ThreadSupervisionContractTests(unittest.TestCase):
     def test_protected_policy_application_blocks_stale_mutations(self):
         reference = REFERENCE.read_text(encoding="utf-8")
         receipt = protected_policy_application_example(reference)
+        for non_json_number in (
+            float("nan"),
+            float("inf"),
+            float("-inf"),
+        ):
+            noncanonical_policy = copy.deepcopy(
+                receipt["operation_policy"]
+            )
+            noncanonical_policy["eligibility_cutoff"] = non_json_number
+            with self.assertRaises(ValueError):
+                operation_policy_fingerprint(noncanonical_policy)
+            noncanonical_receipt = copy.deepcopy(receipt)
+            noncanonical_receipt["operation_policy"][
+                "eligibility_cutoff"
+            ] = non_json_number
+            self.assertEqual(
+                evaluate_fixture_at_current_head(
+                    noncanonical_receipt
+                ),
+                "invalid",
+            )
         self.assertEqual(
             receipt["schema"], "codex.protected_policy_application.v2"
         )
@@ -4188,7 +4962,7 @@ class ThreadSupervisionContractTests(unittest.TestCase):
         wrong_application_id = copy.deepcopy(receipt)
         wrong_application_id["application_id"] = "different-application-id"
         self.assertEqual(
-            evaluate_protected_policy_application(wrong_application_id),
+            evaluate_fixture_at_current_head(wrong_application_id),
             "invalid",
         )
         self.assertEqual(
@@ -4310,7 +5084,7 @@ class ThreadSupervisionContractTests(unittest.TestCase):
             },
         )
         self.assertEqual(
-            evaluate_protected_policy_application(receipt), "applied"
+            evaluate_fixture_at_current_head(receipt), "applied"
         )
         self.assertEqual(
             receipt["operation_policy"]["mandatory_fields"][0][
@@ -4446,21 +5220,21 @@ class ThreadSupervisionContractTests(unittest.TestCase):
             target[path[-1]] = f"{value}-substituted"
             with self.subTest(single_leaf_substitution=".".join(map(str, path))):
                 self.assertNotEqual(
-                    evaluate_protected_policy_application(substituted),
+                    evaluate_fixture_at_current_head(substituted),
                     "applied",
                 )
 
         cross_receiver_replay = copy.deepcopy(receipt)
         cross_receiver_replay["receiver_thread_id"] = "different-receiver"
         self.assertEqual(
-            evaluate_protected_policy_application(cross_receiver_replay),
+            evaluate_fixture_at_current_head(cross_receiver_replay),
             "invalid",
         )
 
         missing_adoption_evidence = copy.deepcopy(receipt)
         missing_adoption_evidence["receiver_adoption"]["acknowledgement_ref"] = ""
         self.assertEqual(
-            evaluate_protected_policy_application(missing_adoption_evidence),
+            evaluate_fixture_at_current_head(missing_adoption_evidence),
             "invalid",
         )
 
@@ -4469,7 +5243,7 @@ class ThreadSupervisionContractTests(unittest.TestCase):
             "to_protected_contract_fingerprint"
         ] = "different-protected-fingerprint"
         self.assertEqual(
-            evaluate_protected_policy_application(wrong_adopted_fingerprint),
+            evaluate_fixture_at_current_head(wrong_adopted_fingerprint),
             "invalid",
         )
 
@@ -4478,14 +5252,14 @@ class ThreadSupervisionContractTests(unittest.TestCase):
             "from_protected_contract_fingerprint"
         ] = "different-prior-protected-fingerprint"
         self.assertEqual(
-            evaluate_protected_policy_application(wrong_predecessor_fingerprint),
+            evaluate_fixture_at_current_head(wrong_predecessor_fingerprint),
             "invalid",
         )
 
         understated_application = copy.deepcopy(receipt)
         understated_application["application"] = "blocked"
         self.assertEqual(
-            evaluate_protected_policy_application(understated_application),
+            evaluate_fixture_at_current_head(understated_application),
             "invalid",
         )
 
@@ -4494,7 +5268,7 @@ class ThreadSupervisionContractTests(unittest.TestCase):
             "sha256:" + "0" * 64
         )
         self.assertEqual(
-            evaluate_protected_policy_application(wrong_policy_fingerprint),
+            evaluate_fixture_at_current_head(wrong_policy_fingerprint),
             "invalid",
         )
 
@@ -4503,7 +5277,7 @@ class ThreadSupervisionContractTests(unittest.TestCase):
             "receiver_acknowledgement_ref"
         ] = "different-receiver-ack"
         self.assertEqual(
-            evaluate_protected_policy_application(late_adoption_intent),
+            evaluate_fixture_at_current_head(late_adoption_intent),
             "invalid",
         )
 
@@ -4512,7 +5286,7 @@ class ThreadSupervisionContractTests(unittest.TestCase):
             "prewrite_intent_ref"
         ] = "different-prewrite-intent"
         self.assertEqual(
-            evaluate_protected_policy_application(wrong_mutation_intent),
+            evaluate_fixture_at_current_head(wrong_mutation_intent),
             "invalid",
         )
 
@@ -4520,8 +5294,9 @@ class ThreadSupervisionContractTests(unittest.TestCase):
         wrong_mutation_operation["readback"][
             "mutation_operation_id"
         ] = "different-mutation-operation"
+        wrong_mutation_operation["application"] = "policy-drift"
         self.assertEqual(
-            evaluate_protected_policy_application(wrong_mutation_operation),
+            evaluate_fixture_at_current_head(wrong_mutation_operation),
             "policy-drift",
         )
 
@@ -4530,7 +5305,7 @@ class ThreadSupervisionContractTests(unittest.TestCase):
             "destination_ref"
         ] = "different-destination"
         self.assertEqual(
-            evaluate_protected_policy_application(wrong_mutation_destination),
+            evaluate_fixture_at_current_head(wrong_mutation_destination),
             "invalid",
         )
 
@@ -4539,7 +5314,7 @@ class ThreadSupervisionContractTests(unittest.TestCase):
             "result_object_ref"
         ] = "different-object"
         self.assertEqual(
-            evaluate_protected_policy_application(
+            evaluate_fixture_at_current_head(
                 wrong_mutation_result_object
             ),
             "invalid",
@@ -4547,8 +5322,9 @@ class ThreadSupervisionContractTests(unittest.TestCase):
 
         wrong_readback_object = copy.deepcopy(receipt)
         wrong_readback_object["readback"]["object_ref"] = "different-object"
+        wrong_readback_object["application"] = "policy-drift"
         self.assertEqual(
-            evaluate_protected_policy_application(wrong_readback_object),
+            evaluate_fixture_at_current_head(wrong_readback_object),
             "policy-drift",
         )
 
@@ -4557,7 +5333,7 @@ class ThreadSupervisionContractTests(unittest.TestCase):
             "store_schema"
         ] = "filesystem.local-write.v1"
         self.assertEqual(
-            evaluate_protected_policy_application(unauthorized_store),
+            evaluate_fixture_at_current_head(unauthorized_store),
             "invalid",
         )
 
@@ -4566,7 +5342,7 @@ class ThreadSupervisionContractTests(unittest.TestCase):
             "store_authorization_ref"
         ] = ""
         self.assertEqual(
-            evaluate_protected_policy_application(missing_store_authorization),
+            evaluate_fixture_at_current_head(missing_store_authorization),
             "invalid",
         )
 
@@ -4575,7 +5351,7 @@ class ThreadSupervisionContractTests(unittest.TestCase):
             "immutability_evidence_ref"
         ] = ""
         self.assertEqual(
-            evaluate_protected_policy_application(missing_immutability),
+            evaluate_fixture_at_current_head(missing_immutability),
             "invalid",
         )
 
@@ -4583,15 +5359,17 @@ class ThreadSupervisionContractTests(unittest.TestCase):
         stale_readback["readback"][
             "mutation_receipt_ref"
         ] = "different-mutation-receipt"
+        stale_readback["application"] = "policy-drift"
         self.assertEqual(
-            evaluate_protected_policy_application(stale_readback),
+            evaluate_fixture_at_current_head(stale_readback),
             "policy-drift",
         )
 
         unordered_readback = copy.deepcopy(receipt)
         unordered_readback["readback"]["relation"] = "before-mutation"
+        unordered_readback["application"] = "policy-drift"
         self.assertEqual(
-            evaluate_protected_policy_application(unordered_readback),
+            evaluate_fixture_at_current_head(unordered_readback),
             "policy-drift",
         )
 
@@ -4654,13 +5432,14 @@ class ThreadSupervisionContractTests(unittest.TestCase):
             target[path[-1]] = value
             with self.subTest(malformed_nested_field=label):
                 self.assertEqual(
-                    evaluate_protected_policy_application(malformed), "invalid"
+                    evaluate_fixture_at_current_head(malformed), "invalid"
                 )
 
         missing = copy.deepcopy(receipt)
         missing["readback"]["field_results"] = []
+        missing["application"] = "policy-drift"
         self.assertEqual(
-            evaluate_protected_policy_application(missing), "policy-drift"
+            evaluate_fixture_at_current_head(missing), "policy-drift"
         )
 
         duplicate = copy.deepcopy(receipt)
@@ -4668,7 +5447,7 @@ class ThreadSupervisionContractTests(unittest.TestCase):
             copy.deepcopy(duplicate["readback"]["field_results"][0])
         )
         self.assertEqual(
-            evaluate_protected_policy_application(duplicate), "invalid"
+            evaluate_fixture_at_current_head(duplicate), "invalid"
         )
 
         mismatched = copy.deepcopy(receipt)
@@ -4676,7 +5455,7 @@ class ThreadSupervisionContractTests(unittest.TestCase):
             "observed_value_fingerprint"
         ]["digest"] = "3" * 64
         self.assertEqual(
-            evaluate_protected_policy_application(mismatched), "invalid"
+            evaluate_fixture_at_current_head(mismatched), "invalid"
         )
 
         nul_field_ref = copy.deepcopy(receipt)
@@ -4687,7 +5466,7 @@ class ThreadSupervisionContractTests(unittest.TestCase):
             "field_ref"
         ] = "opaque-domain\x00field-ref"
         self.assertEqual(
-            evaluate_protected_policy_application(nul_field_ref), "invalid"
+            evaluate_fixture_at_current_head(nul_field_ref), "invalid"
         )
 
         for label, fingerprint in (
@@ -4722,7 +5501,7 @@ class ThreadSupervisionContractTests(unittest.TestCase):
             ] = malformed_fingerprint["operation_policy_fingerprint"]
             with self.subTest(malformed_keyed_fingerprint=label):
                 self.assertEqual(
-                    evaluate_protected_policy_application(malformed_fingerprint),
+                    evaluate_fixture_at_current_head(malformed_fingerprint),
                     "invalid",
                 )
 
@@ -4790,7 +5569,7 @@ class ThreadSupervisionContractTests(unittest.TestCase):
         # Matching receipt and evidence echoes cannot replace the independent
         # verifier's authorized key, source binding, and HMAC recomputation.
         self.assertEqual(
-            evaluate_protected_policy_application(
+            evaluate_fixture_at_current_head(
                 forged_keyed_receipt,
                 forged_evidence,
             ),
@@ -4828,7 +5607,7 @@ class ThreadSupervisionContractTests(unittest.TestCase):
         # The generic evidence map cannot replace the independently loaded
         # private immutable recovery record, even when every echo agrees.
         self.assertEqual(
-            evaluate_protected_policy_application(
+            evaluate_fixture_at_current_head(
                 coordinated_policy_body,
                 coordinated_policy_evidence,
             ),
@@ -4867,8 +5646,9 @@ class ThreadSupervisionContractTests(unittest.TestCase):
             "value_fingerprint": different_observation_fingerprint,
             "status": "mismatched",
         }
+        verified_field_drift["application"] = "policy-drift"
         self.assertEqual(
-            evaluate_protected_policy_application(
+            evaluate_fixture_at_current_head(
                 verified_field_drift,
                 verified_field_drift_evidence,
             ),
@@ -4895,8 +5675,9 @@ class ThreadSupervisionContractTests(unittest.TestCase):
             "value_fingerprint": None,
             "status": "missing",
         }
+        verified_missing_field["application"] = "policy-drift"
         self.assertEqual(
-            evaluate_protected_policy_application(
+            evaluate_fixture_at_current_head(
                 verified_missing_field,
                 verified_missing_evidence,
             ),
@@ -4922,7 +5703,7 @@ class ThreadSupervisionContractTests(unittest.TestCase):
             }
         )
         self.assertEqual(
-            evaluate_protected_policy_application(
+            evaluate_fixture_at_current_head(
                 unverified_observation_echo,
                 unverified_observation_evidence,
             ),
@@ -4981,8 +5762,9 @@ class ThreadSupervisionContractTests(unittest.TestCase):
 
         adopted_intent_without_mutation = copy.deepcopy(receipt)
         mark_not_attempted(adopted_intent_without_mutation)
+        adopted_intent_without_mutation["application"] = "blocked"
         self.assertEqual(
-            evaluate_protected_policy_application(
+            evaluate_fixture_at_current_head(
                 adopted_intent_without_mutation
             ),
             "blocked",
@@ -4991,8 +5773,9 @@ class ThreadSupervisionContractTests(unittest.TestCase):
         intent_before_adoption = copy.deepcopy(receipt)
         intent_before_adoption["receiver_adoption"]["status"] = "not-proven"
         mark_not_attempted(intent_before_adoption)
+        intent_before_adoption["application"] = "policy-drift"
         self.assertEqual(
-            evaluate_protected_policy_application(intent_before_adoption),
+            evaluate_fixture_at_current_head(intent_before_adoption),
             "policy-drift",
         )
 
@@ -5001,8 +5784,9 @@ class ThreadSupervisionContractTests(unittest.TestCase):
             "not-proven"
         )
         mark_readback_not_run(incomplete_before_adoption)
+        incomplete_before_adoption["application"] = "policy-drift"
         self.assertEqual(
-            evaluate_protected_policy_application(
+            evaluate_fixture_at_current_head(
                 incomplete_before_adoption
             ),
             "policy-drift",
@@ -5014,7 +5798,7 @@ class ThreadSupervisionContractTests(unittest.TestCase):
         ] = "different-policy-revision"
         mark_readback_not_run(incomplete_with_adoption_mismatch)
         self.assertEqual(
-            evaluate_protected_policy_application(
+            evaluate_fixture_at_current_head(
                 incomplete_with_adoption_mismatch
             ),
             "invalid",
@@ -5026,7 +5810,7 @@ class ThreadSupervisionContractTests(unittest.TestCase):
         ] = "before-adoption"
         mark_readback_not_run(incomplete_with_intent_ordering_drift)
         self.assertEqual(
-            evaluate_protected_policy_application(
+            evaluate_fixture_at_current_head(
                 incomplete_with_intent_ordering_drift
             ),
             "invalid",
@@ -5069,7 +5853,7 @@ class ThreadSupervisionContractTests(unittest.TestCase):
                     evidence_state=evidence_state,
                 ):
                     self.assertEqual(
-                        evaluate_protected_policy_application(
+                        evaluate_fixture_at_current_head(
                             incomplete_with_untrusted_gate,
                             untrusted_evidence,
                         ),
@@ -5078,8 +5862,9 @@ class ThreadSupervisionContractTests(unittest.TestCase):
 
         stale_receiver = copy.deepcopy(intent_before_adoption)
         mark_intent_unwritten(stale_receiver)
+        stale_receiver["application"] = "blocked"
         self.assertEqual(
-            evaluate_protected_policy_application(stale_receiver), "blocked"
+            evaluate_fixture_at_current_head(stale_receiver), "blocked"
         )
 
         not_attempted_with_mutation_observation = copy.deepcopy(receipt)
@@ -5088,7 +5873,7 @@ class ThreadSupervisionContractTests(unittest.TestCase):
             "operation_id"
         ] = receipt["mutation"]["operation_id"]
         self.assertEqual(
-            evaluate_protected_policy_application(
+            evaluate_fixture_at_current_head(
                 not_attempted_with_mutation_observation
             ),
             "invalid",
@@ -5100,7 +5885,7 @@ class ThreadSupervisionContractTests(unittest.TestCase):
             "object_ref"
         ] = receipt["readback"]["object_ref"]
         self.assertEqual(
-            evaluate_protected_policy_application(
+            evaluate_fixture_at_current_head(
                 not_attempted_with_readback_observation
             ),
             "invalid",
@@ -5113,14 +5898,15 @@ class ThreadSupervisionContractTests(unittest.TestCase):
             copy.deepcopy(malformed_result),
         ]
         self.assertEqual(
-            evaluate_protected_policy_application(malformed_stale_receiver),
+            evaluate_fixture_at_current_head(malformed_stale_receiver),
             "invalid",
         )
 
         unauthorized_mutation = copy.deepcopy(receipt)
         unauthorized_mutation["receiver_adoption"]["status"] = "not-proven"
+        unauthorized_mutation["application"] = "policy-drift"
         self.assertEqual(
-            evaluate_protected_policy_application(unauthorized_mutation),
+            evaluate_fixture_at_current_head(unauthorized_mutation),
             "policy-drift",
         )
 
@@ -5128,6 +5914,10 @@ class ThreadSupervisionContractTests(unittest.TestCase):
         nonadopted_unknown["receiver_adoption"]["status"] = "not-proven"
         nonadopted_unknown["mutation"]["state"] = "outcome-unknown"
         nonadopted_unknown["mutation"]["receipt_ref"] = None
+        nonadopted_unknown["recovery_ref"] = (
+            "opaque-protected-policy-application-recovery-ref"
+        )
+        nonadopted_unknown["application"] = "reconciliation-required"
         nonadopted_unknown["readback"].update(
             {
                 "state": "not-run",
@@ -5141,15 +5931,62 @@ class ThreadSupervisionContractTests(unittest.TestCase):
             }
         )
         self.assertEqual(
-            evaluate_protected_policy_application(nonadopted_unknown),
+            evaluate_fixture_at_current_head(nonadopted_unknown),
             "reconciliation-required",
+        )
+        mutation_unknown_with_terminal_head = copy.deepcopy(
+            nonadopted_unknown
+        )
+        mutation_unknown_with_terminal_head["recovery_ref"] = (
+            "opaque-protected-policy-application-terminal-recovery-ref"
+        )
+        self.assertEqual(
+            evaluate_fixture_at_current_head(
+                mutation_unknown_with_terminal_head
+            ),
+            "invalid",
+        )
+        mutation_unknown_with_intent_head = copy.deepcopy(
+            nonadopted_unknown
+        )
+        mutation_unknown_with_intent_head["recovery_ref"] = (
+            "opaque-protected-policy-application-"
+            "intent-unknown-recovery-ref"
+        )
+        self.assertEqual(
+            evaluate_fixture_at_current_head(
+                mutation_unknown_with_intent_head
+            ),
+            "invalid",
+        )
+        substituted_recovery_ref = "generic-substituted-recovery-ref"
+        mutation_unknown_with_substituted_head = copy.deepcopy(
+            nonadopted_unknown
+        )
+        mutation_unknown_with_substituted_head[
+            "recovery_ref"
+        ] = substituted_recovery_ref
+        generic_recovery_evidence = trusted_policy_evidence()
+        generic_recovery_evidence[substituted_recovery_ref] = (
+            copy.deepcopy(
+                trusted_policy_recovery_store()[
+                    "opaque-protected-policy-application-recovery-ref"
+                ]
+            )
+        )
+        self.assertEqual(
+            evaluate_fixture_at_current_head(
+                mutation_unknown_with_substituted_head,
+                generic_recovery_evidence,
+            ),
+            "invalid",
         )
         unknown_with_wrong_application = copy.deepcopy(nonadopted_unknown)
         unknown_with_wrong_application["application_id"] = (
             "different-application-id"
         )
         self.assertEqual(
-            evaluate_protected_policy_application(
+            evaluate_fixture_at_current_head(
                 unknown_with_wrong_application
             ),
             "invalid",
@@ -5159,7 +5996,7 @@ class ThreadSupervisionContractTests(unittest.TestCase):
             "operation"
         ] = "update"
         self.assertEqual(
-            evaluate_protected_policy_application(
+            evaluate_fixture_at_current_head(
                 unknown_with_stale_policy_body
             ),
             "invalid",
@@ -5170,7 +6007,7 @@ class ThreadSupervisionContractTests(unittest.TestCase):
             "sha256:" + "0" * 64
         )
         self.assertEqual(
-            evaluate_protected_policy_application(
+            evaluate_fixture_at_current_head(
                 unknown_with_policy_mismatch
             ),
             "invalid",
@@ -5184,7 +6021,7 @@ class ThreadSupervisionContractTests(unittest.TestCase):
             "store_schema"
         ] = "different-store-schema"
         self.assertEqual(
-            evaluate_protected_policy_application(
+            evaluate_fixture_at_current_head(
                 unknown_with_binding_mismatch
             ),
             "reconciliation-required",
@@ -5195,7 +6032,7 @@ class ThreadSupervisionContractTests(unittest.TestCase):
             "operation_policy_fingerprint"
         ] = "not-a-fingerprint"
         self.assertEqual(
-            evaluate_protected_policy_application(
+            evaluate_fixture_at_current_head(
                 unknown_with_malformed_fingerprint
             ),
             "invalid",
@@ -5204,7 +6041,7 @@ class ThreadSupervisionContractTests(unittest.TestCase):
         missing_mutation_operation = copy.deepcopy(nonadopted_unknown)
         missing_mutation_operation["mutation"]["operation_id"] = None
         self.assertEqual(
-            evaluate_protected_policy_application(missing_mutation_operation),
+            evaluate_fixture_at_current_head(missing_mutation_operation),
             "invalid",
         )
 
@@ -5221,7 +6058,7 @@ class ThreadSupervisionContractTests(unittest.TestCase):
                 f"different-{field.replace('_', '-')}"
             )
             self.assertEqual(
-                evaluate_protected_policy_application(
+                evaluate_fixture_at_current_head(
                     conflicting_unknown_identity
                 ),
                 "invalid",
@@ -5246,7 +6083,7 @@ class ThreadSupervisionContractTests(unittest.TestCase):
             }
         )
         self.assertEqual(
-            evaluate_protected_policy_application(
+            evaluate_fixture_at_current_head(
                 coordinated_unknown_identity
             ),
             "invalid",
@@ -5260,7 +6097,7 @@ class ThreadSupervisionContractTests(unittest.TestCase):
             "prewrite_intent_ref"
         ] = "different-intent-ref"
         self.assertEqual(
-            evaluate_protected_policy_application(
+            evaluate_fixture_at_current_head(
                 coordinated_unknown_intent_ref
             ),
             "invalid",
@@ -5286,8 +6123,9 @@ class ThreadSupervisionContractTests(unittest.TestCase):
             }
         )
         mark_not_attempted(no_intent_store)
+        no_intent_store["application"] = "blocked"
         self.assertEqual(
-            evaluate_protected_policy_application(no_intent_store), "blocked"
+            evaluate_fixture_at_current_head(no_intent_store), "blocked"
         )
 
         intent_outcome_unknown = copy.deepcopy(receipt)
@@ -5299,10 +6137,125 @@ class ThreadSupervisionContractTests(unittest.TestCase):
             }
         )
         mark_not_attempted(intent_outcome_unknown)
+        intent_outcome_unknown["recovery_ref"] = (
+            "opaque-protected-policy-application-"
+            "intent-unknown-recovery-ref"
+        )
+        intent_outcome_unknown["application"] = (
+            "reconciliation-required"
+        )
         self.assertEqual(
-            evaluate_protected_policy_application(intent_outcome_unknown),
+            evaluate_fixture_at_current_head(intent_outcome_unknown),
             "reconciliation-required",
         )
+        self.assertEqual(
+            evaluate_protected_policy_application(
+                intent_outcome_unknown
+            ),
+            "invalid",
+        )
+        stale_intent_head_ref = intent_outcome_unknown["recovery_ref"]
+        current_intent_head_ref = (
+            "opaque-current-intent-unknown-recovery-ref"
+        )
+        current_intent_head = copy.deepcopy(
+            trusted_policy_recovery_store()[stale_intent_head_ref]
+        )
+        current_intent_head.update(
+            {
+                "predecessor_ref": stale_intent_head_ref,
+                "reconciliation_receipt_ref": None,
+            }
+        )
+        current_intent_item = {
+            "schema": "codex.protected_policy_application_checkpoint.v2",
+            "application_id": intent_outcome_unknown["application_id"],
+            "state": "intent-outcome-unknown",
+            "policy_revision_id": intent_outcome_unknown[
+                "policy_revision_id"
+            ],
+            "operation_policy_fingerprint": intent_outcome_unknown[
+                "operation_policy_fingerprint"
+            ],
+            "recovery_ref": current_intent_head_ref,
+            "intent_operation_id": current_intent_head[
+                "intent_operation_id"
+            ],
+            "mutation_operation_id": current_intent_head[
+                "mutation_operation_id"
+            ],
+        }
+        current_intent_state = empty_policy_application_state()
+        current_intent_state.update(
+            {
+                "active_count": 1,
+                "active_inline": [current_intent_item],
+            }
+        )
+        current_intent_evidence = trusted_policy_recovery_store()
+        current_intent_evidence[
+            current_intent_head_ref
+        ] = current_intent_head
+        self.assertTrue(
+            valid_policy_application_state(
+                current_intent_state, current_intent_evidence
+            )
+        )
+        self.assertEqual(
+            evaluate_protected_policy_application(
+                intent_outcome_unknown,
+                current_recovery_ref=current_intent_head_ref,
+            ),
+            "invalid",
+        )
+        intent_unknown_with_terminal_head = copy.deepcopy(
+            intent_outcome_unknown
+        )
+        intent_unknown_with_terminal_head["recovery_ref"] = (
+            "opaque-protected-policy-application-terminal-recovery-ref"
+        )
+        self.assertEqual(
+            evaluate_fixture_at_current_head(
+                intent_unknown_with_terminal_head
+            ),
+            "invalid",
+        )
+        intent_unknown_with_mutation_head = copy.deepcopy(
+            intent_outcome_unknown
+        )
+        intent_unknown_with_mutation_head["recovery_ref"] = (
+            "opaque-protected-policy-application-recovery-ref"
+        )
+        self.assertEqual(
+            evaluate_fixture_at_current_head(
+                intent_unknown_with_mutation_head
+            ),
+            "invalid",
+        )
+        declared_results = {
+            "invalid",
+            "blocked",
+            "applied",
+            "policy-drift",
+            "reconciliation-required",
+        }
+        for canonical, computed in (
+            (adopted_intent_without_mutation, "blocked"),
+            (intent_before_adoption, "policy-drift"),
+            (receipt, "applied"),
+            (intent_outcome_unknown, "reconciliation-required"),
+        ):
+            for declared in declared_results:
+                candidate = copy.deepcopy(canonical)
+                candidate["application"] = declared
+                with self.subTest(
+                    computed_application=computed,
+                    declared_application=declared,
+                ):
+                    self.assertEqual(
+                        evaluate_fixture_at_current_head(candidate),
+                        computed if declared == computed else "invalid",
+                    )
         intent_unknown_with_wrong_application = copy.deepcopy(
             intent_outcome_unknown
         )
@@ -5310,7 +6263,7 @@ class ThreadSupervisionContractTests(unittest.TestCase):
             "different-application-id"
         )
         self.assertEqual(
-            evaluate_protected_policy_application(
+            evaluate_fixture_at_current_head(
                 intent_unknown_with_wrong_application
             ),
             "invalid",
@@ -5322,7 +6275,7 @@ class ThreadSupervisionContractTests(unittest.TestCase):
             "eligibility_cutoff"
         ] = "different-eligibility-cutoff"
         self.assertEqual(
-            evaluate_protected_policy_application(
+            evaluate_fixture_at_current_head(
                 intent_unknown_with_stale_policy_body
             ),
             "invalid",
@@ -5335,7 +6288,7 @@ class ThreadSupervisionContractTests(unittest.TestCase):
             "operation_policy_fingerprint"
         ] = "sha256:" + "0" * 64
         self.assertEqual(
-            evaluate_protected_policy_application(
+            evaluate_fixture_at_current_head(
                 intent_unknown_with_policy_mismatch
             ),
             "invalid",
@@ -5344,7 +6297,7 @@ class ThreadSupervisionContractTests(unittest.TestCase):
         missing_intent_operation = copy.deepcopy(intent_outcome_unknown)
         missing_intent_operation["prewrite_intent"]["operation_id"] = None
         self.assertEqual(
-            evaluate_protected_policy_application(missing_intent_operation),
+            evaluate_fixture_at_current_head(missing_intent_operation),
             "invalid",
         )
 
@@ -5355,7 +6308,7 @@ class ThreadSupervisionContractTests(unittest.TestCase):
             "mutation_operation_id"
         ] = None
         self.assertEqual(
-            evaluate_protected_policy_application(
+            evaluate_fixture_at_current_head(
                 missing_retained_mutation_operation
             ),
             "invalid",
@@ -5369,7 +6322,7 @@ class ThreadSupervisionContractTests(unittest.TestCase):
             }
         )
         self.assertEqual(
-            evaluate_protected_policy_application(
+            evaluate_fixture_at_current_head(
                 coordinated_unknown_intent
             ),
             "invalid",
@@ -5401,7 +6354,7 @@ class ThreadSupervisionContractTests(unittest.TestCase):
             }
         )
         self.assertEqual(
-            evaluate_protected_policy_application(
+            evaluate_fixture_at_current_head(
                 intent_unknown_with_committed_mutation
             ),
             "invalid",
@@ -5432,7 +6385,7 @@ class ThreadSupervisionContractTests(unittest.TestCase):
             }
         )
         self.assertEqual(
-            evaluate_protected_policy_application(
+            evaluate_fixture_at_current_head(
                 intent_and_mutation_both_unknown
             ),
             "invalid",
@@ -5445,7 +6398,7 @@ class ThreadSupervisionContractTests(unittest.TestCase):
             "operation_id"
         ] = "stale-mutation-operation-id"
         self.assertEqual(
-            evaluate_protected_policy_application(
+            evaluate_fixture_at_current_head(
                 intent_unknown_with_stale_mutation_observation
             ),
             "invalid",
@@ -5463,7 +6416,7 @@ class ThreadSupervisionContractTests(unittest.TestCase):
                 f"different-{field.replace('_', '-')}"
             )
             self.assertEqual(
-                evaluate_protected_policy_application(
+                evaluate_fixture_at_current_head(
                     unknown_intent_with_other_store
                 ),
                 "invalid",
@@ -5472,8 +6425,9 @@ class ThreadSupervisionContractTests(unittest.TestCase):
 
         unavailable = copy.deepcopy(receipt)
         unavailable["readback"]["field_results"][0]["status"] = "unavailable"
+        unavailable["application"] = "reconciliation-required"
         self.assertEqual(
-            evaluate_protected_policy_application(unavailable),
+            evaluate_fixture_at_current_head(unavailable),
             "reconciliation-required",
         )
         unavailable_with_stale_policy_body = copy.deepcopy(unavailable)
@@ -5483,7 +6437,7 @@ class ThreadSupervisionContractTests(unittest.TestCase):
             "different-expectation-evidence-ref"
         )
         self.assertEqual(
-            evaluate_protected_policy_application(
+            evaluate_fixture_at_current_head(
                 unavailable_with_stale_policy_body
             ),
             "invalid",
@@ -5527,7 +6481,7 @@ class ThreadSupervisionContractTests(unittest.TestCase):
             target[path[-1]] = value
             with self.subTest(recovery_identity=label):
                 self.assertEqual(
-                    evaluate_protected_policy_application(
+                    evaluate_fixture_at_current_head(
                         untrusted_reconciliation_target
                     ),
                     "invalid",
@@ -5541,7 +6495,7 @@ class ThreadSupervisionContractTests(unittest.TestCase):
         extra_result["status"] = "matched"
         unavailable_with_extra["readback"]["field_results"].append(extra_result)
         self.assertEqual(
-            evaluate_protected_policy_application(unavailable_with_extra),
+            evaluate_fixture_at_current_head(unavailable_with_extra),
             "reconciliation-required",
         )
 
@@ -5550,7 +6504,7 @@ class ThreadSupervisionContractTests(unittest.TestCase):
             "sha256:" + "0" * 64
         )
         self.assertEqual(
-            evaluate_protected_policy_application(
+            evaluate_fixture_at_current_head(
                 unavailable_with_policy_mismatch
             ),
             "invalid",
@@ -5573,7 +6527,7 @@ class ThreadSupervisionContractTests(unittest.TestCase):
             "sha256:" + "0" * 64
         )
         self.assertEqual(
-            evaluate_protected_policy_application(
+            evaluate_fixture_at_current_head(
                 incomplete_with_policy_mismatch
             ),
             "invalid",
@@ -5588,7 +6542,7 @@ class ThreadSupervisionContractTests(unittest.TestCase):
             "different-application-id"
         )
         self.assertEqual(
-            evaluate_protected_policy_application(
+            evaluate_fixture_at_current_head(
                 incomplete_with_wrong_application
             ),
             "invalid",
@@ -5601,7 +6555,7 @@ class ThreadSupervisionContractTests(unittest.TestCase):
             "operation"
         ] = "transition"
         self.assertEqual(
-            evaluate_protected_policy_application(
+            evaluate_fixture_at_current_head(
                 incomplete_with_stale_policy_body
             ),
             "invalid",
@@ -5612,7 +6566,7 @@ class ThreadSupervisionContractTests(unittest.TestCase):
             "mutation_operation_id"
         ] = "different-operation-id"
         self.assertEqual(
-            evaluate_protected_policy_application(
+            evaluate_fixture_at_current_head(
                 unavailable_with_conflicting_operation
             ),
             "invalid",
@@ -5626,7 +6580,7 @@ class ThreadSupervisionContractTests(unittest.TestCase):
             "prewrite_intent_ref"
         ] = "different-intent-ref"
         self.assertEqual(
-            evaluate_protected_policy_application(
+            evaluate_fixture_at_current_head(
                 unavailable_with_coordinated_intent_ref
             ),
             "invalid",
@@ -5640,17 +6594,18 @@ class ThreadSupervisionContractTests(unittest.TestCase):
             "mutation_receipt_ref"
         ] = "different-mutation-receipt-ref"
         self.assertEqual(
-            evaluate_protected_policy_application(
+            evaluate_fixture_at_current_head(
                 unavailable_with_coordinated_receipt_ref
             ),
             "invalid",
         )
 
         schedule = protected_policy_failure_schedule(reference)
-        self.assertEqual(len(schedule), 25)
+        self.assertEqual(len(schedule), 26)
         for condition in (
             "direct user revision while unrelated evidence or skill intervention is pending",
             "malformed receipt, empty mandatory set, or duplicate mandatory or result field refs",
+            "declared application differs from the independently computed closed result",
             "no authorized typed receiver rebind with no intent, mutation, or readback observation",
             "receiver has not proven the exact revision and fingerprint, and intent, mutation, and readback remain unwritten",
             "receiver reports a revision or protected-fingerprint conflict while intent, mutation, and readback remain unwritten",

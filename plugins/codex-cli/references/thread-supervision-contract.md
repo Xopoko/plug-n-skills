@@ -189,8 +189,9 @@ owning-system operation namespace, and both operation IDs. This is one closed
 record shape: reject missing or extra fields and never substitute a smaller
 checkpoint projection. State, policy fingerprint, receiver, store,
 authorization, intent, destination, subject, and operation namespace bindings
-are bounded and non-null in every record; only operation IDs and the two
-chain-edge refs may start null where the lifecycle permits. The pair of
+are bounded and non-null in every record; only operation IDs, the two chain-edge
+refs, and the all-or-none migration-provenance fields may be null where the
+lifecycle permits. The pair of
 operation namespace and operation ID is globally unique across active and
 retired applications. When a recovery head changes, the new record names the
 previous
@@ -198,9 +199,12 @@ previous
 application ID plus policy revision, not the recovery-head ref. Validate every
 intermediate recovery record. The application, revision, receiver, store,
 intent, destination, subject, operation namespace, and required operation-policy
-fingerprint never change within the chain. Either operation ID may be allocated
-once where the closed lifecycle permits it; every later successor retains that
-exact value.
+fingerprint never change within the chain. Migration ref, immutable source
+checkpoint ref and fingerprint, and source target/host are all null for a native
+v2 root. For an explicit v1 migration they are all non-null, bind the exact
+migration attestation and resolved source checkpoint, and remain unchanged in
+every successor. Either operation ID may be allocated once where the closed
+lifecycle permits it; every later successor retains that exact value.
 Every successor's `checkpoint_state` must be one exact edge on the closed state
 graph, and the checkpoint entry state must equal its recovery head's state.
 Treat every lifecycle, checkpoint-state, terminal-outcome, and reconciliation
@@ -214,9 +218,10 @@ fails closed. A checkpoint transition that changes state appends exactly one
 successor, so an intermediate edge cannot hide the real before/after pair. A
 later ordinary advance appends another state-bearing successor and remains
 valid without reusing the prior reconciliation.
-A newly appended application starts with a root recovery record: both
-`predecessor_ref` and `reconciliation_receipt_ref` are null. Only a later
-checkpoint transition may advance that recovery head.
+A newly appended application starts with a root recovery record at
+`revision-captured`: both `predecessor_ref` and
+`reconciliation_receipt_ref` are null. An ordinary v2 append at any later state
+fails closed. Only a later checkpoint transition may advance that recovery head.
 
 Application state follows this closed monotonic graph:
 
@@ -269,11 +274,15 @@ v1 checkpoint root and selects exactly one nested `targets[]` entry by both
 thread ID and host ID. A v1 target that contains the provisional singular
 `protected_policy_application` field may be migrated only after loading its
 immutable recovery record and persisting a typed
-`codex.protected_policy_application_migration.v1` record. That migration binds
-the canonical full-checkpoint fingerprint, exact target identity, legacy
-recovery ref, revision and operation IDs to a new stable application ID,
-operation namespace, and new v2 recovery ref whose record echoes the same
-identities plus the exact migrated checkpoint state. The fingerprint is
+`codex.protected_policy_application_migration.v1` record. Its `migration_ref` is
+the canonical `sha256:` fingerprint of that complete strict-JSON record. The
+migration binds the immutable source-checkpoint ref, canonical full-checkpoint
+fingerprint, exact target identity, legacy recovery ref, revision and operation
+IDs to a new stable application ID, operation namespace, and new v2 recovery
+ref whose record echoes the same identities plus the exact migrated checkpoint
+state. The typed migration record's `migrated_recovery_ref` must equal the
+actual recovery root ref being validated; a coherently rehashed record with
+another schema or root ref still fails closed. The fingerprint is
 `sha256:` plus lowercase SHA-256 of strict UTF-8
 JSON with recursively sorted object keys, no insignificant whitespace, array
 order preserved, and non-JSON constants rejected. A present `null` singular
@@ -289,7 +298,17 @@ legacy state, both singular and v2 state, or an unresolved migration write fails
 closed; do not resume mutation. Validate the branch-specific migration or
 pre-feature proof ref as a
 bounded non-null scalar before evidence lookup. A null-key evidence-map entry
-never supplies a missing ref.
+never supplies a missing ref. Only this exact migration attestation may preserve
+a later-state recovery as the root of a v2 application. Resolve the retained
+source-checkpoint ref, recompute its canonical fingerprint, and select exactly
+one matching source target before accepting the legacy application. The
+migration ref, source ref and fingerprint, and source target/host are retained
+on the migrated root and every successor, so an unrelated ambient attestation
+or a rebound source cannot validate the chain. Without that explicit
+provenance, the later-state root is invalid. Validate the migration record's
+operation IDs against that root record, not against a later recovery head;
+when the migrated root has null IDs, the ordinary one-time allocation rule
+still applies to its legal successors.
 
 The private indexes and terminal proof use these closed projections:
 
@@ -402,7 +421,9 @@ the observed fingerprint remains null; absence never fabricates an HMAC.
 
 Fingerprint `operation_policy` as
 `sha256:` plus lowercase SHA-256 of its UTF-8 JSON with recursively sorted
-object keys, no insignificant whitespace, and array order preserved. Persist an
+object keys, no insignificant whitespace, and array order preserved. Reject
+non-JSON constants such as `NaN` and positive or negative infinity rather than
+hashing a language-specific extension. Persist an
 immutable pre-write intent after receiver adoption and before the mutation only
 through an existing authorized intent store. Never create or emulate that store
 with an ordinary write under supervision authority. If it is unavailable, keep
@@ -575,6 +596,15 @@ reconciliation receipt ref. The receipt cannot replace that record or supply
 an alternate resolver. The generic evidence map is not a recovery resolver:
 changing a receipt, its evidence echoes, and map entries under `recovery_ref`
 cannot replace the independently loaded private record.
+An unknown intent receipt must name the active `intent-outcome-unknown` recovery
+head, and an unknown mutation receipt must name the active
+`mutation-outcome-unknown` head. A terminal, crossed, substituted, or otherwise
+stale recovery head is invalid; append and bind an owning-system reconciliation
+successor before evaluating a later terminal receipt.
+The evaluator receives the current checkpoint recovery-head ref independently
+of the receipt and requires exact equality before classifying any result. A
+receipt-supplied ref cannot declare itself current, and an older same-state
+recovery is invalid after a successor becomes the retained head.
 After receipt shape, closed states, bounded scalar formats, exact
 recovery-to-receipt application, revision, receiver, recomputed
 operation-policy, destination, and subject bindings, and durable operation IDs
@@ -604,6 +634,10 @@ adoption is `policy-drift`; carrying any mutation or readback observation while
 claiming `not-attempted` is `invalid`.
 Incomplete or unavailable readback reaches reconciliation only after exact
 receiver adoption and pre-write intent ordering and evidence are valid.
+For every structurally valid receipt, the declared `application` must equal the
+independently computed result below. A declaration never overrides the
+evidence-derived result, and declaring `invalid` does not repair malformed
+evidence.
 
 Evaluate this precedence atomically:
 
@@ -611,6 +645,7 @@ Evaluate this precedence atomically:
 | --- | --- |
 | Direct user revision while unrelated evidence or skill intervention is pending | Capture the protected revision; preserve the pending intervention; keep the affected mutation blocked until receiver adoption |
 | Malformed receipt, empty mandatory set, or duplicate mandatory or result field refs | `application=invalid` |
+| Declared application differs from the independently computed closed result | `application=invalid` |
 | No authorized typed receiver rebind with no intent, mutation, or readback observation | `receiver_adoption.status=capability-unavailable`, `mutation.state=not-attempted`, `application=blocked` |
 | Receiver has not proven the exact revision and fingerprint, and intent, mutation, and readback remain unwritten | `receiver_adoption.status=not-proven`, `mutation.state=not-attempted`, `application=blocked` |
 | Receiver reports a revision or protected-fingerprint conflict while intent, mutation, and readback remain unwritten | `receiver_adoption.status=conflict`, `mutation.state=not-attempted`, `application=blocked` |
@@ -1045,10 +1080,14 @@ After compaction or a later wake:
     recovery, and operation-namespace-plus-operation-ID identities across both
     sets. Preserve every active entry separately; append a later revision
     without replacing an earlier entry. Resolve every active and retired
-    recovery chain to its root, then require every updated recovery head to
+    recovery chain to its root. Require each root either to be an ordinary fresh
+    v2 `revision-captured` record or to carry the exact v1 migration attestation
+    for that later-state root. Then require every updated recovery head to
     preserve that exact prefix and reach its prior recovery ref. Enforce the
     closed monotonic application-state graph. An unknown outcome permits only
-    exact owning-system reconciliation, never a new write.
+    exact owning-system reconciliation, never a new write. Pass the independently
+    resolved current checkpoint recovery-head ref into application-receipt
+    evaluation; never infer currentness from the receipt itself.
 11. Remove an active entry only when a new retired-index record has the prior
     retired ref as predecessor and every new tombstone names an application
     active in the immediately preceding checkpoint. Resolve the terminal
