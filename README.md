@@ -83,7 +83,9 @@ python3 scripts/install-codex-plugins.py \
 The installer validates the repository, generates a local Codex marketplace
 file at `.agents/plugins/marketplace.json`, points Codex's `local` marketplace
 at this checkout, enables the selected plugins, and materializes cache entries
-under `~/.codex/plugins/cache/local/...`.
+under the active Codex home: `$CODEX_HOME` when it is nonempty, otherwise
+`~/.codex`. A configured `CODEX_HOME` must resolve to an existing directory.
+Explicit `--config-path` and `--cache-root` values take precedence.
 
 `.agents/` and Codex cache directories are local runtime state, not part of
 the published source tree.

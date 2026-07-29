@@ -63,6 +63,13 @@ python3 "$PLUGIN_ROOT/scripts/plugin/ensure_local_plugin_installed.py" <plugin-d
 python3 "$PLUGIN_ROOT/scripts/plugin/ensure_local_plugin_installed.py" <plugin-dir> --check-only
 ```
 
+When config/cache paths are omitted, both derive from one canonical active
+Codex home: nonempty `CODEX_HOME` must resolve to an existing directory, while
+unset or empty `CODEX_HOME` falls back to `~/.codex`. Explicit
+`--config-path`/`--cache-root` values take precedence and use the manual path so
+the native CLI cannot target a different profile. The personal
+`.agents/plugins/marketplace.json` default is independent of `CODEX_HOME`.
+
 `--check-only` is read-only. It verifies the enabled plugin entry and exact
 installable source/cache content, including the root entry, entry kinds, and
 modes, while

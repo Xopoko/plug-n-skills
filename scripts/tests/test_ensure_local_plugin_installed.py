@@ -1,4 +1,6 @@
+import contextlib
 import importlib.util
+import io
 import json
 import os
 import shutil
@@ -117,24 +119,234 @@ class LocalPluginVisibilityTest(unittest.TestCase):
             check_only=True,
         )
 
-    def run_cli(self, *extra_args):
+    def run_cli(
+        self,
+        *extra_args,
+        env_updates=None,
+        include_state_paths=True,
+    ):
+        command = [
+            sys.executable,
+            str(HELPER_PATH),
+            str(self.plugin_root),
+            "--marketplace-path",
+            str(self.marketplace_path),
+        ]
+        if include_state_paths:
+            command.extend(
+                [
+                    "--config-path",
+                    str(self.config_path),
+                    "--cache-root",
+                    str(self.cache_root),
+                ]
+            )
+        command.extend(extra_args)
+        child_env = os.environ.copy()
+        for key, value in (env_updates or {}).items():
+            if value is None:
+                child_env.pop(key, None)
+            else:
+                child_env[key] = value
         return subprocess.run(
-            [
-                sys.executable,
-                str(HELPER_PATH),
-                str(self.plugin_root),
-                "--marketplace-path",
-                str(self.marketplace_path),
-                "--config-path",
-                str(self.config_path),
-                "--cache-root",
-                str(self.cache_root),
-                *extra_args,
-            ],
+            command,
             text=True,
             stdout=subprocess.PIPE,
             stderr=subprocess.PIPE,
             check=False,
+            env=child_env,
+        )
+
+    def test_cli_defaults_target_only_the_active_codex_profile(self):
+        active_home = self.root / "active-codex"
+        active_config = active_home / "config.toml"
+        active_cache = active_home / "plugins" / "cache"
+        active_home.mkdir()
+        active_config.write_bytes(self.config_path.read_bytes())
+        shutil.copytree(self.cache_root, active_cache)
+        personal_home = self.root / "personal"
+        personal_home.mkdir()
+
+        result = self.run_cli(
+            "--check-only",
+            env_updates={
+                "CODEX_HOME": str(active_home),
+                "HOME": str(personal_home),
+            },
+            include_state_paths=False,
+        )
+
+        self.assertEqual(0, result.returncode, result.stderr)
+        expected_cache_path = (
+            active_cache.resolve() / "local" / "fixture-plugin" / "0.1.0"
+        )
+        self.assertIn(f"cache path: {expected_cache_path}", result.stdout)
+        self.assertNotIn(str(personal_home / ".codex"), result.stdout)
+
+    def test_cli_explicit_state_paths_bypass_invalid_codex_home(self):
+        result = self.run_cli(
+            "--check-only",
+            env_updates={"CODEX_HOME": str(self.root / "missing-home")},
+        )
+
+        self.assertEqual(0, result.returncode, result.stderr)
+        self.assertIn(f"cache path: {self.cache_path.resolve()}", result.stdout)
+
+    def test_cli_explicit_cache_root_symlink_is_rejected(self):
+        cache_link = self.root / "cache-link"
+        try:
+            cache_link.symlink_to(self.cache_root, target_is_directory=True)
+        except OSError as exc:
+            self.skipTest(f"symlinks unavailable: {exc}")
+
+        result = self.run_cli(
+            "--check-only",
+            "--cache-root",
+            str(cache_link),
+        )
+
+        self.assertEqual(1, result.returncode)
+        self.assertIn("plugin cache root must not be a symlink", result.stderr)
+
+    def test_cli_existing_config_directory_is_rejected(self):
+        config_directory = self.root / "config-directory"
+        config_directory.mkdir()
+
+        result = self.run_cli(
+            "--check-only",
+            "--config-path",
+            str(config_directory),
+        )
+
+        self.assertEqual(1, result.returncode)
+        self.assertIn("config path must be a regular file", result.stderr)
+
+    def test_cli_invalid_codex_home_fails_before_creating_state(self):
+        invalid_homes = [self.root / "missing-home", self.root / "home-file"]
+        invalid_homes[1].write_text("fixture\n", encoding="utf-8")
+
+        for invalid_home in invalid_homes:
+            with self.subTest(invalid_home=invalid_home):
+                result = self.run_cli(
+                    "--dry-run",
+                    env_updates={"CODEX_HOME": str(invalid_home)},
+                    include_state_paths=False,
+                )
+
+                self.assertEqual(1, result.returncode)
+                self.assertIn("existing directory", result.stderr)
+                if invalid_home.name == "missing-home":
+                    self.assertFalse(invalid_home.exists())
+
+    def test_cli_explicit_state_paths_force_manual_install(self):
+        argv = [
+            str(HELPER_PATH),
+            str(self.plugin_root),
+            "--marketplace-path",
+            str(self.marketplace_path),
+            "--config-path",
+            str(self.config_path),
+            "--cache-root",
+            str(self.cache_root),
+        ]
+        with (
+            mock.patch.object(sys, "argv", argv),
+            mock.patch.dict(
+                os.environ,
+                {"CODEX_HOME": str(self.root / "missing-home")},
+                clear=False,
+            ),
+            mock.patch.object(
+                ensure_local_plugin_installed,
+                "try_cli_install",
+            ) as cli_install,
+            contextlib.redirect_stdout(io.StringIO()),
+        ):
+            ensure_local_plugin_installed.main()
+
+        cli_install.assert_not_called()
+
+    def test_cli_default_state_paths_bind_native_cli_to_canonical_home(self):
+        active_home = self.root / "active-codex"
+        active_home.mkdir()
+        outcome = ensure_local_plugin_installed.InstallOutcome(
+            plugin_id="fixture-plugin@local",
+            marketplace_name="local",
+            source_path=self.plugin_root,
+            cache_path=active_home
+            / "plugins"
+            / "cache"
+            / "local"
+            / "fixture-plugin"
+            / "0.1.0",
+            mode="check-only",
+            config_changed=False,
+            cache_changed=False,
+            source_validated=True,
+            install_state_verified=True,
+            expected_source_path=None,
+            expected_source_verified=None,
+        )
+        argv = [
+            str(HELPER_PATH),
+            str(self.plugin_root),
+            "--marketplace-path",
+            str(self.marketplace_path),
+            "--check-only",
+        ]
+        with (
+            mock.patch.object(sys, "argv", argv),
+            mock.patch.dict(
+                os.environ,
+                {"CODEX_HOME": str(active_home)},
+                clear=False,
+            ),
+            mock.patch.object(
+                ensure_local_plugin_installed,
+                "ensure_installed",
+                return_value=outcome,
+            ) as ensure_installed,
+            contextlib.redirect_stdout(io.StringIO()),
+        ):
+            ensure_local_plugin_installed.main()
+
+        call = ensure_installed.call_args.kwargs
+        self.assertEqual(active_home.resolve(), call["cli_codex_home"])
+        self.assertEqual(
+            active_home.resolve() / "config.toml",
+            call["config_path"],
+        )
+        self.assertEqual(
+            active_home.resolve() / "plugins" / "cache",
+            call["cache_root"],
+        )
+        self.assertFalse(call["force_manual"])
+
+    def test_native_cli_receives_the_resolved_codex_home(self):
+        active_home = (self.root / "active-codex").resolve()
+        active_home.mkdir()
+        completed = subprocess.CompletedProcess(
+            args=[],
+            returncode=1,
+            stdout="",
+            stderr="unrecognized subcommand",
+        )
+
+        with mock.patch.object(
+            ensure_local_plugin_installed.subprocess,
+            "run",
+            return_value=completed,
+        ) as run:
+            result = ensure_local_plugin_installed.try_cli_install(
+                "codex",
+                "fixture-plugin@local",
+                codex_home=active_home,
+            )
+
+        self.assertEqual("unsupported", result)
+        self.assertEqual(
+            str(active_home),
+            run.call_args.kwargs["env"]["CODEX_HOME"],
         )
 
     def test_identical_source_and_cache_verify_stably(self):

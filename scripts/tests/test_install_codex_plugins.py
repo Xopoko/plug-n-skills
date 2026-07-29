@@ -1,5 +1,6 @@
 import importlib.util
 import json
+import os
 import subprocess
 import sys
 import tempfile
@@ -18,6 +19,224 @@ spec.loader.exec_module(install_codex_plugins)
 
 
 class CodexInstallerTest(unittest.TestCase):
+    def test_check_only_defaults_target_active_codex_home(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            active_home = root / "active-codex"
+            active_home.mkdir()
+            argv = [
+                str(INSTALLER_PATH),
+                "--plugin",
+                "capability-workbench",
+                "--check-only",
+            ]
+
+            with (
+                mock.patch.object(sys, "argv", argv),
+                mock.patch.dict(
+                    os.environ,
+                    {"CODEX_HOME": str(active_home)},
+                    clear=False,
+                ),
+                mock.patch.object(install_codex_plugins, "run") as run,
+            ):
+                install_codex_plugins.main()
+
+            helper_command = run.call_args_list[-1].args[0]
+            self.assertIn(
+                str(active_home.resolve() / "config.toml"),
+                helper_command,
+            )
+            self.assertIn(
+                str(active_home.resolve() / "plugins" / "cache"),
+                helper_command,
+            )
+
+    def test_explicit_state_paths_bypass_invalid_codex_home(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            config_path = root / "state" / "config.toml"
+            cache_root = root / "state" / "cache"
+            argv = [
+                str(INSTALLER_PATH),
+                "--plugin",
+                "capability-workbench",
+                "--config-path",
+                str(config_path),
+                "--cache-root",
+                str(cache_root),
+                "--check-only",
+            ]
+
+            with (
+                mock.patch.object(sys, "argv", argv),
+                mock.patch.dict(
+                    os.environ,
+                    {"CODEX_HOME": str(root / "missing-home")},
+                    clear=False,
+                ),
+                mock.patch.object(install_codex_plugins, "run") as run,
+            ):
+                install_codex_plugins.main()
+
+            helper_command = run.call_args_list[-1].args[0]
+            self.assertIn(str(config_path.resolve()), helper_command)
+            self.assertIn(str(cache_root), helper_command)
+
+    def test_invalid_codex_home_fails_before_any_installer_command(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            argv = [
+                str(INSTALLER_PATH),
+                "--plugin",
+                "capability-workbench",
+                "--check-only",
+            ]
+
+            with (
+                mock.patch.object(sys, "argv", argv),
+                mock.patch.dict(
+                    os.environ,
+                    {"CODEX_HOME": str(root / "missing-home")},
+                    clear=False,
+                ),
+                mock.patch.object(install_codex_plugins, "run") as run,
+                self.assertRaisesRegex(SystemExit, "existing directory"),
+            ):
+                install_codex_plugins.main()
+
+            run.assert_not_called()
+            self.assertFalse((root / "missing-home").exists())
+
+    def test_invalid_personal_codex_home_fails_before_marketplace_change(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            home = root / "home"
+            home.mkdir()
+            fallback = home / ".codex"
+            fallback.write_bytes(b"codex-home-sentinel\n")
+            marketplace_path = root / "marketplace.json"
+            marketplace_path.write_bytes(b"marketplace-sentinel\n")
+            argv = [
+                str(INSTALLER_PATH),
+                "--plugin",
+                "capability-workbench",
+                "--marketplace-path",
+                str(marketplace_path),
+            ]
+
+            with (
+                mock.patch.object(sys, "argv", argv),
+                mock.patch.dict(os.environ, {"HOME": str(home)}, clear=True),
+                mock.patch.object(install_codex_plugins, "run") as run,
+                self.assertRaisesRegex(
+                    SystemExit,
+                    "default Codex home must resolve to an existing directory",
+                ),
+            ):
+                install_codex_plugins.main()
+
+            run.assert_not_called()
+            self.assertEqual(b"codex-home-sentinel\n", fallback.read_bytes())
+            self.assertEqual(b"marketplace-sentinel\n", marketplace_path.read_bytes())
+
+    def test_install_rejects_cache_symlink_before_any_control_plane_write(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            marketplace_path = root / "marketplace.json"
+            config_path = root / "config.toml"
+            marketplace_path.write_bytes(b"marketplace-sentinel\n")
+            config_path.write_bytes(b"config-sentinel\n")
+            global_source_root = root / "legacy-plugins"
+            destination = global_source_root / "capability-workbench"
+            destination.mkdir(parents=True)
+            source_sentinel = destination / "sentinel.txt"
+            source_sentinel.write_bytes(b"source-sentinel\n")
+            cache_target = root / "cache-target"
+            cache_target.mkdir()
+            cache_link = root / "cache-link"
+            try:
+                cache_link.symlink_to(cache_target, target_is_directory=True)
+            except OSError as exc:
+                self.skipTest(f"symlinks unavailable: {exc}")
+            argv = [
+                str(INSTALLER_PATH),
+                "--plugin",
+                "capability-workbench",
+                "--global-source-root",
+                str(global_source_root),
+                "--marketplace-path",
+                str(marketplace_path),
+                "--config-path",
+                str(config_path),
+                "--cache-root",
+                str(cache_link),
+            ]
+
+            with (
+                mock.patch.object(sys, "argv", argv),
+                mock.patch.object(install_codex_plugins, "run") as run,
+                self.assertRaisesRegex(SystemExit, "cache root must not be a symlink"),
+            ):
+                install_codex_plugins.main()
+
+            run.assert_not_called()
+            self.assertEqual(b"marketplace-sentinel\n", marketplace_path.read_bytes())
+            self.assertEqual(b"config-sentinel\n", config_path.read_bytes())
+            self.assertEqual(b"source-sentinel\n", source_sentinel.read_bytes())
+            self.assertEqual(
+                ["sentinel.txt"],
+                sorted(path.name for path in destination.iterdir()),
+            )
+
+    def test_install_rejects_config_directory_before_any_control_plane_write(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            marketplace_path = root / "marketplace.json"
+            marketplace_path.write_bytes(b"marketplace-sentinel\n")
+            config_directory = root / "config.toml"
+            config_directory.mkdir()
+            config_sentinel = config_directory / "sentinel.txt"
+            config_sentinel.write_bytes(b"config-sentinel\n")
+            global_source_root = root / "legacy-plugins"
+            destination = global_source_root / "capability-workbench"
+            destination.mkdir(parents=True)
+            source_sentinel = destination / "sentinel.txt"
+            source_sentinel.write_bytes(b"source-sentinel\n")
+            cache_root = root / "cache"
+            argv = [
+                str(INSTALLER_PATH),
+                "--plugin",
+                "capability-workbench",
+                "--global-source-root",
+                str(global_source_root),
+                "--marketplace-path",
+                str(marketplace_path),
+                "--config-path",
+                str(config_directory),
+                "--cache-root",
+                str(cache_root),
+            ]
+
+            with (
+                mock.patch.object(sys, "argv", argv),
+                mock.patch.object(install_codex_plugins, "run") as run,
+                self.assertRaisesRegex(
+                    SystemExit,
+                    "config path must be a regular file",
+                ),
+            ):
+                install_codex_plugins.main()
+
+            run.assert_not_called()
+            self.assertEqual(b"marketplace-sentinel\n", marketplace_path.read_bytes())
+            self.assertEqual(b"config-sentinel\n", config_sentinel.read_bytes())
+            self.assertEqual(b"source-sentinel\n", source_sentinel.read_bytes())
+            self.assertEqual(
+                ["sentinel.txt"],
+                sorted(path.name for path in destination.iterdir()),
+            )
+
     def test_installer_plugin_names_match_repository_and_marketplace(self):
         repository_names = {
             path.parent.parent.name
