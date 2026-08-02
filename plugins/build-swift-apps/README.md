@@ -115,7 +115,7 @@ metadata, larger instructions on demand.
 | Metric | Tokens | Notes |
 | --- | ---: | --- |
 | Startup metadata | 4,194 | Name, description, and file pointer for all 61 skills. |
-| On-demand skill bodies | 38,587 | Full body text loaded only when a skill is selected. |
+| On-demand skill bodies | 36,116 | Full body text loaded only when a skill is selected. |
 
 | Skill | Startup metadata | On-demand body |
 | --- | ---: | ---: |
@@ -129,21 +129,21 @@ metadata, larger instructions on demand.
 | `appstore-connect-cli` | 56 | 521 |
 | `appstore-crash-insights` | 60 | 494 |
 | `appstore-id-resolver` | 56 | 318 |
-| `appstore-metadata-localizer` | 87 | 954 |
-| `appstore-metadata-sync` | 76 | 914 |
-| `appstore-notary-runner` | 73 | 815 |
-| `appstore-pricing-planner` | 66 | 850 |
+| `appstore-metadata-localizer` | 87 | 425 |
+| `appstore-metadata-sync` | 76 | 436 |
+| `appstore-notary-runner` | 73 | 485 |
+| `appstore-pricing-planner` | 66 | 402 |
 | `appstore-record-creator` | 59 | 570 |
 | `appstore-release-director` | 79 | 726 |
 | `appstore-release-notes-writer` | 79 | 688 |
 | `appstore-release-planner` | 84 | 722 |
 | `appstore-revenuecat-sync` | 72 | 784 |
-| `appstore-review-readiness` | 79 | 1,013 |
+| `appstore-review-readiness` | 79 | 440 |
 | `appstore-screenshot-pipeline` | 63 | 1,013 |
 | `appstore-screenshot-studio` | 64 | 653 |
-| `appstore-screenshot-validator` | 58 | 637 |
+| `appstore-screenshot-validator` | 58 | 420 |
 | `appstore-signing-setup` | 56 | 646 |
-| `appstore-subscription-localizer` | 73 | 715 |
+| `appstore-subscription-localizer` | 73 | 402 |
 | `appstore-testflight-coordinator` | 55 | 346 |
 | `appstore-wall-publisher` | 79 | 373 |
 | `appstore-workflow-runner` | 65 | 793 |
@@ -158,13 +158,13 @@ metadata, larger instructions on demand.
 | `ios-swiftui-architect` | 71 | 708 |
 | `macos-appkit-bridge` | 87 | 566 |
 | `macos-liquid-glass-designer` | 78 | 593 |
-| `macos-notarization-packager` | 80 | 305 |
+| `macos-notarization-packager` | 80 | 341 |
 | `macos-runtime-debugger` | 75 | 770 |
-| `macos-signing-inspector` | 69 | 428 |
+| `macos-signing-inspector` | 69 | 485 |
 | `macos-swiftpm-runner` | 76 | 280 |
 | `macos-swiftui-architect` | 69 | 821 |
 | `macos-telemetry-probe` | 63 | 412 |
-| `macos-test-diagnoser` | 74 | 323 |
+| `macos-test-diagnoser` | 74 | 574 |
 | `macos-view-architect` | 61 | 500 |
 | `macos-window-architect` | 67 | 799 |
 | `swiftpm-build-inspector` | 62 | 536 |
@@ -174,7 +174,7 @@ metadata, larger instructions on demand.
 | `tuist-generation-doctor` | 68 | 629 |
 | `tuist-migration-planner` | 66 | 577 |
 | `tuist-workspace-navigator` | 71 | 500 |
-| `xcode-build-baseline` | 57 | 550 |
+| `xcode-build-baseline` | 57 | 623 |
 | `xcode-build-strategist` | 69 | 959 |
 | `xcode-build-tuner` | 68 | 749 |
 | `xcode-compile-profiler` | 61 | 494 |

@@ -92,6 +92,16 @@
       "name": "spec-driven-development",
       "source": "./plugins/spec-driven-development",
       "description": "Spec-Driven Development with Spec Kit, traceability, evidence profiles, and completion proof gates."
+    },
+    {
+      "name": "engineering-hygiene",
+      "source": "./plugins/engineering-hygiene",
+      "description": "Everyday delivery gates: pre-done maintenance sweep, business-logic untangling, skeptical visual QA, and missing-tool provisioning."
+    },
+    {
+      "name": "signature-map",
+      "source": "./plugins/signature-map",
+      "description": "Generate and query signatures.json as a lightweight declaration index for fast, low-cost code navigation."
     }
   ]
 }

@@ -11,7 +11,7 @@ Use this skill when the work is about shipping the app rather than merely
 running it locally: archives, exported app bundles, notarization readiness,
 hardened runtime, or distribution validation.
 
-Use `macos-signing-inspector` for local signing/trust diagnosis on an existing artifact. Use `appstore-notary-runner` when the artifact is ready and the task is to run `asc notarization` submit/status/log/staple commands.
+Use `macos-signing-inspector` for local signing/trust diagnosis on an existing artifact. Use `appstore-notary-runner` when the artifact is ready and the task is to run `asc notarization` submit/status/log/staple commands. For raw `pkgbuild`/`productbuild`/`notarytool` command forms, see `../macos-signing-inspector/references/binary-tools.md`.
 
 ## Workflow
 

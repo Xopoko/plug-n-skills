@@ -19,6 +19,8 @@ from agent_target import AgentResolutionError, resolve_codex_plugin_state_paths
 
 
 PLUGIN_NAMES = [
+    "engineering-hygiene",
+    "signature-map",
     "build-swift-apps",
     "pixijs",
     "tauri",

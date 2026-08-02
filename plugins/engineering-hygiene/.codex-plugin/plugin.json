@@ -1,0 +1,46 @@
+{
+  "name": "engineering-hygiene",
+  "version": "0.1.0",
+  "description": "Discipline gates for everyday development: code maintenance sweeps before claiming done, behavior-preserving untangling of mixed business logic, skeptical visual QA of rendered UI and screenshots, and autonomous provisioning of missing tools instead of stopping at blockers.",
+  "author": {
+    "name": "Xopoko"
+  },
+  "repository": "https://github.com/Xopoko/plug-n-skills/tree/main/plugins/engineering-hygiene",
+  "license": "MIT",
+  "keywords": [
+    "business-logic",
+    "code-quality",
+    "dead-code",
+    "hygiene",
+    "provisioning",
+    "refactoring",
+    "tooling",
+    "ui-verification",
+    "visual-qa"
+  ],
+  "skills": "./skills/",
+  "interface": {
+    "displayName": "Engineering Hygiene",
+    "shortDescription": "Finish-line gates: cleanup sweeps, logic untangling, visual QA, tool provisioning.",
+    "longDescription": "Engineering Hygiene packages four discipline gates for ordinary development work. Before claiming a code change done, it sweeps the changed surface for dead code, stale leftovers, and safe consolidation. When business rules are tangled with UI, IO, platform quirks, concurrency, or error policy, it runs a narrow behavior-preserving untangling pass. When rendered UI or screenshots are the evidence, it forces a skeptical second pass for unrelated visual anomalies beyond the acceptance criteria. When work is blocked or weakened by a missing SDK, CLI, runtime, or test utility, it provisions the tool and continues instead of reporting the gap as the result. All gates are evidence-first: findings cite searches, tool output, or screenshots, and edits stay inside the touched surface.",
+    "developerName": "Xopoko",
+    "category": "Productivity",
+    "capabilities": [
+      "Dead-code and stale-leftover sweep over changed and adjacent code",
+      "Safe local consolidation of duplicate code with abstraction guardrails",
+      "Behavior-preserving untangling of business rules from UI, IO, platform, and lifecycle code",
+      "Hidden-invariant, state-ownership, and error-policy drift detection",
+      "Skeptical screenshot and rendered-UI audit beyond acceptance criteria",
+      "Spacing, alignment, platform-convention, and data-plausibility inspection",
+      "Autonomous installation and verification of missing SDKs, CLIs, runtimes, and test tools",
+      "Evidence-first audit reporting with apply-versus-report decision rules"
+    ],
+    "defaultPrompt": [
+      "Use Engineering Hygiene to sweep these code changes for dead code, stale leftovers, duplication, and safe consolidation before calling the task done.",
+      "Use Engineering Hygiene to untangle the business rules mixed into this UI/IO/platform code without changing behavior.",
+      "Use Engineering Hygiene to audit this screenshot or rendered UI skeptically: verify the requested change and inspect the whole frame for unrelated visual defects.",
+      "Use Engineering Hygiene to provision the missing tool blocking this task, verify it, and continue the original work end to end."
+    ],
+    "brandColor": "#B45309"
+  }
+}

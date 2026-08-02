@@ -1,0 +1,20 @@
+{
+  "name": "engineering-hygiene",
+  "version": "0.1.0",
+  "description": "Discipline gates for everyday development: code maintenance sweeps before claiming done, behavior-preserving untangling of mixed business logic, skeptical visual QA of rendered UI and screenshots, and autonomous provisioning of missing tools instead of stopping at blockers.",
+  "author": {
+    "name": "Xopoko"
+  },
+  "license": "MIT",
+  "keywords": [
+    "business-logic",
+    "code-quality",
+    "dead-code",
+    "hygiene",
+    "provisioning",
+    "refactoring",
+    "tooling",
+    "ui-verification",
+    "visual-qa"
+  ]
+}

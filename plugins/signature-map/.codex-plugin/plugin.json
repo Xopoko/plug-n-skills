@@ -1,0 +1,41 @@
+{
+  "name": "signature-map",
+  "version": "0.1.0",
+  "description": "Lightweight code-declaration index for fast, low-token navigation: a Go generator builds signatures.json (types and callables with signatures, doc comments, and line numbers across Swift, Objective-C, C/C++, Kotlin, Java, JS/TS, Python, Ruby, and shell), and the sigmap CLI refreshes the index, queries declarations by name or regex, opens code around matches, and diagnoses index health.",
+  "author": {
+    "name": "Xopoko"
+  },
+  "repository": "https://github.com/Xopoko/plug-n-skills/tree/main/plugins/signature-map",
+  "license": "MIT",
+  "skills": "./skills/",
+  "keywords": [
+    "code-navigation",
+    "declaration-index",
+    "symbol-search",
+    "signatures",
+    "sigmap",
+    "code-search",
+    "repo-index",
+    "token-efficiency"
+  ],
+  "interface": {
+    "displayName": "Signature Map",
+    "shortDescription": "Index and query code declarations fast.",
+    "longDescription": "Signature Map gives the host agent a declaration-first navigation workflow for medium and large repositories: an incremental Go generator indexes types and callables into signatures.json, and the bundled sigmap CLI answers exact-name and regex declaration queries, opens source with bounded context around matches, and runs doctor checks on index health, so the agent reads targeted snippets instead of scanning whole files.",
+    "developerName": "Xopoko",
+    "category": "Coding",
+    "capabilities": [
+      "Incremental repo-wide declaration indexing into signatures.json",
+      "Exact-name and regex declaration search with kind, subtree, and limit filters",
+      "Bounded-context source opening around declarations and file:line locations",
+      "Batch snippet extraction from selector lists",
+      "Index and generator health diagnostics"
+    ],
+    "defaultPrompt": [
+      "Use Signature Map to find where this symbol is declared in the repo.",
+      "Use Signature Map to survey this module's API surface before editing it.",
+      "Use Signature Map to open the code around these declarations with context."
+    ],
+    "brandColor": "#2563EB"
+  }
+}

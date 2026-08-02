@@ -29,6 +29,8 @@ PLUGIN_NAMES = [
     "game-design-intelligence",
     "kotlin-multiplatform",
     "spec-driven-development",
+    "engineering-hygiene",
+    "signature-map",
 ]
 
 TEXT_EXTENSIONS = {

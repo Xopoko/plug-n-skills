@@ -58,3 +58,7 @@ Provide:
 - what signing state it is in
 - the exact failure class
 - the minimum fix or validation sequence
+
+## Resources
+
+- `references/binary-tools.md` — Mach-O inspection (`nm`, `otool`, `llvm-objdump`, `dsymutil`), `.pkg` packaging (`pkgbuild`, `productbuild`), and raw `notarytool` command forms.

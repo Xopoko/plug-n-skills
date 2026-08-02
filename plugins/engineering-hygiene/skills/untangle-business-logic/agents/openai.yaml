@@ -1,0 +1,6 @@
+interface:
+  display_name: "Untangle Business Logic"
+  short_description: "Refactor tangled business logic"
+  default_prompt: "Use $untangle-business-logic to inspect and refactor tangled business rules, state, errors, and integration boundaries without changing behavior."
+policy:
+  allow_implicit_invocation: false

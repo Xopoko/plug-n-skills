@@ -163,6 +163,7 @@ repository is the active workspace:
 For source-only work, stop after validation and state that no global
 install/cache refresh was performed.
 
+
 ## External User Behavior
 
 These repo-local rules apply only when this repository is the active workspace
