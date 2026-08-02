@@ -37,7 +37,11 @@ for _agent_target in (
     if _agent_target.is_file():
         sys.path.insert(0, str(_agent_target.parent))
         break
-from agent_target import resolve_agent  # noqa: E402
+from agent_target import (  # noqa: E402
+    resolve_active_codex_home,
+    resolve_agent,
+    resolve_codex_plugin_state_paths,
+)
 
 from validate_plugin import validate_plugin  # noqa: E402
 
@@ -74,18 +78,18 @@ class TreeEntry:
 
 
 def default_marketplace_path() -> Path:
-    return resolve_agent(explicit="codex").marketplace_path
+    return Path.home() / ".agents" / "plugins" / "marketplace.json"
 
 
 def default_config_path() -> Path:
-    return resolve_agent(explicit="codex").home_dir / "config.toml"
+    return resolve_active_codex_home() / "config.toml"
 
 
 def default_cache_root() -> Path:
-    return resolve_agent(explicit="codex").home_dir / "plugins" / "cache"
+    return resolve_active_codex_home() / "plugins" / "cache"
 
 
-def parse_args() -> argparse.Namespace:
+def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
     parser = argparse.ArgumentParser(
         description=(
             "Install or verify a local Codex plugin from a marketplace entry. Uses "
@@ -101,13 +105,19 @@ def parse_args() -> argparse.Namespace:
     )
     parser.add_argument(
         "--config-path",
-        default=str(default_config_path()),
-        help="Path to Codex config.toml",
+        default=None,
+        help=(
+            "Path to Codex config.toml (defaults to the active CODEX_HOME, "
+            "or ~/.codex when unset)"
+        ),
     )
     parser.add_argument(
         "--cache-root",
-        default=str(default_cache_root()),
-        help="Root of Codex plugin cache",
+        default=None,
+        help=(
+            "Root of Codex plugin cache (defaults to the active CODEX_HOME, "
+            "or ~/.codex when unset)"
+        ),
     )
     parser.add_argument(
         "--expected-source-path",
@@ -139,26 +149,36 @@ def parse_args() -> argparse.Namespace:
         action="store_true",
         help="Print intended changes without writing config or cache",
     )
-    return parser.parse_args()
+    return parser.parse_args(argv)
 
 
 def main() -> None:
     args = parse_args()
     try:
+        state_paths = resolve_codex_plugin_state_paths(
+            config_path=args.config_path,
+            cache_root=args.cache_root,
+        )
+        has_explicit_state_path = (
+            state_paths.config_explicit or state_paths.cache_explicit
+        )
         outcome = ensure_installed(
             plugin_path=Path(args.plugin_path),
             marketplace_path=Path(args.marketplace_path),
-            config_path=Path(args.config_path),
-            cache_root=Path(args.cache_root),
+            config_path=state_paths.config_path,
+            cache_root=state_paths.cache_root,
             codex_bin=args.codex_bin,
             expected_source_path=(
                 Path(args.expected_source_path)
                 if args.expected_source_path is not None
                 else None
             ),
-            force_manual=args.force_manual,
+            force_manual=args.force_manual or has_explicit_state_path,
             check_only=args.check_only,
             dry_run=args.dry_run,
+            cli_codex_home=(
+                None if has_explicit_state_path else state_paths.home_dir
+            ),
         )
     except Exception as err:  # noqa: BLE001 - CLI should return one clear error.
         print(str(err), file=sys.stderr)
@@ -200,6 +220,7 @@ def ensure_installed(
     force_manual: bool = False,
     check_only: bool = False,
     dry_run: bool = False,
+    cli_codex_home: Path | None = None,
 ) -> InstallOutcome:
     if check_only and dry_run:
         raise ValueError("--check-only and --dry-run cannot be combined")
@@ -304,7 +325,11 @@ def ensure_installed(
 
     if not force_manual and not dry_run:
         if resolve_agent(explicit="codex").agent == "codex":
-            cli_result = try_cli_install(codex_bin, plugin_id)
+            cli_result = try_cli_install(
+                codex_bin,
+                plugin_id,
+                codex_home=cli_codex_home,
+            )
         else:
             cli_result = None
         if cli_result == "installed":
@@ -679,7 +704,16 @@ def ensure_same_plugin_source(
     )
 
 
-def try_cli_install(codex_bin: str, plugin_id: str) -> str:
+def try_cli_install(
+    codex_bin: str,
+    plugin_id: str,
+    *,
+    codex_home: Path | None = None,
+) -> str:
+    child_env = None
+    if codex_home is not None:
+        child_env = os.environ.copy()
+        child_env["CODEX_HOME"] = str(codex_home)
     try:
         result = subprocess.run(
             [codex_bin, "plugin", "add", plugin_id],
@@ -688,6 +722,7 @@ def try_cli_install(codex_bin: str, plugin_id: str) -> str:
             stderr=subprocess.PIPE,
             timeout=120,
             check=False,
+            env=child_env,
         )
     except FileNotFoundError:
         return "unsupported"

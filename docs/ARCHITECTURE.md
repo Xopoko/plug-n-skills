@@ -32,7 +32,10 @@ python3 scripts/install-codex-plugins.py
 
 The helper writes `.agents/plugins/marketplace.json` as local generated state,
 configures Codex so `[marketplaces.local]` points at the repository root, and
-materializes cache entries under `~/.codex/plugins/cache/local/<plugin>/<version>`.
+materializes cache entries below the active Codex home
+(`$CODEX_HOME` when nonempty, otherwise `~/.codex`). A configured home is
+canonicalized and must already be a directory; explicit config/cache paths
+remain the recovery override.
 
 The generated `.agents/` directory is intentionally ignored by Git. It belongs
 to the local machine, not to the published source.

@@ -12,6 +12,11 @@ from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
 
+_SCRIPT_DIR = Path(__file__).resolve().parent
+if str(_SCRIPT_DIR) not in sys.path:
+    sys.path.insert(0, str(_SCRIPT_DIR))
+from agent_target import AgentResolutionError, resolve_codex_plugin_state_paths
+
 
 PLUGIN_NAMES = [
     "build-swift-apps",
@@ -74,13 +79,19 @@ def parse_args() -> argparse.Namespace:
     )
     parser.add_argument(
         "--config-path",
-        default=str(Path.home() / ".codex" / "config.toml"),
-        help="Codex config.toml path.",
+        default=None,
+        help=(
+            "Codex config.toml path. Defaults to the active CODEX_HOME, "
+            "or ~/.codex when unset."
+        ),
     )
     parser.add_argument(
         "--cache-root",
-        default=str(Path.home() / ".codex" / "plugins" / "cache"),
-        help="Codex plugin cache root.",
+        default=None,
+        help=(
+            "Codex plugin cache root. Defaults to the active CODEX_HOME, "
+            "or ~/.codex when unset."
+        ),
     )
     parser.add_argument(
         "--dry-run",
@@ -113,8 +124,15 @@ def main() -> None:
         if args.marketplace_path
         else marketplace_root / ".agents" / "plugins" / "marketplace.json"
     )
-    config_path = Path(args.config_path).expanduser().resolve()
-    cache_root = Path(args.cache_root).expanduser().resolve()
+    try:
+        state_paths = resolve_codex_plugin_state_paths(
+            config_path=args.config_path,
+            cache_root=args.cache_root,
+        )
+    except AgentResolutionError as exc:
+        raise SystemExit(str(exc)) from exc
+    config_path = state_paths.config_path
+    cache_root = state_paths.cache_root
 
     validate_helper = (
         root
