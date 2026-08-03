@@ -22,6 +22,8 @@ PLUGINS = [
     "game-design-intelligence",
     "kotlin-multiplatform",
     "spec-driven-development",
+    "engineering-hygiene",
+    "signature-map",
 ]
 
 

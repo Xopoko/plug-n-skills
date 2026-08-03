@@ -4,10 +4,11 @@
 #   2. this repository's plugins -> Claude plugin cache (this repository's marketplace)
 #   3. extra local plugin repositories from .sync-local.json -> the same surfaces
 #
-# Machine-local configuration lives in the untracked .sync-local.json:
+# Optional machine-local configuration lives OUTSIDE this repository, at
+# ${XDG_CONFIG_HOME:-$HOME/.config}/plug-n-skills/sync-local.json:
 #   {
-#     "codex_homes": ["~/.codex-extra", ...],
-#     "plugin_repos": [{"path": "~/path/to/repo", "claude_marketplace": "name"}, ...]
+#     "codex_homes": ["<extra CODEX_HOME>", ...],
+#     "plugin_repos": [{"path": "<plugin repo>", "claude_marketplace": "name"}, ...]
 #   }
 #
 # NOTE: Claude caches plugins by version - bump a plugin's version in both
@@ -16,6 +17,7 @@ set -euo pipefail
 
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 HELPER="$ROOT/plugins/capability-workbench/scripts/plugin/ensure_local_plugin_installed.py"
+LOCAL_CONFIG="${SYNC_LOCAL_CONFIG:-${XDG_CONFIG_HOME:-$HOME/.config}/plug-n-skills/sync-local.json}"
 MARKETPLACE_NAME="${SYNC_CLAUDE_MARKETPLACE:-$(python3 -c '
 import json
 import sys
@@ -26,7 +28,7 @@ print(json.loads(manifest.read_text())["name"])
 ' "$ROOT")}"
 
 codex_homes() {
-  ROOT="$ROOT" python3 - <<'PY'
+  LOCAL_CONFIG="$LOCAL_CONFIG" python3 - <<'PY'
 import json
 import os
 from pathlib import Path
@@ -35,7 +37,7 @@ homes = []
 default = Path.home() / ".codex"
 if default.is_dir():
     homes.append(str(default))
-cfg = Path(os.environ["ROOT"]) / ".sync-local.json"
+cfg = Path(os.environ["LOCAL_CONFIG"])
 if cfg.is_file():
     for raw in json.loads(cfg.read_text()).get("codex_homes", []):
         home = str(Path(raw).expanduser())
@@ -46,12 +48,12 @@ PY
 }
 
 plugin_repos() {
-  ROOT="$ROOT" python3 - <<'PY'
+  LOCAL_CONFIG="$LOCAL_CONFIG" python3 - <<'PY'
 import json
 import os
 from pathlib import Path
 
-cfg = Path(os.environ["ROOT"]) / ".sync-local.json"
+cfg = Path(os.environ["LOCAL_CONFIG"])
 if cfg.is_file():
     for entry in json.loads(cfg.read_text()).get("plugin_repos", []):
         print(f'{Path(entry["path"]).expanduser()}\t{entry.get("claude_marketplace", "")}')

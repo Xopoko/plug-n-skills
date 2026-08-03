@@ -167,12 +167,12 @@ instructions.
 
 | Metric | Count | Tokens | Notes |
 | --- | ---: | ---: | --- |
-| Plugin packs | 17 | - | Installable packages under `plugins/`. |
-| Skill entrypoints | 166 | - | `SKILL.md` files exposed through plugin metadata. |
-| Reference files | 236 | - | Longer ledgers, contracts, scorecards, and source notes. |
-| Helper and validator scripts | 85 | - | Deterministic plugin-local helpers. |
-| Startup metadata | 166 skills | 13,369 | Skill name, description, and file pointer for routing. |
-| On-demand skill bodies | 166 skills | 119,807 | Instruction bodies after frontmatter, loaded only when selected. |
+| Plugin packs | 19 | - | Installable packages under `plugins/`. |
+| Skill entrypoints | 171 | - | `SKILL.md` files exposed through plugin metadata. |
+| Reference files | 241 | - | Longer ledgers, contracts, scorecards, and source notes. |
+| Helper and validator scripts | 88 | - | Deterministic plugin-local helpers. |
+| Startup metadata | 171 skills | 13,993 | Skill name, description, and file pointer for routing. |
+| On-demand skill bodies | 171 skills | 124,665 | Instruction bodies after frontmatter, loaded only when selected. |
 
 Regenerate the report after skill edits:
 
@@ -189,7 +189,7 @@ Token columns are `startup metadata / on-demand body`.
 
 | Plugin | Skills | Refs | Scripts | Startup | Body |
 | --- | ---: | ---: | ---: | ---: | ---: |
-| `build-swift-apps` | 61 | 89 | 36 | 4,743 | 35,699 |
+| `build-swift-apps` | 61 | 90 | 36 | 4,743 | 36,116 |
 | `pixijs` | 26 | 64 | 0 | 1,861 | 7,967 |
 | `tauri` | 6 | 0 | 1 | 481 | 3,235 |
 | `scientific-research` | 1 | 4 | 1 | 91 | 2,024 |
@@ -197,8 +197,8 @@ Token columns are `startup metadata / on-demand body`.
 | `capability-workbench` | 10 | 15 | 23 | 958 | 13,076 |
 | `codex-cli` | 8 | 5 | 3 | 688 | 10,059 |
 | `scheduled-automation` | 1 | 5 | 0 | 103 | 1,158 |
-| `gitlab-review` | 1 | 3 | 1 | 117 | 1,083 |
-| `stacked-delivery` | 1 | 4 | 1 | 123 | 1,933 |
+| `gitlab-review` | 1 | 3 | 1 | 117 | 1,308 |
+| `stacked-delivery` | 1 | 4 | 1 | 123 | 2,100 |
 | `git-worktree-safety` | 2 | 2 | 2 | 382 | 2,469 |
 | `claude-code` | 6 | 2 | 1 | 528 | 4,669 |
 | `architecture-intelligence` | 9 | 8 | 2 | 645 | 7,585 |
@@ -206,6 +206,8 @@ Token columns are `startup metadata / on-demand body`.
 | `game-design-intelligence` | 6 | 2 | 1 | 536 | 2,916 |
 | `kotlin-multiplatform` | 14 | 22 | 2 | 1,141 | 14,462 |
 | `spec-driven-development` | 6 | 0 | 2 | 333 | 3,267 |
+| `engineering-hygiene` | 4 | 3 | 0 | 537 | 3,239 |
+| `signature-map` | 1 | 1 | 3 | 87 | 810 |
 
 ### Plugin Focus
 
@@ -228,6 +230,8 @@ Token columns are `startup metadata / on-demand body`.
 | `game-design-intelligence` | Source-backed game design judgment: core loops, gameplay systems, progression/economy/balance, motivation/retention, onboarding/difficulty, and multiplayer/live-service dynamics. Avoids engines, graphics, and implementation code. |
 | `kotlin-multiplatform` | Kotlin Multiplatform development, migration, Gradle diagnosis, Compose Multiplatform, interop, testing, data, governance, performance, security, publishing, and production readiness. |
 | `spec-driven-development` | Spec-Driven Development: route intent into specs, plans, tasks, traceability, implementation, and proof. |
+| `engineering-hygiene` | Discipline gates for everyday development: code maintenance sweeps before claiming done, behavior-preserving untangling of mixed business logic, skeptical visual QA of rendered UI and screenshots, and autonomous provisioning of missing tools instead of stopping at blockers. |
+| `signature-map` | Lightweight code-declaration index for fast, low-token navigation: a Go generator builds signatures.json (types and callables with signatures, doc comments, and line numbers across Swift, Objective-C, C/C++, Kotlin, Java, JS/TS, Python, Ruby, and shell), and the sigmap CLI refreshes the index, queries declarations by name or regex, opens code around matches, and diagnoses index health. |
 
 ### Skill Token Index
 
@@ -276,13 +280,13 @@ Token cells are shown as `startup/body`.
 | `ios-swiftui-architect` | 80/708 | Build or refactor iOS SwiftUI views/components: navigation, TabView, sheets, async state, responsive stacks/grids, state ownership, environment injection, previews, and performance-aware declarative UI. |
 | `macos-appkit-bridge` | 96/566 | Decide when and how to bridge a macOS app from SwiftUI into AppKit. Use when implementing NSViewRepresentable or NSViewControllerRepresentable, accessing NSWindow or the responder chain, presenting panels, customizing menus, or handling desktop behaviors that SwiftUI does not model cleanly. |
 | `macos-liquid-glass-designer` | 87/593 | Implement, refactor, or review modern macOS SwiftUI Liquid Glass UI: NavigationSplitView, toolbars, search, sheets, controls, system materials, `glassEffect`, `GlassEffectContainer`, and `glassEffectID`. |
-| `macos-notarization-packager` | 89/305 | Use when preparing or diagnosing macOS Developer ID distribution artifacts, including archives, exported app bundles, bundle structure, hardened runtime, notarization readiness, or distribution-only failures. Not for local signing-only diagnosis or direct `asc notarization` execution. |
+| `macos-notarization-packager` | 89/341 | Use when preparing or diagnosing macOS Developer ID distribution artifacts, including archives, exported app bundles, bundle structure, hardened runtime, notarization readiness, or distribution-only failures. Not for local signing-only diagnosis or direct `asc notarization` execution. |
 | `macos-runtime-debugger` | 84/770 | Build, run, and debug local macOS apps or desktop executables with shell-first Xcode/Swift workflows. Use for Mac app builds, launch scripts, compiler/linker/startup failures, logs, telemetry, or desktop runtime debugging. |
-| `macos-signing-inspector` | 78/428 | Use when an existing macOS app or binary needs code-signing, entitlement, hardened runtime, sandbox, Gatekeeper, or trust-policy diagnosis. Not for full distribution packaging or running notarization submissions. |
+| `macos-signing-inspector` | 78/485 | Use when an existing macOS app or binary needs code-signing, entitlement, hardened runtime, sandbox, Gatekeeper, or trust-policy diagnosis. Not for full distribution packaging or running notarization submissions. |
 | `macos-swiftpm-runner` | 85/280 | Build, run, and test pure SwiftPM-based macOS packages and executables. Use when the repo is package-first, when there is no Xcode project, or when Swift package workflows are the fastest path to diagnosis. |
 | `macos-swiftui-architect` | 78/821 | Build or refactor native macOS SwiftUI scenes and components: windows, commands, toolbars, settings, split views, inspectors, menu bar extras, keyboard workflows, and desktop layouts. |
 | `macos-telemetry-probe` | 72/412 | Add and verify lightweight macOS runtime telemetry with `Logger`/`os.Logger`, `log stream`, Console filters, signposts, and build-run checks. |
-| `macos-test-diagnoser` | 83/323 | Triage failing macOS tests across Xcode and SwiftPM workflows. Use when asked to run macOS tests, narrow failing scopes, explain assertion or crash failures, or separate real test regressions from setup and environment problems. |
+| `macos-test-diagnoser` | 83/574 | Triage failing macOS tests across Xcode and SwiftPM workflows. Use when asked to run macOS tests, narrow failing scopes, explain assertion or crash failures, or separate real test regressions from setup and environment problems. |
 | `macos-view-architect` | 70/500 | Refactor macOS SwiftUI views/scenes into small stable subviews, explicit scene roots, command/toolbar ownership, scene-aware state, and narrow AppKit bridges. |
 | `macos-window-architect` | 76/799 | Customize macOS 15+ SwiftUI windows and scene behavior: toolbar/title visibility, drag regions, window materials, minimize/restoration, default/ideal placement, launch behavior, and borderless windows. |
 | `swiftpm-build-inspector` | 71/536 | Analyze Swift Package Manager dependencies, plugins, module variants, branch pins, package graph shape, macros, binary targets, and CI/local build overhead that slow Xcode builds. |
@@ -292,7 +296,7 @@ Token cells are shown as `startup/body`.
 | `tuist-generation-doctor` | 77/629 | Debug Tuist-generated project failures across generation, build, and runtime. Use when `tuist generate`, generated Xcode workspaces, or generated app launches fail or behave differently from the source project. |
 | `tuist-migration-planner` | 75/577 | Migrate existing Xcode projects toward Tuist-generated workspaces. Use when converting hand-maintained Xcode projects, mapping targets/settings/dependencies, or validating generated builds and launches. |
 | `tuist-workspace-navigator` | 80/500 | Work productively in Tuist-generated Xcode workspaces. Use for `tuist generate`, generated workspace builds, focused generation, tags, buildable folders, and Xcode build/test commands after generation. |
-| `xcode-build-baseline` | 66/550 | Benchmark Xcode clean, cached-clean, zero-change, and incremental builds with repeatable inputs, timing summaries, and `.build-benchmark/` artifacts. |
+| `xcode-build-baseline` | 66/623 | Benchmark Xcode clean, cached-clean, zero-change, and incremental builds with repeatable inputs, timing summaries, and `.build-benchmark/` artifacts. |
 | `xcode-build-strategist` | 78/959 | Recommend-first Xcode build optimization: benchmark, run specialist analyses, prioritize wall-clock findings, request approval, delegate fixes, and re-benchmark. Use for speeding up Xcode builds or full build audits. |
 | `xcode-build-tuner` | 77/749 | Apply approved Xcode build optimization changes and re-benchmark. Use after `xcode-build-strategist` approval, or for explicit build-setting, script-phase, Swift compilation, or SwiftPM graph fixes. |
 | `xcode-compile-profiler` | 70/494 | Analyze Swift and mixed-language compile hotspots from timing summaries, Swift frontend diagnostics, type-checking warnings, CompileSwiftSources, SwiftEmitModule, and related build evidence. |
@@ -391,13 +395,13 @@ Token cells are shown as `startup/body`.
 
 | Skill | Tokens | Description |
 | --- | ---: | --- |
-| `gitlab-review-response` | 117/1,083 | Use when addressing existing GitLab merge request review discussions: classify feedback against current code and the latest diff, prepare focused fixes, prove exact source-head and CI provenance, and post idempotent same-thread replies. Supports plan-only, reply-only, and explicitly authorized per-thread resolution through GitLab REST v4 or glab api. Do not use for broad code review, GitHub pull requests, approvals, merges, or bulk resolution. |
+| `gitlab-review-response` | 117/1,308 | Use when addressing existing GitLab merge request review discussions: classify feedback against current code and the latest diff, prepare focused fixes, prove exact source-head and CI provenance, and post idempotent same-thread replies. Supports plan-only, reply-only, and explicitly authorized per-thread resolution through GitLab REST v4 or glab api. Do not use for broad code review, GitHub pull requests, approvals, merges, or bulk resolution. |
 
 #### `stacked-delivery`
 
 | Skill | Tokens | Description |
 | --- | ---: | --- |
-| `stacked-change-delivery` | 123/1,933 | Use when pull requests, merge requests, patch sets, or branch changes form a dependency stack and a child must remain based on an exact parent head. Covers stacked diffs, restacking after ancestor updates, per-node CI proof, safe bottom-up or forge-native atomic-prefix landing, isolated worktrees, and cross-agent handoffs. Do not use for one independent change, ordinary review-thread response, or automatic merge or force-push authorization. |
+| `stacked-change-delivery` | 123/2,100 | Use when pull requests, merge requests, patch sets, or branch changes form a dependency stack and a child must remain based on an exact parent head. Covers stacked diffs, restacking after ancestor updates, per-node CI proof, safe bottom-up or forge-native atomic-prefix landing, isolated worktrees, and cross-agent handoffs. Do not use for one independent change, ordinary review-thread response, or automatic merge or force-push authorization. |
 
 #### `git-worktree-safety`
 
@@ -483,6 +487,21 @@ Token cells are shown as `startup/body`.
 | `sdd-plan-tasks` | 55/513 | Convert approved SDD specs into technical plans, design artifacts, contracts, quickstart validation, and traceable task lists. |
 | `sdd-spec-kit` | 58/574 | Use GitHub Spec Kit projects and commands, including constitution, specify, clarify, plan, tasks, analyze, implement, extensions, and presets. |
 | `sdd-specify` | 56/498 | Create or refine SDD requirements and specifications with explicit assumptions, non-goals, acceptance criteria, success metrics, and retrofit truth markers. |
+
+#### `engineering-hygiene`
+
+| Skill | Tokens | Description |
+| --- | ---: | --- |
+| `code-maintenance-audit` | 120/908 | Code maintenance sweep for changed and adjacent code. Use when implementing, modifying, reviewing, or finishing code changes, to catch dead code, stale leftovers, unused imports/variables/types/functions/components, duplicate branches/components/classes, obsolete tests/fixtures, and safe local consolidation opportunities before claiming done. Applies across languages and frameworks. Excludes speculative architecture rewrites, style-only churn, and performance/algorithm optimization unless the user explicitly asks. |
+| `provisioning-missing-tools` | 100/678 | Use when work is blocked, slowed, or downgraded because a command, SDK, runtime, package manager, system package, driver, CLI, simulator, emulator, or test/profiling utility is missing, outdated, too weak, or not configured, especially when the user asked for end-to-end execution. |
+| `ui-visual-audit` | 153/835 | Skeptical visual QA workflow for rendered UI and screenshots. Use when building, modifying, reviewing, or verifying web/mobile/desktop UI; captures browser, simulator, emulator, or desktop screenshots; compares implementation to a design; or claims a UI feature is visually correct. Forces a second pass for unrelated visual anomalies beyond acceptance criteria: occlusion, clipping, overlap, blank boxes, broken icons, poor contrast, broken spacing/alignment, inconsistent padding or margins, wrong platform controls, mock-looking or domain-implausible data, responsive/i18n text overflow, and accessibility-visible defects. |
+| `untangle-business-logic` | 164/818 | Targeted refactoring workflow for tangled business logic in code. Use when working on code where business rules, UI/presentation, API/IO, persistence, platform quirks, concurrency, lifecycle, state transitions, or error policy are mixed together; when the same domain rule is implemented in several places; when a bug depends on event ordering or stale state; or when a feature works but the business meaning is spread across components/services. Complements code-maintenance-audit: this skill is for semantic logic boundaries, hidden invariants, duplicated business meaning, and behavior-preserving logic untangling, not generic dead-code cleanup or performance tuning. |
+
+#### `signature-map`
+
+| Skill | Tokens | Description |
+| --- | ---: | --- |
+| `signature-map` | 87/810 | Generates and queries signatures.json, a lightweight declaration index for fast, low-token code navigation. Use when locating type/function/method declarations in a medium or large repository, before broad rg/grep scans, when opening code around a known symbol, or when a repo's signatures.json index looks stale or broken. |
 
 ## Repository Design
 
