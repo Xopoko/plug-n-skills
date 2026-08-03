@@ -98,6 +98,10 @@ the complete response as provenance-bearing evidence in a restrictive
 task-local artifact and pass only the required structural fields or hashes to
 model context.
 
+Take full discussion and note IDs from the JSON response only. Terminal-oriented
+CLI output abbreviates long discussion IDs, and an abbreviated ID either
+addresses the wrong thread or fails closed on the reply endpoint.
+
 ## Reads, Writes, And Failures
 
 - Treat `401` as an authentication failure and `403` as an authorization or

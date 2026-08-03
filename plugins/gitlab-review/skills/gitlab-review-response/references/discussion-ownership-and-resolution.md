@@ -32,12 +32,34 @@ Applicability:
   but not a durable current-code defect.
 - `already-addressed`: current code demonstrably satisfies the requested
   outcome; cite proof rather than changing code again.
+- `refuted`: the claim is factually wrong at the exact accepted head; a named
+  code or configuration layer contradicts it. Decline with that evidence rather
+  than changing code to satisfy an incorrect claim.
 - `obsolete-or-unmapped`: the original position no longer maps and the
   requested outcome cannot be established from current evidence.
 - `needs-clarification`: intent, expected behavior, or policy is ambiguous.
+- `fixed-in-descendant-slice`: this merge request targets another open merge
+  request's source branch, and a descendant slice of that stack already carries
+  the fix. Reply with the descendant merge request reference and the full commit
+  SHA that contains it, and do not repeat the fix here; a duplicated fix
+  conflicts when the stack is cascaded onto the new head. Restacking the
+  descendants themselves is a separate delivery concern.
 
 An outdated position is not proof that the concern was fixed. Re-anchor the
-request to current code and the latest diff version before classifying it.
+request to current code and the latest diff version before classifying it. In a
+stacked merge request, re-anchor against that slice's own diff between the
+target-ref and source-ref heads, not against the default branch.
+
+A reviewer claim is a hypothesis, not established fact. Before accepting or
+declining one, read the whole chain the claim depends on, including the runtime
+and configuration layer the reviewer may not have opened: serializer or codec
+configuration, dependency wiring, build and feature flags, and
+platform-specific implementations of a shared declaration. A request to change
+a field's declared type, for example, is refuted when the production decoder is
+configured to accept the current wire format. Decline with the path and line of
+the layer that refutes the claim, and record that layer as the evidence for the
+decline. Reviewers are regularly wrong for infrastructure reasons that are
+invisible in the diff.
 
 Ownership:
 
@@ -110,7 +132,9 @@ green.
 ## Resolution Ownership
 
 Default human-authored discussions to reviewer-owned resolution. Reply with
-evidence and leave the thread open for its human owner.
+evidence and leave the thread open for its human owner. That includes a
+discussion you declined and a discussion you answered as already addressed:
+disagreement and prior fixes are the reviewer's call to close, not yours.
 
 Permit a `resolve-only` plan only when all of these are true:
 
@@ -127,7 +151,10 @@ Permit a `resolve-only` plan only when all of these are true:
 7. The discussion contains an unresolved resolvable note; overview-only or
    otherwise non-resolvable discussions are never sent a resolution write.
 
-Treat bot-authored discussions according to an explicit repository policy.
+Treat bot-authored discussions according to an explicit repository policy, and
+resolve one only when closure evidence exists in the thread: the fix commit SHA,
+or the explicit evidence recorded for a not-applicable or already-addressed
+reply. A bot author alone is not closure evidence.
 System notes are never resolution assignments. Resolve self-authored test
 threads only when the task and repository policy authorize them.
 

@@ -13,17 +13,23 @@ description: >-
 # GitLab Review Response
 
 Run the review response as one stateful transaction. Keep repository policy
-authoritative. If repository instructions conflict with this workflow, stop the
+authoritative. Before acting, read the target repository's `CLAUDE.md`,
+`AGENTS.md`, and `CONTRIBUTING` guidance and record its commit-message
+convention, thread-resolution etiquette, and push and CI policy; those
+conventions override every default in this skill. When `CLAUDE.md` and
+`AGENTS.md` diverge, follow `CLAUDE.md` and report the divergence as a
+documentation defect. Never invent a commit-message format the repository does
+not use. If repository instructions conflict with this workflow, stop the
 conflicting mutation and report the policy boundary.
 
 Resolve `$SKILL_ROOT` as the absolute directory containing this `SKILL.md`.
 
 Load only the reference needed:
 
-- Pushes, CI proof, concurrent updates, or uncertain write receipts:
-  `$SKILL_ROOT/references/review-transaction-contract.md`
-- Thread ownership, reply wording, or any resolution decision:
-  `$SKILL_ROOT/references/discussion-ownership-and-resolution.md`
+- Local proof, pushes, CI proof, concurrent updates, or uncertain write
+  receipts: `$SKILL_ROOT/references/review-transaction-contract.md`
+- Thread ownership, claim verification, reply wording, or any resolution
+  decision: `$SKILL_ROOT/references/discussion-ownership-and-resolution.md`
 - Authentication, pagination, endpoints, forks, or CLI/version differences:
   `$SKILL_ROOT/references/gitlab-api-compatibility.md`
 
@@ -36,13 +42,14 @@ Load only the reference needed:
   REST client. Feature-probe optional CLI conveniences before using them.
 - Never auto-approve or merge. Never force-push or resolve without explicit
   authorization, and never resolve in bulk. Keep reply and resolution as
-  separate writes.
+  separate writes. Do not trigger, retry, or cancel a pipeline to obtain proof;
+  observe the pipeline the push produced.
 - Keep raw bodies in restrictive task-local artifacts. Emit bounded summaries,
   identifiers, hashes, state transitions, and relevant failure tails.
 
 ## Workflow
 
-1. **Bind the target.** Read repository instructions, then record the explicit
+1. **Bind the target.** After reading repository policy above, record the
    GitLab host, visible authenticated account ID, target project ID, MR ID and
    IID, source project ID and path, source branch, credential-free source
    remote identity and ref, target branch and target-ref SHA, MR head SHA, full
@@ -56,14 +63,20 @@ Load only the reference needed:
    Bound retries; persistent churn becomes report-only. Preserve the accepted
    snapshot as an immutable review epoch.
 3. **Classify each active thread.** Inspect the exact epoch head and current
-   file, not only the old diff position. Classify applicability as
-   `current-code`, `latest-diff-only`, `already-addressed`,
-   `obsolete-or-unmapped`, or `needs-clarification`; classify ownership
+   file, not only the old diff position. Treat every reviewer claim as a
+   hypothesis: verify it against the current file and against the runtime and
+   configuration layer the reviewer may not have read before accepting it.
+   Classify applicability as `current-code`, `latest-diff-only`,
+   `already-addressed`, `refuted`, `obsolete-or-unmapped`,
+   `needs-clarification`, or `fixed-in-descendant-slice`; classify ownership
    separately. Record `discussion -> requested outcome -> planned change ->
    proof`. Do not expand into an unsolicited broad review.
 4. **Prepare and prove.** Make only repository-authorized changes and run the
-   smallest relevant local proof. Immediately before push, fetch the source
-   ref, take another complete stable snapshot, and compare it with the epoch.
+   smallest relevant local proof that can fail without the fix. When a note
+   reports failing CI, triage that failure before replying: read the failed job
+   log, isolate the first actionable error, and map it to code or configuration.
+   Immediately before push, fetch the source ref, take another complete stable
+   snapshot, and compare it with the epoch.
    Require the remote source ref and MR head to remain at the epoch head and the
    prepared local history to be based on that head. On drift, re-triage before
    any push.

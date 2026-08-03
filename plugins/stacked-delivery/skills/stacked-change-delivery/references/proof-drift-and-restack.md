@@ -20,6 +20,31 @@ Accept it only when:
 Parent proof does not flow upward. Cached evidence is acceptable only when the
 repository's cache key binds the same inputs and the receipt records that key.
 
+## Node-Only Delta
+
+Derive a node's delta from its own dependency interval: the exact expected
+parent head, or the base head for the bottom node, up to its current head. With
+repository-native Git evidence that is the range between the node's own target
+ref and its source ref, for example
+`git diff <node-target-ref>..<node-source-ref>` resolved from freshly fetched
+remote-tracking refs. A range against the base branch also contains every
+ancestor's work, so it inflates the delta, attributes a review claim to the
+wrong node, and scopes proof beyond the node under evaluation.
+
+## Shared Recorded Artifacts
+
+Some proofs compare recorded reference artifacts, such as generated goldens,
+snapshots, or approved output files, instead of asserting behavior inline. Those
+artifacts cross node boundaries:
+
+- When a node changes a component that several modules record against, its
+  smallest covering proof still verifies every module whose recorded artifacts
+  depend on that component, not only the edited module. Otherwise the break
+  stays invisible in this node and surfaces in a descendant or after landing.
+- A descendant's invalidated artifacts are re-recorded inside that descendant,
+  under its own ownership and proof, never folded into the ancestor whose change
+  invalidated them.
+
 ## Unavailable Proof Surfaces
 
 When a proof cannot start because an external precondition is unavailable,
@@ -199,7 +224,10 @@ collector.
 
 Restacking rewrites descendants. Do not do it as an incidental repair.
 
-1. Record old base, parent, node, and remote object IDs.
+1. Record old base, parent, node, and remote object IDs. Capture the mutated
+   node's pre-mutation head before its first new commit; that exact head is what
+   every descendant already binds as its expected parent head, and a local ref
+   that has moved cannot be recomputed.
 2. Resolve current change ownership and action-specific authority from fresh
    read-only evidence; a local `writer_id` is not that authority.
 3. Confirm each affected worktree is clean, or stop with its dirty state
@@ -209,14 +237,40 @@ Restacking rewrites descendants. Do not do it as an incidental repair.
 5. Rewrite one node at a time from bottom to top.
 6. Verify ancestry, ordered contribution provenance, and the node-only delta.
 7. Publish only with an explicit expected remote object ID and current
-   publication authority.
+   publication authority. Every rewritten descendant needs that lease publish. A
+   node whose history was only appended to publishes as an ordinary
+   fast-forward; do not merge the two into one publication class.
 8. Read back the remote head.
 9. Repeat for the next descendant.
 10. Rerun node-local proof and rebuild the snapshot.
 
+### Replay Interval
+
+A descendant replays across an interval defined by two heads of its parent: the
+parent's pre-mutation head, which the descendant already binds as its expected
+parent head, and the parent's new head. Neither endpoint is the grandparent's
+head or the descendant's own head.
+
+```bash
+git rebase --onto <parent-new-head> <parent-pre-mutation-head> <descendant-ref>
+```
+
+Never derive the old endpoint by recomputing a merge point or fork point in any
+form, whether plain, multi-head, or against the base branch. Once the parent has
+moved, that computation returns the stack's fork from the base branch, so the
+replay silently rewrites every commit below the descendant instead of only the
+parent's new work, and it still reports success. When the pre-mutation head was
+not captured, recover it from read-only history evidence, such as the ref log of
+the parent's remote-tracking ref or the forge's recorded change-version history,
+and stop if neither yields an exact object ID.
+
 On conflict, remote drift, lease failure, ambiguous state, or partial publish,
 stop and preserve the last confirmed mapping. Do not retry the same rewrite
-without new state or a changed resolution.
+without new state or a changed resolution. When an authorized resolution does
+proceed, it keeps both sides of the composition: the parent's new work and the
+descendant's own change. Dropping or skipping the descendant's commit is not a
+resolution; it deletes that node's delta while the rewrite reports success, and
+it fails composition equivalence.
 
 ## External Mechanisms
 

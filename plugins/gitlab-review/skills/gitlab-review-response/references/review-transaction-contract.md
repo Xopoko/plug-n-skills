@@ -96,6 +96,42 @@ commit identity must be exactly 40 or 64 hexadecimal characters.
 The commands emit one deterministic JSON object. Exit `2` from `compare` means
 the epochs drifted; it is not a prompt to weaken comparison.
 
+## Local Proof Before Push
+
+A green run of gates that already existed is not proof that a fix works. Every
+accepted fix carries a proof that fails without it.
+
+For a behavioral fix, add a new test or extend an existing one so it fails
+without the fix, then demonstrate that failure: stash only the fix, run the
+test, require exactly that test to fail, restore the fix, and require it to
+pass. Prove failure for at least the key fix of the batch.
+
+For a visual fix, the re-recorded reference images are the test. Keep record and
+verify as separate invocations, never one combined run, and follow this order:
+
+1. Apply the code fix.
+2. Record new reference images.
+3. Stash only the code fix; the new reference images stay in the tree.
+4. Run verify and require it to fail.
+5. Restore the fix.
+6. Run verify again and require it to pass.
+
+Verifying the old reference images with the fix stashed passes trivially and is
+not proof. Inspect every changed reference image, including each supported
+appearance variant.
+
+After changing a component shared across modules, run snapshot verify for every
+snapshot-bearing module in the tree. A shared component invalidates reference
+images in sibling modules and in sibling merge requests of the same stack, not
+only in the module you touched.
+
+Run the repository's own gates for the touched modules. When piping gate output,
+set `set -o pipefail` first; a trailing `| tail` otherwise reports the pipe's
+exit code and masks a failing gate.
+
+Keep local proof and exact-head CI proof as separate ledger fields. Neither
+substitutes for the other.
+
 ## Pre-Push Compare
 
 Immediately before push:

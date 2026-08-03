@@ -271,6 +271,34 @@ class StackedDeliveryGuidanceTests(unittest.TestCase):
         ):
             self.assertIn(invariant, handoff)
 
+    def test_replay_interval_and_shared_artifact_scope_are_exact(self):
+        skill = compact(SKILL)
+        restack = compact(REFERENCE)
+        for invariant in (
+            "never from a range against the base branch",
+            "re-recorded in that descendant rather than here",
+            "already bound as that descendant's expected parent head",
+            "never recompute that old endpoint from a merge or fork point",
+        ):
+            self.assertIn(invariant, skill)
+        for invariant in (
+            "capture the mutated node's pre-mutation head before its first new "
+            "commit",
+            "neither endpoint is the grandparent's head or the descendant's own "
+            "head",
+            "never derive the old endpoint by recomputing a merge point or fork "
+            "point in any form",
+            "returns the stack's fork from the base branch",
+            "ref log of the parent's remote-tracking ref",
+            "dropping or skipping the descendant's commit is not a resolution",
+            "every rewritten descendant needs that lease publish",
+            "publishes as an ordinary fast-forward",
+            "verifies every module whose recorded artifacts depend on that "
+            "component, not only the edited module",
+            "re-recorded inside that descendant",
+        ):
+            self.assertIn(invariant, restack)
+
     def test_manifest_names_the_full_audited_surface(self):
         manifest = json.loads(CODEX_MANIFEST.read_text(encoding="utf-8"))
         long_description = manifest["interface"]["longDescription"].lower()

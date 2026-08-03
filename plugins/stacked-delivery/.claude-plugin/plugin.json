@@ -1,6 +1,6 @@
 {
   "name": "stacked-delivery",
-  "version": "0.1.4",
+  "version": "0.1.5",
   "description": "Dependency-safe delivery for stacked pull requests, merge requests, and dependent changes with exact parent-head binding, descendant invalidation, per-node proof, post-rewrite proof-record freshness, provenance and publication-authority boundaries, safe landing order, and guarded handoff receipts.",
   "author": {
     "name": "Xopoko"

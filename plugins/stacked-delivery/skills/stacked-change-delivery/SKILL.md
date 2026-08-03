@@ -71,10 +71,16 @@ Load only the reference needed:
    evidence that the composition is current.
 4. **Plan isolated slices.** Give each writable branch one canonical worktree
    and writer. A node may depend on landed or currently bound lower nodes, but
-   its diff and proof remain its own. Record the exact parent head before
-   starting a dependent slice.
+   its diff and proof remain its own: derive that diff from the node's own
+   dependency interval, its exact target or parent head up to its own head, and
+   never from a range against the base branch. Record the exact parent head
+   before starting a dependent slice.
 5. **Prepare and prove one node.** Make only authorized changes in that node's
-   worktree. Run the smallest repository-native proof that covers the node.
+   worktree. Run the smallest repository-native proof that covers the node. When
+   the node changes a component that several modules record reference artifacts
+   against, that proof still verifies every dependent module, not only the edited
+   one, and a descendant's invalidated artifacts are re-recorded in that
+   descendant rather than here.
    Bind every accepted proof to the node head and the exact base or parent head.
    `skipped`, `neutral`, cancelled, superseded, or head-only results do not
    establish current dependency proof. If a proof cannot start because an
@@ -88,8 +94,13 @@ Load only the reference needed:
    invalidates the affected descendant closure. Restacking is a history rewrite
    and needs explicit authorization; perform it bottom to top, preserve old to
    new object-ID evidence and repository-required contribution attribution,
-   then rerun proof for every rewritten node. When another task will publish a
-   prepared rewrite, validate the additive prepared mutation handoff. Its v1
+   then rerun proof for every rewritten node. Replay each descendant across the
+   interval between the parent's pre-mutation head, captured before the parent's
+   first new commit and already bound as that descendant's expected parent head,
+   and the parent's new head; never recompute that old endpoint from a merge or
+   fork point, which after the parent moves replays the whole stack from its
+   base-branch fork. When another task will publish a prepared rewrite,
+   validate the additive prepared mutation handoff. Its v1
    contract embeds exact pre-rewrite `stacked_delivery.snapshot.v1` only; it
    rejects snapshot v2 because prepared-mutation validation is not post-rewrite
    readiness or handoff proof. Treat its authority record as preparation
