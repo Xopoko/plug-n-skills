@@ -23,7 +23,15 @@ import json
 import sys
 from pathlib import Path
 
-manifest = Path(sys.argv[1]) / ".claude-plugin" / "marketplace.json"
+root = Path(sys.argv[1]).resolve()
+known = Path.home() / ".claude/plugins/known_marketplaces.json"
+if known.is_file():
+    for name, entry in json.loads(known.read_text()).items():
+        paths = {entry.get("installLocation"), entry.get("source", {}).get("path")}
+        if any(p and Path(p).expanduser().resolve() == root for p in paths):
+            print(name)
+            sys.exit(0)
+manifest = root / ".claude-plugin" / "marketplace.json"
 print(json.loads(manifest.read_text())["name"])
 ' "$ROOT")}"
 
