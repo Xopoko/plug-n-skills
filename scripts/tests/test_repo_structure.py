@@ -79,6 +79,41 @@ class RepoStructureTest(unittest.TestCase):
         self.assertTrue(wire_helper.is_file(), "missing Workbench icon manifest helper")
         self.assertIn("$imagegen", factory.read_text())
 
+    def test_capability_workbench_harness_contract_exists(self):
+        plugin = ROOT / "plugins" / "capability-workbench"
+        router = (plugin / "skills" / "capability-workbench" / "SKILL.md").read_text()
+        validator = plugin / "scripts" / "harness" / "validate_harness_artifact.py"
+        references = {
+            "agent-harness-contracts.md",
+            "agent-harness-patterns.md",
+            "agent-harness-evaluation.md",
+            "agent-harness-landscape.md",
+        }
+
+        self.assertTrue(validator.is_file(), "missing Workbench harness validator")
+        for name in ("agent-harness-engineering", "agent-harness-evaluation"):
+            skill = plugin / "skills" / name / "SKILL.md"
+            self.assertTrue(skill.is_file(), f"missing Workbench harness skill {name}")
+            self.assertIn(name, router)
+            self.assertIn(
+                "scripts/harness/validate_harness_artifact.py",
+                skill.read_text(),
+            )
+        engineering = (
+            plugin / "skills" / "agent-harness-engineering" / "SKILL.md"
+        ).read_text()
+        evaluation = (
+            plugin / "skills" / "agent-harness-evaluation" / "SKILL.md"
+        ).read_text()
+        self.assertIn("agent_harness.design.v1", engineering)
+        self.assertIn("agent_harness.evaluation_plan.v1", evaluation)
+        self.assertIn("agent_harness.run_result.v1", evaluation)
+        for name in references:
+            self.assertTrue(
+                (plugin / "references" / name).is_file(),
+                f"missing Workbench harness reference {name}",
+            )
+
     def test_readme_dashboard_header_renderer_exists(self):
         readme = (ROOT / "README.md").read_text()
         self.assertIn("assets/plugin-dashboard-header.png", readme)
