@@ -1,6 +1,6 @@
 ---
 name: capability-workbench
-description: Route and orchestrate agent skill and plugin lifecycle work. Use when work involves agent skills, plugins, marketplace packages, capability acquisition, synthesis, creation, installation, packaging, audit, or context-density optimization.
+description: Route agent skill/plugin lifecycle and LLM agent harness work. Use for capability discovery, synthesis, creation, installation, packaging, audit, portfolio design, or for designing and evaluating the runtime around an LLM-powered agent.
 ---
 
 # Capability Workbench
@@ -25,9 +25,20 @@ Choose one primary mode before making changes:
 | Create, update, install, or publish agent marketplace plugin | `plugin-factory` | Plugin folder, marketplace entry when needed, validation, optional install/cache proof and separate discovery state |
 | Review safety, coverage, validation, token cost, or prompt contracts | `capability-auditor` | Structured audit and fixes or recommendations |
 | Repair a false, stale, or broken skill/script/plugin/MCP contract discovered during work | `capability-reality-repair` | Updated source of truth plus validation proof |
+| Design, build, refactor, or recover an LLM agent runtime/control harness | `agent-harness-engineering` | Validated harness design contract plus implementation handoff |
+| Benchmark, replay, diagnose, compare, or release-gate an LLM agent harness | `agent-harness-evaluation` | Validated evaluation plan or run result plus evidence-backed findings |
 
 If the request spans modes, sequence them explicitly. Typical full lifecycle:
 `capability-synthesizer` -> optional `capability-portfolio-architect` -> `skill-factory` or `plugin-factory` -> `capability-auditor` -> optional install/cache gate and separate runtime-discovery probe.
+
+Harness work is a direct domain route, not an automatic synthesis route. Use
+`agent-harness-engineering` when the artifact is the runtime/control system and
+`agent-harness-evaluation` when the artifact is evidence about its behavior.
+If the user asks to create a skill that teaches either workflow, route through
+`capability-synthesizer` and `skill-factory` instead. Keep exact Codex or Claude
+Code commands in their vendor plugins, generic application structure in
+Architecture Intelligence, prompt/context deep work in Context Density, and
+literature synthesis in Scientific Research.
 
 If context-density work or an audit shows overlap, cross-plugin responsibility duplication, missing boundaries, overloaded skills, stale skills, or repeated deterministic procedures hidden in prose, route through `capability-portfolio-architect` before editing. Token reduction is a signal, not a substitute for a structural decision ledger.
 
@@ -50,6 +61,8 @@ Bind the primary target and delivery surface before editing. If the user names a
 ## Hard Boundaries
 
 - Do not blindly merge whole skills or plugin packs.
+- Do not treat a model transcript as a checkpoint, model output as permission, telemetry as correctness evidence, or a skill/package scan as a safety guarantee.
+- Do not route a harness benchmark through `capability-auditor`; that skill audits capability artifacts, while `agent-harness-evaluation` audits runtime behavior.
 - Do not delete, move, merge, or split skills/plugins from token pressure alone. Preserve or explicitly transfer trigger coverage, safety boundaries, commands, output contracts, install surface, and validators.
 - Do not execute candidate skills or unknown install scripts during evaluation.
 - Do not include paid APIs, required API keys, external generation services, hidden network dependencies, telemetry, unsafe shell execution, obscure installers, or project-specific infrastructure in the core path.

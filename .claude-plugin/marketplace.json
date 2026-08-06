@@ -36,7 +36,7 @@
     {
       "name": "capability-workbench",
       "source": "./plugins/capability-workbench",
-      "description": "Capability discovery, synthesis, portfolio architecture, skill trigger metadata, Codex catalog-budget and evidence-coverage audits, agent guidance authoring, vetting, packaging, installation, and marketplace visibility."
+      "description": "Capability discovery, synthesis, portfolio architecture, skill trigger metadata, Codex catalog-budget and evidence-coverage audits, agent guidance authoring, LLM agent harness engineering and evaluation, vetting, packaging, installation, and marketplace visibility."
     },
     {
       "name": "codex-cli",

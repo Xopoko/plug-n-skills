@@ -1,7 +1,7 @@
 {
   "name": "capability-workbench",
-  "version": "0.3.8+codex.profile-routing-v1",
-  "description": "Agent-agnostic capability workbench for discovery, synthesis, portfolio architecture, trigger metadata, Codex catalog-budget and evidence-coverage audits, agent guidance, vetting, repair, installation, packaging, and imagegen-backed plugin icons.",
+  "version": "0.4.0",
+  "description": "Agent-agnostic capability workbench for discovery, synthesis, portfolio architecture, trigger metadata, Codex catalog-budget and evidence-coverage audits, agent guidance, LLM agent harness engineering and evaluation, vetting, repair, installation, packaging, and imagegen-backed plugin icons.",
   "author": {
     "name": "Xopoko"
   },
@@ -19,13 +19,16 @@
     "context-density",
     "evidence-coverage",
     "validation",
-    "repair"
+    "repair",
+    "agent-harness",
+    "agent-runtime",
+    "evaluation"
   ],
   "skills": "./skills/",
   "interface": {
     "displayName": "Capability Workbench",
-    "shortDescription": "Discover, synthesize, author guidance, vet, install, and package agent capabilities.",
-    "longDescription": "Capability Workbench combines web-first external discovery, skill synthesis, cross-plugin capability portfolio architecture, skill authoring, AGENTS.md and CLAUDE.md guidance file authoring, urgent repair of stale or false capability contracts, global agent skill installation, plugin packaging, imagegen-backed plugin icon workflows, marketplace visibility, safety vetting, and context-density tooling into one capability-acquisition plugin. It models Codex's aggregate model-visible skill catalog budget, audits concrete inventories for description shortening or whole-entry omission, and keeps trigger-first metadata distinct from selected SKILL.md bodies. It gates broad audit claims against exact declared item-by-dimension evidence coverage without treating the declared universe as independently proven. It can audit whole plugin portfolios for overlap, weak routing, split/merge/delete/move decisions, shared capability extraction, reference extraction, and script extraction. It treats public repositories, marketplaces, research sources, and community implementations as the primary corpus, with local skills as supplementary evidence. It writes artifacts to the validated source surface and installs into the global agent installation only when the user asks for installed/global use.",
+    "shortDescription": "Build agent capabilities and engineer LLM harnesses.",
+    "longDescription": "Capability Workbench combines web-first external discovery, skill synthesis, cross-plugin capability portfolio architecture, skill authoring, AGENTS.md and CLAUDE.md guidance file authoring, urgent repair of stale or false capability contracts, global agent skill installation, plugin packaging, imagegen-backed plugin icon workflows, marketplace visibility, safety vetting, and context-density tooling into one capability-acquisition plugin. It models Codex's aggregate model-visible skill catalog budget, audits concrete inventories for description shortening or whole-entry omission, and keeps trigger-first metadata distinct from selected SKILL.md bodies. It gates broad audit claims against exact declared item-by-dimension evidence coverage without treating the declared universe as independently proven. It can audit whole plugin portfolios for overlap, weak routing, split/merge/delete/move decisions, shared capability extraction, reference extraction, and script extraction. It also provides vendor-neutral engineering and evaluation workflows for the runtime around an LLM-powered agent: control loops, typed tools and state, context and memory, policy and isolation, recovery, delegation, traces, benchmark design, and release gates. It treats public repositories, marketplaces, research sources, and community implementations as the primary corpus, with local skills as supplementary evidence. It writes artifacts to the validated source surface and installs into the global agent installation only when the user asks for installed/global use.",
     "developerName": "Xopoko",
     "category": "Productivity",
     "capabilities": [
@@ -42,7 +45,9 @@
       "Reality repair for stale or false skill, script, plugin, and MCP contracts",
       "Global agent skill installation with safety vetting",
       "Agent marketplace plugin creation and global visibility validation",
-      "Context-density and prompt-contract audits"
+      "Context-density and prompt-contract audits",
+      "Outcome-neutral LLM agent harness engineering",
+      "Harness evaluation, replay, reliability analysis, and release gates"
     ],
     "defaultPrompt": [
       "Use Capability Workbench to decide whether this request needs skill creation, skill installation, plugin packaging, synthesis, or audit.",
@@ -54,7 +59,9 @@
       "Use Capability Workbench to validate a broad audit claim against an exact declared item-by-dimension evidence matrix.",
       "Use Capability Workbench to repair a stale skill, script, plugin, or MCP contract that contradicted live behavior during work.",
       "Use Capability Workbench to generate a coherent imagegen-backed icon for a new marketplace-backed plugin and wire it into the plugin manifest.",
-      "Use Capability Workbench to validate and install an agent marketplace plugin so it is visible globally in the host agent."
+      "Use Capability Workbench to validate and install an agent marketplace plugin so it is visible globally in the host agent.",
+      "Use Capability Workbench to design or refactor an LLM agent harness with bounded control, typed tools and state, explicit policy, recovery, and an evaluation handoff.",
+      "Use Capability Workbench to build an evidence-backed evaluation, replay, or release gate for an LLM agent harness."
     ],
     "brandColor": "#0F766E",
     "composerIcon": "./assets/icon.png",
