@@ -83,12 +83,12 @@ class RepoStructureTest(unittest.TestCase):
         plugin = ROOT / "plugins" / "capability-workbench"
         router = (plugin / "skills" / "capability-workbench" / "SKILL.md").read_text()
         validator = plugin / "scripts" / "harness" / "validate_harness_artifact.py"
-        references = {
+        references = (
             "agent-harness-contracts.md",
             "agent-harness-patterns.md",
             "agent-harness-evaluation.md",
             "agent-harness-landscape.md",
-        }
+        )
 
         self.assertTrue(validator.is_file(), "missing Workbench harness validator")
         for name in ("agent-harness-engineering", "agent-harness-evaluation"):

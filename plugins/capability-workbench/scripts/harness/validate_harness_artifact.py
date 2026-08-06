@@ -80,11 +80,15 @@ SYSTEM_COMPONENTS = (
 
 
 def is_number(value: Any) -> bool:
-    return (
-        isinstance(value, (int, float))
-        and not isinstance(value, bool)
-        and math.isfinite(float(value))
-    )
+    if isinstance(value, bool):
+        return False
+    if isinstance(value, int):
+        return True
+    return isinstance(value, float) and math.isfinite(value)
+
+
+def reject_nonstandard_json_constant(value: str) -> Any:
+    raise ValueError(f"non-standard JSON constant {value}")
 
 
 def require_object(
@@ -474,7 +478,7 @@ def validate_evaluation_plan(
         require_string(metric, "denominator", path, errors)
 
     scenarios = require_list(data, "scenarios", "$", errors)
-    scenario_classes: set[str] = set()
+    scenario_classes_by_id: dict[str, set[str]] = {}
     declared_scenario_ids: set[str] = set()
     for index, scenario in enumerate(scenarios):
         path = f"$.scenarios[{index}]"
@@ -492,17 +496,24 @@ def validate_evaluation_plan(
             errors.append(
                 f"{path}.classes: happy_path cannot share a scenario with injected failure classes"
             )
-        scenario_classes.update(class_set)
-    missing_required = REQUIRED_SCENARIO_CLASSES - scenario_classes
+        if scenario_id and scenario_id not in scenario_classes_by_id:
+            scenario_classes_by_id[scenario_id] = class_set
+    scheduled_scenario_classes: set[str] = set()
+    for scenario_id in scenario_ids:
+        if isinstance(scenario_id, str):
+            scheduled_scenario_classes.update(
+                scenario_classes_by_id.get(scenario_id, set())
+            )
+    missing_required = REQUIRED_SCENARIO_CLASSES - scheduled_scenario_classes
     if missing_required:
         errors.append(
-            "$.scenarios: missing required classes "
+            "$.task_suite.scenario_ids: scheduled scenarios missing required classes "
             + ", ".join(sorted(missing_required))
         )
-    missing_recommended = RECOMMENDED_SCENARIO_CLASSES - scenario_classes
+    missing_recommended = RECOMMENDED_SCENARIO_CLASSES - scheduled_scenario_classes
     if missing_recommended:
         warnings.append(
-            "$.scenarios: recommended classes not covered: "
+            "$.task_suite.scenario_ids: scheduled scenarios do not cover recommended classes: "
             + ", ".join(sorted(missing_recommended))
         )
     missing_suite_scenarios = {
@@ -528,8 +539,12 @@ def validate_evaluation_plan(
         operator = require_string(gate, "operator", path, errors)
         if operator and operator not in {">=", "<=", "==", "zero"}:
             errors.append(f"{path}.operator: must be >=, <=, ==, or zero")
-        if "threshold" not in gate or not isinstance(gate["threshold"], (int, float, bool)):
-            errors.append(f"{path}.threshold: must be numeric or boolean")
+        threshold = gate.get("threshold")
+        if isinstance(threshold, bool):
+            if operator and operator != "==":
+                errors.append(f"{path}.threshold: boolean thresholds require ==")
+        elif not is_number(threshold):
+            errors.append(f"{path}.threshold: must be a finite number or boolean")
         if not isinstance(gate.get("blocking"), bool):
             errors.append(f"{path}.blocking: must be a boolean")
 
@@ -683,11 +698,16 @@ def validate(data: dict[str, Any]) -> tuple[list[str], list[str]]:
 
 def load_artifact(path: Path) -> tuple[dict[str, Any] | None, str | None]:
     try:
-        data = json.loads(path.read_text(encoding="utf-8"))
+        data = json.loads(
+            path.read_text(encoding="utf-8"),
+            parse_constant=reject_nonstandard_json_constant,
+        )
     except OSError as exc:
         return None, f"$: cannot read artifact: {exc}"
     except json.JSONDecodeError as exc:
         return None, f"$: invalid JSON at line {exc.lineno}, column {exc.colno}: {exc.msg}"
+    except ValueError as exc:
+        return None, f"$: invalid JSON: {exc}"
     if not isinstance(data, dict):
         return None, "$: artifact must be a JSON object"
     return data, None

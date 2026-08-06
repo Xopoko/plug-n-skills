@@ -1893,6 +1893,38 @@ def test_harness_artifact_validator() -> None:
             result.stdout,
         )
 
+        unscheduled_safety = json.loads(json.dumps(evaluation))
+        unscheduled_safety["task_suite"]["scenario_ids"] = ["happy-noncoding"]
+        path = root / "unscheduled-safety.json"
+        path.write_text(json.dumps(unscheduled_safety), encoding="utf-8")
+        result = run([script, str(path), "--json"])
+        check(
+            "harness validator: unscheduled safety scenarios do not count as coverage",
+            result.returncode != 0
+            and "scheduled scenarios missing required classes" in result.stdout
+            and "policy_denial" in result.stdout,
+            result.stdout,
+        )
+
+        unscheduled_recommended = json.loads(json.dumps(evaluation))
+        unscheduled_recommended["task_suite"]["scenario_ids"].remove(
+            "untrusted-input"
+        )
+        path = root / "unscheduled-recommended.json"
+        path.write_text(json.dumps(unscheduled_recommended), encoding="utf-8")
+        result = run([script, str(path), "--json"])
+        payload = json.loads(result.stdout)
+        check(
+            "harness validator: unscheduled scenario does not satisfy recommended coverage",
+            result.returncode == 0
+            and any(
+                "scheduled scenarios do not cover recommended classes: untrusted_input"
+                in warning
+                for warning in payload.get("warnings", [])
+            ),
+            result.stdout,
+        )
+
         contradictory = json.loads(json.dumps(evaluation))
         contradictory["scenarios"][0]["classes"].append("timeout")
         path = root / "contradictory-scenario.json"
@@ -1957,14 +1989,72 @@ def test_harness_artifact_validator() -> None:
             result.stdout,
         )
 
-        nonfinite = json.loads(json.dumps(design))
-        nonfinite["control_loop"]["bounds"]["max_steps"] = float("nan")
-        path = root / "nonfinite.json"
-        path.write_text(json.dumps(nonfinite), encoding="utf-8")
+        for index, constant in enumerate(("NaN", "Infinity", "-Infinity")):
+            path = root / f"nonstandard-constant-{index}.json"
+            path.write_text(
+                '{"schema":"agent_harness.design.v1","value":' + constant + "}",
+                encoding="utf-8",
+            )
+            result = run([script, str(path), "--json"])
+            payload = json.loads(result.stdout)
+            check(
+                f"harness validator: non-standard JSON constant {constant} fails",
+                result.returncode != 0
+                and payload.get("artifact_schema") is None
+                and "invalid JSON" in result.stdout
+                and constant in result.stdout,
+                result.stdout,
+            )
+
+        large_integer = json.loads(json.dumps(design))
+        large_integer["control_loop"]["bounds"]["wall_time_seconds"] = 10**1000
+        path = root / "large-integer.json"
+        path.write_text(json.dumps(large_integer), encoding="utf-8")
+        result = run([script, str(path), "--json"])
+        payload = json.loads(result.stdout)
+        check(
+            "harness validator: large JSON integer does not overflow numeric validation",
+            result.returncode == 0 and payload.get("valid") is True,
+            result.stdout,
+        )
+
+        overflow_threshold = json.loads(json.dumps(evaluation))
+        overflow_threshold["release_gates"][0]["threshold"] = "__OVERFLOW__"
+        path = root / "overflow-threshold.json"
+        path.write_text(
+            json.dumps(overflow_threshold).replace('"__OVERFLOW__"', "1e100000"),
+            encoding="utf-8",
+        )
         result = run([script, str(path), "--json"])
         check(
-            "harness validator: non-finite step bound fails",
-            result.returncode != 0 and "positive integer" in result.stdout,
+            "harness validator: non-finite release threshold fails",
+            result.returncode != 0
+            and "threshold" in result.stdout
+            and "finite number or boolean" in result.stdout,
+            result.stdout,
+        )
+
+        boolean_threshold = json.loads(json.dumps(evaluation))
+        boolean_threshold["release_gates"][0]["operator"] = "=="
+        boolean_threshold["release_gates"][0]["threshold"] = True
+        path = root / "boolean-threshold.json"
+        path.write_text(json.dumps(boolean_threshold), encoding="utf-8")
+        result = run([script, str(path), "--json"])
+        payload = json.loads(result.stdout)
+        check(
+            "harness validator: boolean release threshold remains supported",
+            result.returncode == 0 and payload.get("valid") is True,
+            result.stdout,
+        )
+
+        invalid_boolean_threshold = json.loads(json.dumps(evaluation))
+        invalid_boolean_threshold["release_gates"][0]["threshold"] = True
+        path = root / "invalid-boolean-threshold.json"
+        path.write_text(json.dumps(invalid_boolean_threshold), encoding="utf-8")
+        result = run([script, str(path), "--json"])
+        check(
+            "harness validator: boolean release threshold requires equality",
+            result.returncode != 0 and "boolean thresholds require ==" in result.stdout,
             result.stdout,
         )
 
