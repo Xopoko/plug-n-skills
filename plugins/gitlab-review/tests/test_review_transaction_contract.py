@@ -76,11 +76,40 @@ class ReviewTransactionGitIntegrationTests(unittest.TestCase):
 
     def guard_environment(self, **updates):
         environment = os.environ.copy()
+        forbidden_names = {
+            "all_proxy",
+            "curl_ca_bundle",
+            "http_proxy",
+            "https_proxy",
+            "ld_library_path",
+            "ld_preload",
+            "requests_ca_bundle",
+            "ssh_askpass",
+            "ssh_askpass_require",
+            "ssl_cert_dir",
+            "ssl_cert_file",
+        }
         for name in tuple(environment):
-            if name.lower() in {"all_proxy", "http_proxy", "https_proxy"}:
+            if name.lower() in forbidden_names or name.upper().startswith("DYLD_"):
                 del environment[name]
         environment.update(updates)
         return environment
+
+    def test_guard_environment_removes_ci_loader_overrides_by_default(self):
+        with mock.patch.dict(
+            os.environ,
+            {
+                "LD_LIBRARY_PATH": "/runner/python/lib",
+                "DYLD_LIBRARY_PATH": "/runner/python/lib",
+            },
+            clear=False,
+        ):
+            environment = self.guard_environment()
+            explicit = self.guard_environment(LD_LIBRARY_PATH="explicit-canary")
+
+        self.assertNotIn("LD_LIBRARY_PATH", environment)
+        self.assertNotIn("DYLD_LIBRARY_PATH", environment)
+        self.assertEqual(explicit["LD_LIBRARY_PATH"], "explicit-canary")
 
     def execution_environment(self, manifest):
         self.assertEqual(manifest["environment"]["base"], "empty")
@@ -1765,6 +1794,25 @@ class ReviewTransactionGitIntegrationTests(unittest.TestCase):
             self.assertNotIn(askpass_canary, custom_askpass.stdout)
             self.assertFalse(Path(askpass_canary).exists())
             self.assertFalse(fixture["transaction"].exists())
+
+    def test_push_binding_guard_rejects_explicit_loader_environment(self):
+        for name in ("LD_LIBRARY_PATH", "DYLD_LIBRARY_PATH"):
+            with self.subTest(name=name), tempfile.TemporaryDirectory() as directory:
+                root = Path(directory)
+                fixture = self.make_guard_fixture(root)
+                canary = str(root / "loader-canary")
+                result = self.run_guard(
+                    "prepare",
+                    *fixture["common"],
+                    environment=self.guard_environment(**{name: canary}),
+                )
+                self.assertEqual(result.returncode, 2, result.stdout)
+                self.assertEqual(
+                    json.loads(result.stdout)["reason_codes"],
+                    ["HTTPS_BASELINE_UNAVAILABLE"],
+                )
+                self.assertNotIn(canary, result.stdout)
+                self.assertFalse(fixture["transaction"].exists())
 
     def test_transaction_mode_normalization_never_follows_directory_symlink(self):
         with tempfile.TemporaryDirectory() as directory:
