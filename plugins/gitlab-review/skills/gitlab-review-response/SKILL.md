@@ -3,11 +3,11 @@ name: gitlab-review-response
 description: >-
   Use when addressing existing GitLab merge request review discussions:
   classify feedback against current code and the latest diff, prepare focused
-  fixes, prove exact source-head and CI provenance, and post idempotent
-  same-thread replies. Supports plan-only, reply-only, and explicitly
-  authorized per-thread resolution through GitLab REST v4 or glab api. Do not
-  use for broad code review, GitHub pull requests, approvals, merges, or bulk
-  resolution.
+  fixes, bind any authorized push to the exact source project and SHA, prove
+  exact-head CI provenance, and post idempotent same-thread replies. Supports
+  plan-only, reply-only, and explicitly authorized per-thread resolution
+  through GitLab REST v4 or glab api. Do not use for broad code review, GitHub
+  pull requests, approvals, merges, or bulk resolution.
 ---
 
 # GitLab Review Response
@@ -52,9 +52,10 @@ Load only the reference needed:
 1. **Bind the target.** After reading repository policy above, record the
    GitLab host, visible authenticated account ID, target project ID, MR ID and
    IID, source project ID and path, source branch, credential-free source
-   remote identity and ref, target branch and target-ref SHA, MR head SHA, full
-   diff refs, and latest diff-version identity. Verify the local repository and
-   chosen remote represent that exact source project, including for fork MRs.
+   Project API clone identity, source Project Branch API commit ID, target
+   branch and target-ref SHA, MR head SHA, full diff refs, and latest
+   diff-version identity. Verify the local repository and selected publication
+   endpoint represent that exact source project, including for fork MRs.
    Discover missing values read-only; do not mutate an inferred target or as an
    unverified writer.
 2. **Freeze a stable epoch.** Exhaust pagination for discussions. Capture the MR
@@ -75,16 +76,21 @@ Load only the reference needed:
    smallest relevant local proof that can fail without the fix. When a note
    reports failing CI, triage that failure before replying: read the failed job
    log, isolate the first actionable error, and map it to code or configuration.
-   Immediately before push, fetch the source ref, take another complete stable
-   snapshot, and compare it with the epoch.
-   Require the remote source ref and MR head to remain at the epoch head and the
-   prepared local history to be based on that head. On drift, re-triage before
-   any push.
-5. **Push once and bind proof.** Push the prepared batch using repository policy
-   and explicit lease protection for any authorized history rewrite. Re-fetch
-   until a bounded deadline and require local HEAD, remote source-ref HEAD, and
-   MR head to equal the same full SHA. Accept direct head CI only when its SHA
-   equals that head. If repository policy requires merged-results CI, prove its
+   Immediately before push, take another complete stable snapshot and read the
+   exact source branch through the source Project Branch API. Require that API
+   commit, MR head, and diff head to remain at the epoch head and the prepared
+   local history to descend from it. Prepare and verify the local-only push
+   binding described in the transaction contract. On any evidence, endpoint,
+   object, configuration, tool, or environment drift, re-triage before push.
+5. **Push once and bind proof.** Only after explicit push authorization and a
+   fresh successful binding verification, execute the exact hashed push plan
+   with the expected-old-OID lease and immutable `SHA:refs/heads/BRANCH`
+   refspec. Do not infer or set upstream tracking as part of publication. Read
+   the source Project Branch API and MR API until a bounded deadline and require
+   local HEAD, Branch API commit, MR head, and diff head to equal the same full
+   SHA. Command success, a remote-tracking ref, `ls-remote`, or upstream state
+   is not a publication receipt. Accept direct head CI only when its SHA equals
+   that head. If repository policy requires merged-results CI, prove its
    current source-head and target-head pair separately. A green pipeline with
    unbound provenance is not proof.
 6. **Reconcile before writing.** Rebuild the complete stable snapshot after the
@@ -101,14 +107,18 @@ Load only the reference needed:
    one final stable snapshot and report the bound head, addressed threads,
    replies, resolution owners, proof, drift, and unresolved items.
 
-Use the deterministic guard for read-only snapshot and plan gates:
+Use the deterministic review guard for read-only snapshot and plan gates, and
+the local-only push-binding guard for source-project-bound preparation and
+drift verification:
 
 ```bash
 python3 "$SKILL_ROOT/scripts/gitlab_review_guard.py" --help
+python3 "$SKILL_ROOT/scripts/gitlab_push_binding_guard.py" --help
 ```
 
-Exit `0` means the requested read-only gate passed, `2` means drift or a gate
-failure, and `1` means malformed or unreadable input. The guard never fetches
-GitLab state or performs writes. It also never proves repository policy,
-reviewer intent, fetched-JSON authenticity, diff-version list position, network
-authorization, or test adequacy.
+Exit `0` means the requested gate passed or the binding is `READY`, `2` means
+drift, a gate failure, or `REPORT_ONLY`, and `1` means malformed or unreadable
+input. Neither helper fetches GitLab state, acquires credentials, pushes, posts,
+resolves, approves, or merges. They also never prove repository policy,
+reviewer intent, fetched-JSON authenticity, diff-version list position, live
+account ownership, network authorization, or test adequacy.

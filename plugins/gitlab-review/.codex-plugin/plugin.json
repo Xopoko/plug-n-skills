@@ -1,7 +1,7 @@
 {
   "name": "gitlab-review",
-  "version": "0.1.1",
-  "description": "Race-safe GitLab merge request review response with complete discussion inventory, reviewer-owned resolution, idempotent replies, and exact-head handoff proof.",
+  "version": "0.1.2",
+  "description": "Race-safe GitLab merge request review response with source-project-bound pushes, complete discussion inventory, reviewer-owned resolution, idempotent replies, and exact-head proof.",
   "author": {
     "name": "Xopoko"
   },
@@ -19,7 +19,7 @@
   "interface": {
     "displayName": "GitLab Review",
     "shortDescription": "Address MR feedback on one proven head.",
-    "longDescription": "A cross-agent GitLab merge request review-response plugin that freezes a complete review epoch, classifies current feedback against current code, guards against concurrent pushes and reviewer edits, preserves reviewer-owned thread resolution, deduplicates replies, and binds final CI and discussion evidence to the exact pushed head.",
+    "longDescription": "A cross-agent GitLab merge request review-response plugin that freezes a complete review epoch, classifies current feedback against current code, binds authorized exact-SHA publication to authenticated source Project, Merge Request, and Branch evidence, guards against concurrent pushes and reviewer edits, preserves reviewer-owned thread resolution, deduplicates replies, and binds final CI and discussion evidence to the exact pushed head.",
     "developerName": "Xopoko",
     "category": "Coding",
     "capabilities": [
@@ -27,6 +27,7 @@
       "Current-code and latest-diff feedback classification",
       "Immutable head, diff-version, note, and resolution race guards",
       "Discussion-to-commit-to-proof action ledgers",
+      "Source-project-bound exact-SHA push preparation and drift verification",
       "Idempotent same-thread evidence replies with ambiguous-write readback",
       "Human reviewer-owned resolution with explicit authorization gates",
       "Exact local, remote, merge-request, pipeline, and final-discussion handoff proof"

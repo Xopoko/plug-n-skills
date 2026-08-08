@@ -138,7 +138,7 @@ replaced to match the repository source, and repeated runs converge.
 | `claude-code` | Claude Code CLI operations, print-mode automation, diagnostics, plugin and MCP lifecycle, hooks, settings, agents, sessions, and worktrees. |
 | `codex-cli` | Codex CLI operations, automation, producer-native deferred completion, diagnostics, live thread supervision with protected-policy gates, version-aware skill handoffs with source/runtime separation, evidence corrections, aggregate claim boundaries, plugin and MCP lifecycle, normalized session trace audits, and local environment actions. |
 | `scheduled-automation` | Local scheduler diagnostics, real-runtime proof, safe canaries, correlated run receipts, missed-run analysis, and rollback-aware repair. |
-| `gitlab-review` | Race-safe GitLab merge request review response, reviewer-owned resolution, idempotent thread replies, and exact-head handoff proof. |
+| `gitlab-review` | Race-safe GitLab merge request review response with source-project-bound exact-SHA pushes, reviewer-owned resolution, idempotent thread replies, and exact-head proof. |
 | `stacked-delivery` | Dependency-safe stacked change delivery with exact parent-head binding, descendant invalidation, node-local proof, post-rewrite proof-record freshness, distinct provenance and publication-authority gates, safe landing order, and guarded handoff receipts. |
 | `git-worktree-safety` | Git pointer and SSH-signed-commit recovery with redacted evidence, exact-state journals, one-use authorization, and fail-closed proof. |
 | `context-density` | Context design, long-context placement, typed state and companion-drift validation, research-backed acceptance gates, prompt contracts, skill compression, structural handoff, and validation reporting. |
@@ -170,9 +170,9 @@ instructions.
 | Plugin packs | 19 | - | Installable packages under `plugins/`. |
 | Skill entrypoints | 173 | - | `SKILL.md` files exposed through plugin metadata. |
 | Reference files | 245 | - | Longer ledgers, contracts, scorecards, and source notes. |
-| Helper and validator scripts | 89 | - | Deterministic plugin-local helpers. |
-| Startup metadata | 173 skills | 14,217 | Skill name, description, and file pointer for routing. |
-| On-demand skill bodies | 173 skills | 127,294 | Instruction bodies after frontmatter, loaded only when selected. |
+| Helper and validator scripts | 90 | - | Deterministic plugin-local helpers. |
+| Startup metadata | 173 skills | 14,227 | Skill name, description, and file pointer for routing. |
+| On-demand skill bodies | 173 skills | 127,470 | Instruction bodies after frontmatter, loaded only when selected. |
 
 Regenerate the report after skill edits:
 
@@ -197,7 +197,7 @@ Token columns are `startup metadata / on-demand body`.
 | `capability-workbench` | 12 | 19 | 24 | 1,182 | 15,705 |
 | `codex-cli` | 8 | 5 | 3 | 688 | 10,059 |
 | `scheduled-automation` | 1 | 5 | 0 | 103 | 1,158 |
-| `gitlab-review` | 1 | 3 | 1 | 117 | 1,308 |
+| `gitlab-review` | 1 | 3 | 2 | 127 | 1,484 |
 | `stacked-delivery` | 1 | 4 | 1 | 123 | 2,100 |
 | `git-worktree-safety` | 2 | 2 | 2 | 382 | 2,469 |
 | `claude-code` | 6 | 2 | 1 | 528 | 4,669 |
@@ -221,7 +221,7 @@ Token columns are `startup metadata / on-demand body`.
 | `capability-workbench` | Agent-agnostic capability workbench for discovery, synthesis, portfolio architecture, trigger metadata, Codex catalog-budget and evidence-coverage audits, agent guidance, LLM agent harness engineering and evaluation, vetting, repair, installation, packaging, and imagegen-backed plugin icons. |
 | `codex-cli` | Codex CLI operations, automation, producer-native deferred completion, diagnostics, live thread supervision with protected-policy gates and version-aware skill handoffs, plugin and MCP lifecycle, normalized session trace audits, and local environment actions. |
 | `scheduled-automation` | Local scheduler diagnostics, real-runtime proof, safe canaries, correlated run receipts, and missed-run analysis for launchd, systemd timers, cron, and Windows Task Scheduler. |
-| `gitlab-review` | Race-safe GitLab merge request review response with complete discussion inventory, reviewer-owned resolution, idempotent replies, and exact-head handoff proof. |
+| `gitlab-review` | Race-safe GitLab merge request review response with source-project-bound pushes, complete discussion inventory, reviewer-owned resolution, idempotent replies, and exact-head proof. |
 | `stacked-delivery` | Dependency-safe delivery for stacked pull requests, merge requests, and dependent changes with exact parent-head binding, descendant invalidation, per-node proof, post-rewrite proof-record freshness, provenance and publication-authority boundaries, safe landing order, and guarded handoff receipts. |
 | `git-worktree-safety` | Fail-closed Git safety for worktree pointer and SSH-signed-commit recovery, with redacted evidence, exact-state journals, one-use authorization, and explicit host boundaries. |
 | `claude-code` | Claude Code CLI operations, print-mode automation, diagnostics, plugin and MCP lifecycle, hooks, settings, agents, sessions, and worktrees. |
@@ -397,7 +397,7 @@ Token cells are shown as `startup/body`.
 
 | Skill | Tokens | Description |
 | --- | ---: | --- |
-| `gitlab-review-response` | 117/1,308 | Use when addressing existing GitLab merge request review discussions: classify feedback against current code and the latest diff, prepare focused fixes, prove exact source-head and CI provenance, and post idempotent same-thread replies. Supports plan-only, reply-only, and explicitly authorized per-thread resolution through GitLab REST v4 or glab api. Do not use for broad code review, GitHub pull requests, approvals, merges, or bulk resolution. |
+| `gitlab-review-response` | 127/1,484 | Use when addressing existing GitLab merge request review discussions: classify feedback against current code and the latest diff, prepare focused fixes, bind any authorized push to the exact source project and SHA, prove exact-head CI provenance, and post idempotent same-thread replies. Supports plan-only, reply-only, and explicitly authorized per-thread resolution through GitLab REST v4 or glab api. Do not use for broad code review, GitHub pull requests, approvals, merges, or bulk resolution. |
 
 #### `stacked-delivery`
 

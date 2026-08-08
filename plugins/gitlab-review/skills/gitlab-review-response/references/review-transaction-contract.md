@@ -136,12 +136,13 @@ substitutes for the other.
 
 Immediately before push:
 
-1. Fetch the exact source ref from the bound source project.
+1. Read the exact source ref from the source Project Branch API by numeric
+   project ID and retain its `commit.id`.
 2. Build and accept another stable complete snapshot.
 3. Require its MR head, diff refs, discussion digest, edits, replies, and
    resolved states to match the triaged epoch.
-4. Require the remote source ref and MR head to equal the epoch source SHA, and
-   require the target ref to equal the epoch target SHA.
+4. Require the source Project Branch API result and MR head to equal the epoch
+   source SHA, and require the target ref to equal the epoch target SHA.
 5. Require the prepared local commit to descend from that exact SHA and contain
    only the reviewed plan.
 
@@ -150,12 +151,226 @@ target/diff change invalidates the affected classification. Rebuild the epoch
 and re-triage. Do not force-push unless both repository policy and the user
 explicitly authorize it; use an exact lease when authorized.
 
+### Exact-SHA refspec tracking
+
+Remote aliases are not publication identities. A configured fetch URL can
+differ from its push URL, one remote can contain multiple push URLs, and
+`insteadOf` / `pushInsteadOf` rules can change the endpoint selected by Git.
+Neither an alias-based preflight nor an alias-based readback proves which
+source project accepted a write.
+
+Use the local-only binding helper before an authorized publication:
+
+```text
+python3 $SKILL_ROOT/scripts/gitlab_push_binding_guard.py prepare \
+  --repository REPOSITORY --discovery-remote PUSH_REMOTE \
+  --transaction-dir NEW_PRIVATE_TRANSACTION_DIR \
+  --project PROJECT_BINDING_JSON --mr MR_BINDING_JSON \
+  --branch BRANCH_BINDING_JSON --prepared-sha SHA > PREPARE_RECEIPT
+
+python3 $SKILL_ROOT/scripts/gitlab_push_binding_guard.py verify \
+  --repository REPOSITORY --discovery-remote PUSH_REMOTE \
+  --transaction-dir NEW_PRIVATE_TRANSACTION_DIR \
+  --project PROJECT_BINDING_JSON --mr MR_BINDING_JSON \
+  --branch BRANCH_BINDING_JSON --prepared-sha SHA \
+  --receipt PREPARE_RECEIPT > VERIFY_RECEIPT
+```
+
+The helper requires Git 2.31 or newer because its path-identity checks require
+`rev-parse --path-format=absolute`. Older Git is `UNSUPPORTED_GIT`, not an
+eligible degraded path.
+
+Project, MR, Branch, and receipt files are restrictive task-local artifacts,
+not public evidence. Project input is the exact projection `id` plus
+credential-free `http_url_to_repo`; MR input is the exact projection
+`source_project_id`, `source_branch`, `sha`, and `diff_refs.head_sha`; Branch
+input is the exact projection `name` and `commit.id`. Obtain all three from the
+same authenticated GitLab collection window. Do not accept a caller-provided
+endpoint or project path as a substitute.
+
+`READY` is deliberately conservative. It requires one raw configured push URL
+before deduplication, one effective push URL, canonical credential-free HTTPS
+equal to the Project API clone identity, no ambient proxy, matching MR and
+Branch API source state, a prepared commit descending from that exact OID, and
+a complete local object range with lazy retrieval disabled. SSH/scp syntax,
+multiple or repeated URLs, rewrites on the discovery remote, unsafe evidence
+files, unsupported object formats, and unresolved transport state yield
+`REPORT_ONLY`. Any semantics-bearing inherited `GIT_*` variable or any
+empty/relative `PATH` component is also `REPORT_ONLY`; `GIT_PAGER` is the sole
+inert exception because every Git subprocess captures output without a terminal
+or pager. The guard never silently changes an injected Git config or
+current-directory-dependent executable lookup into another auth path.
+
+`prepare` creates a new mode-0700 transaction envelope with a matching-format
+bare repository, an empty template and hooks directory, a single opaque-token
+remote, an exact one-pass `pushInsteadOf` binding, neutral push options, and a
+read-only link to the already verified local object database. It captures the
+ordered active unscoped `credential.helper` list; rejects shell,
+argument-bearing, or unresolved entries; and normalizes each eligible helper
+to its verified resolved absolute executable. It rejects every other unscoped
+`credential.*` key because a username, path policy, or future credential
+option can change which account the same helper returns. Before copying generic
+helpers, it enumerates every scoped credential subsection and asks Git's own
+URL matcher about the exact endpoint through a collision-checked synthetic key.
+Any matching subsection, unrepresentable key, ambiguous matcher result, or
+config change across that read-only probe is `REPORT_ONLY`. Nonmatching scoped
+records are not copied or loaded by the isolated execution. The transaction
+writes one empty local helper first to reset earlier helpers and then appends
+only the normalized generic helper list. A canonical mode-0600
+`execution.json` inside the private envelope retains the execution working
+directory, absolute tool paths, exact arguments, and environment operations
+needed by the separate writer.
+The public-safe receipt records only counts and SHA-256 bindings; it never
+prints a URL, project name, filesystem path, API payload, Git diagnostic, or
+credential. It does not contact GitLab, acquire credentials, execute hooks,
+fetch, or perform a write. `verify` recomputes the source, evidence, config,
+object, endpoint, transaction-tree, tool/helper, and execution-manifest
+identities and requires the exact canonical prepare receipt. Any change is
+`REPORT_ONLY`; prepare a new envelope rather than repairing cache or editing
+the transaction repository.
+
+The opaque remote value is a nonexistent transaction-local `file://` sentinel,
+not scp-like syntax or a resolvable host. The transaction denies every
+protocol by default, permits only HTTPS, and separately denies file, SSH, Git,
+HTTP, FTP, FTPS, and external helpers. If the exact rewrite disappears, the
+sentinel fails locally instead of selecting another network transport.
+Symlinks, writable parents, hard-linked evidence, partial/promisor object
+stores, executable transaction config commands, custom CA/loader environment,
+or an unsafe captured generic credential helper make the helper
+`REPORT_ONLY`.
+
+The helper proves only a current local execution binding. After a fresh
+`verify` receipt, the separately authorized writer may execute the hashed plan
+from the transaction repository:
+
+```text
+BOUND_GIT --git-dir=NEW_PRIVATE_TRANSACTION_DIR/repository.git push \
+  --porcelain \
+  --no-verify --no-signed --no-follow-tags --no-tags \
+  --no-set-upstream --no-force-if-includes --no-push-option \
+  --recurse-submodules=no \
+  --force-with-lease=refs/heads/PUSH_BRANCH:E \
+  gitlab-review-bound SHA:refs/heads/PUSH_BRANCH
+```
+
+Use the exact absolute Git binary and resolved `GIT_EXEC_PATH` retained in the
+private preparation context, and change to the exact private transaction root
+recorded as the execution working directory. The environment operation order
+is fixed: clear the entire inherited environment, restore only the exact
+captured all-absolute `PATH`, then set the bound `GIT_EXEC_PATH`,
+`GIT_NO_LAZY_FETCH=1`,
+`GIT_NO_REPLACE_OBJECTS=1`, `GIT_TERMINAL_PROMPT=0`,
+`GIT_CONFIG_NOSYSTEM=1`, `LANG=C`, and `LC_ALL=C`. Set both `HOME` and
+`XDG_CONFIG_HOME` to the validated root-owned non-directory null device.
+This automated path is POSIX-only: a host without that absolute character
+device and root-owned parent is `REPORT_ONLY`, with no writable per-user
+fallback.
+Arbitrary tokens, proxy, custom CA, loader, askpass, `NETRC`, `CURL_HOME`, and
+`USERPROFILE` variables therefore remain absent. The non-directory HOME/XDG
+anchor cannot contain `.gitconfig`, `.netrc`, `_netrc`, or `git/config`, so
+same-user creation inside the transaction envelope cannot turn those ambient
+lookup paths back on. System/global Git config, matching ambient URL-scoped
+credential records, HTTP extra headers, and cookie files are unavailable to
+the push; the verified transaction-local config is the only loaded Git config.
+Reject any transaction-local URL-scoped credential record, HTTP extra header,
+cookie source/sink, enabled empty-auth, or delegation broader than `none`.
+Those records are drift even when injected before the first receipt.
+The execution-plan digest binds the explicit arguments, main Git and required
+helper bytes, resolved exec path, resolved absolute credential-helper
+executables, the execution working directory, non-directory HOME/XDG identity,
+captured all-absolute PATH, empty-base operation order, and the remaining
+environment policy. Shell helpers, helper entries with arguments, and askpass
+are not eligible for `READY`; configurations that require helper arguments need
+a separately reviewed fixed wrapper executable or remain `REPORT_ONLY`.
+
+Authentication still requires a separate live account check. The helper does
+not authenticate GitLab evidence, perform the future TLS handshake, prove
+credential ownership, freeze system trust after `verify`, or provide atomic
+execution over config files. Authentication must come from the already
+verified account's bound generic credential helper, not from a new endpoint,
+URL argument, injected Git option, URL-scoped helper, netrc entry, header, or
+cookie. A helper that stores state under the ordinary user HOME can become
+unavailable under the non-directory HOME; a helper that depends on an ambient
+token becomes unavailable under the empty-base environment. Command failure is
+the safe result and does not authorize fallback or retry. Environment, tool,
+helper, evidence, or config drift after `verify` invalidates the receipt.
+
+Use the exact expected old OID `E` from the accepted Branch/MR evidence for
+every update, including a fast-forward. The ancestry check prevents this lease
+from silently broadening rewrite authority. The lease is an OID-state
+compare-and-swap, not a continuous-history proof: a delete/recreate or
+move-away/move-back that returns the ref to the same OID is a same-OID ABA and
+is unobservable to this protocol. It may succeed. A history-sensitive policy
+therefore remains `REPORT_ONLY` unless the server supplies a monotonic
+generation or audit token and an atomic conditional write over that token.
+
+Do not treat command success, porcelain output, a local remote-tracking ref, or
+`ls-remote` as a publication receipt. Read desired state from both:
+
+- the source Project Branch API by numeric project ID, requiring its
+  `commit.id` to equal `SHA`; and
+- the MR API, requiring its `source_project_id`, `source_branch`, `sha`, and
+  `diff_refs.head_sha` to equal the same accepted binding and `SHA`.
+
+When the write receipt is lost or times out, perform that desired-state
+readback once. If both APIs already expose the exact desired state, classify
+it as `STATE_PRESENT_ATTRIBUTION_UNKNOWN`: the bytes are present, but this
+writer is not proven to have caused them. Preserve the uncertainty and never
+retry the same write. If desired state is absent or the two APIs disagree,
+hold for reconciliation; silence and timeout are not terminal proof.
+
+An exact publication can use an immutable commit expression rather than a
+local branch ref. Do not treat `-u` as an upstream receipt in that form. Git can
+publish `SHA:refs/heads/PUSH_BRANCH` without configuring
+`LOCAL_BRANCH@{upstream}`. An unset `@{upstream}` is therefore not publication
+failure, and an existing upstream is not evidence that it names the intended
+source project or branch.
+
+Bind publication and optional local tracking as separate transitions:
+
+1. Keep the previously verified source-project writer identity,
+   `PUSH_REMOTE`, `PUSH_BRANCH`, local branch, exact expected old OID, and exact
+   prepared SHA. The transaction remote is an execution mechanism, not a
+   replacement identity for those bindings.
+2. Prove publication through the source Project Branch API and MR API as
+   described above.
+3. Only when later local work actually needs an upstream, require a named,
+   non-detached `LOCAL_BRANCH` at the prepared SHA. Obtain the intended
+   `UPSTREAM_REMOTE` and `UPSTREAM_BRANCH` from repository policy or an
+   explicit task binding; never derive them from `PUSH_REMOTE` or
+   `PUSH_BRANCH`.
+4. Inspect the current upstream and `branch.*.remote` /
+   `branch.*.merge` configuration. If an existing mapping differs from the
+   intended upstream, stop for reconciliation; do not overwrite it. Fetch and
+   verify the independently selected upstream branch before configuring a
+   missing mapping.
+5. When the missing mapping is authorized, run
+   `git branch --set-upstream-to=UPSTREAM_REMOTE/UPSTREAM_BRANCH LOCAL_BRANCH`.
+   Read back the configured name and SHA through
+   `LOCAL_BRANCH@{upstream}`. Require the name, `branch.*.remote`, and
+   `branch.*.merge` values to equal the intended upstream identity, and require
+   the SHA to equal the independently verified upstream branch SHA.
+
+Never guess a remote, branch, or local branch from whichever upstream happens
+to exist. Do not configure tracking before both remote identities are bound
+and read back. A push remote, `remote.pushDefault`, or
+`branch.*.pushRemote` does not establish the fetch/upstream identity;
+triangular workflows deliberately keep those destinations separate. If a
+proof consumer requires `@{upstream}` to mean the exact MR source ref but
+repository policy assigns a different upstream, do not rewrite the mapping:
+give the consumer the explicit verified source ref or report that precondition
+as unavailable.
+
+Tracking configuration is local convenience state. Failure to establish it
+must be reported separately and does not erase a separately proven push, while
+successful tracking does not replace remote-ref, MR-head, or CI proof.
+
 ## Exact-Head And CI Gate
 
 After push, bind `H1` to the full local commit SHA. Within one bounded wait:
 
-- fetch the source ref and MR again;
-- require local HEAD = remote source-ref HEAD = MR head = `H1`;
+- read the source Project Branch API and MR again;
+- require local HEAD = Branch API `commit.id` = MR head = `H1`;
 - for direct source-head CI, select only a pipeline whose reported `sha` equals
   `H1`;
 - for repository-required merged-results CI, separately prove that the
