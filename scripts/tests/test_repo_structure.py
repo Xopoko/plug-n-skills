@@ -58,10 +58,21 @@ class RepoStructureTest(unittest.TestCase):
         lock = json.loads(lock_path.read_text(encoding="utf-8"))
         self.assertEqual(lock.get("schemaVersion"), 1)
 
+        dependencies = lock.get("dependencies")
+        self.assertIsInstance(
+            dependencies, list, "external dependency lock must contain a list"
+        )
         reverse_skill = next(
-            dependency
-            for dependency in lock["dependencies"]
-            if dependency["id"] == "reverse-skill"
+            (
+                dependency
+                for dependency in dependencies
+                if isinstance(dependency, dict)
+                and dependency.get("id") == "reverse-skill"
+            ),
+            None,
+        )
+        self.assertIsNotNone(
+            reverse_skill, "external dependency lock must contain reverse-skill"
         )
         self.assertEqual(reverse_skill["kind"], "agent-skill-source")
         self.assertEqual(reverse_skill["reviewedBy"], ["capability-workbench"])
