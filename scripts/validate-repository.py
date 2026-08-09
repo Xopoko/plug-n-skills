@@ -163,8 +163,11 @@ def main() -> None:
     root = repo_root()
     errors: list[str] = []
     validate_helper = root / "plugins" / "capability-workbench" / "scripts" / "plugin" / "validate_plugin.py"
+    external_dependency_helper = root / "scripts" / "external-dependencies.py"
     if not validate_helper.is_file():
         errors.append(f"missing validator: {validate_helper}")
+    if not external_dependency_helper.is_file():
+        errors.append(f"missing validator: {external_dependency_helper}")
 
     for name in PLUGIN_NAMES:
         plugin_dir = root / "plugins" / name
@@ -196,6 +199,26 @@ def main() -> None:
                 errors.append(
                     f"Codex plugin validation failed for {name}:\n{result.stdout}{result.stderr}"
                 )
+
+    if external_dependency_helper.is_file():
+        result = subprocess.run(
+            [
+                sys.executable,
+                str(external_dependency_helper),
+                "--root",
+                str(root),
+                "validate",
+            ],
+            text=True,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+            check=False,
+        )
+        if result.returncode != 0:
+            errors.append(
+                "External dependency validation failed:\n"
+                f"{result.stdout}{result.stderr}"
+            )
 
     errors.extend(validate_marketplace(root))
     errors.extend(validate_capability_workbench_harness_surface(root))

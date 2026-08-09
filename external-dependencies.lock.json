@@ -1,0 +1,39 @@
+{
+  "schemaVersion": 1,
+  "dependencies": [
+    {
+      "id": "reverse-skill",
+      "kind": "agent-skill-source",
+      "reviewedBy": [
+        "capability-workbench"
+      ],
+      "source": {
+        "provider": "github",
+        "repository": "zhaoxuya520/reverse-skill",
+        "commit": "539899ddc7608d63dc66e08e794d572e080f1a55",
+        "tree": "d66dd63b3dec42a9ec7a6b8ae9db93de31e5ab88"
+      },
+      "policy": {
+        "mode": "reference-only",
+        "allowInstall": false,
+        "allowExecute": false,
+        "allowVendor": false
+      },
+      "license": {
+        "root": "MIT",
+        "exceptions": [
+          {
+            "path": "CTF-Sandbox-Orchestrator",
+            "license": "GPL-3.0-only"
+          }
+        ]
+      },
+      "audit": {
+        "reviewedAt": "2026-08-09",
+        "verdict": "isolate",
+        "report": "docs/external-dependencies/reverse-skill.md",
+        "receipt": "docs/external-dependencies/reverse-skill.audit.json"
+      }
+    }
+  ]
+}

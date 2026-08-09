@@ -53,6 +53,63 @@ class RepoStructureTest(unittest.TestCase):
             path = ROOT / Path(src.lstrip("./")) if isinstance(src, str) else None
             self.assertTrue(path and path.is_dir(), f"bad source for {entry['name']}")
 
+    def test_external_dependency_lock_is_inert_and_pinned(self):
+        lock_path = ROOT / "external-dependencies.lock.json"
+        lock = json.loads(lock_path.read_text(encoding="utf-8"))
+        self.assertEqual(lock.get("schemaVersion"), 1)
+
+        reverse_skill = next(
+            dependency
+            for dependency in lock["dependencies"]
+            if dependency["id"] == "reverse-skill"
+        )
+        self.assertEqual(reverse_skill["kind"], "agent-skill-source")
+        self.assertEqual(reverse_skill["reviewedBy"], ["capability-workbench"])
+        self.assertEqual(
+            reverse_skill["source"],
+            {
+                "provider": "github",
+                "repository": "zhaoxuya520/reverse-skill",
+                "commit": "539899ddc7608d63dc66e08e794d572e080f1a55",
+                "tree": "d66dd63b3dec42a9ec7a6b8ae9db93de31e5ab88",
+            },
+        )
+        self.assertEqual(
+            reverse_skill["policy"],
+            {
+                "mode": "reference-only",
+                "allowInstall": False,
+                "allowExecute": False,
+                "allowVendor": False,
+            },
+        )
+        self.assertEqual(reverse_skill["audit"]["verdict"], "isolate")
+        self.assertTrue(
+            (ROOT / reverse_skill["audit"]["report"]).is_file(),
+            "missing reverse-skill dependency review",
+        )
+        self.assertTrue(
+            (ROOT / reverse_skill["audit"]["receipt"]).is_file(),
+            "missing reverse-skill dependency audit receipt",
+        )
+        self.assertTrue(
+            (ROOT / "scripts" / "external-dependencies.py").is_file(),
+            "missing external dependency validator",
+        )
+
+        host_metadata = [ROOT / ".claude-plugin" / "marketplace.json"]
+        for plugin in PLUGINS:
+            for marker in (".claude-plugin", ".codex-plugin"):
+                host_metadata.append(
+                    ROOT / "plugins" / plugin / marker / "plugin.json"
+                )
+        for path in host_metadata:
+            self.assertNotIn(
+                "reverse-skill",
+                path.read_text(encoding="utf-8"),
+                f"reference-only dependency leaked into host metadata: {path}",
+            )
+
     def test_gitignore_keeps_local_work_products_private(self):
         gitignore = (ROOT / ".gitignore").read_text()
         for pattern in (
