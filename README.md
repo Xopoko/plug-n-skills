@@ -520,12 +520,15 @@ plugins/
     assets/
 .claude-plugin/
   marketplace.json
+external-dependencies.lock.json
 scripts/
+  external-dependencies.py
   install-codex-plugins.py
   token-report.py
   validate-repository.py
 docs/
   ARCHITECTURE.md
+  external-dependencies/
   QUALITY.md
 ```
 
@@ -538,6 +541,33 @@ The public source surface is:
 - `references/` for longer ledgers, contracts, scorecards, and source notes;
 - `scripts/` for deterministic validators and helpers;
 - `assets/` for plugin media and icons.
+
+## External Dependencies
+
+External agent-skill sources are declared in
+`external-dependencies.lock.json`. Version 1 is intentionally inert: every
+entry is pinned to a full commit and Git tree, validated offline, and restricted
+to `reference-only` use. A lock entry is provenance and review metadata, not
+permission to install, execute, vendor, or add the source to an agent catalog.
+
+The registry is currently empty.
+
+Inspect and validate the registry without network access:
+
+```bash
+python3 scripts/external-dependencies.py list
+python3 scripts/external-dependencies.py validate
+```
+
+Verify the declared commit-to-tree binding against GitHub when network access
+is available:
+
+```bash
+python3 scripts/external-dependencies.py verify-source <dependency-id>
+```
+
+Reference-only entries have zero skill-catalog metadata cost because the
+upstream tree is not copied into `plugins/*/skills/` or an agent runtime.
 
 Generated or machine-specific state stays out of commits:
 

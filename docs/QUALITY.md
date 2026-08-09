@@ -17,6 +17,9 @@ It checks:
 - manifest names match directory names;
 - required metadata such as license and repository fields is present;
 - the root Claude marketplace lists the complete plugin set;
+- the external dependency lock uses immutable commits and trees, references
+  existing reviewers and review reports, and cannot authorize installation,
+  execution, or vendoring;
 - source text contains no Cyrillic characters in public-facing files;
 - source text does not leak machine-specific home paths;
 - generated artifacts and common secret patterns are absent.
@@ -26,6 +29,19 @@ The validator intentionally skips local-only ignored workspaces such as
 folders. If material from those folders should become public source, distill it
 into tracked docs, references, scripts, or tests first.
 
+The dependency lock can also be inspected directly without network access:
+
+```bash
+python3 scripts/external-dependencies.py validate
+python3 scripts/external-dependencies.py list
+```
+
+When a pin changes, verify its Git object relationship against the source:
+
+```bash
+python3 scripts/external-dependencies.py verify-source <dependency-id>
+```
+
 ## Manual Review Checklist
 
 - Does the plugin name match the folder and both manifests?
@@ -33,6 +49,8 @@ into tracked docs, references, scripts, or tests first.
 - Are long references outside the hot `SKILL.md` path?
 - Are scripts deterministic and runnable from the documented working directory?
 - Are external APIs documented with fallback behavior?
+- Are external skill sources pinned, reviewed, and inert unless a separate
+  activation design has been approved?
 - Does the install script report every local/global path it writes?
 - Does the README describe the actual install flow rather than a stale local
   setup?

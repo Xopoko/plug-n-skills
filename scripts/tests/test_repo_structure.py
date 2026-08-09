@@ -53,6 +53,21 @@ class RepoStructureTest(unittest.TestCase):
             path = ROOT / Path(src.lstrip("./")) if isinstance(src, str) else None
             self.assertTrue(path and path.is_dir(), f"bad source for {entry['name']}")
 
+    def test_external_dependency_lock_is_valid_and_currently_empty(self):
+        lock_path = ROOT / "external-dependencies.lock.json"
+        lock = json.loads(lock_path.read_text(encoding="utf-8"))
+        self.assertEqual(lock.get("schemaVersion"), 1)
+
+        dependencies = lock.get("dependencies")
+        self.assertIsInstance(
+            dependencies, list, "external dependency lock must contain a list"
+        )
+        self.assertEqual(dependencies, [])
+        self.assertTrue(
+            (ROOT / "scripts" / "external-dependencies.py").is_file(),
+            "missing external dependency validator",
+        )
+
     def test_gitignore_keeps_local_work_products_private(self):
         gitignore = (ROOT / ".gitignore").read_text()
         for pattern in (

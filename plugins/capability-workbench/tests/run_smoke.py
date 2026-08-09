@@ -330,6 +330,63 @@ def test_description_prefix_audit() -> None:
             malformed.stdout + malformed.stderr,
         )
 
+        unicode_root = Path(tmp) / "caf\u00e9"
+        write_skill(
+            unicode_root,
+            "unicode-output",
+            "---\n"
+            "name: unicode-output\n"
+            "description: Specific Unicode output signal "
+            + ("x" * 241)
+            + "\n---\n",
+        )
+        ascii_env = dict(os.environ)
+        ascii_env["PYTHONIOENCODING"] = "ascii"
+        unicode_result = subprocess.run(
+            [sys.executable, script, str(unicode_root), "--json"],
+            cwd=str(PLUGIN_ROOT),
+            env=ascii_env,
+            capture_output=True,
+        )
+        try:
+            unicode_stdout = unicode_result.stdout.decode("utf-8")
+            unicode_payload = json.loads(unicode_stdout)
+        except (UnicodeDecodeError, json.JSONDecodeError) as exc:
+            unicode_stdout = repr(unicode_result.stdout)
+            unicode_payload = {}
+            unicode_error = str(exc)
+        else:
+            unicode_error = unicode_result.stderr.decode("utf-8", errors="replace")
+        check(
+            "description_prefix_audit: Unicode JSON is UTF-8 under ASCII stdout",
+            unicode_result.returncode == 0
+            and unicode_payload.get("valid") is True
+            and "caf\u00e9" in unicode_payload["warnings"][0]["path"],
+            unicode_stdout + unicode_error,
+        )
+
+        missing_yaml = Path(tmp) / "missing-yaml"
+        missing_yaml.mkdir()
+        (missing_yaml / "yaml.py").write_text(
+            "raise ModuleNotFoundError(\"No module named 'yaml'\", name='yaml')\n",
+            encoding="utf-8",
+        )
+        missing_yaml_result = run(
+            [script, str(root), "--json"],
+            env={"PYTHONPATH": str(missing_yaml)},
+        )
+        missing_yaml_payload = json.loads(missing_yaml_result.stdout)
+        check(
+            "description_prefix_audit: missing PyYAML returns structured guidance",
+            missing_yaml_result.returncode != 0
+            and missing_yaml_payload["valid"] is False
+            and missing_yaml_payload["errors"][0]["code"] == "parse_error"
+            and "PyYAML is required"
+            in missing_yaml_payload["errors"][0]["message"]
+            and "Traceback" not in missing_yaml_result.stderr,
+            missing_yaml_result.stdout + missing_yaml_result.stderr,
+        )
+
 
 def test_skill_catalog_runtime_comparison_reference() -> None:
     reference = PLUGIN_ROOT / "references" / "skill-catalog-runtime-comparison.md"
