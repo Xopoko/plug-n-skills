@@ -365,6 +365,28 @@ def test_description_prefix_audit() -> None:
             unicode_stdout + unicode_error,
         )
 
+        missing_yaml = Path(tmp) / "missing-yaml"
+        missing_yaml.mkdir()
+        (missing_yaml / "yaml.py").write_text(
+            "raise ModuleNotFoundError(\"No module named 'yaml'\", name='yaml')\n",
+            encoding="utf-8",
+        )
+        missing_yaml_result = run(
+            [script, str(root), "--json"],
+            env={"PYTHONPATH": str(missing_yaml)},
+        )
+        missing_yaml_payload = json.loads(missing_yaml_result.stdout)
+        check(
+            "description_prefix_audit: missing PyYAML returns structured guidance",
+            missing_yaml_result.returncode != 0
+            and missing_yaml_payload["valid"] is False
+            and missing_yaml_payload["errors"][0]["code"] == "parse_error"
+            and "PyYAML is required"
+            in missing_yaml_payload["errors"][0]["message"]
+            and "Traceback" not in missing_yaml_result.stderr,
+            missing_yaml_result.stdout + missing_yaml_result.stderr,
+        )
+
 
 def test_skill_catalog_runtime_comparison_reference() -> None:
     reference = PLUGIN_ROOT / "references" / "skill-catalog-runtime-comparison.md"

@@ -16,7 +16,12 @@ import unicodedata
 from pathlib import Path
 from typing import Any, Iterable
 
-import yaml
+try:
+    import yaml
+except ModuleNotFoundError as exc:
+    if exc.name != "yaml":
+        raise
+    yaml = None
 
 
 SCHEMA = "capability.skill_description_prefix_audit.v1"
@@ -177,6 +182,12 @@ def discover_skill_files(raw_roots: list[str]) -> tuple[list[Path], list[dict[st
 
 
 def read_frontmatter(path: Path) -> dict[str, Any]:
+    if yaml is None:
+        raise FrontmatterError(
+            "PyYAML is required for frontmatter parsing; install it with "
+            "'python -m pip install pyyaml'"
+        )
+
     try:
         text = path.read_text(encoding="utf-8-sig")
     except (OSError, UnicodeError) as exc:
