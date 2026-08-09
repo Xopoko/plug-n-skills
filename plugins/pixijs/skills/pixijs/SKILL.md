@@ -1,6 +1,6 @@
 ---
 name: pixijs
-description: "Use first for PixiJS v8 tasks. Router for Application/app.init, scene graph Container/Sprite/Graphics/Text/Mesh, Assets, events, Ticker, filters, shaders, performance, migration, and create-pixi."
+description: "PixiJS v8 tasks start with this router, which selects Application/app.init, scene graph Container/Sprite/Graphics/Text/Mesh, Assets, events, Ticker, filters, shaders, performance, migration, and create-pixi guidance."
 license: MIT
 ---
 

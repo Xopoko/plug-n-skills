@@ -1,7 +1,7 @@
 {
   "name": "game-design-intelligence",
-  "version": "0.1.1",
-  "description": "Source-backed game design judgment: core loops, gameplay systems, progression/economy/balance, motivation/retention, onboarding/difficulty, and multiplayer/live-service dynamics. Avoids engines, graphics, and implementation code.",
+  "version": "0.1.2",
+  "description": "Game design judgment grounded in evidence: core loops, gameplay systems, progression/economy/balance, motivation/retention, onboarding/difficulty, and multiplayer/live-service health; excludes engines, graphics, assets, and code.",
   "author": {
     "name": "Xopoko"
   },

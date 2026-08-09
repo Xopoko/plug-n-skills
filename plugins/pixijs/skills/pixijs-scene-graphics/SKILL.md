@@ -1,6 +1,6 @@
 ---
 name: pixijs-scene-graphics
-description: "Use for PixiJS v8 Graphics, GraphicsContext, vector shapes and paths: rect/circle/poly, moveTo/lineTo/arc, fill/stroke/cut, gradients, patterns, SVG import/export, hit testing."
+description: "PixiJS v8 Graphics draws reusable GraphicsContext shapes and paths: rect/circle/poly, moveTo/lineTo/arc, fill/stroke/cut, gradients, patterns, SVG import/export, and hit tests."
 license: MIT
 ---
 

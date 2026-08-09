@@ -1,6 +1,10 @@
 ---
 name: ui-visual-audit
-description: "Skeptical visual QA workflow for rendered UI and screenshots. Use when building, modifying, reviewing, or verifying web/mobile/desktop UI; captures browser, simulator, emulator, or desktop screenshots; compares implementation to a design; or claims a UI feature is visually correct. Forces a second pass for unrelated visual anomalies beyond acceptance criteria: occlusion, clipping, overlap, blank boxes, broken icons, poor contrast, broken spacing/alignment, inconsistent padding or margins, wrong platform controls, mock-looking or domain-implausible data, responsive/i18n text overflow, and accessibility-visible defects."
+description: >-
+  Rendered UI and screenshot audits verify changes and catch unrelated
+  occlusion, clipping, overlap, broken icons, poor contrast, spacing/alignment,
+  platform-control, data-plausibility, responsive text, and visible
+  accessibility defects.
 ---
 
 # UI Visual Audit

@@ -1,7 +1,7 @@
 {
   "name": "signature-map",
-  "version": "0.1.0",
-  "description": "Lightweight code-declaration index for fast, low-token navigation: a Go generator builds signatures.json (types and callables with signatures, doc comments, and line numbers across Swift, Objective-C, C/C++, Kotlin, Java, JS/TS, Python, Ruby, and shell), and the sigmap CLI refreshes the index, queries declarations by name or regex, opens code around matches, and diagnoses index health.",
+  "version": "0.1.1",
+  "description": "Signature Map indexes and queries code declarations in signatures.json for low-token navigation across Swift, Objective-C, C/C++, Kotlin, Java, JavaScript/TypeScript, Python, Ruby, and shell.",
   "author": {
     "name": "Xopoko"
   },

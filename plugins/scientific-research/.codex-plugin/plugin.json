@@ -1,7 +1,7 @@
 {
   "name": "scientific-research",
-  "version": "0.3.2",
-  "description": "Disciplined scholarly research workflow: discovery, source routing, DOI dedup, claim ledgers, and evidence quality gates across arXiv/OpenAlex/Crossref/Europe PMC/Semantic Scholar/NCBI/CORE/OpenCitations.",
+  "version": "0.3.3",
+  "description": "Scholarly research discovers papers, deduplicates DOIs, extracts source-backed claims, and validates evidence across arXiv, OpenAlex, Crossref, Europe PMC, Semantic Scholar, PubMed, and OpenCitations.",
   "author": {
     "name": "Xopoko"
   },
@@ -20,8 +20,8 @@
   ],
   "interface": {
     "displayName": "Scientific Research",
-    "shortDescription": "Run source-backed scholarly research workflows.",
-    "longDescription": "Scientific Research gives the host agent a disciplined workflow for scholarly discovery, source routing, deduplication, open-copy handling, claim ledgers, and evidence quality gates across arXiv, OpenAlex, Crossref, Europe PMC, Semantic Scholar, NCBI, CORE, and OpenCitations.",
+    "shortDescription": "Scholarly research builds traceable evidence.",
+    "longDescription": "Scholarly literature workflows discover papers, route open copies, deduplicate DOIs, and bind synthesized claims to evidence across arXiv, OpenAlex, Crossref, Europe PMC, Semantic Scholar, PubMed, CORE, and OpenCitations.",
     "developerName": "Xopoko",
     "category": "Research",
     "capabilities": [

@@ -1,6 +1,6 @@
 ---
 name: pixijs-scene-container
-description: "Use for PixiJS v8 Container: addChild/removeChild, transforms, sortableChildren/zIndex, boundsArea, culling, render groups, masks, coordinate conversion, destroy."
+description: "PixiJS v8 Container manages addChild/removeChild, transforms, sortableChildren/zIndex, boundsArea, culling, render groups, masks, coordinates, and destroy."
 license: MIT
 ---
 

@@ -1,7 +1,7 @@
 {
   "name": "gitlab-review",
-  "version": "0.1.2",
-  "description": "Race-safe GitLab merge request review response with source-project-bound pushes, complete discussion inventory, reviewer-owned resolution, idempotent replies, and exact-head proof.",
+  "version": "0.1.3",
+  "description": "GitLab merge-request discussions get race-safe fixes with complete discussion inventory, source-project-bound exact-SHA pushes, reviewer-owned resolution, idempotent replies, and exact-head CI handoff proof.",
   "author": {
     "name": "Xopoko"
   },
@@ -18,8 +18,8 @@
   "skills": "./skills/",
   "interface": {
     "displayName": "GitLab Review",
-    "shortDescription": "Address MR feedback on one proven head.",
-    "longDescription": "A cross-agent GitLab merge request review-response plugin that freezes a complete review epoch, classifies current feedback against current code, binds authorized exact-SHA publication to authenticated source Project, Merge Request, and Branch evidence, guards against concurrent pushes and reviewer edits, preserves reviewer-owned thread resolution, deduplicates replies, and binds final CI and discussion evidence to the exact pushed head.",
+    "shortDescription": "GitLab MR feedback fixed on exact head.",
+    "longDescription": "GitLab merge-request discussions receive a race-safe response against a frozen review epoch and exact source head. The plugin classifies current feedback, binds authorized exact-SHA publication to authenticated source Project, Merge Request, and Branch evidence, guards concurrent pushes and reviewer edits, keeps resolution reviewer-owned, deduplicates replies, and binds CI and handoff proof to the pushed head.",
     "developerName": "Xopoko",
     "category": "Coding",
     "capabilities": [

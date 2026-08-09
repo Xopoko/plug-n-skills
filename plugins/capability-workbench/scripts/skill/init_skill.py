@@ -25,7 +25,7 @@ ALLOWED_RESOURCES = {"scripts", "references", "assets"}
 
 SKILL_TEMPLATE = """---
 name: {skill_name}
-description: [TODO: Explain what the skill does and when an agent should use it. Put discriminative task, artifact, failure, decision, or source-evidence triggers first because hosts may shorten catalog descriptions; avoid only listing exact user request phrases.]
+description: [TODO: Lead with a concrete domain, artifact, failure, or decision plus the owned action. Put secondary trigger terms and boundaries later because hosts may shorten or omit catalog entries; avoid generic lead-ins and procedure.]
 ---
 
 # {skill_title}

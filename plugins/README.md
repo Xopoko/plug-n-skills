@@ -9,23 +9,25 @@ workflow.
 
 | Directory | Codex id | Claude marketplace id | Focus |
 | --- | --- | --- | --- |
-| `build-swift-apps` | `build-swift-apps@local` | `build-swift-apps@xopoko-plug-n-skills` | Swift, iOS, macOS, Xcode, SwiftUI, App Store, TestFlight, profiling, and release workflows. |
-| `pixijs` | `pixijs@local` | `pixijs@xopoko-plug-n-skills` | PixiJS v8 application, rendering, scene graph, assets, events, filters, migration, and performance workflows. |
-| `tauri` | `tauri@local` | `tauri@xopoko-plug-n-skills` | Tauri 2 setup, migration, security, IPC, plugins, shell UI, debug/test, and distribution workflows. |
-| `scientific-research` | `scientific-research@local` | `scientific-research@xopoko-plug-n-skills` | Scholarly discovery, deduplication, claim ledgers, source quality, and provenance gates. |
-| `context-density` | `context-density@local` | `context-density@xopoko-plug-n-skills` | Context design, long-context placement, typed state and companion-drift validation, research-backed acceptance gates, skill compression, prompt contracts, structural handoff, and validation reporting. |
-| `capability-workbench` | `capability-workbench@local` | `capability-workbench@xopoko-plug-n-skills` | Capability discovery, synthesis, cross-plugin portfolio architecture, agent guidance files, skill trigger metadata, Codex catalog-budget and exact evidence-coverage audits, LLM agent harness engineering and evaluation, vetting, repair, plugin packaging, imagegen-backed plugin icon workflows, install-scope, and visibility checks. |
-| `codex-cli` | `codex-cli@local` | `codex-cli@xopoko-plug-n-skills` | Codex CLI operations, exec/review automation, producer-native one-wait completion, live thread supervision with protected-policy gates, controlled skill handoffs, evidence corrections, aggregate claim boundaries, doctor/debug/sandbox diagnostics, plugin and MCP lifecycle, normalized session trace audits, and local environment actions. |
-| `scheduled-automation` | `scheduled-automation@local` | `scheduled-automation@xopoko-plug-n-skills` | Local launchd, systemd timer, cron, and Windows Task Scheduler diagnostics with native-trigger proof, safe canaries, correlated receipts, and rollback-aware repair. |
-| `gitlab-review` | `gitlab-review@local` | `gitlab-review@xopoko-plug-n-skills` | Race-safe GitLab merge request review response with source-project-bound exact-SHA pushes, reviewer-owned resolution, idempotent thread replies, and exact-head proof. |
-| `stacked-delivery` | `stacked-delivery@local` | `stacked-delivery@xopoko-plug-n-skills` | Cross-forge stacked change delivery with exact parent heads, descendant invalidation, fresh per-node proof, post-rewrite proof-record freshness, distinct provenance and publication-authority gates, safe landing prefixes, and guarded handoffs. |
-| `git-worktree-safety` | `git-worktree-safety@local` | `git-worktree-safety@xopoko-plug-n-skills` | Git pointer and SSH-signed-commit recovery with redacted evidence, exact-state journals, one-use authorization, and fail-closed proof. |
-| `claude-code` | `claude-code@local` | `claude-code@xopoko-plug-n-skills` | Claude Code CLI operations, print-mode automation, diagnostics, plugin and MCP lifecycle, hooks, settings, agents, sessions, and worktrees. |
-| `architecture-intelligence` | `architecture-intelligence@local` | `architecture-intelligence@xopoko-plug-n-skills` | Codebase architecture audits, async state consistency, ownership and runtime topology, conformance/drift checks, structure metrics, module boundaries, ADRs, fitness functions, and refactoring strategy. |
-| `design-intelligence` | `design-intelligence@local` | `design-intelligence@xopoko-plug-n-skills` | Product judgment, interface architecture, interaction design, visual hierarchy, usability, accessibility, and design systems. |
-| `game-design-intelligence` | `game-design-intelligence@local` | `game-design-intelligence@xopoko-plug-n-skills` | Gameplay loops, systems, progression, economy, retention, onboarding, difficulty, and live-service critique. |
-| `kotlin-multiplatform` | `kotlin-multiplatform@local` | `kotlin-multiplatform@xopoko-plug-n-skills` | KMP architecture, Gradle diagnosis, Compose Multiplatform, iOS interop, testing, security, publishing, and readiness. |
-| `spec-driven-development` | `spec-driven-development@local` | `spec-driven-development@xopoko-plug-n-skills` | SDD lane selection, Spec Kit integration, requirements quality, traceability, implementation, and proof gates. |
+| `build-swift-apps` | `build-swift-apps@local` | `build-swift-apps@xopoko-plug-n-skills` | Build, debug, profile, test, refactor, and release Swift apps across Apple platforms. |
+| `pixijs` | `pixijs@local` | `pixijs@xopoko-plug-n-skills` | Build and debug PixiJS v8 applications, scenes, assets, events, filters, performance, and migrations. |
+| `tauri` | `tauri@local` | `tauri@xopoko-plug-n-skills` | Build, secure, debug, test, package, and release Tauri 2 desktop/mobile apps. |
+| `scientific-research` | `scientific-research@local` | `scientific-research@xopoko-plug-n-skills` | Discover scholarly sources, deduplicate papers, extract claims, and validate evidence. |
+| `context-density` | `context-density@local` | `context-density@xopoko-plug-n-skills` | Audit agent context cost, prompt contracts, typed state, compression, and structural overlap. |
+| `capability-workbench` | `capability-workbench@local` | `capability-workbench@xopoko-plug-n-skills` | Design, audit, synthesize, and package agent skills/plugins and LLM harnesses. |
+| `codex-cli` | `codex-cli@local` | `codex-cli@xopoko-plug-n-skills` | Diagnose and operate Codex CLI, skill catalogs, automation, tasks, plugins/MCP, logs, and environments. |
+| `scheduled-automation` | `scheduled-automation@local` | `scheduled-automation@xopoko-plug-n-skills` | Diagnose and prove local scheduler runs across launchd, systemd, cron, and Windows Task Scheduler. |
+| `gitlab-review` | `gitlab-review@local` | `gitlab-review@xopoko-plug-n-skills` | Resolve GitLab merge-request discussions with a complete inventory, source-project-bound exact-SHA pushes, explicit per-thread authorization, idempotent replies, reviewer-owned resolution, and exact-head CI proof. |
+| `stacked-delivery` | `stacked-delivery@local` | `stacked-delivery@xopoko-plug-n-skills` | Deliver stacked PRs/MRs with exact parent heads, fresh proof, safe landing, and guarded handoffs. |
+| `git-worktree-safety` | `git-worktree-safety@local` | `git-worktree-safety@xopoko-plug-n-skills` | Recover Git worktree pointers and SSH-signed commits through fail-closed proof. |
+| `claude-code` | `claude-code@local` | `claude-code@xopoko-plug-n-skills` | Operate and diagnose Claude Code CLI automation, plugins/MCP, hooks, agents, sessions, and worktrees. |
+| `architecture-intelligence` | `architecture-intelligence@local` | `architecture-intelligence@xopoko-plug-n-skills` | Audit and evolve software architecture, topology, async state consistency, conformance, ADRs, and refactoring. |
+| `design-intelligence` | `design-intelligence@local` | `design-intelligence@xopoko-plug-n-skills` | Frame and critique product/UX architecture, interaction, accessibility, visual communication, and design systems. |
+| `game-design-intelligence` | `game-design-intelligence@local` | `game-design-intelligence@xopoko-plug-n-skills` | Design and critique gameplay, progression, economy, retention, onboarding, and live service. |
+| `kotlin-multiplatform` | `kotlin-multiplatform@local` | `kotlin-multiplatform@xopoko-plug-n-skills` | Design, build, diagnose, test, secure, publish, and release Kotlin Multiplatform systems. |
+| `spec-driven-development` | `spec-driven-development@local` | `spec-driven-development@xopoko-plug-n-skills` | Specify, plan, implement, and audit traceable Spec-Driven Development work. |
+| `engineering-hygiene` | `engineering-hygiene@local` | `engineering-hygiene@xopoko-plug-n-skills` | Audit changed code, untangle business logic, inspect rendered UI, and provision missing tools. |
+| `signature-map` | `signature-map@local` | `signature-map@xopoko-plug-n-skills` | Index and query code declarations in `signatures.json` for low-token navigation. |
 
 ## Expected Plugin Shape
 

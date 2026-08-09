@@ -1,6 +1,6 @@
 ---
 name: architecture-intelligence
-description: "Use whenever code work has structural consequences: project architecture, module boundaries, dependency direction, runtime topology, asynchronous state consistency, ownership, ADRs, fitness functions, or architecture refactoring."
+description: "Software architecture routing covers module boundaries, dependencies, runtime topology, async state, ownership, ADRs, fitness functions, and staged refactoring; excludes UI/UX and routine cleanup."
 ---
 
 # Architecture Intelligence

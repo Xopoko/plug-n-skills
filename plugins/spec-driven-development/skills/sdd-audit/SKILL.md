@@ -1,6 +1,8 @@
 ---
 name: sdd-audit
-description: Audit SDD artifacts, requirement-task traceability, surface selection, and completion evidence before implementation or final delivery.
+description: >-
+  SDD artifact audits verify traceability, surface selection, and completion
+  evidence before implementation or final delivery.
 ---
 
 # SDD Audit

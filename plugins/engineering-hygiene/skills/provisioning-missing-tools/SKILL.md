@@ -1,6 +1,10 @@
 ---
 name: provisioning-missing-tools
-description: Use when work is blocked, slowed, or downgraded because a command, SDK, runtime, package manager, system package, driver, CLI, simulator, emulator, or test/profiling utility is missing, outdated, too weak, or not configured, especially when the user asked for end-to-end execution.
+description: >-
+  Missing toolchains are provisioned when absent, outdated, weak, or
+  misconfigured commands, SDKs, runtimes, package managers, drivers, CLIs,
+  simulators, emulators, or test/profiling utilities block or downgrade
+  end-to-end work.
 ---
 
 # Provisioning Missing Tools

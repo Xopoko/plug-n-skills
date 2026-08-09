@@ -1,6 +1,9 @@
 ---
 name: claude-hooks-settings
-description: Use when creating, editing, auditing, or debugging Claude Code settings, hooks, CLAUDE.md/rules loading, custom agents, tool allow/deny permissions, output styles, workflows, setting sources, safe-mode/bare-mode differences, or plugin-provided customizations.
+description: >-
+  Claude Code settings and hooks are created, audited, or debugged across
+  CLAUDE.md/rules loading, custom agents, tool permissions, output styles,
+  workflows, setting sources, safe/bare modes, and plugin customizations.
 ---
 
 # Claude Hooks And Settings

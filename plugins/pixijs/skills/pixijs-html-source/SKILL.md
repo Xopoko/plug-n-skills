@@ -1,6 +1,6 @@
 ---
 name: pixijs-html-source
-description: "Use for PixiJS v8 experimental HTMLSource and ElementImageSource: render DOM/HTML snapshots as textures, pixi.js/html-source, requestPaint, feature detection, fallbacks."
+description: "PixiJS v8 experimental HTMLSource and ElementImageSource render DOM/HTML snapshots as textures through pixi.js/html-source; covers requestPaint, feature detection, and fallbacks."
 license: MIT
 ---
 

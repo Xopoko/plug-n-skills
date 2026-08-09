@@ -1,10 +1,10 @@
 ---
 name: skill-trigger-metadata
 description: >-
-  Audit skill trigger metadata and Codex catalog-budget pressure. Use when
-  creating or debugging names, descriptions, SKILL.md frontmatter, shortened
-  descriptions, model-visible omissions, discovery routing, under-triggering,
-  or over-triggering.
+  Optimize skill names/descriptions for reliable routing under catalog
+  truncation, omission, and cross-runtime pressure. For instruction, resource,
+  packaging, or installation changes, continue with skill-factory or
+  plugin-factory.
 ---
 
 # Skill Trigger Metadata
@@ -35,10 +35,15 @@ Treat skill selection as tool lookup plus routing:
 
 Top-load trigger boundaries and critical constraints so the agent can decide to read the skill before acting.
 
-For Codex targets, top-load the smallest discriminative trigger clause. The
-initial catalog has one aggregate metadata budget, so later description text
-may be shortened and whole entries can disappear under stronger pressure. Do
-not infer visibility from a per-skill character count.
+For any target runtime, top-load the smallest discriminative trigger clause.
+Catalog limits differ: a host may hard-omit entries, softly simplify metadata,
+or apply no dedicated aggregate cap. Do not infer visibility from a portable
+per-skill character count.
+
+Use the first 40 characters as a repository review probe, not as a claimed host
+limit. Prefer a concrete domain/artifact/failure cue plus an owned action there;
+remove generic lead-ins such as `Use when`, `Use for`, `Use this skill`, `Help
+with`, or `Agent skills for` when the real trigger can lead.
 
 ## Selection Card
 
@@ -55,12 +60,18 @@ Adjacent skills:
 Then turn it into this shape:
 
 ```yaml
-description: Use when <task contexts, artifacts, failures, or agent decision points that should trigger this skill>.
+description: <Domain, artifact, failure, or decision>: <owned action>. <Secondary triggers and bounded adjacent cases>.
 ```
 
 Include concrete terms for user intent, artifacts, symptoms, source evidence, synonyms, adjacent phrasing, and negative boundaries when nearby skills share vocabulary.
 
-For router/process skills where missing the skill is the dominant failure, stronger phrasing is acceptable: "Use when..." or "Use before...". Do not make ordinary domain skills globally mandatory.
+For router/process skills where missing the skill is the dominant failure,
+state the gate concretely, for example `Repository-wide capability changes:
+route before editing`. Do not make ordinary domain skills globally mandatory.
+
+Treat an existing skill name as a public identifier. Prefer description repair;
+rename only with an explicit migration across folder names, references, tests,
+deeplinks, and installed copies.
 
 ## Trigger Audit
 
@@ -81,31 +92,33 @@ Check each prompt against the description:
 
 Revise until the boundary is clear. If two skills own the same trigger surface, split responsibilities or make the router skill explicit.
 
-## Codex Catalog Audit
-
-When Codex is a target host and metadata or skill count changes materially, run:
+Run the portable prefix audit against the broadest source inventory in scope:
 
 ```bash
-python3 "$PLUGIN_ROOT/scripts/skill/codex_skill_catalog_audit.py" \
-  <skill-roots-or-plugin-roots> --context-window <tokens> --json
+python3 "$PLUGIN_ROOT/scripts/skill/audit_description_prefixes.py" <skill-or-plugin-roots> --json
 ```
 
-Use the broadest concrete enabled inventory available. A single plugin audit
-measures its contribution but cannot prove host-wide visibility. Read these
-typed states directly:
+Generic lead-ins and parse failures are errors. Forty-character exact prefix
+collisions and descriptions above the 240-character review target are advisory;
+use `--strict` only when the target portfolio has intentionally adopted those
+review thresholds as release gates.
 
-- `full_metadata_visible`: all modeled names and descriptions fit;
-- `descriptions_shortened`: every modeled name remains, but only description
-  prefixes survive;
-- `skills_omitted`: some modeled names and paths are absent from initial model
-  context.
+## Runtime Catalog Audit
 
-If a known host surface applies a tighter limit, pass
-`--metadata-token-cap <tokens>`. Treat the output as conservative because Codex
-may select shorter path aliases. For a rare enabled skill that should be manual
-only, consider `agents/openai.yaml` with
-`policy.allow_implicit_invocation: false`; explicit `$skill` use remains the
-recovery path.
+Read `$PLUGIN_ROOT/references/skill-catalog-runtime-comparison.md` when metadata
+or skill count changes materially. Bind the exact host and version, then test
+the broadest concrete enabled inventory available. A single plugin measures
+only its contribution and cannot prove host-wide model visibility.
+
+Interpret full metadata, shortened metadata, names-only or identity-only
+entries, whole-entry omission, and an empty catalog as different runtime
+states. Separate model-context loading from disk reads or in-process caching.
+
+Use the target host's vendor plugin for executable/version-specific diagnosis.
+For Codex, route budget arithmetic, root aliases, current prompt or rollout
+evidence, and the deterministic catalog audit to `codex-cli`. Keep metadata
+redesign here after the runtime finding identifies which prefixes or boundaries
+failed.
 
 ## Failure Diagnosis
 

@@ -1,7 +1,7 @@
 {
   "name": "capability-workbench",
-  "version": "0.4.0",
-  "description": "Agent-agnostic capability workbench for discovery, synthesis, portfolio architecture, trigger metadata, Codex catalog-budget and evidence-coverage audits, agent guidance, LLM agent harness engineering and evaluation, vetting, repair, installation, packaging, and imagegen-backed plugin icons.",
+  "version": "0.4.2",
+  "description": "Design, audit, synthesize, and package agent skills/plugins with portfolio architecture, trigger metadata, catalog-pressure analysis, guidance authoring, harness engineering/evaluation, vetting, repair, and validation.",
   "author": {
     "name": "Xopoko"
   },

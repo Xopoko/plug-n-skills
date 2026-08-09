@@ -1,6 +1,8 @@
 ---
 name: sdd-spec-kit
-description: Use GitHub Spec Kit projects and commands, including constitution, specify, clarify, plan, tasks, analyze, implement, extensions, and presets.
+description: >-
+  GitHub Spec Kit projects route constitution, specify, clarify, plan, tasks,
+  analyze, implement, extensions, and presets.
 ---
 
 # SDD Spec Kit

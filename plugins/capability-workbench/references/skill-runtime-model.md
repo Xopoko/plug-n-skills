@@ -5,6 +5,12 @@ installing agent skills. It describes how skills are discovered, selected,
 loaded, and activated across Codex, Claude Code, Cursor, and the open Agent
 Skills format.
 
+For pinned catalog budgets and overflow behavior across Codex, the inspected
+Claude source snapshot, OpenClaw, Hermes Agent, OpenCode, and Qwen Code, read
+`skill-catalog-runtime-comparison.md`. Host behavior is not portable: the same
+skill inventory can be hard-truncated, softly simplified, or have no dedicated
+aggregate catalog budget identified in the pinned runtime source.
+
 ## Core Model
 
 A skill is a versioned folder with a required `SKILL.md` file and optional
@@ -81,47 +87,29 @@ Selection:
 
 Catalog budget:
 
-- The documented initial metadata list is capped at 2% of the model context
-  window. If the context window is unknown, the fallback is 8,000 characters.
-  This budget applies to discovery metadata, not to the selected `SKILL.md`
-  body.
-- In the audited core renderer, the token-mode limit is
-  `max(floor(context_window * 2 / 100), 1)`. Metadata cost is estimated as
-  `ceil(UTF-8 bytes / 4)`, not with the model tokenizer. Each description is
-  first normalized to one whitespace-separated line and capped at 1,024
-  characters. Plugin skills are rendered with their qualified
-  `plugin-name:skill-name`, which also consumes budget.
-- If full metadata does not fit but every minimum `name + path` line does,
-  Codex distributes the remaining space across description prefixes one
-  Unicode character at a time. Every skill name stays model-visible in this
-  mode, but implicit matching can lose discriminative terms from later in a
-  description.
-- If the minimum lines do not fit, Codex removes all descriptions and omits
-  whole entries. An omitted entry's name and path are absent from the model's
-  initial discovery list. The enabled host inventory can still resolve an
-  explicit unambiguous `$skill` mention and inject the selected instructions.
-- `agents/openai.yaml` with `policy.allow_implicit_invocation: false` excludes
-  that enabled skill from the implicit catalog while preserving explicit use.
-  This is useful for rare or manually selected skills that should not consume
-  discovery budget.
+- In the pinned current renderer, initial metadata uses a hard 2 percent share
+  of a known model context window and an 8,000-character fallback when the
+  window is unavailable. Token mode estimates `ceil(UTF-8 bytes / 4)` rather
+  than invoking a model tokenizer.
+- The budget covers skill metadata lines and any selected root-alias-table
+  overhead. It does not cap the surrounding skills usage instructions or a
+  selected `SKILL.md` body.
+- Codex first shortens description prefixes round-robin. If even every minimum
+  name-and-locator line cannot fit, it omits whole entries in catalog order.
+- The 2 percent value is a compile-time constant in the pinned source, with no
+  supported config, flag, environment, or feature override. Re-check the exact
+  installed version before carrying this claim forward.
 - Budget pressure is aggregate. A single description length cannot prove that
-  a skill will be visible: the result also depends on every enabled implicitly
-  invocable skill, locator lengths, aliases, scope ordering, model window, and
-  any tighter host cap.
+  a skill is visible; the result depends on the complete enabled implicit
+  inventory, qualified names, locators, aliases, scope order, and model window.
+- `agents/openai.yaml` with `policy.allow_implicit_invocation: false` keeps a
+  rare enabled skill out of the model-visible catalog while preserving
+  explicit selection.
 
-Use the bundled conservative audit against the broadest concrete enabled
-inventory available:
-
-```bash
-python3 "$PLUGIN_ROOT/scripts/skill/codex_skill_catalog_audit.py" \
-  <skill-roots-or-plugin-roots> --context-window <tokens> --json
-```
-
-The audit mirrors the core budget phases with absolute paths. Codex may choose
-shorter path aliases and preserve more metadata. For a host-wide claim, include
-System, Admin, Repo, and User skills; auditing one plugin proves only that
-plugin's contribution. Pass `--metadata-token-cap` when a known host surface
-sets a tighter ceiling than 2%.
+Use the `codex-cli` plugin for Codex-specific source modeling, exact live-prompt
+or rollout evidence, version/config checks, and the deterministic
+`scripts/codex_skill_catalog_audit.py` command. Workbench owns portable
+authoring and cross-runtime comparison, not the current Codex executable.
 
 Discovery and scope:
 
@@ -396,9 +384,9 @@ evidence rather than assumptions:
 - OpenAI Codex skills:
   https://developers.openai.com/codex/skills
 - Audited Codex core renderer snapshot:
-  https://github.com/openai/codex/blob/315195492c80fdade38e917c18f9584efd599304/codex-rs/core-skills/src/render.rs
+  https://github.com/openai/codex/blob/95c7265e849e6e360a7fa53ffeac70b25d6051a3/codex-rs/ext/skills/src/render.rs
 - Audited Codex explicit skill injection snapshot:
-  https://github.com/openai/codex/blob/315195492c80fdade38e917c18f9584efd599304/codex-rs/core-skills/src/injection.rs
+  https://github.com/openai/codex/blob/95c7265e849e6e360a7fa53ffeac70b25d6051a3/codex-rs/ext/skills/src/selection.rs
 - OpenAI Codex plugin build guide:
   https://developers.openai.com/codex/plugins/build
 - Claude Code skills:

@@ -1,6 +1,8 @@
 ---
 name: sdd
-description: Route Spec-Driven Development work across lightweight, Spec Kit, Kiro-style, OpenSpec-style, brownfield, bugfix, planning, implementation, and audit lanes.
+description: >-
+  Spec-Driven Development routes lightweight, Spec Kit, Kiro-style,
+  OpenSpec-style, brownfield, bugfix, planning, implementation, and audit lanes.
 ---
 
 # SDD Router

@@ -1,6 +1,6 @@
 ---
 name: codex-thread-supervisor
-description: "Use for live Codex task or thread supervision by ID: cursor transitions, attention gates, bounded claims, checkpoint adoption, authorized skill or evidence handoffs, and privacy-safe capability mining. Not for rollout forensics, current-turn subagents, or external jobs."
+description: "Supervise live Codex tasks by ID with cursor waits, attention/completion gates, bounded claims, checkpoints, skill/evidence handoffs, and privacy-safe capability mining. Excludes rollout forensics, current-turn subagents, and external jobs."
 ---
 
 # Codex Thread Supervisor

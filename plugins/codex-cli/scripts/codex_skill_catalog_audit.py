@@ -1,9 +1,10 @@
 #!/usr/bin/env python3
 """Estimate Codex model-visible skill metadata pressure for a concrete inventory.
 
-The core phases and cost model mirror the pinned openai/codex renderer. Path
-alias selection and cross-scope ordering depend on host discovery state, so the
-audit deliberately uses absolute locators and reports that conservative bound.
+The allocation phases and cost model mirror an isolated CoreCompatible host
+catalog in the pinned openai/codex renderer. Real scope metadata, display paths,
+root aliases, and additional Desktop/app-server catalogs require runtime state,
+so this source-only audit reports its approximation limits explicitly.
 """
 
 from __future__ import annotations
@@ -17,10 +18,12 @@ from typing import Any
 
 
 SCHEMA = "capability.codex_skill_catalog_audit.v1"
-CODEX_SOURCE_SNAPSHOT = "315195492c80fdade38e917c18f9584efd599304"
+CODEX_SOURCE_SNAPSHOT = "95c7265e849e6e360a7fa53ffeac70b25d6051a3"
 METADATA_CONTEXT_PERCENT = 2
 DEFAULT_METADATA_CHAR_BUDGET = 8_000
 MAX_DESCRIPTION_CHARS = 1_024
+MAX_BASE_NAME_CHARS = 64
+MAX_QUALIFIED_NAME_CHARS = 129
 TRUNCATION_SUFFIX = "..."
 APPROX_BYTES_PER_TOKEN = 4
 DESCRIPTION_WARNING_THRESHOLD = 100
@@ -229,18 +232,18 @@ def openai_explicit_only(skill_dir: Path) -> bool:
         return False
     try:
         payload = load_yaml_mapping(path.read_text(encoding="utf-8"), str(path))
-    except OSError as exc:
-        raise AuditInputError(f"{path}: cannot read agent metadata") from exc
+    except (OSError, UnicodeError, ValueError):
+        # Codex treats malformed optional agent metadata as absent. Preserve that
+        # fail-open visibility behavior instead of rejecting the whole inventory.
+        return False
     policy = payload.get("policy")
     if policy is None:
         return False
     if not isinstance(policy, dict):
-        raise AuditInputError(f"{path}: policy must be a mapping")
+        return False
     value = policy.get("allow_implicit_invocation")
     if value is not None and not isinstance(value, bool):
-        raise AuditInputError(
-            f"{path}: policy.allow_implicit_invocation must be a boolean"
-        )
+        return False
     return value is False
 
 
@@ -336,15 +339,26 @@ def load_records(inputs: list[str]) -> list[SkillRecord]:
         frontmatter = skill_frontmatter(path)
         name = frontmatter.get("name")
         description = frontmatter.get("description")
-        if not isinstance(name, str) or not name.strip():
-            raise AuditInputError(f"{path}: name must be a non-empty string")
+        if name is None or (isinstance(name, str) and not name.strip()):
+            name = path.parent.name
+        elif not isinstance(name, str):
+            raise AuditInputError(f"{path}: name must be a string when present")
         if not isinstance(description, str) or not description.strip():
             raise AuditInputError(f"{path}: description must be a non-empty string")
         base_name = normalize_single_line(name)
+        if len(base_name) > MAX_BASE_NAME_CHARS:
+            raise AuditInputError(
+                f"{path}: base skill name exceeds {MAX_BASE_NAME_CHARS} characters"
+            )
         raw_description = description
         source_description = normalize_single_line(description)
         namespace = nearest_codex_plugin_namespace(path)
         qualified_name = f"{namespace}:{base_name}" if namespace else base_name
+        if len(qualified_name) > MAX_QUALIFIED_NAME_CHARS:
+            raise AuditInputError(
+                f"{path}: qualified skill name exceeds "
+                f"{MAX_QUALIFIED_NAME_CHARS} characters"
+            )
         records.append(
             SkillRecord(
                 base_name=base_name,
@@ -475,11 +489,20 @@ def audit_payload(
     budget, percent_limit = build_budget(context_window, metadata_token_cap)
     state, rendered, full_cost, minimum_cost = render_with_budget(records, budget)
     rendered_by_path = {row.record.path: row for row in rendered}
-    name_counts: dict[str, int] = {}
+    qualified_name_counts: dict[str, int] = {}
+    base_name_counts: dict[str, int] = {}
     for record in records:
-        name_counts[record.name] = name_counts.get(record.name, 0) + 1
-    ambiguous_names = sorted(
-        name for name, count in name_counts.items() if count > 1
+        qualified_name_counts[record.name] = (
+            qualified_name_counts.get(record.name, 0) + 1
+        )
+        base_name_counts[record.base_name] = (
+            base_name_counts.get(record.base_name, 0) + 1
+        )
+    ambiguous_qualified_names = sorted(
+        name for name, count in qualified_name_counts.items() if count > 1
+    )
+    ambiguous_base_names = sorted(
+        name for name, count in base_name_counts.items() if count > 1
     )
     implicit_records = [record for record in records if not record.explicit_only]
     included_count = sum(row.included for row in rendered)
@@ -521,7 +544,9 @@ def audit_payload(
                 "namespace": record.namespace,
                 "path": record.path.as_posix(),
                 "explicit_only": record.explicit_only,
-                "explicit_resolution_eligible": name_counts[record.name] == 1,
+                "unique_plain_name_in_supplied_inventory": (
+                    base_name_counts[record.base_name] == 1
+                ),
                 "included_in_implicit_catalog": (
                     rendered_row.included if rendered_row is not None else False
                 ),
@@ -542,6 +567,17 @@ def audit_payload(
     return {
         "schema": SCHEMA,
         "valid": True,
+        "fidelity": {
+            "exact": False,
+            "surface": "isolated_host_core_compatible_absolute",
+            "direction": "unknown",
+            "unknowns": [
+                "scope_and_source_kind",
+                "display_paths_and_roots",
+                "root_alias_selection",
+                "other_catalogs_and_shared_budget",
+            ],
+        },
         "source_model": {
             "codex_source_snapshot": CODEX_SOURCE_SNAPSHOT,
             "metadata_context_percent": METADATA_CONTEXT_PERCENT,
@@ -552,7 +588,10 @@ def audit_payload(
             "maximum_scan_depth": MAX_SCAN_DEPTH,
             "maximum_scan_directories": MAX_SCAN_DIRECTORIES,
             "maximum_scan_entries": MAX_SCAN_ENTRIES,
-            "path_model": "conservative_absolute_locators_without_alias_selection",
+            "budget_configuration": "compile_time_constant_without_supported_runtime_override",
+            "budget_scope": "metadata_lines_and_selected_alias_table_overhead_not_prompt_boilerplate",
+            "renderer_policy": "isolated_host_core_compatible_approximation",
+            "path_model": "absolute_locators_without_alias_selection_or_alias_table_overhead",
             "scope_model": "single_scope_name_then_path_order",
             "discovery_model": "recursive_exact_filename_hidden_descendants_skipped",
         },
@@ -568,8 +607,10 @@ def audit_payload(
             "state": state,
             "discovered_skills": len(records),
             "enabled_inventory_skills_assumed": len(records),
-            "ambiguous_explicit_skill_names": ambiguous_names,
-            "ambiguous_explicit_skill_name_count": len(ambiguous_names),
+            "ambiguous_qualified_skill_names": ambiguous_qualified_names,
+            "ambiguous_qualified_skill_name_count": len(ambiguous_qualified_names),
+            "ambiguous_base_skill_names": ambiguous_base_names,
+            "ambiguous_base_skill_name_count": len(ambiguous_base_names),
             "implicit_catalog_skills": len(implicit_records),
             "explicit_only_skills_excluded": len(records) - len(implicit_records),
             "included_skills": included_count,
@@ -582,17 +623,20 @@ def audit_payload(
             "budget_truncated_description_count": truncated_count,
             "budget_truncated_description_chars": budget_removed,
             "average_budget_truncated_description_chars": average_removed,
-            "codex_thread_warning_expected": warning_kind is not None,
-            "codex_thread_warning_kind": warning_kind,
+            "modeled_warning_condition": warning_kind is not None,
+            "modeled_warning_kind": warning_kind,
         },
         "skills": rows,
         "caveats": [
             "Only supplied paths are modeled; a host-wide visibility claim requires every enabled implicitly invocable skill across system, admin, repo, and user scopes.",
-            "Every discovered skill is treated as enabled; omit disabled paths from the supplied inventory. Explicit resolution is eligible only for unique qualified names.",
-            "Codex may replace absolute paths with root aliases and preserve more metadata than this conservative path model.",
-            "Actual hard-omission order ranks System, Admin, Repo, then User before name and path; this audit models one scope.",
+            "Every discovered skill is treated as enabled; omit disabled paths from the supplied inventory. Name uniqueness is reported only within that inventory; connector collisions, provider-specific duplicate resolution, and exact path selection are separate.",
+            "For identical production inputs, Codex selects a root-aliased candidate only when its inclusion, retained-description, or cost comparator is better than the absolute candidate. This script resolves its own paths and lacks runtime display roots, so the overall estimate still has unknown direction.",
+            "Actual host hard-omission order ranks System, Admin, Repo, then User before name and main prompt path; this audit models one sorted scope.",
+            "Desktop/app-server may allocate one budget across executor, orchestrator, and host catalogs. This isolated host scenario does not model that shared allocation.",
+            "Malformed optional agents/openai.yaml metadata is treated as absent, matching Codex fail-open implicit visibility.",
             "Directory symlink traversal is followed with cycle detection; Codex symlink policy varies by skill scope.",
-            "Host or app-server surfaces may impose a tighter cap; pass --metadata-token-cap when that cap is known.",
+            "The two percent constant has no supported runtime override in the pinned source. --metadata-token-cap is an analysis-only scenario input, not a Codex config setting.",
+            "The two percent budget covers rendered metadata lines and any selected alias-table overhead, not the surrounding skills instructions or a selected SKILL.md body.",
         ],
         "errors": [],
     }
@@ -607,6 +651,10 @@ def invalid_payload(message: str) -> dict[str, Any]:
 
 
 def main() -> int:
+    reconfigure = getattr(sys.stdout, "reconfigure", None)
+    if callable(reconfigure):
+        reconfigure(encoding="utf-8")
+
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument(
         "paths",
@@ -621,7 +669,7 @@ def main() -> int:
     parser.add_argument(
         "--metadata-token-cap",
         type=positive_int,
-        help="Optional tighter host metadata cap, applied after the 2 percent calculation.",
+        help="Analysis-only tighter metadata scenario cap; this is not a Codex config setting.",
     )
     parser.add_argument("--json", action="store_true", help="Emit the typed JSON audit.")
     args = parser.parse_args()
@@ -656,7 +704,7 @@ def main() -> int:
         "all_names_visible="
         f"{int(summary['all_implicit_skill_names_visible'])} "
         f"truncated_descriptions={summary['budget_truncated_description_count']} "
-        f"warning_expected={int(summary['codex_thread_warning_expected'])}"
+        f"modeled_warning={int(summary['modeled_warning_condition'])}"
     )
     return 0
 

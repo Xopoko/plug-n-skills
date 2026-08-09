@@ -1,6 +1,6 @@
 ---
 name: pixijs-accessibility
-description: "Use for PixiJS v8 accessibility: AccessibilitySystem, screen reader overlays, keyboard navigation, accessibleTitle, accessibleHint, tabIndex, roles, activation settings."
+description: "PixiJS v8 AccessibilitySystem configures screen-reader overlays, keyboard focus, roles, accessibleTitle, accessibleHint, tabIndex, and activation behavior."
 license: MIT
 ---
 

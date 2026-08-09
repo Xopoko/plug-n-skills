@@ -1,6 +1,6 @@
 ---
 name: codebase-architecture-audit
-description: "Use before architecture-significant code work to recover the actual source-backed system shape: modules, dependencies, domain seams, runtime coupling, ownership, quality attributes, tests, docs, and risks."
+description: "Codebase architecture audits recover actual modules, dependencies, domain seams, runtime coupling, ownership, quality attributes, tests, docs, and risks before structural code changes."
 ---
 
 # Codebase Architecture Audit

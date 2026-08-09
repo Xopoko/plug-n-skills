@@ -1,6 +1,6 @@
 ---
 name: tauri-config-security
-description: Configure or review Tauri 2 tauri.conf files, capabilities, permissions, CSP, scoped filesystem/network/shell access, window labels, plugin permissions, and security-sensitive frontend API exposure.
+description: Tauri 2 configuration and security review for tauri.conf, capabilities, permissions, CSP, scoped filesystem/network/shell access, window labels, plugin permissions, and frontend-exposed native APIs.
 ---
 
 # Tauri Config And Security

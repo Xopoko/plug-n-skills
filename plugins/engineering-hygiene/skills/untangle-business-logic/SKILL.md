@@ -1,6 +1,11 @@
 ---
 name: untangle-business-logic
-description: "Targeted refactoring workflow for tangled business logic in code. Use when working on code where business rules, UI/presentation, API/IO, persistence, platform quirks, concurrency, lifecycle, state transitions, or error policy are mixed together; when the same domain rule is implemented in several places; when a bug depends on event ordering or stale state; or when a feature works but the business meaning is spread across components/services. Complements code-maintenance-audit: this skill is for semantic logic boundaries, hidden invariants, duplicated business meaning, and behavior-preserving logic untangling, not generic dead-code cleanup or performance tuning."
+description: >-
+  Business-logic refactors separate rules from
+  UI/IO/platform/concurrency/lifecycle, state, and error policy while preserving
+  behavior, targeting
+  duplicated meaning and hidden invariants rather than dead-code cleanup or
+  performance tuning.
 ---
 
 # Untangle Business Logic

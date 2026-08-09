@@ -1,7 +1,7 @@
 {
   "name": "capability-workbench",
-  "version": "0.4.0",
-  "description": "Agent-agnostic capability workbench for discovery, synthesis, portfolio architecture, trigger metadata, Codex catalog-budget and evidence-coverage audits, agent guidance, LLM agent harness engineering and evaluation, vetting, repair, installation, packaging, and imagegen-backed plugin icons.",
+  "version": "0.4.2",
+  "description": "Design, audit, synthesize, and package agent skills/plugins with portfolio architecture, trigger metadata, catalog-pressure analysis, guidance authoring, harness engineering/evaluation, vetting, repair, and validation.",
   "author": {
     "name": "Xopoko"
   },
@@ -27,8 +27,8 @@
   "skills": "./skills/",
   "interface": {
     "displayName": "Capability Workbench",
-    "shortDescription": "Build agent capabilities and engineer LLM harnesses.",
-    "longDescription": "Capability Workbench combines web-first external discovery, skill synthesis, cross-plugin capability portfolio architecture, skill authoring, AGENTS.md and CLAUDE.md guidance file authoring, urgent repair of stale or false capability contracts, global agent skill installation, plugin packaging, imagegen-backed plugin icon workflows, marketplace visibility, safety vetting, and context-density tooling into one capability-acquisition plugin. It models Codex's aggregate model-visible skill catalog budget, audits concrete inventories for description shortening or whole-entry omission, and keeps trigger-first metadata distinct from selected SKILL.md bodies. It gates broad audit claims against exact declared item-by-dimension evidence coverage without treating the declared universe as independently proven. It can audit whole plugin portfolios for overlap, weak routing, split/merge/delete/move decisions, shared capability extraction, reference extraction, and script extraction. It also provides vendor-neutral engineering and evaluation workflows for the runtime around an LLM-powered agent: control loops, typed tools and state, context and memory, policy and isolation, recovery, delegation, traces, benchmark design, and release gates. It treats public repositories, marketplaces, research sources, and community implementations as the primary corpus, with local skills as supplementary evidence. It writes artifacts to the validated source surface and installs into the global agent installation only when the user asks for installed/global use.",
+    "shortDescription": "Design, audit, and package reliable agent capabilities.",
+    "longDescription": "Design, audit, synthesize, and package reliable agent skills and plugins. Capability Workbench covers web-first discovery, portfolio architecture, trigger metadata and catalog-pressure analysis, skill authoring, AGENTS.md and CLAUDE.md guidance, reality repair, safety vetting, optional installation, plugin packaging, icon workflows, evidence-coverage gates, and context-density tooling. It also supports vendor-neutral LLM agent harness engineering and evaluation across control loops, typed tools and state, memory, policy, isolation, recovery, delegation, traces, benchmarks, and release gates. Runtime comparisons stay version-pinned and distinguish model-visible metadata, entry omission, body loading, disk/cache state, and exact vendor-specific diagnosis. Artifacts remain on the validated source surface unless the user explicitly requests installed or global use.",
     "developerName": "Xopoko",
     "category": "Productivity",
     "capabilities": [
@@ -40,7 +40,7 @@
       "AGENTS.md, CLAUDE.md, and Cursor rule guidance authoring",
       "Imagegen-backed bitmap plugin icon prompts, asset checks, and manifest wiring",
       "Skill name and description trigger metadata design",
-      "Codex model-visible skill catalog budget audits",
+      "Cross-runtime model-visible skill catalog, overflow, and body-loading comparison",
       "Exact item-by-dimension evidence coverage gates for aggregate audit claims",
       "Reality repair for stale or false skill, script, plugin, and MCP contracts",
       "Global agent skill installation with safety vetting",
@@ -55,7 +55,7 @@
       "Use Capability Workbench to audit a skill/plugin portfolio across plugins and decide whether capabilities should be kept, split, merged, moved, deleted, routed, moved to references, extracted into shared mechanics, or extracted into scripts.",
       "Use Capability Workbench to create, refresh, audit, or migrate AGENTS.md, CLAUDE.md, and Cursor rule files for coding agents.",
       "Use Capability Workbench to design or debug skill names and descriptions so the host agent loads the right SKILL.md.",
-      "Use Capability Workbench to audit a concrete Codex skill inventory for description shortening, whole-entry omission, and explicit-only recovery under the model-visible metadata budget.",
+      "Use Capability Workbench to compare how Codex, Claude-family snapshots, OpenClaw, Hermes Agent, OpenCode, and Qwen Code expose skill catalogs and load selected bodies.",
       "Use Capability Workbench to validate a broad audit claim against an exact declared item-by-dimension evidence matrix.",
       "Use Capability Workbench to repair a stale skill, script, plugin, or MCP contract that contradicted live behavior during work.",
       "Use Capability Workbench to generate a coherent imagegen-backed icon for a new marketplace-backed plugin and wire it into the plugin manifest.",

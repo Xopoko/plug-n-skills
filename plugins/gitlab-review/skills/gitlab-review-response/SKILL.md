@@ -1,13 +1,10 @@
 ---
 name: gitlab-review-response
 description: >-
-  Use when addressing existing GitLab merge request review discussions:
-  classify feedback against current code and the latest diff, prepare focused
-  fixes, bind any authorized push to the exact source project and SHA, prove
-  exact-head CI provenance, and post idempotent same-thread replies. Supports
-  plan-only, reply-only, and explicitly authorized per-thread resolution
-  through GitLab REST v4 or glab api. Do not use for broad code review, GitHub
-  pull requests, approvals, merges, or bulk resolution.
+  GitLab MR discussions: address feedback, bind pushes to source project/SHA,
+  prove exact-head CI, and reply idempotently. Per-thread resolution needs
+  authorization. Excludes broad review, GitHub PRs, approvals, merges, and bulk
+  resolution.
 ---
 
 # GitLab Review Response

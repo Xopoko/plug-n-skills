@@ -1,4 +1,4 @@
 interface:
   display_name: "Git Commit Signing Recovery"
-  short_description: "Recover SSH signer failures without unsigned fallback"
+  short_description: "SSH signer failures recover without unsigned fallback"
   default_prompt: "Use $git-commit-signing-recovery to diagnose this failed SSH-signed Git operation and determine whether one single-use retry authorization can be issued."

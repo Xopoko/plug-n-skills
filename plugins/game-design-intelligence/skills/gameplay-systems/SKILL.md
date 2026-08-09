@@ -1,6 +1,6 @@
 ---
 name: gameplay-systems
-description: "Design and critique core gameplay loops, mechanics, verbs, systems, dynamics, emergence, and player-facing structure. Use when the task is about what players do, why it stays interesting, how systems interact, or how the loop creates the intended experience. Do not use for engine, rendering, graphics, assets, or code."
+description: "Gameplay systems design shapes core loops, verbs, mechanics, dynamics, emergence, mastery, agency, and player-facing structure. Do not use for engine, rendering, graphics, asset, or code decisions."
 ---
 
 # Gameplay Systems

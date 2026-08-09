@@ -1,7 +1,7 @@
 {
   "name": "engineering-hygiene",
-  "version": "0.1.0",
-  "description": "Discipline gates for everyday development: code maintenance sweeps before claiming done, behavior-preserving untangling of mixed business logic, skeptical visual QA of rendered UI and screenshots, and autonomous provisioning of missing tools instead of stopping at blockers.",
+  "version": "0.1.1",
+  "description": "Engineering hygiene audits changed code, untangles business logic, inspects rendered UI, and provisions missing tools with evidence-first, touched-surface discipline.",
   "author": {
     "name": "Xopoko"
   },
@@ -21,8 +21,8 @@
   "skills": "./skills/",
   "interface": {
     "displayName": "Engineering Hygiene",
-    "shortDescription": "Finish-line gates: cleanup sweeps, logic untangling, visual QA, tool provisioning.",
-    "longDescription": "Engineering Hygiene packages four discipline gates for ordinary development work. Before claiming a code change done, it sweeps the changed surface for dead code, stale leftovers, and safe consolidation. When business rules are tangled with UI, IO, platform quirks, concurrency, or error policy, it runs a narrow behavior-preserving untangling pass. When rendered UI or screenshots are the evidence, it forces a skeptical second pass for unrelated visual anomalies beyond the acceptance criteria. When work is blocked or weakened by a missing SDK, CLI, runtime, or test utility, it provisions the tool and continues instead of reporting the gap as the result. All gates are evidence-first: findings cite searches, tool output, or screenshots, and edits stay inside the touched surface.",
+    "shortDescription": "Engineering hygiene audits code, logic, UI, and tooling gaps.",
+    "longDescription": "Engineering hygiene audits changed code, untangles domain rules, inspects rendered UI, and provisions missing tools. Evidence comes from searches, tool output, tests, builds, or screenshots; edits stay within the touched surface.",
     "developerName": "Xopoko",
     "category": "Productivity",
     "capabilities": [

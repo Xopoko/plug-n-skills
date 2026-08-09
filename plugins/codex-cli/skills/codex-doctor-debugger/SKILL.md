@@ -1,6 +1,6 @@
 ---
 name: codex-doctor-debugger
-description: Use when diagnosing Codex CLI install, config, auth, runtime, feature flags, sandbox denials, debug models, prompt input, app-server, remote-control, remote websocket/unix connections, or local Codex health failures.
+description: "Diagnose current Codex CLI health and model-visible skill catalogs: metadata truncation/omission, install, config, auth, sandbox, prompt, app-server, remote-control, and runtime failures. For what an existing task saw, use codex-log-reader."
 ---
 
 # Codex Doctor And Debugger
@@ -17,7 +17,7 @@ or local environment inconsistencies.
 Start with cheap, non-mutating commands:
 
 ```bash
-python3 "$PLUGIN_ROOT/scripts/codex_cli_inspector.py" --commands doctor debug sandbox features app-server remote-control --json
+python3 "$PLUGIN_ROOT/scripts/codex_cli_inspector.py" --commands doctor debug "debug prompt-input" sandbox features app-server remote-control --json
 codex doctor --summary --ascii
 ```
 
@@ -87,6 +87,31 @@ codex debug app-server --help
 
 Treat debug output as potentially sensitive because it can include model,
 config, prompt-input, or environment-derived data.
+
+### Skill Metadata Catalog
+
+Read `$PLUGIN_ROOT/references/skill-metadata-catalog-budget.md` for the pinned
+renderer contract, 2 percent arithmetic, alias overhead, overflow stages,
+unsupported-override finding, and mitigation boundary.
+
+For an existing task, locate its exact rollout with `codex-log-reader` before
+interpreting the recorded `<skills_instructions>` fragment. For a fresh render,
+bind the exact executable/version and cwd, inspect `codex debug prompt-input
+--help`, then inspect the output without publishing full prompts or absolute
+paths. `prompt-input` is not a replay and may initialize or refresh runtime
+caches.
+
+For source-only inventory modeling:
+
+```bash
+python3 "$PLUGIN_ROOT/scripts/codex_skill_catalog_audit.py" \
+  <enabled-skill-roots-or-plugin-roots> --context-window <tokens> --json
+```
+
+Do not invent a `config.toml` key or describe the script's
+`--metadata-token-cap` analysis option as a Codex setting. Re-check local help,
+`codex features list`, the config schema, and compatible source before carrying
+the pinned no-override finding to another version.
 
 ### App Server And Remote Control
 

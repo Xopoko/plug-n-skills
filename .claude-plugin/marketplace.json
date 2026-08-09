@@ -11,97 +11,97 @@
     {
       "name": "build-swift-apps",
       "source": "./plugins/build-swift-apps",
-      "description": "Swift app build, debug, profile, package, App Store, TestFlight, simulator, macOS, iOS, and Xcode workflows."
+      "description": "Build, debug, profile, test, refactor, and release Swift apps across iOS, macOS, Xcode, SwiftUI, SwiftPM, Tuist, and App Store Connect."
     },
     {
       "name": "pixijs",
       "source": "./plugins/pixijs",
-      "description": "PixiJS v8 application, scene graph, rendering, migration, asset, event, and performance workflows."
+      "description": "PixiJS v8 scene tooling builds and debugs Applications, assets, events, filters, shaders, performance, v7 migrations, and create-pixi projects."
     },
     {
       "name": "tauri",
       "source": "./plugins/tauri",
-      "description": "Tauri 2 setup, migration, config security, IPC, plugins, debugging, testing, and distribution workflows."
+      "description": "Tauri 2 project scaffolding/migration, security, Rust IPC/plugins, shell UI, debugging, testing, packaging, signing, updates, and desktop/mobile release."
     },
     {
       "name": "scientific-research",
       "source": "./plugins/scientific-research",
-      "description": "Source-backed scholarly discovery, deduplication, screening, claim ledgers, and evidence quality gates."
+      "description": "Scholarly research discovers papers, deduplicates DOIs, extracts source-backed claims, and validates evidence across arXiv, OpenAlex, Crossref, Europe PMC, Semantic Scholar, PubMed, and OpenCitations."
     },
     {
       "name": "context-density",
       "source": "./plugins/context-density",
-      "description": "Context design, long-context placement, prompt-contract audits, skill/plugin compression, and structural handoff."
+      "description": "Agent context audits measure token cost, validate prompt/output contracts and typed state, test compression, and route structural skill or plugin overlap to Capability Workbench."
     },
     {
       "name": "capability-workbench",
       "source": "./plugins/capability-workbench",
-      "description": "Capability discovery, synthesis, portfolio architecture, skill trigger metadata, Codex catalog-budget and evidence-coverage audits, agent guidance authoring, LLM agent harness engineering and evaluation, vetting, packaging, installation, and marketplace visibility."
+      "description": "Design, audit, synthesize, and package agent skills/plugins with portfolio architecture, trigger metadata, catalog-pressure analysis, guidance authoring, harness engineering/evaluation, vetting, repair, and validation."
     },
     {
       "name": "codex-cli",
       "source": "./plugins/codex-cli",
-      "description": "Codex CLI operations, automation, producer-native deferred completion, diagnostics, live thread supervision with protected-policy gates, version-aware skill handoffs, and aggregate claim boundaries, plugin and MCP lifecycle, session log forensics, and local environment actions."
+      "description": "Diagnose and operate Codex CLI: skill-catalog budgets, exec/review automation, deferred completion, task supervision, plugin/MCP lifecycle, rollout forensics, and app environments."
     },
     {
       "name": "scheduled-automation",
       "source": "./plugins/scheduled-automation",
-      "description": "Local scheduler diagnostics, real-runtime proof, safe canaries, correlated run receipts, and missed-run analysis for launchd, systemd timers, cron, and Windows Task Scheduler."
+      "description": "Local scheduler diagnostics prove launchd, systemd timer, cron, and Windows Task Scheduler runs, compare scheduler-owned context, and analyze missed or divergent executions."
     },
     {
       "name": "gitlab-review",
       "source": "./plugins/gitlab-review",
-      "description": "Race-safe GitLab merge request review response with source-project-bound pushes, complete discussion inventory, reviewer-owned resolution, idempotent replies, and exact-head proof."
+      "description": "GitLab merge-request discussions get race-safe fixes with complete discussion inventory, source-project-bound exact-SHA pushes, reviewer-owned resolution, idempotent replies, and exact-head CI handoff proof."
     },
     {
       "name": "stacked-delivery",
       "source": "./plugins/stacked-delivery",
-      "description": "Dependency-safe stacked change delivery with exact parent-head binding, descendant invalidation, node-local proof, post-rewrite proof-record freshness, distinct provenance and publication-authority gates, safe landing order, and guarded handoff receipts."
+      "description": "Stacked pull requests and merge requests preserve exact parent-head binding, descendant invalidation, per-node proof freshness, contribution provenance, publication-authority boundaries, safe landing order, and guarded handoff receipts."
     },
     {
       "name": "git-worktree-safety",
       "source": "./plugins/git-worktree-safety",
-      "description": "Git pointer and SSH-signed-commit recovery with redacted evidence, exact-state journals, one-use authorization, and fail-closed proof."
+      "description": "Git worktree pointers and SSH-signed commits recover fail-closed with redacted evidence, exact-state journals, one-use authorization, and explicit POSIX and host boundaries."
     },
     {
       "name": "claude-code",
       "source": "./plugins/claude-code",
-      "description": "Claude Code CLI operations, print-mode automation, diagnostics, plugin and MCP lifecycle, hooks, settings, agents, sessions, and worktrees."
+      "description": "Claude Code CLI manages print automation, diagnostics, plugins, MCP, hooks, settings, agents, sessions, remote control, and worktrees."
     },
     {
       "name": "architecture-intelligence",
       "source": "./plugins/architecture-intelligence",
-      "description": "Source-backed code architecture audits, async state consistency, ownership and runtime topology, conformance and drift checks, structure metrics, ADRs, fitness functions, dependency boundaries, and refactoring strategy."
+      "description": "Software architecture audits and decisions grounded in source evidence: boundaries, ownership/runtime topology, async state consistency, conformance, ADRs, fitness functions, and staged refactoring."
     },
     {
       "name": "design-intelligence",
       "source": "./plugins/design-intelligence",
-      "description": "Source-backed product, UX, interaction, hierarchy, accessibility, and design-system judgment."
+      "description": "Product and UX design judgment grounded in evidence: framing, information architecture, interaction, usability/accessibility review, visual communication, and design-system governance; excludes Figma, CSS, and framework recipes."
     },
     {
       "name": "game-design-intelligence",
       "source": "./plugins/game-design-intelligence",
-      "description": "Gameplay loops, progression, economy, motivation, onboarding, difficulty, multiplayer, and live-service critique."
+      "description": "Game design judgment grounded in evidence: core loops, gameplay systems, progression/economy/balance, motivation/retention, onboarding/difficulty, and multiplayer/live-service health; excludes engines, graphics, assets, and code."
     },
     {
       "name": "kotlin-multiplatform",
       "source": "./plugins/kotlin-multiplatform",
-      "description": "Kotlin Multiplatform architecture, Gradle diagnosis, Compose Multiplatform, interop, testing, data, governance, performance, security, publishing, and release workflows."
+      "description": "Kotlin Multiplatform design, Gradle repair, Compose UI, data/interop architecture, migration, testing, governance, security, performance, CI, publishing, and readiness review."
     },
     {
       "name": "spec-driven-development",
       "source": "./plugins/spec-driven-development",
-      "description": "Spec-Driven Development with Spec Kit, traceability, evidence profiles, and completion proof gates."
+      "description": "Spec-Driven Development routes intent through specs, plans, traceable tasks, implementation, and proof."
     },
     {
       "name": "engineering-hygiene",
       "source": "./plugins/engineering-hygiene",
-      "description": "Everyday delivery gates: pre-done maintenance sweep, business-logic untangling, skeptical visual QA, and missing-tool provisioning."
+      "description": "Engineering hygiene audits changed code, untangles business logic, inspects rendered UI, and provisions missing tools with evidence-first, touched-surface discipline."
     },
     {
       "name": "signature-map",
       "source": "./plugins/signature-map",
-      "description": "Generate and query signatures.json as a lightweight declaration index for fast, low-cost code navigation."
+      "description": "Signature Map indexes and queries code declarations in signatures.json for low-token navigation across Swift, Objective-C, C/C++, Kotlin, Java, JavaScript/TypeScript, Python, Ruby, and shell."
     }
   ]
 }

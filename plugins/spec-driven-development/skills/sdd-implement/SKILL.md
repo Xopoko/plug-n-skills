@@ -1,6 +1,8 @@
 ---
 name: sdd-implement
-description: Execute SDD task lists safely, update task status, handle spec drift, and verify completion with fresh evidence before claiming done.
+description: >-
+  SDD task execution: execute approved tasks, update status, handle spec drift,
+  and require fresh completion evidence before any done claim.
 ---
 
 # SDD Implement

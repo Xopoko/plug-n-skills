@@ -1,6 +1,6 @@
 ---
 name: multiplayer-live-service
-description: "Design and critique multiplayer dynamics, cooperation, competition, social systems, fairness, toxicity prevention, guilds, matchmaking, content cadence, seasons, events, battle passes, late-game loops, and live-service health. Do not use for networking implementation, backend architecture, graphics, assets, or code."
+description: "Multiplayer/live-service design: co-op/competition, social systems, fairness, toxicity, matchmaking, seasons, events, cadence, and late-game health. Do not use for networking implementation, backend architecture, graphics, assets, or code."
 ---
 
 # Multiplayer And Live Service

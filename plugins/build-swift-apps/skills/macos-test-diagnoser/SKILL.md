@@ -1,6 +1,6 @@
 ---
 name: macos-test-diagnoser
-description: Triage failing macOS tests across Xcode and SwiftPM workflows. Use when asked to run macOS tests, narrow failing scopes, explain assertion or crash failures, or separate real test regressions from setup and environment problems.
+description: "macOS Xcode and SwiftPM tests: run focused scopes and diagnose build, assertion, crash, async-flake, fixture, entitlement, and host-app failures; separate regressions from setup issues."
 ---
 
 # macOS Test Diagnoser

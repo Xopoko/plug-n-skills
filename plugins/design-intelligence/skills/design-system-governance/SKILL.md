@@ -1,6 +1,6 @@
 ---
 name: design-system-governance
-description: "Govern reusable design decisions, patterns, components, accessibility proof, contribution models, maturity, drift, and system adoption. Do not use for CSS implementation, Figma libraries, or token tooling unless requested."
+description: "Design-system governance defines reusable patterns, contribution rules, accessibility evidence, ownership, maturity, adoption, and drift; excludes CSS, Figma libraries, and token tooling unless requested."
 ---
 
 # Design System Governance

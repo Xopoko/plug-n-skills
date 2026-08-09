@@ -1,7 +1,7 @@
 {
   "name": "engineering-hygiene",
-  "version": "0.1.0",
-  "description": "Discipline gates for everyday development: code maintenance sweeps before claiming done, behavior-preserving untangling of mixed business logic, skeptical visual QA of rendered UI and screenshots, and autonomous provisioning of missing tools instead of stopping at blockers.",
+  "version": "0.1.1",
+  "description": "Engineering hygiene audits changed code, untangles business logic, inspects rendered UI, and provisions missing tools with evidence-first, touched-surface discipline.",
   "author": {
     "name": "Xopoko"
   },

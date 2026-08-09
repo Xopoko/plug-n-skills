@@ -1,7 +1,7 @@
 {
   "name": "pixijs",
-  "version": "0.1.1",
-  "description": "PixiJS v8 skill collection: application setup, scene graph, assets, events, filters, rendering, performance, v7->v8 migration, and project scaffolding.",
+  "version": "0.1.2",
+  "description": "PixiJS v8 scene tooling builds and debugs Applications, assets, events, filters, shaders, performance, v7 migrations, and create-pixi projects.",
   "author": {
     "name": "PixiJS community"
   },

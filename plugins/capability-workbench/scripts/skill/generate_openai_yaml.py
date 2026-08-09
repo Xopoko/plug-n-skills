@@ -72,21 +72,15 @@ def format_display_name(skill_name):
 
 
 def generate_short_description(display_name):
-    description = f"Help with {display_name} tasks"
+    # Keep the skill's searchable subject first. Callers should still provide a
+    # semantic override whenever the display name does not encode the action.
+    description = f"{display_name}: run focused tasks"
 
     if len(description) < 25:
-        description = f"Help with {display_name} tasks and workflows"
-    if len(description) < 25:
-        description = f"Help with {display_name} tasks with guidance"
+        description = f"{display_name}: run focused tasks and workflows"
 
     if len(description) > 64:
-        description = f"Help with {display_name}"
-    if len(description) > 64:
-        description = f"{display_name} helper"
-    if len(description) > 64:
-        description = f"{display_name} tools"
-    if len(description) > 64:
-        suffix = " helper"
+        suffix = ": run workflows"
         max_name_length = 64 - len(suffix)
         trimmed = display_name[:max_name_length].rstrip()
         description = f"{trimmed}{suffix}"
@@ -94,7 +88,7 @@ def generate_short_description(display_name):
         description = description[:64].rstrip()
 
     if len(description) < 25:
-        description = f"{description} workflows"
+        description = f"{description} with guidance"
         if len(description) > 64:
             description = description[:64].rstrip()
 

@@ -1,6 +1,6 @@
 ---
 name: pixijs-environments
-description: "Use for PixiJS v8 environments outside normal browser pages: Web Workers, OffscreenCanvas, Node/SSR, CSP, DOMAdapter, BrowserAdapter, WebWorkerAdapter, unsafe-eval."
+description: "PixiJS v8 runtime adapters cover Web Workers, OffscreenCanvas, and Node/SSR through DOMAdapter, BrowserAdapter, and WebWorkerAdapter. Strict-CSP support uses the pixi.js/unsafe-eval compatibility polyfill."
 license: MIT
 ---
 

@@ -1,6 +1,6 @@
 ---
 name: interaction-design
-description: "Design or critique flows, task sequences, affordances, feedback, states, error prevention, recovery, undo, progressive disclosure, input burden, keyboard/touch behavior, and interaction psychology."
+description: "Interaction design shapes task flows, affordances, feedback, state coverage, error prevention, recovery, undo, progressive disclosure, input burden, and keyboard/touch behavior."
 ---
 
 # Interaction Design

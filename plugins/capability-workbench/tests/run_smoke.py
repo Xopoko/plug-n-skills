@@ -158,265 +158,195 @@ def test_quick_validate() -> None:
         check("quick_validate: missing description fails", result.returncode != 0, result.stdout)
 
 
-def test_codex_skill_catalog_audit() -> None:
-    script = str(SCRIPTS / "skill" / "codex_skill_catalog_audit.py")
+def test_generate_openai_yaml_prefix() -> None:
+    script = str(SCRIPTS / "skill" / "generate_openai_yaml.py")
     with tempfile.TemporaryDirectory() as tmp:
-        manifest_dir = Path(tmp) / ".codex-plugin"
-        manifest_dir.mkdir()
-        (manifest_dir / "plugin.json").write_text(
-            json.dumps({"name": "fixture-pack"}), encoding="utf-8"
+        skill = write_skill(
+            Path(tmp),
+            "catalog-pressure-audit",
+            "---\nname: catalog-pressure-audit\ndescription: Audit catalog pressure.\n---\n\n# Audit\n",
         )
-        root = Path(tmp) / "skills"
-        long_description = "Trigger-first    metadata " + ("x" * 1_100)
+        result = run([script, str(skill)])
+        output_path = skill / "agents" / "openai.yaml"
+        output = output_path.read_text(encoding="utf-8") if output_path.exists() else ""
+        check(
+            "generate_openai_yaml: default short description leads with subject",
+            result.returncode == 0
+            and 'short_description: "Catalog Pressure Audit:' in output
+            and "Help with" not in output,
+            result.stdout + result.stderr + output,
+        )
+
+
+def test_description_prefix_audit() -> None:
+    script = str(SCRIPTS / "skill" / "audit_description_prefixes.py")
+
+    with tempfile.TemporaryDirectory() as tmp:
+        root = Path(tmp) / "catalog"
         first = write_skill(
+            root / "nested",
+            "alpha",
+            "---\n"
+            "name: alpha\n"
+            "description: Distinctive catalog routing signal alpha one.\n"
+            "---\n",
+        )
+        second = write_skill(
             root,
-            "alpha-skill",
-            "---\nname: alpha-skill\ndescription: >-\n  "
-            + long_description
-            + "\n---\n\n# Alpha\n",
+            "beta",
+            "---\n"
+            "name: beta\n"
+            "description: DISTINCTIVE   CATALOG routing signal alpha two.\n"
+            "---\n",
         )
         write_skill(
             root,
-            "unicode-skill",
-            "---\nname: unicode-skill\ndescription: "
-            + ("é" * 300)
-            + "\n---\n\n# Unicode\n",
-        )
-        explicit = write_skill(
-            root,
-            "manual-skill",
-            "---\nname: manual-skill\ndescription: Manual-only fixture.\n---\n",
-        )
-        (explicit / "agents").mkdir()
-        (explicit / "agents" / "openai.yaml").write_text(
-            "interface:\n  display_name: Manual Skill\n"
-            "policy:\n  allow_implicit_invocation: false\n",
-            encoding="utf-8",
-        )
-        nested_fixture = first / "references" / "example" / "SKILL.md"
-        nested_fixture.parent.mkdir(parents=True)
-        nested_fixture.write_text(
-            "---\nname: nested-resource\ndescription: Not an enabled skill.\n---\n",
-            encoding="utf-8",
+            "long-description",
+            "---\n"
+            "name: long-description\n"
+            "description: Specific catalog length signal "
+            + ("x" * 241)
+            + "\n---\n",
         )
 
-        full = run([script, str(root), "--context-window", "1000000", "--json"])
-        check("codex_catalog_audit: full inventory runs", full.returncode == 0, full.stderr)
-        if full.returncode != 0:
-            return
-        payload = json.loads(full.stdout)
-        summary = payload["summary"]
-        rows = {row["name"]: row for row in payload["skills"]}
+        advisory = run([script, str(root), "--json"])
+        payload = json.loads(advisory.stdout)
+        warning_codes = {finding["code"] for finding in payload["warnings"]}
         check(
-            "codex_catalog_audit: explicit-only skill is excluded from implicit budget",
-            summary["discovered_skills"] == 4
-            and summary["implicit_catalog_skills"] == 3
-            and summary["explicit_only_skills_excluded"] == 1
-            and rows["fixture-pack:manual-skill"]["explicit_only"]
-            and rows["fixture-pack:manual-skill"]["explicit_resolution_eligible"],
-            full.stdout,
+            "description_prefix_audit: recursive defaults and advisory findings",
+            advisory.returncode == 0
+            and payload["valid"] is True
+            and payload["input"]["prefix_width"] == 40
+            and payload["input"]["max_description_chars"] == 240
+            and payload["summary"]["parsed_skills"] == 3
+            and warning_codes == {"prefix_collision", "description_too_long"}
+            and not payload["errors"],
+            advisory.stdout + advisory.stderr,
         )
         check(
-            "codex_catalog_audit: recursive discovery includes nested SKILL.md",
-            "fixture-pack:nested-resource" in rows,
-            full.stdout,
-        )
-        check(
-            "codex_catalog_audit: description pre-cap mirrors Codex",
-            rows["fixture-pack:alpha-skill"]["catalog_description_chars"] == 1024,
-            str(rows["fixture-pack:alpha-skill"]),
-        )
-        check(
-            "codex_catalog_audit: loader whitespace and plugin namespace are modeled",
-            rows["fixture-pack:alpha-skill"]["namespace"] == "fixture-pack"
-            and rows["fixture-pack:alpha-skill"]["base_name"] == "alpha-skill"
-            and rows["fixture-pack:alpha-skill"]["raw_description_chars"]
-            > rows["fixture-pack:alpha-skill"]["source_description_chars"],
-            str(rows["fixture-pack:alpha-skill"]),
+            "description_prefix_audit: normalized prefix collision is exact",
+            payload["summary"]["prefix_collisions"] == 1
+            and payload["collisions"][0]["normalized_prefix"]
+            == "distinctive catalog routing signal alpha"
+            and len(payload["collisions"][0]["paths"]) == 2,
+            advisory.stdout,
         )
 
-        discovery_root = Path(tmp) / "discovery"
-        write_skill(
-            discovery_root / "d0" / "d1" / "d2" / "d3" / "d4",
-            "d5",
-            "---\nname: within-depth\ndescription: Visible fixture.\n---\n",
-        )
-        write_skill(
-            discovery_root / "d0" / "d1" / "d2" / "d3" / "d4" / "d5",
-            "d6",
-            "---\nname: too-deep\ndescription: Hidden by depth.\n---\n",
-        )
-        write_skill(
-            discovery_root / ".hidden",
-            "hidden-skill",
-            "---\nname: hidden-skill\ndescription: Hidden fixture.\n---\n",
-        )
-        discovery = run(
-            [script, str(discovery_root), "--context-window", "1000000", "--json"]
-        )
-        discovery_payload = json.loads(discovery.stdout)
-        discovered_names = {row["base_name"] for row in discovery_payload["skills"]}
-        check(
-            "codex_catalog_audit: discovery depth and hidden-directory bounds match Codex",
-            discovery.returncode == 0
-            and "within-depth" in discovered_names
-            and "too-deep" not in discovered_names
-            and "hidden-skill" not in discovered_names,
-            discovery.stdout + discovery.stderr,
-        )
-
-        alternate_plugin = Path(tmp) / "alternate-plugin"
-        (alternate_plugin / ".claude-plugin").mkdir(parents=True)
-        (alternate_plugin / ".claude-plugin" / "plugin.json").write_text(
-            json.dumps({"name": ""}), encoding="utf-8"
-        )
-        write_skill(
-            alternate_plugin / "skills",
-            "alt-skill",
-            "---\nname: alt-skill\ndescription: Alternate manifest fixture.\n---\n",
-        )
-        alternate = run(
-            [script, str(alternate_plugin), "--context-window", "1000000", "--json"]
-        )
-        alternate_payload = json.loads(alternate.stdout)
-        check(
-            "codex_catalog_audit: alternate manifest and empty-name namespace fallback",
-            alternate.returncode == 0
-            and alternate_payload["skills"][0]["name"]
-            == "alternate-plugin:alt-skill",
-            alternate.stdout + alternate.stderr,
-        )
-
-        duplicates = Path(tmp) / "duplicates"
-        write_skill(
-            duplicates,
-            "first",
-            "---\nname: duplicate-name\ndescription: First duplicate.\n---\n",
-        )
-        write_skill(
-            duplicates,
-            "second",
-            "---\nname: duplicate-name\ndescription: Second duplicate.\n---\n",
-        )
-        duplicate_result = run(
-            [script, str(duplicates), "--context-window", "1000000", "--json"]
-        )
-        duplicate_payload = json.loads(duplicate_result.stdout)
-        check(
-            "codex_catalog_audit: duplicate qualified names are explicit-resolution ambiguous",
-            duplicate_result.returncode == 0
-            and duplicate_payload["summary"]["ambiguous_explicit_skill_names"]
-            == ["fixture-pack:duplicate-name"]
-            and all(
-                not row["explicit_resolution_eligible"]
-                for row in duplicate_payload["skills"]
-            ),
-            duplicate_result.stdout + duplicate_result.stderr,
-        )
-        ascii_root = Path(tmp) / "ascii1" / "demo"
-        unicode_root = Path(tmp) / "utf8xx" / "demo"
-        write_skill(
-            ascii_root.parent,
-            ascii_root.name,
-            "---\nname: byte-cost\ndescription: " + ("e" * 300) + "\n---\n",
-        )
-        write_skill(
-            unicode_root.parent,
-            unicode_root.name,
-            "---\nname: byte-cost\ndescription: " + ("é" * 300) + "\n---\n",
-        )
-        ascii_result = run(
-            [script, str(ascii_root), "--context-window", "1000000", "--json"]
-        )
-        unicode_result = run(
-            [script, str(unicode_root), "--context-window", "1000000", "--json"]
-        )
-        ascii_payload = json.loads(ascii_result.stdout)
-        unicode_payload = json.loads(unicode_result.stdout)
-        check(
-            "codex_catalog_audit: UTF-8 descriptions use byte-aware token cost",
-            ascii_result.returncode == 0
-            and unicode_result.returncode == 0
-            and unicode_payload["summary"]["full_metadata_cost"]
-            > ascii_payload["summary"]["full_metadata_cost"],
-            ascii_result.stdout + unicode_result.stdout,
-        )
-
-        full_cost = summary["full_metadata_cost"]
-        minimum_cost = summary["minimum_name_path_cost"]
-        soft_budget = minimum_cost + max((full_cost - minimum_cost) // 2, 1)
-        soft = run(
-            [script, str(root), "--context-window", str(soft_budget * 50), "--json"]
-        )
-        soft_payload = json.loads(soft.stdout)
-        check(
-            "codex_catalog_audit: soft pressure keeps names and shortens descriptions",
-            soft.returncode == 0
-            and soft_payload["summary"]["state"] == "descriptions_shortened"
-            and soft_payload["summary"]["all_implicit_skill_names_visible"]
-            and soft_payload["summary"]["visible_metadata_cost"] <= soft_budget,
-            soft.stdout + soft.stderr,
-        )
-
-        hard_budget = max(minimum_cost - 1, 1)
-        hard = run(
-            [script, str(root), "--context-window", str(hard_budget * 50), "--json"]
-        )
-        hard_payload = json.loads(hard.stdout)
-        check(
-            "codex_catalog_audit: hard pressure reports whole-entry omission",
-            hard.returncode == 0
-            and hard_payload["summary"]["state"] == "skills_omitted"
-            and hard_payload["summary"]["omitted_skills"] > 0
-            and hard_payload["summary"]["visible_metadata_cost"] <= hard_budget
-            and all(
-                row["explicit_resolution_eligible"]
-                for row in hard_payload["skills"]
-                if not row["included_in_implicit_catalog"]
-            ),
-            hard.stdout + hard.stderr,
-        )
-
-        capped = run(
+        mixed_roots = run(
             [
                 script,
-                str(root),
-                "--context-window",
-                "1000000",
-                "--metadata-token-cap",
-                str(soft_budget),
+                str(first / "SKILL.md"),
+                str(second),
+                "--prefix-width",
+                "20",
+                "--max-description-chars",
+                "500",
                 "--json",
             ]
         )
-        capped_payload = json.loads(capped.stdout)
+        mixed_payload = json.loads(mixed_roots.stdout)
         check(
-            "codex_catalog_audit: tighter host token cap overrides two percent",
-            capped.returncode == 0
-            and capped_payload["input"]["budget_limit"] == soft_budget
-            and capped_payload["input"]["two_percent_limit"] == 20000
-            and capped_payload["summary"]["state"] == "descriptions_shortened",
-            capped.stdout + capped.stderr,
+            "description_prefix_audit: accepts multiple file and directory roots",
+            mixed_roots.returncode == 0
+            and mixed_payload["input"]["prefix_width"] == 20
+            and mixed_payload["input"]["max_description_chars"] == 500
+            and mixed_payload["summary"]["parsed_skills"] == 2
+            and mixed_payload["summary"]["prefix_collisions"] == 1,
+            mixed_roots.stdout + mixed_roots.stderr,
         )
 
-        tiny = run([script, str(first), "--context-window", "49", "--json"])
-        tiny_payload = json.loads(tiny.stdout)
+        strict = run([script, str(root), "--strict", "--json"])
+        strict_payload = json.loads(strict.stdout)
+        strict_codes = {finding["code"] for finding in strict_payload["errors"]}
         check(
-            "codex_catalog_audit: two percent formula floors then clamps to one",
-            tiny.returncode == 0
-            and tiny_payload["input"]["two_percent_limit"] == 1
-            and tiny_payload["input"]["budget_limit"] == 1,
-            tiny.stdout + tiny.stderr,
+            "description_prefix_audit: strict promotes collision and length warnings",
+            strict.returncode != 0
+            and strict_payload["valid"] is False
+            and strict_codes == {"prefix_collision", "description_too_long"}
+            and not strict_payload["warnings"],
+            strict.stdout + strict.stderr,
         )
 
-        fallback = run([script, str(first), "--json"])
-        fallback_payload = json.loads(fallback.stdout)
-        check(
-            "codex_catalog_audit: unknown window uses 8000-character fallback",
-            fallback.returncode == 0
-            and fallback_payload["input"]["budget_mode"] == "characters"
-            and fallback_payload["input"]["budget_limit"] == 8000,
-            fallback.stdout + fallback.stderr,
+        generic_root = Path(tmp) / "generic"
+        lead_ins = (
+            "Use when",
+            "Use for",
+            "Use this",
+            "Use whenever",
+            "Help with",
+            "Agent skills for",
+            "This skill",
         )
+        for index, lead_in in enumerate(lead_ins):
+            write_skill(
+                generic_root,
+                f"generic-{index}",
+                "---\n"
+                f"name: generic-{index}\n"
+                f"description: {lead_in} catalog prefix fixture {index}.\n"
+                "---\n",
+            )
+
+        generic = run([script, str(generic_root), "--json"])
+        generic_payload = json.loads(generic.stdout)
+        detected = {
+            finding["lead_in"]
+            for finding in generic_payload["errors"]
+            if finding["code"] == "generic_lead_in"
+        }
+        check(
+            "description_prefix_audit: required generic lead-ins are errors",
+            generic.returncode != 0
+            and generic_payload["summary"]["generic_lead_ins"] == len(lead_ins)
+            and detected == set(lead_ins)
+            and not generic_payload["warnings"],
+            generic.stdout + generic.stderr,
+        )
+
+        text_report = run([script, str(generic_root)])
+        check(
+            "description_prefix_audit: text mode labels errors",
+            text_report.returncode != 0
+            and "ERROR [generic_lead_in]" in text_report.stdout
+            and "SUMMARY" in text_report.stdout,
+            text_report.stdout + text_report.stderr,
+        )
+
+        malformed_root = Path(tmp) / "malformed"
+        write_skill(
+            malformed_root,
+            "bad-yaml",
+            "---\nname: bad-yaml\ndescription: [unterminated\n---\n",
+        )
+        malformed = run([script, str(malformed_root), "--json"])
+        malformed_payload = json.loads(malformed.stdout)
+        check(
+            "description_prefix_audit: YAML parse errors fail with JSON errors",
+            malformed.returncode != 0
+            and malformed_payload["valid"] is False
+            and malformed_payload["summary"]["errors"] == 1
+            and malformed_payload["errors"][0]["code"] == "parse_error"
+            and not malformed_payload["warnings"],
+            malformed.stdout + malformed.stderr,
+        )
+
+
+def test_skill_catalog_runtime_comparison_reference() -> None:
+    reference = PLUGIN_ROOT / "references" / "skill-catalog-runtime-comparison.md"
+    text = reference.read_text(encoding="utf-8")
+    required = (
+        "OpenAI Codex",
+        "OpenClaw",
+        "Hermes Agent",
+        "OpenCode",
+        "Qwen Code",
+        "VineeTagarwaL-code/claude-code",
+    )
+    check(
+        "skill_catalog_runtime_comparison: pinned runtime families are present",
+        all(name in text for name in required),
+        str(reference),
+    )
 
 
 def test_install_scope_gate() -> None:
@@ -2063,7 +1993,9 @@ def main() -> int:
     for test in (
         test_validate_plugin,
         test_quick_validate,
-        test_codex_skill_catalog_audit,
+        test_generate_openai_yaml_prefix,
+        test_description_prefix_audit,
+        test_skill_catalog_runtime_comparison_reference,
         test_install_scope_gate,
         test_external_discovery_gate,
         test_evidence_coverage_gate,

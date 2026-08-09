@@ -1,6 +1,6 @@
 ---
 name: pixijs-scene-sprite
-description: "Use for PixiJS v8 image sprites: Sprite, AnimatedSprite, NineSliceSprite, TilingSprite, texture/anchor/tint, frame animation, scalable UI panels, repeating backgrounds."
+description: "PixiJS v8 sprites render Sprite, AnimatedSprite, NineSliceSprite, and TilingSprite with texture/anchor/tint for animation, scalable panels, and repeating backgrounds."
 license: MIT
 ---
 

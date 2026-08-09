@@ -1,6 +1,6 @@
 ---
 name: skill-factory
-description: Use when creating, refactoring, splitting, compressing, validating, or packaging agent skills. Use for SKILL.md trigger design, agents/openai.yaml metadata, skill resources, progressive disclosure, token-efficient instructions, quick validation, and plugin-contained skills.
+description: Create or refactor portable agent skills across SKILL.md bodies, progressive disclosure, scripts/references/assets, packaging, and validation. For name/description-only routing work, use skill-trigger-metadata first.
 ---
 
 # Skill Factory
@@ -42,14 +42,14 @@ Frontmatter must include only:
 ```yaml
 ---
 name: skill-name
-description: What the skill does and concrete trigger situations.
+description: Domain or artifact plus the owned action. Secondary triggers and boundaries.
 ---
 ```
 
 Body guidelines:
 
 - Put routing and required workflow in `SKILL.md`.
-- Make frontmatter descriptions agent-triggerable from task context, artifacts, source evidence, file types, failures, or decisions. Avoid descriptions that only say "when the user asks for X" unless explicit user consent is the safety boundary.
+- Lead frontmatter descriptions with a concrete domain, artifact, failure, or decision plus the owned action. Put secondary triggers and boundaries later; avoid generic lead-ins and descriptions that only say "when the user asks for X" unless explicit user consent is the safety boundary.
 - Keep workflow steps out of `description` when they could let the agent act from metadata and skip `SKILL.md`; use `skill-trigger-metadata` for focused name/description audits.
 - For adjacent skills, require a compact selection card: use-when, inputs/signals, do-not-use, failure symptoms, and adjacent skills. Preserve this in frontmatter without turning the description into a procedure.
 - Move detailed variants, long examples, specs, and edge-case playbooks into directly linked `references/`.
@@ -68,17 +68,13 @@ python3 "$PLUGIN_ROOT/scripts/context/context_density_audit.py" <skill-dir> --js
 
 Use the audit to remove duplicate hot-path prose, stale history, brittle request-phrase trigger design, and brittle parsing of generated model text. Do not shrink away trigger precision, safety rules, or required commands.
 
-When Codex is a target host, audit aggregate catalog pressure after material
-metadata or skill-count changes:
-
-```bash
-python3 "$PLUGIN_ROOT/scripts/skill/codex_skill_catalog_audit.py" \
-  <enabled-skill-roots-or-plugin-roots> --context-window <tokens> --json
-```
-
-Do not substitute an isolated description-length check: visibility depends on
-the full enabled implicit inventory. Use `skill-trigger-metadata` to repair
-prefix information scent when the result is `descriptions_shortened`.
+After material metadata or skill-count changes, read
+`$PLUGIN_ROOT/references/skill-catalog-runtime-comparison.md` and validate the
+target runtime's aggregate catalog behavior. Do not substitute an isolated
+description-length check. Route Codex-specific source modeling and exact
+live-prompt or rollout budget diagnosis to `codex-cli`, then use
+`skill-trigger-metadata` to repair prefix information scent when descriptions
+were shortened.
 
 For material skill refactors, run a structured quality-review pass before and
 after the change:
@@ -98,6 +94,7 @@ Run:
 
 ```bash
 python3 "$PLUGIN_ROOT/scripts/skill/quick_validate.py" <skill-dir>
+python3 "$PLUGIN_ROOT/scripts/skill/audit_description_prefixes.py" <skill-dir>
 ```
 
 When `agents/openai.yaml` is present or desired, regenerate it after final SKILL.md edits:

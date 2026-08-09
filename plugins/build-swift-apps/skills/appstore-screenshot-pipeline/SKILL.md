@@ -1,6 +1,6 @@
 ---
 name: appstore-screenshot-pipeline
-description: Orchestrate iOS screenshot automation with xcodebuild/simctl, AXe plans, Koubou framing, review artifacts, and `asc screenshots` upload.
+description: iOS App Store screenshot automation with xcodebuild/simctl capture, AXe plans, Koubou framing, review artifacts, and `asc` upload.
 ---
 
 # App Store Screenshot Pipeline

@@ -1,6 +1,6 @@
 ---
 name: architecture-fitness-functions
-description: "Use when architecture choices need executable guardrails: dependency rules, cycle checks, boundary tests, ownership review gates, ADR compliance, runtime/resilience checks, and CI fitness functions."
+description: "Architecture fitness functions turn intended boundaries into dependency rules, cycle checks, ownership gates, ADR conformance, runtime/resilience checks, and staged CI enforcement."
 ---
 
 # Architecture Fitness Functions

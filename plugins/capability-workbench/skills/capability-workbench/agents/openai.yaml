@@ -1,4 +1,4 @@
 interface:
   display_name: "Capability Workbench"
-  short_description: "Route agent capabilities and LLM harness work."
+  short_description: "Route capability lifecycle and LLM harness work"
   default_prompt: "Use Capability Workbench to route skill/plugin lifecycle or LLM agent harness work, distinguish harness engineering from harness evaluation, default synthesis to broad external-first discovery, and install only when required."

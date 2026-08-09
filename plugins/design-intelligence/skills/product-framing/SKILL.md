@@ -1,6 +1,6 @@
 ---
 name: product-framing
-description: "Frame product and UX decisions before interface work: strategy, user needs, Jobs-to-be-Done, outcome mapping, opportunity-solution trees, HEART/GSM, problem statements, assumptions, discovery plans."
+description: "Product framing clarifies user needs, Jobs-to-be-Done, outcomes, strategy, assumptions, opportunity-solution trees, HEART/GSM metrics, and discovery before interface design."
 ---
 
 # Product Framing

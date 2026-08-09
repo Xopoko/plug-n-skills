@@ -1,6 +1,9 @@
 ---
 name: claude-code
-description: Route Claude Code CLI work across local CLI inspection, interactive and print-mode automation, plugin and MCP lifecycle, diagnostics, hooks/settings, background agents, worktrees, sessions, remote control, and ultrareview.
+description: >-
+  Claude Code CLI routes local inspection, interactive or print-mode
+  automation, plugin and MCP lifecycle, diagnostics, hooks/settings, background
+  agents, worktrees, sessions, remote control, and ultrareview.
 ---
 
 # Claude Code Router

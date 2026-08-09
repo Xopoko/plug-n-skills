@@ -1,6 +1,6 @@
 ---
 name: game-design-intelligence
-description: "Route source-backed game design work. Use for gameplay systems, core loops, progression, rewards, economies, balance, motivation, retention, onboarding, difficulty, multiplayer, live-service, content cadence, and player psychology. Do not use for engines, graphics, assets, programming, or implementation details."
+description: "Game design routing covers loops, gameplay systems, progression, economies, balance, motivation, retention, onboarding, difficulty, multiplayer, live service, and psychology. Excludes engines, graphics, assets, code, and implementation."
 ---
 
 # Game Design Intelligence

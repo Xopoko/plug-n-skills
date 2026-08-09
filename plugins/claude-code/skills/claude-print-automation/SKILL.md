@@ -1,6 +1,9 @@
 ---
 name: claude-print-automation
-description: Use when preparing, running, or debugging non-interactive Claude Code with `claude --print`, output-format text/json/stream-json, input-format text/stream-json, JSON schema validation, budget caps, fallback model, no session persistence, prompt suggestions, or trusted-directory CI-style runs.
+description: >-
+  Claude Code print-mode runs are prepared or debugged with `claude --print`,
+  text/JSON/stream-json I/O, JSON Schema, budgets, fallback models, no
+  persistence, prompt suggestions, and trusted-directory CI.
 ---
 
 # Claude Print Automation

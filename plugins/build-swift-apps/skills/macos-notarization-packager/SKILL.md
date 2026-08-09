@@ -1,6 +1,6 @@
 ---
 name: macos-notarization-packager
-description: Use when preparing or diagnosing macOS Developer ID distribution artifacts, including archives, exported app bundles, bundle structure, hardened runtime, notarization readiness, or distribution-only failures. Not for local signing-only diagnosis or direct `asc notarization` execution.
+description: "macOS distribution artifacts: inspect Developer ID archives, app bundles, hardened runtime, nested signing, and notarization readiness; exclude local signing-only diagnosis and direct `asc notarization` execution."
 ---
 
 # macOS Notarization Packager

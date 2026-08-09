@@ -1,6 +1,6 @@
 ---
 name: architecture-refactoring-strategy
-description: "Use when code changes need staged structural design: boundary extraction, modularization, dependency inversion, migrations, anti-corruption layers, tests, rollout gates, and rollback."
+description: "Architecture refactoring strategy stages boundary extraction, modularization, dependency inversion, migrations, anti-corruption layers, validation, and rollback instead of rewrites."
 ---
 
 # Architecture Refactoring Strategy

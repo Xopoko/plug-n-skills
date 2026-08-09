@@ -1,6 +1,6 @@
 ---
 name: tauri-debug-testing
-description: Debug, test, or stabilize Tauri 2 apps, including Rust compile/runtime errors, frontend API mocks, permissions failures, dev/build mismatches, WebDriver, CI checks, logs, DevTools, and platform-specific test gaps.
+description: Tauri 2 debugging and test stabilization for Rust compile/runtime errors, frontend API mocks, permission failures, dev/build mismatches, WebDriver, CI, logs, DevTools, and platform-specific coverage gaps.
 ---
 
 # Tauri Debug And Testing

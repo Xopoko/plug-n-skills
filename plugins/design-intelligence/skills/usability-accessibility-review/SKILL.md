@@ -1,6 +1,6 @@
 ---
 name: usability-accessibility-review
-description: "Review screens, flows, specs, or product ideas for usability heuristics, cognitive walkthrough failures, WCAG/APG/COGA accessibility risks, inclusive design, ethical UX, and dark patterns."
+description: "Usability and accessibility review audits screens, flows, or specs for heuristics, cognitive-walkthrough risks, WCAG/APG/COGA concerns, inclusive design, ethical UX, and dark patterns."
 ---
 
 # Usability And Accessibility Review

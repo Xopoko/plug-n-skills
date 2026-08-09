@@ -1,6 +1,6 @@
 ---
 name: tauri-distribution-mobile
-description: Package, sign, notarize, update, release, or validate Tauri 2 desktop/mobile builds, including bundle targets, updater signatures, macOS/Windows/Linux distribution, Android/iOS setup, CI release checks, and store-readiness planning.
+description: Tauri 2 desktop/mobile distribution and release validation for bundle targets, signing, notarization, updater signatures, Windows/macOS/Linux packaging, Android/iOS setup, CI gates, and store readiness.
 ---
 
 # Tauri Distribution And Mobile

@@ -1,8 +1,9 @@
 ---
 name: git-worktree-recovery
 description: >-
-  Use when an expected Git worktree path or convenience symlink is missing,
-  stale, or broken and a registered replacement may already hold the branch.
+  Git worktree recovery applies when an expected Git worktree path or
+  convenience symlink is missing, stale, or broken and a registered replacement
+  may already hold the branch.
   Classifies branch-ref, reflog-only, object-only, or missing retention and
   guards POSIX-only exact symlink repair when directory-relative primitives are
   available. Do not use for Git administrative worktree repair after moving a

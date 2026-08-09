@@ -1,6 +1,6 @@
 ---
 name: motivation-retention
-description: "Analyze player motivation, psychology, engagement, retention, ethical commercial design, and long-term value. Use for motivation models, retention risks, player segments, habit loops, emotional engagement, commercial viability, and dark-pattern review. Do not use for manipulative retention optimization."
+description: "Player motivation and retention analysis covers psychology, engagement, segments, long-term value, ethical commercial fit, habit loops, and dark-pattern risk. Do not use for manipulative retention optimization."
 ---
 
 # Motivation And Retention

@@ -1,12 +1,10 @@
 ---
 name: scheduled-automation-runtime
 description: >-
-  Use when a local launchd, systemd timer, cron, or Windows Task Scheduler job
-  works manually but fails or differs under the scheduler, or when
-  registration, runtime context, last-result evidence, missed runs, or a fresh
-  scheduler-originated result needs proof. Not for vendor CLI command
-  construction, architecture inventory, cloud schedulers, or job business
-  logic.
+  Local scheduler jobs need proof when launchd, systemd, cron, or Windows Task
+  Scheduler differ from manual runs or lack runtime proof. Not for vendor CLI
+  command construction, architecture inventory, cloud schedulers, or job
+  business logic.
 ---
 
 # Scheduled Automation Runtime

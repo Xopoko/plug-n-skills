@@ -1,6 +1,6 @@
 ---
 name: pixijs-scene-mesh
-description: "Use for PixiJS v8 Mesh and custom geometry: MeshGeometry positions/uvs/indices/topology, MeshSimple, MeshPlane, MeshRope, PerspectiveMesh, vertex animation."
+description: "PixiJS v8 Mesh geometry builds positions/UVs/indices/topology with MeshGeometry, MeshSimple, MeshPlane, MeshRope, PerspectiveMesh, and vertex animation."
 license: MIT
 ---
 

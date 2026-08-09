@@ -1,6 +1,6 @@
 ---
 name: kmp-data-layer
-description: Design and review KMP data layers, repositories, source-of-truth, legacy storage migration, durable migration decisions, resurrection prevention, DTO/domain mapping, sync, offline-first behavior, persistence choices, error handling, shared/coalesced work, cancellation and admission races, causal receipts, threading, and API exposure.
+description: "KMP data-layer design/review for repositories, source-of-truth, migrations, DTO/domain mapping, offline sync, storage/errors, shared/coalesced work, cancellation and admission races, causal receipts, threading, and API exposure."
 ---
 
 # KMP Data Layer

@@ -1,6 +1,6 @@
 ---
 name: design-intelligence
-description: "Route UX/product judgment to focused skills for framing, IA, interaction, usability, accessibility, visual communication, design-system governance, and heuristics. Not for Figma, CSS, automation, or assets."
+description: "Product and UX design routing covers framing, information architecture, interaction, usability, accessibility, visual communication, and design-system governance; excludes Figma, CSS, automation, and assets."
 ---
 
 # Design Intelligence

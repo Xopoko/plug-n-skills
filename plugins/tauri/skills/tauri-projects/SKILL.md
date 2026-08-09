@@ -1,6 +1,6 @@
 ---
 name: tauri-projects
-description: Start, inspect, scaffold, migrate, or orient Tauri 2 projects. Use when a task mentions creating a Tauri app, adding Tauri to an existing frontend, src-tauri project structure, package-manager selection, framework selection, Tauri 1 to 2 migration, or "what shape is this Tauri repo in?"
+description: Tauri 2 project scaffolding, inspection, and migration for new apps, existing frontends, src-tauri layout, package-manager or framework selection, repository orientation, and Tauri 1-to-2 upgrades.
 ---
 
 # Tauri Projects

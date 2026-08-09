@@ -1,6 +1,6 @@
 ---
 name: pixijs-scene-dom-container
-description: "Use for PixiJS v8 DOMContainer overlays: HTML elements attached to scene nodes, pixi.js/dom import, element/anchor options, CSS transforms, visibility and resize sync."
+description: "PixiJS v8 DOMContainer overlays attach HTML elements to scene nodes via pixi.js/dom and synchronize element/anchor options, CSS transforms, visibility, and resize."
 license: MIT
 ---
 

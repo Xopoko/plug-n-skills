@@ -1,6 +1,6 @@
 ---
 name: kmp-ecosystem-selection
-description: Select Kotlin Multiplatform ecosystem libraries, services, and tools for persistence, networking, DI, navigation, logging, observability, testing, code quality, resources, images, docs, payments, and reference templates without forcing a stack.
+description: Kotlin Multiplatform ecosystem selection for libraries/tools spanning persistence, networking, DI, navigation, logging, observability, testing, code quality, resources, images, docs, payments, and templates without imposing one stack.
 ---
 
 # KMP Ecosystem Selection

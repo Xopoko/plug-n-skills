@@ -1,6 +1,6 @@
 ---
 name: kmp-testing-quality
-description: Use when diagnosing KMP test failures, especially DI fixture or container missing bindings, or designing and reviewing commonTest, kotlin.test, platform or Compose UI and screenshot tests, test doubles, refactor safety, review gates, and regressions.
+description: "KMP testing covers diagnosing KMP test failures, especially DI fixture or container missing bindings, plus commonTest, kotlin.test, platform/Compose UI and screenshot tests, test doubles, refactor safety, review gates, and regressions."
 ---
 
 # KMP Testing And Quality

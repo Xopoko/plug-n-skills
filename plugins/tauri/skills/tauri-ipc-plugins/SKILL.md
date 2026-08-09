@@ -1,6 +1,6 @@
 ---
 name: tauri-ipc-plugins
-description: Implement or review Tauri 2 Rust commands, frontend invoke wrappers, events, Channels, custom errors, state, official plugins, or custom Tauri plugins across Rust, JavaScript, permissions, and mobile surfaces.
+description: Tauri 2 IPC and plugin implementation review for Rust commands, invoke wrappers, events, Channels, custom errors, state, official or custom plugins, permissions, JavaScript, and mobile surfaces.
 ---
 
 # Tauri IPC And Plugins

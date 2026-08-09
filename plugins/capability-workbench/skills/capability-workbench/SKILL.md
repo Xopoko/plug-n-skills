@@ -1,6 +1,6 @@
 ---
 name: capability-workbench
-description: Route agent skill/plugin lifecycle and LLM agent harness work. Use for capability discovery, synthesis, creation, installation, packaging, audit, portfolio design, or for designing and evaluating the runtime around an LLM-powered agent.
+description: Route agent capability lifecycle work across discovery, synthesis, skill/plugin creation, installation, packaging, audit, portfolio design, and LLM harness engineering or evaluation.
 ---
 
 # Capability Workbench
@@ -20,7 +20,7 @@ Choose one primary mode before making changes:
 | Build well-vetted skill or plugin from references | `capability-synthesizer` | Reports plus final skill/plugin |
 | Redesign skill/plugin architecture: split, merge, delete, move, router, cross-plugin overlap, reference extraction, script extraction, shared capability extraction, or boundary changes | `capability-portfolio-architect` | Portfolio decision ledger plus structural refactor plan |
 | Create or refactor one skill | `skill-factory` | Skill folder and validation |
-| Design, audit, or debug skill names/descriptions and trigger metadata | `skill-trigger-metadata` | Trigger-ready frontmatter, prompt boundary examples, and Codex catalog-budget audit |
+| Design, audit, or debug skill names/descriptions, trigger metadata, or cross-runtime catalog survivability | `skill-trigger-metadata` | Trigger-ready frontmatter, prompt boundary examples, and target-runtime validation route |
 | Find, vet, install, or update skills | `skill-installer-vetter` | Provenance, vetting, install state |
 | Create, update, install, or publish agent marketplace plugin | `plugin-factory` | Plugin folder, marketplace entry when needed, validation, optional install/cache proof and separate discovery state |
 | Review safety, coverage, validation, token cost, or prompt contracts | `capability-auditor` | Structured audit and fixes or recommendations |
@@ -39,6 +39,11 @@ If the user asks to create a skill that teaches either workflow, route through
 Code commands in their vendor plugins, generic application structure in
 Architecture Intelligence, prompt/context deep work in Context Density, and
 literature synthesis in Scientific Research.
+
+For portable skill discovery and catalog comparisons, use
+`$PLUGIN_ROOT/references/skill-catalog-runtime-comparison.md`. Route exact
+current-host catalog diagnosis to the vendor plugin; for Codex budget arithmetic,
+prompt/rollout evidence, and omission analysis, use `codex-cli`.
 
 If context-density work or an audit shows overlap, cross-plugin responsibility duplication, missing boundaries, overloaded skills, stale skills, or repeated deterministic procedures hidden in prose, route through `capability-portfolio-architect` before editing. Token reduction is a signal, not a substitute for a structural decision ledger.
 

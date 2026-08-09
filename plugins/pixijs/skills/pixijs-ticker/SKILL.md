@@ -1,6 +1,6 @@
 ---
 name: pixijs-ticker
-description: "Use for PixiJS v8 Ticker and render loop control: add/addOnce/remove, deltaTime/deltaMS/elapsedMS, UPDATE_PRIORITY, maxFPS/minFPS, speed, shared/private ticker."
+description: "PixiJS v8 Ticker controls render loops and schedules add/addOnce/remove callbacks with deltaTime/deltaMS/elapsedMS, UPDATE_PRIORITY, maxFPS/minFPS, speed, and shared/private tickers."
 license: MIT
 ---
 

@@ -1,6 +1,6 @@
 ---
 name: appstore-crash-insights
-description: Triage TestFlight crashes, beta feedback, hangs, disk writes, launches, and performance diagnostics with `asc` crash/feedback/diagnostics commands.
+description: "TestFlight crash reports: triage crashes, beta feedback, hangs, disk writes, launches, and performance diagnostics with `asc`."
 ---
 
 # App Store Crash Insights

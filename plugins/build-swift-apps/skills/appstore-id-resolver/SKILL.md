@@ -1,6 +1,6 @@
 ---
 name: appstore-id-resolver
-description: Resolve App Store Connect IDs (apps, builds, versions, groups, testers) from human-friendly names using asc. Use when commands require IDs.
+description: "App Store Connect IDs: resolve apps, builds, versions, groups, testers, and review submissions from names with deterministic `asc` lookups."
 ---
 
 # App Store ID Resolver

@@ -1,12 +1,10 @@
 ---
 name: stacked-change-delivery
 description: >-
-  Use when pull requests, merge requests, patch sets, or branch changes form a
-  dependency stack and a child must remain based on an exact parent head.
-  Covers stacked diffs, restacking after ancestor updates, per-node CI proof,
-  safe bottom-up or forge-native atomic-prefix landing, isolated worktrees,
-  and cross-agent handoffs. Do not use for one independent change, ordinary
-  review-thread response, or automatic merge or force-push authorization.
+  Stacked PR/MR delivery binds children to exact parent heads, restacks after
+  changes, records CI proof, lands bottom-up/atomically, and hands off safely.
+  Excludes independent changes, review replies, and automatic merge/force-push
+  authority.
 ---
 
 # Stacked Change Delivery

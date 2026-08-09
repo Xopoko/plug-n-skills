@@ -1,6 +1,6 @@
 ---
 name: pixijs-scene-particle-container
-description: "Use for PixiJS v8 ParticleContainer and Particle: thousands of lightweight sprites, addParticle/removeParticle, particleChildren, dynamicProperties, boundsArea, roundPixels."
+description: "PixiJS v8 ParticleContainer adds/removes thousands of Particle sprites through addParticle/removeParticle, particleChildren, dynamicProperties, boundsArea, and roundPixels."
 license: MIT
 ---
 

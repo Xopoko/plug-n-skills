@@ -1,7 +1,7 @@
 {
   "name": "claude-code",
-  "version": "0.1.2",
-  "description": "Claude Code CLI operations, print-mode automation, diagnostics, plugin and MCP lifecycle, hooks, settings, agents, sessions, and worktrees.",
+  "version": "0.1.3",
+  "description": "Claude Code CLI manages print automation, diagnostics, plugins, MCP, hooks, settings, agents, sessions, remote control, and worktrees.",
   "author": {
     "name": "Xopoko"
   },
@@ -21,8 +21,8 @@
   "skills": "./skills/",
   "interface": {
     "displayName": "Claude Code",
-    "shortDescription": "Operate, automate, debug, and inspect Claude Code safely.",
-    "longDescription": "A Claude Code operations pack for local CLI surface inspection, print-mode automation, plugin marketplace and MCP lifecycle work, safe-mode and bare-mode diagnostics, hooks and settings governance, background agents, sessions, worktrees, remote control, and cloud ultrareview boundaries.",
+    "shortDescription": "Claude Code CLI runs, automates, and diagnoses safely.",
+    "longDescription": "Claude Code CLI operations manage local inspection, print-mode automation, plugins, MCP servers, diagnostics, hooks, settings, background agents, sessions, worktrees, remote control, and cloud ultrareview boundaries.",
     "developerName": "Xopoko",
     "category": "Coding",
     "capabilities": [

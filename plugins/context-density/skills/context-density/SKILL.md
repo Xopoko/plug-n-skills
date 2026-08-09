@@ -1,16 +1,10 @@
 ---
 name: context-density
 description: >-
-  Use when designing, auditing, refactoring, measuring, or validating
-  token-efficient context and prompt/output contracts. Trigger for AGENTS.md,
-  prompts, skill packages, marketplace plugins, MCP/tool schemas,
-  long-context placement, prompt/context compression, retrieval provenance,
-  runtime context diagnostics, duplicated or overlapping prose, competing
-  skill descriptions, companion-artifact drift, current-state commitments,
-  irrelevant-context pruning, prompt reformatting,
-  agent/subagent context handoffs, brittle trigger descriptions, strict
-  JSON/schema/tool-call output, validators, retry/repair loops, or
-  behavior-preserving token reduction.
+  Agent context audits measure token cost, provenance, compression, typed-state
+  drift, trigger overlap, and prompt/output contracts across
+  AGENTS.md, prompts, skills, plugins, MCP/tool schemas, current-state
+  artifacts, and agent handoffs.
 ---
 
 # Context Density

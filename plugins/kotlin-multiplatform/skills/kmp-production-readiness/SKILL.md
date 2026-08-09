@@ -1,6 +1,6 @@
 ---
 name: kmp-production-readiness
-description: Audit Kotlin Multiplatform production readiness with explicit scorecards, release blockers, risk ownership, validation commands, and deferred checks across architecture, build, testing, interop, security, performance, and publishing.
+description: Kotlin Multiplatform production-readiness audits with scorecards, release blockers, risk ownership, and deferred checks across architecture, build, testing, interop, security, performance, and publishing.
 ---
 
 # KMP Production Readiness

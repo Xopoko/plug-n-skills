@@ -1,6 +1,6 @@
 ---
 name: pixijs-scene-text
-description: "Use for PixiJS v8 text rendering: Text, TextStyle, BitmapText, HTMLText, SplitText, SplitBitmapText, dynamic labels, glyph atlas performance, styled markup."
+description: "PixiJS v8 text builds Text/TextStyle, BitmapText, HTMLText, SplitText, and SplitBitmapText for dynamic labels, glyph-atlas speed, and styled markup."
 license: MIT
 ---
 

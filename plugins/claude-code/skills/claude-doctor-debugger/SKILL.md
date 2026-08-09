@@ -1,6 +1,9 @@
 ---
 name: claude-doctor-debugger
-description: Use when diagnosing Claude Code install/update/auth/config/runtime health, broken customizations, safe mode, bare mode, debug logs, auto-mode classifier, settings validation, keychain or API-key auth boundaries, IDE/Chrome integration, doctor warnings, or update/install/setup-token issues.
+description: >-
+  Claude Code diagnostics isolate install, update, auth, configuration health,
+  broken customizations, safe/bare modes, debug logs, auto-mode, keychain/API-key
+  boundaries, IDE/Chrome integration, doctor warnings, and setup-token failures.
 ---
 
 # Claude Doctor And Debugger

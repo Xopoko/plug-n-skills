@@ -1,6 +1,6 @@
 ---
 name: pixijs-assets
-description: "Use for PixiJS v8 Assets: Assets.init/load/add/unload, bundles, manifests, cache, onProgress, background loading, spritesheets, video, SVG, fonts, compressed textures, parser selection."
+description: "PixiJS v8 Assets manages Assets.init/load/add/unload, bundles, manifests, cache, onProgress, background loading, spritesheets, video, SVG, fonts, compressed textures, and parsers."
 license: MIT
 ---
 

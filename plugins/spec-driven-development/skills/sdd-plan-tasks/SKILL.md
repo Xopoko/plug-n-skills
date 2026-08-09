@@ -1,6 +1,8 @@
 ---
 name: sdd-plan-tasks
-description: Convert approved SDD specs into technical plans, design artifacts, contracts, quickstart validation, and traceable task lists.
+description: >-
+  SDD plans convert approved specs into designs, contracts, quickstarts, and
+  traceable task lists.
 ---
 
 # SDD Plan And Tasks

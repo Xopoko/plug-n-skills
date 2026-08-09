@@ -1,7 +1,7 @@
 {
   "name": "game-design-intelligence",
-  "version": "0.1.1",
-  "description": "Source-backed game design judgment: core loops, gameplay systems, progression/economy/balance, motivation/retention, onboarding/difficulty, and multiplayer/live-service dynamics. Avoids engines, graphics, and implementation code.",
+  "version": "0.1.2",
+  "description": "Game design judgment grounded in evidence: core loops, gameplay systems, progression/economy/balance, motivation/retention, onboarding/difficulty, and multiplayer/live-service health; excludes engines, graphics, assets, and code.",
   "author": {
     "name": "Xopoko"
   },
@@ -24,8 +24,8 @@
   "skills": "./skills/",
   "interface": {
     "displayName": "Game Design Intelligence",
-    "shortDescription": "Design engaging, balanced, scalable games before implementation.",
-    "longDescription": "Game Design Intelligence gives the host agent a source-backed design judgment system for game loops, mechanics, progression, economies, rewards, onboarding, difficulty curves, player motivation, retention, multiplayer dynamics, content cadence, and live-service patterns. It deliberately avoids game engines, graphics, asset creation, programming, and implementation details.",
+    "shortDescription": "Game design decisions for loops, balance, and retention.",
+    "longDescription": "Game design decisions use source-backed judgment across loops, mechanics, progression, economies, rewards, onboarding, difficulty, motivation, retention, multiplayer dynamics, content cadence, and live-service health. The plugin deliberately avoids game engines, graphics, asset creation, programming, and implementation details.",
     "developerName": "Xopoko",
     "category": "Productivity",
     "capabilities": [

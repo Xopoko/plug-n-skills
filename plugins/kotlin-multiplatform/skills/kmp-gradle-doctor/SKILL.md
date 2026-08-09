@@ -1,6 +1,6 @@
 ---
 name: kmp-gradle-doctor
-description: Diagnose and fix Kotlin Multiplatform Gradle, source-set, dependency, private dependency resolution or consumption failures, Android target, Compose plugin, KGP/AGP, testing, static-analysis, and CI issues.
+description: "Kotlin Multiplatform Gradle diagnosis and repair for source sets, dependency failures including private dependency resolution or consumption failures, Android targets, Compose, KGP/AGP, tests, static analysis, and CI."
 ---
 
 # KMP Gradle Doctor

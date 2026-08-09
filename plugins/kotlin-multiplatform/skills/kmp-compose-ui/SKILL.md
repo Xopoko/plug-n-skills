@@ -1,6 +1,6 @@
 ---
 name: kmp-compose-ui
-description: Build and repair Compose Multiplatform UI, state, navigation, external URI effects, resources, platform entry points, previews, performance, accessibility, and UI tests in Kotlin Multiplatform projects.
+description: Compose Multiplatform UI implementation and repair across state, navigation, external-URI effects, resources, platform entry points, previews, accessibility, performance, and UI testing.
 ---
 
 # Compose Multiplatform UI

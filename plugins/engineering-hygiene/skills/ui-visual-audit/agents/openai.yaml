@@ -1,6 +1,6 @@
 interface:
   display_name: "UI Visual Audit"
-  short_description: "Skeptical screenshot and UI QA"
+  short_description: "Audit rendered UI for defects"
   default_prompt: "Use $ui-visual-audit to inspect this UI screenshot for primary task success and unrelated visual anomalies."
 policy:
   allow_implicit_invocation: false

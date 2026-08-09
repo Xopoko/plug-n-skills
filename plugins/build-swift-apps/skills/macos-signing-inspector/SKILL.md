@@ -1,6 +1,6 @@
 ---
 name: macos-signing-inspector
-description: Use when an existing macOS app or binary needs code-signing, entitlement, hardened runtime, sandbox, Gatekeeper, or trust-policy diagnosis. Not for full distribution packaging or running notarization submissions.
+description: "macOS app signing artifacts: inspect code signatures, entitlements, hardened runtime, sandbox, Gatekeeper, and trust failures; exclude distribution packaging and notarization submission."
 ---
 
 # macOS Signing Inspector

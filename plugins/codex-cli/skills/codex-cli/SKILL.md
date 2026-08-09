@@ -1,6 +1,6 @@
 ---
 name: codex-cli
-description: Route Codex CLI work across local CLI inspection, non-interactive exec/review automation, deferred completion without polling, live task and thread supervision with canonical checkpoint adoption guardrails, plugin and MCP management, doctor/debug/sandbox/app-server diagnostics, session log forensics, and Codex app local environment actions.
+description: Route Codex CLI operations across skill-catalog diagnostics, CLI inspection, exec/review automation, deferred completion, task supervision, plugin/MCP management, doctor/debug, rollout forensics, and app environments.
 ---
 
 # Codex CLI Router
@@ -37,9 +37,9 @@ runtime arguments instead.
 - Non-interactive tasks, CI-style runs, JSONL output, output schemas, last-message files, `codex exec resume`, or code review commands: use `codex-exec-automation`.
 - Long-running executables with an existing producer-native atomic JSON terminal receipt that would otherwise require repeated process or remote-status polling: use `codex-deferred-completion`.
 - Installed plugin marketplaces, plugin add/list/remove, local marketplace refresh, MCP server list/get/add/remove/login/logout: use `codex-plugin-mcp-manager`.
-- Installation health, config/auth/runtime issues, feature flags, sandbox denials, debug models, app-server, remote control, or experimental server transports: use `codex-doctor-debugger`.
+- Installation health, config/auth/runtime issues, feature flags, sandbox denials, debug models, model-visible skill catalog budgets, shortened/omitted skill metadata, app-server, remote control, or experimental server transports: use `codex-doctor-debugger`.
 - Live Codex task or thread watching by ID, including cursor-based transition waits, canonical checkpoint adoption guardrails, completion or attention gates, claims in the actively supervised task, narrowly authorized skill handoffs or evidence corrections, or capability mining from that live watch: use `codex-thread-supervisor`.
-- CODEX_THREAD_ID lookup, rollout JSONL, "what happened in that Codex thread", malformed logs, huge logs, or safe redacted session summaries: use `codex-log-reader`.
+- CODEX_THREAD_ID lookup, rollout JSONL, "what happened in that Codex thread", the skill catalog recorded for an existing task, malformed logs, huge logs, or safe redacted session summaries: use `codex-log-reader`.
 - `.codex/environments/environment.toml`, Codex app Run/Test/Preview actions, startup commands, long-running dev servers, or repeatable local project actions: use `codex-environments`.
 
 If several apply, start with health/surface inspection, then choose the narrow
@@ -68,6 +68,11 @@ Use this precedence for current CLI behavior:
 
 When local help and docs disagree, trust local help for the installed binary and
 say that the docs may describe a different version.
+
+For "what did this existing task see?", its exact rollout evidence outranks a
+new `codex debug prompt-input` render. The debug command uses the current
+executable, cwd, model/config, and plugin state; it is not a task replay and may
+initialize or refresh runtime caches.
 
 ## Completion Standard
 

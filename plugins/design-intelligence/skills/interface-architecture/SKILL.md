@@ -1,6 +1,6 @@
 ---
 name: interface-architecture
-description: "Design or critique information architecture, navigation, taxonomy, labeling, screen structure, content priority, findability, search and browse strategy, and information hierarchy."
+description: "Interface architecture structures navigation, taxonomy, labels, content models, screen priority, findability, search/browse, and information hierarchy."
 ---
 
 # Interface Architecture

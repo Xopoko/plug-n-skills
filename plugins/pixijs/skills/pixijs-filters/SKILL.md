@@ -1,6 +1,6 @@
 ---
 name: pixijs-filters
-description: "Use for PixiJS v8 filters and visual effects: BlurFilter, ColorMatrixFilter, DisplacementFilter, NoiseFilter, Filter.from, padding/resolution, pixi-filters community effects."
+description: "PixiJS v8 filters apply BlurFilter, ColorMatrixFilter, DisplacementFilter, NoiseFilter, Filter.from, padding/resolution, and pixi-filters community effects."
 license: MIT
 ---
 

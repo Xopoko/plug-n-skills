@@ -1,6 +1,6 @@
 ---
 name: xcode-project-auditor
-description: Audit Xcode project configuration, schemes, build settings, target dependencies, run scripts, module maps, explicit modules, and fixed build overhead with approval gates.
+description: Audit Xcode project and target overhead across schemes, settings, dependencies, run scripts, module maps, and explicit modules; require approval before changes.
 ---
 
 # Xcode Project Auditor

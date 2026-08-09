@@ -1,7 +1,7 @@
 {
   "name": "kotlin-multiplatform",
-  "version": "0.3.16",
-  "description": "Kotlin Multiplatform development, migration, Gradle diagnosis, Compose Multiplatform, interop, testing, data, governance, performance, security, publishing, and production readiness.",
+  "version": "0.3.17",
+  "description": "Kotlin Multiplatform design, Gradle repair, Compose UI, data/interop architecture, migration, testing, governance, security, performance, CI, publishing, and readiness review.",
   "author": {
     "name": "Xopoko"
   },
@@ -18,8 +18,8 @@
   "skills": "./skills/",
   "interface": {
     "displayName": "Kotlin Multiplatform",
-    "shortDescription": "Build, migrate, debug, and verify Kotlin Multiplatform projects.",
-    "longDescription": "A source-backed Kotlin Multiplatform capability pack for Gradle and source-set diagnosis, Android-KMP and AGP migration, Compose Multiplatform UI, iOS interoperability, CocoaPods to SwiftPM migration, CI, testing, performance, observability, security, privacy, publishing, and production readiness.",
+    "shortDescription": "Kotlin Multiplatform: design, debug, migrate, and release.",
+    "longDescription": "Kotlin Multiplatform engineering for Gradle/source sets, Android-KMP/AGP migration, Compose UI, data, iOS interop, CocoaPods/SwiftPM, testing, governance, performance/observability, security/privacy, CI, publishing, and readiness audits.",
     "developerName": "Xopoko",
     "category": "Coding",
     "capabilities": [

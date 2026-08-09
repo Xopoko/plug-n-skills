@@ -5,7 +5,7 @@
 <h1 align="center">Build Swift Apps</h1>
 
 <p align="center">
-  Agent skills for building, debugging, profiling, testing, refactoring, and shipping Swift apps across Apple platforms.
+  Build, debug, profile, test, refactor, and release Swift apps across iOS and macOS.
 </p>
 
 <p align="center">

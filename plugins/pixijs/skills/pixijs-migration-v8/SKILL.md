@@ -1,6 +1,6 @@
 ---
 name: pixijs-migration-v8
-description: "Use for PixiJS v7 to v8 migration: app.init, pixi.js package imports, Graphics fill/stroke/cut, Texture/BaseTexture changes, events, ticker, shaders, filters, adapters."
+description: "PixiJS v7-to-v8 migration replaces Application constructor options with app.init and updates pixi.js imports, Graphics fill/stroke/cut, Texture/BaseTexture, events, tickers, shaders, filters, and adapters."
 license: MIT
 ---
 

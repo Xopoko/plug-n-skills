@@ -1,6 +1,6 @@
 ---
 name: appstore-screenshot-validator
-description: Resize, strip alpha, color-convert, validate, and upload App Store screenshots using current `asc screenshots` size data and macOS `sips`.
+description: App Store screenshot validation and upload with live `asc` size data and macOS `sips` to resize, strip alpha, and color-convert copies.
 ---
 
 # App Store Screenshot Validator

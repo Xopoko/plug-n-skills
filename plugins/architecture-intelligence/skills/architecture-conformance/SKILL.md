@@ -1,6 +1,6 @@
 ---
 name: architecture-conformance
-description: "Use when intended architecture must be compared with implementation: dependency policies, ADRs, ownership rules, drift, erosion, recovered models, and conformance classifications."
+description: "Architecture conformance compares intended rules with implementation for dependencies, ADRs, ownership constraints, drift, erosion, recovered models, and classifications."
 ---
 
 # Architecture Conformance

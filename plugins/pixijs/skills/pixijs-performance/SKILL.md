@@ -1,6 +1,6 @@
 ---
 name: pixijs-performance
-description: "Use for PixiJS v8 performance: FPS, jank, draw calls, batching, GPU memory, destroy patterns, cacheAsTexture, GCSystem, PrepareSystem, Culler, pooling, resolution."
+description: "PixiJS v8 performance diagnoses FPS, jank, draw calls, batching, GPU memory, destroy, cacheAsTexture, GCSystem, PrepareSystem, Culler, pooling, and resolution."
 license: MIT
 ---
 

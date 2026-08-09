@@ -1,6 +1,6 @@
 ---
 name: progression-economy-balance
-description: "Design and critique progression, rewards, power curves, economies, currencies, sinks, sources, balance, pacing, and tuning hypotheses. Use for reward loops, upgrades, unlocks, economy pacing, dominant strategies, or balance reviews. Do not use for implementation, analytics instrumentation, or monetization dark patterns."
+description: "Game progression/economy/balance design covers rewards, power curves, currencies, sources/sinks, pacing, tuning, dominant strategies, and unlocks. Do not use for implementation, analytics instrumentation, or monetization dark patterns."
 ---
 
 # Progression, Economy, And Balance

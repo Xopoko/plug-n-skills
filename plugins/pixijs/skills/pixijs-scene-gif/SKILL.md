@@ -1,6 +1,6 @@
 ---
 name: pixijs-scene-gif
-description: "Use for PixiJS v8 animated GIFs: pixi.js/gif import, Assets.load to GifSource, GifSprite playback, autoPlay/loop, currentFrame, animationSpeed, callbacks, clone/destroy."
+description: "PixiJS v8 GIF playback loads GifSource into GifSprite via pixi.js/gif and controls autoPlay/loop, currentFrame, animationSpeed, callbacks, clone, and destroy."
 license: MIT
 ---
 

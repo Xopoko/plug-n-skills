@@ -15,7 +15,7 @@ evidence.
   versioned evidence corrections, aggregate claim boundaries, and privacy-safe
   capability mining.
 - `codex-plugin-mcp-manager`: plugin marketplaces, installed plugins, and MCP servers.
-- `codex-doctor-debugger`: `doctor`, `debug`, `sandbox`, feature flags, app-server, and remote-control diagnostics.
+- `codex-doctor-debugger`: skill-catalog budgets and visibility, `doctor`, `debug`, `sandbox`, feature flags, app-server, and remote-control diagnostics.
 - `codex-log-reader`: redacted rollout JSONL lookup, root/child normalization, active-scope views, deterministic trace audits, searches, and log health checks.
 - `codex-environments`: `.codex/environments/environment.toml` actions and long-running project commands.
 
@@ -23,6 +23,7 @@ evidence.
 
 ```bash
 python3 scripts/codex_cli_inspector.py --json
+python3 scripts/codex_skill_catalog_audit.py --help
 python3 scripts/codex_log_reader.py --help
 python3 scripts/validate_thread_skill_handoff.py --help
 ```
@@ -30,6 +31,11 @@ python3 scripts/validate_thread_skill_handoff.py --help
 `codex_cli_inspector.py` resolves the executable from `--codex`, `CODEX_CLI`, or
 `PATH`, then reads `--version` and `--help` output without launching an agent
 session.
+
+`codex_skill_catalog_audit.py` models the pinned Codex host renderer's 2 percent
+metadata allocation for a supplied enabled inventory. It reports full,
+description-shortened, and whole-entry-omission states while labeling the
+absolute-locator result and analysis-only scenario cap explicitly.
 
 `codex_log_reader.py` reads Codex rollout JSONL under `$CODEX_HOME` or
 `~/.codex`, redacts likely secrets, separates active child work from inherited

@@ -1,6 +1,6 @@
 ---
 name: pixijs-custom-rendering
-description: "Use for PixiJS v8 custom rendering: Shader.from, GlProgram/GpuProgram, UniformGroup typed uniforms, textures as resources, custom Filter, batchers, WebGL/WebGPU shader code."
+description: "PixiJS v8 custom rendering builds Shader.from with GlProgram/GpuProgram, typed UniformGroups, textures as resources, custom Filters, batchers, and WebGL/WebGPU code."
 license: MIT
 ---
 

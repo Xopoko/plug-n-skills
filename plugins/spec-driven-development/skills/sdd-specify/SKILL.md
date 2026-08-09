@@ -1,6 +1,8 @@
 ---
 name: sdd-specify
-description: Create or refine SDD requirements and specifications with explicit assumptions, non-goals, acceptance criteria, success metrics, and retrofit truth markers.
+description: >-
+  SDD specifications capture requirements, assumptions, non-goals, acceptance
+  criteria, success metrics, and retrofit truth markers.
 ---
 
 # SDD Specify

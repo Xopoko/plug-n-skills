@@ -1,6 +1,6 @@
 ---
 name: skill-installer-vetter
-description: Find, list, vet, install, or update agent skills from curated catalogs, GitHub repo paths, local folders, or user-provided references. Use when installation must be preceded by provenance, safety, dependency, and capability checks.
+description: Find, compare, vet, install, or update agent skills from catalogs, GitHub, local folders, or user references with provenance, safety, dependency, capability, and destination checks.
 ---
 
 # Skill Installer Vetter

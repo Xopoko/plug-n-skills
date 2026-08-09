@@ -1,6 +1,6 @@
 ---
 name: pixijs-color
-description: "Use for PixiJS v8 Color: hex/CSS/rgb/hsl inputs, toHex/toNumber/toArray/toRgbaString, multiply, premultiply, alpha, tint, color-space conversion."
+description: "PixiJS v8 Color parses hex/CSS/RGB/HSL; outputs toHex/toNumber/toArray/toRgbaString; handles multiply, premultiply, alpha, tint, color spaces."
 license: MIT
 ---
 

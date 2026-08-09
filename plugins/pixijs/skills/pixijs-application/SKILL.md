@@ -1,6 +1,6 @@
 ---
 name: pixijs-application
-description: "Use for PixiJS v8 Application setup, app.init, renderer/canvas/screen/stage, resizeTo, ticker/sharedTicker, CullerPlugin, app.start/stop/destroy, releaseGlobalResources."
+description: "PixiJS v8 Application lifecycle configures app.init, renderer/canvas/screen/stage, resizeTo, ticker/sharedTicker, CullerPlugin, app.start/stop/destroy, and releaseGlobalResources."
 license: MIT
 ---
 

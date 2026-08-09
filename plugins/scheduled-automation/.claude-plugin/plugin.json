@@ -1,7 +1,7 @@
 {
   "name": "scheduled-automation",
-  "version": "0.1.0",
-  "description": "Local scheduler diagnostics, real-runtime proof, safe canaries, correlated run receipts, and missed-run analysis for launchd, systemd timers, cron, and Windows Task Scheduler.",
+  "version": "0.1.1",
+  "description": "Local scheduler diagnostics prove launchd, systemd timer, cron, and Windows Task Scheduler runs, compare scheduler-owned context, and analyze missed or divergent executions.",
   "author": {
     "name": "Xopoko"
   },

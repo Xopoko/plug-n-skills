@@ -1,7 +1,7 @@
 {
   "name": "git-worktree-safety",
-  "version": "0.2.0",
-  "description": "Fail-closed Git safety for worktree pointer and SSH-signed-commit recovery, with redacted evidence, exact-state journals, one-use authorization, and explicit host boundaries.",
+  "version": "0.2.1",
+  "description": "Git worktree pointers and SSH-signed commits recover fail-closed with redacted evidence, exact-state journals, one-use authorization, and explicit POSIX and host boundaries.",
   "author": {
     "name": "Xopoko"
   },

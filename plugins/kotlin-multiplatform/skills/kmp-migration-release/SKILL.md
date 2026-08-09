@@ -1,6 +1,6 @@
 ---
 name: kmp-migration-release
-description: Plan and execute Kotlin Multiplatform migrations and release gates, including AGP 9 Android-KMP, monolithic composeApp splits, CocoaPods to SwiftPM, cinterop, iOS framework integration, CI, publishing, and app-store readiness.
+description: Kotlin Multiplatform migration and release execution for AGP 9 Android-KMP adoption, monolithic composeApp splits, CocoaPods-to-SwiftPM moves, cinterop, iOS frameworks, CI, publishing, and app-store readiness.
 ---
 
 # KMP Migration And Release

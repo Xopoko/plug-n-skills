@@ -1,7 +1,7 @@
 {
   "name": "design-intelligence",
-  "version": "0.1.1",
-  "description": "Source-backed, technology-agnostic UI/UX judgment: product framing, information architecture, interaction design, usability/accessibility review, visual communication, and design-system governance. Deliberately avoids Figma automation, framework recipes, and CSS recipes.",
+  "version": "0.1.2",
+  "description": "Product and UX design judgment grounded in evidence: framing, information architecture, interaction, usability/accessibility review, visual communication, and design-system governance; excludes Figma, CSS, and framework recipes.",
   "author": {
     "name": "Xopoko"
   },
@@ -21,8 +21,8 @@
   "skills": "./skills/",
   "interface": {
     "displayName": "Design Intelligence",
-    "shortDescription": "Build better product experiences, not better design files.",
-    "longDescription": "Design Intelligence gives the host agent a source-backed product and UI/UX judgment system. It routes work through product framing, interface architecture, interaction design, usability and accessibility review, visual communication, and design-system governance. It recognizes common UI surfaces such as forms, data views, search/browse, onboarding, permissions, empty/error states, settings, notifications, and transactions while deliberately avoiding Figma automation, CSS recipes, framework recipes, and design-tool workflows.",
+    "shortDescription": "Product and UX decisions for accessible, usable flows.",
+    "longDescription": "Product and UX design decisions use technology-agnostic, source-backed judgment across framing, interface architecture, interaction design, usability/accessibility review, visual communication, and design-system governance. The plugin recognizes forms, data views, search/browse, onboarding, permissions, empty/error states, settings, notifications, and transactions while deliberately avoiding Figma automation, CSS recipes, framework recipes, and design-tool workflows.",
     "developerName": "Xopoko",
     "category": "Productivity",
     "capabilities": [

@@ -1,6 +1,6 @@
 ---
 name: xcode-build-baseline
-description: Benchmark Xcode clean, cached-clean, zero-change, and incremental builds with repeatable inputs, timing summaries, and `.build-benchmark/` artifacts.
+description: Benchmark Xcode clean, cached-clean, zero-change, and incremental builds with fixed inputs, timing summaries, and `.build-benchmark/` artifacts.
 ---
 
 # Xcode Build Baseline

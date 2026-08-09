@@ -1,6 +1,6 @@
 ---
 name: appstore-screenshot-studio
-description: Create, revise, translate, scrape, crop, validate, and prepare App Store marketing screenshots and `.appstore-screenshots` workspaces. Not for general image generation.
+description: App Store marketing screenshot creation and revision to translate, scrape, crop, and validate `.appstore-screenshots` workspaces. Excludes general image generation.
 ---
 
 # App Store Screenshot Studio

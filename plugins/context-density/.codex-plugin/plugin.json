@@ -1,7 +1,7 @@
 {
   "name": "context-density",
-  "version": "0.4.2",
-  "description": "Context design, prompt-contract optimization, typed state validation, research-backed acceptance gates, compression validation, and structural handoff for agent skills, plugins, prompts, docs, and workflows.",
+  "version": "0.4.3",
+  "description": "Agent context audits measure token cost, validate prompt/output contracts and typed state, test compression, and route structural skill or plugin overlap to Capability Workbench.",
   "author": {
     "name": "Xopoko"
   },
@@ -20,8 +20,8 @@
   "skills": "./skills/",
   "interface": {
     "displayName": "Context Density",
-    "shortDescription": "Measure context cost, validate typed state and compression, and enforce explicit LLM output contracts.",
-    "longDescription": "Context Density turns token efficiency, long-context placement, retrieval provenance, typed state commitments, prompt-cache layout, and prompt-contract discipline into one agent workflow: identify the consumer and load path, measure context cost, remove drift and duplication, preserve behavioral invariants, validate state and exact companion snapshots, enforce structured output contracts, apply research-backed acceptance gates, and validate the result with deterministic audits. When token pressure exposes skill/plugin split, merge, move, delete, router, or cross-plugin overlap decisions, it routes structural work to Capability Workbench portfolio architecture.",
+    "shortDescription": "Agent context audits reduce token cost and validate contracts.",
+    "longDescription": "Agent context audits measure token cost, placement, provenance, typed-state integrity, compression, and prompt/output contracts. Structural plugin split, merge, move, delete, router, and overlap decisions route to Capability Workbench.",
     "developerName": "Xopoko",
     "category": "Productivity",
     "capabilities": [

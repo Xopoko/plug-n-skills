@@ -1,6 +1,6 @@
 ---
 name: pixijs-scene-core-concepts
-description: "Use for PixiJS v8 scene graph concepts: containers vs leaves, transforms, local/world coordinates, render order, masks, RenderLayer, render groups, culling, scene management."
+description: "PixiJS v8 scene-graph modeling maps containers/leaves, transforms, local/world coordinates, render order, masks, RenderLayer, render groups, culling, and scene management."
 license: MIT
 ---
 

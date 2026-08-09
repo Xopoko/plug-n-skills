@@ -1,6 +1,6 @@
 ---
 name: architecture-runtime-topology
-description: "Use when code work touches runtime shape: services, app/CLI/background flows, deployment/IaC, observability, resilience, external integrations, ownership, and runtime coupling."
+description: "Runtime architecture analysis maps services, app/CLI/background flows, deployment/IaC, integrations, observability, resilience, and coupling without claiming production truth."
 ---
 
 # Architecture Runtime Topology

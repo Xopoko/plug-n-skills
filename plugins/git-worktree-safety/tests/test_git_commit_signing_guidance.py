@@ -152,7 +152,7 @@ class GitCommitSigningGuidanceTests(unittest.TestCase):
         claude = json.loads(CLAUDE_MANIFEST.read_text(encoding="utf-8"))
         for field in ("name", "version", "description", "author", "license", "keywords"):
             self.assertEqual(codex[field], claude[field])
-        self.assertEqual(codex["version"], "0.2.0")
+        self.assertEqual(codex["version"], "0.2.1")
         self.assertEqual(codex["interface"]["displayName"], "Git Safety")
         self.assertIn(
             "SSH-signed-commit",

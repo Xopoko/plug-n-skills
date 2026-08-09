@@ -1,6 +1,6 @@
 ---
 name: agent-harness-evaluation
-description: Use when benchmarking, replaying, regression-testing, diagnosing, comparing, or release-gating an LLM agent harness across tasks, providers, policies, failures, restarts, cancellation, or context pressure, including inside broader rollout work. Not for literature surveys, generic unit tests, prompt/model-only benchmarks, or harness design without an empirical evaluation deliverable.
+description: Evaluate LLM agent harness reliability through replay, regression, failure/restart, cancellation, context pressure, and release gates. Excludes generic tests, surveys, prompt/model-only benchmarks, and design without empirical evidence.
 ---
 
 # Agent Harness Evaluation

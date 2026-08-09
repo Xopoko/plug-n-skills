@@ -1,6 +1,10 @@
 ---
 name: scientific-research
-description: Use for scientific or scholarly research with source traceability, literature reviews, paper discovery, arXiv/OpenAlex/Crossref/Europe PMC/Semantic Scholar/PubMed queries, corpus building, DOI deduplication, source-backed claim extraction, evidence synthesis, or research quality validation.
+description: >-
+  Scholarly research discovers papers, builds traceable corpora, deduplicates
+  DOIs, extracts source-backed claims, synthesizes evidence, and validates
+  quality across arXiv, OpenAlex, Crossref, Europe PMC, Semantic Scholar, and
+  PubMed.
 ---
 
 # Scientific Research

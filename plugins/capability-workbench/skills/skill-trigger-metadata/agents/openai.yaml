@@ -1,4 +1,4 @@
 interface:
   display_name: "Skill Trigger Metadata"
-  short_description: "Design skill names and descriptions that trigger reliably."
+  short_description: "Design skill names/descriptions for reliable routing"
   default_prompt: "Use Skill Trigger Metadata to design or debug a skill name and description so the host agent loads the right SKILL.md."

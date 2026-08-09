@@ -1,10 +1,9 @@
 ---
 name: capability-reality-repair
 description: >-
-  Repair stale or false agent capability instructions immediately. Use when a
-  skill, script, plugin manifest/helper, MCP/tool contract, connector guidance,
-  validator, or bundled reference describes commands, schemas, paths, outputs,
-  install state, dependencies, or behavior that does not match live reality.
+  Repair stale or false skill/script/plugin/MCP contracts when commands,
+  schemas, paths, outputs, dependencies, install state, connector guidance,
+  validators, or docs disagree with live reality.
 ---
 
 # Capability Reality Repair

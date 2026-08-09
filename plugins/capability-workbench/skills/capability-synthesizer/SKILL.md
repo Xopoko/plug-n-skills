@@ -1,6 +1,6 @@
 ---
 name: capability-synthesizer
-description: Use when performing broad external-first discovery, vetting, scoring, distillation, or synthesis of agent skills or plugin packs from the public web, GitHub/public repositories, OpenClaw/ClawHub, marketplaces, research sources, community implementations, user references, or local skills. Use for well-vetted capability synthesis, cross-skill comparison, plugin-pack synthesis, global capability acquisition, skill strengthening, and adoption/rejection changelogs.
+description: Synthesize or strengthen well-vetted agent skills/plugins from broad public sources and local or user-provided candidates, with evidence-backed comparison and adoption/rejection.
 ---
 
 # Capability Synthesizer

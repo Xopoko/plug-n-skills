@@ -1,7 +1,7 @@
 {
   "name": "scheduled-automation",
-  "version": "0.1.0",
-  "description": "Local scheduler diagnostics, real-runtime proof, safe canaries, correlated run receipts, and missed-run analysis for launchd, systemd timers, cron, and Windows Task Scheduler.",
+  "version": "0.1.1",
+  "description": "Local scheduler diagnostics prove launchd, systemd timer, cron, and Windows Task Scheduler runs, compare scheduler-owned context, and analyze missed or divergent executions.",
   "author": {
     "name": "Xopoko"
   },
@@ -19,8 +19,8 @@
   "skills": "./skills/",
   "interface": {
     "displayName": "Scheduled Automation",
-    "shortDescription": "Prove local jobs in their real scheduler runtime.",
-    "longDescription": "A cross-agent operations plugin for launchd, systemd timers, cron, and Windows Task Scheduler. It separates definition, registration, demand-run, native-trigger, and functional-effect evidence; diagnoses scheduler-owned runtime differences; and supports bounded canaries and correlated atomic receipts without treating a manual shell run as scheduler proof.",
+    "shortDescription": "Local scheduler diagnostics prove real job runs.",
+    "longDescription": "Local scheduler diagnostics distinguish registration, demand runs, native triggers, and effects across launchd, systemd, cron, and Windows Task Scheduler, exposing identity, environment, workdir, permissions, output, and atomic receipts.",
     "developerName": "Xopoko",
     "category": "Coding",
     "capabilities": [

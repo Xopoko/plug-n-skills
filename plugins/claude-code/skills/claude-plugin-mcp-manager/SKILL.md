@@ -1,6 +1,10 @@
 ---
 name: claude-plugin-mcp-manager
-description: Use when managing Claude Code plugins, plugin marketplaces, plugin validation/details/token cost/tag/install/update/remove/prune, session-only plugin-dir or plugin-url, MCP list/get/add/remove/import/serve, project MCP approvals, strict MCP config, transports, headers, OAuth, or MCP/plugin installation failures.
+description: >-
+  Claude Code plugins and MCP servers are managed across marketplaces,
+  validation, token cost, install/update/remove/prune, session-only sources,
+  MCP approvals, strict config, transports, headers, OAuth, and lifecycle
+  failures.
 ---
 
 # Claude Plugin And MCP Manager

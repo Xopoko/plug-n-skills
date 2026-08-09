@@ -1,6 +1,10 @@
 ---
 name: claude-agent-worktrees
-description: Use when coordinating Claude Code background agents, `claude agents --json`, dispatched-session defaults, git worktrees, tmux/iTerm panes, resume/continue/from-pr/fork-session, session names and IDs, remote control, prompt suggestions, or cloud ultrareview runs.
+description: >-
+  Claude Code sessions coordinate background agents, `claude agents --json`,
+  dispatched-session defaults, worktrees, tmux/iTerm panes,
+  resume/continue/from-pr/fork-session, names and IDs, remote control, and cloud
+  ultrareview runs.
 ---
 
 # Claude Agents And Worktrees

@@ -1,7 +1,7 @@
 {
   "name": "git-worktree-safety",
-  "version": "0.2.0",
-  "description": "Fail-closed Git safety for worktree pointer and SSH-signed-commit recovery, with redacted evidence, exact-state journals, one-use authorization, and explicit host boundaries.",
+  "version": "0.2.1",
+  "description": "Git worktree pointers and SSH-signed commits recover fail-closed with redacted evidence, exact-state journals, one-use authorization, and explicit POSIX and host boundaries.",
   "author": {
     "name": "Xopoko"
   },
@@ -20,8 +20,8 @@
   "skills": "./skills/",
   "interface": {
     "displayName": "Git Safety",
-    "shortDescription": "Recover worktree pointers and SSH-signed commits safely.",
-    "longDescription": "Fail-closed Git recovery for vanished worktree pointers and failed ordinary SSH commit signing. Worktree recovery proves live branch identity and supports tightly gated pointer-only repair. POSIX signing recovery records private exact-state evidence, atomically issues one helper authorization per state after a verified signer-state change, and checks the resulting parent, diff, hook policy, signer identity, and residual worktree state.",
+    "shortDescription": "Git pointers and SSH-signed commits recover fail-closed.",
+    "longDescription": "Git worktree pointers and SSH-signed commits recover under fail-closed, exact-state gates. Worktree recovery proves live branch identity and permits only tightly gated pointer repair; POSIX signing recovery keeps private evidence, atomically issues one helper authorization per state after a verified signer-state change, and verifies parent, diff, hook policy, signer identity, and residual worktree state.",
     "developerName": "Xopoko",
     "category": "Coding",
     "capabilities": [

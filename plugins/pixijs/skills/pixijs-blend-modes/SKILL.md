@@ -1,6 +1,6 @@
 ---
 name: pixijs-blend-modes
-description: "Use for PixiJS v8 blend modes and compositing: normal/add/multiply/screen/erase/min/max, advanced-blend-modes, overlay, color-burn, hard-light, alpha behavior."
+description: "PixiJS v8 blend compositing applies normal/add/multiply/screen/erase/min/max modes, advanced-blend-modes, overlay, color-burn, hard-light, and alpha behavior."
 license: MIT
 ---
 

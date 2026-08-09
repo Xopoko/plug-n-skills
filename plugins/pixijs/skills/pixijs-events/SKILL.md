@@ -1,6 +1,6 @@
 ---
 name: pixijs-events
-description: "Use for PixiJS v8 input events: pointer/mouse/touch/wheel, eventMode, FederatedEvent, propagation/capture, hitArea, cursor, drag, interactiveChildren."
+description: "PixiJS v8 events configure pointer/mouse/touch/wheel, eventMode, FederatedEvent, propagation/capture, hitArea, cursor, drag, and interactiveChildren."
 license: MIT
 ---
 

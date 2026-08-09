@@ -1,7 +1,7 @@
 {
   "name": "architecture-intelligence",
-  "version": "0.1.9",
-  "description": "Source-backed software architecture intelligence for codebase audits, ownership topology, runtime topology, async state consistency, architecture conformance and drift checks, structure metrics, module boundaries, dependency flow, ADRs, fitness functions, and incremental refactoring.",
+  "version": "0.1.10",
+  "description": "Software architecture audits and decisions grounded in source evidence: boundaries, ownership/runtime topology, async state consistency, conformance, ADRs, fitness functions, and staged refactoring.",
   "author": {
     "name": "Xopoko"
   },
@@ -34,8 +34,8 @@
   "skills": "./skills/",
   "interface": {
     "displayName": "Architecture Intelligence",
-    "shortDescription": "Audit, check, and evolve code architecture from source evidence.",
-    "longDescription": "Architecture Intelligence gives the host agent a source-backed architecture system for audits, ownership/runtime topology, async state consistency, conformance and drift, ADRs, fitness functions, structure metrics, and incremental refactoring. It focuses on boundaries, dependency direction, lifecycle state, invalidation, replay and publication authority, domain/data seams, CODEOWNERS/OWNERS evidence, deployment/runtime signals, quality attributes, policy checks, cycles, instability, and validation gates rather than style-only review.",
+    "shortDescription": "Software architecture audits and staged refactoring.",
+    "longDescription": "Software architecture audits and decisions use source evidence to evaluate boundaries, ownership/runtime topology, async state consistency, conformance, ADRs, fitness functions, structure metrics, and staged refactoring. The plugin focuses on dependency direction, lifecycle state, invalidation, replay and publication authority, domain/data seams, CODEOWNERS/OWNERS evidence, deployment/runtime signals, quality attributes, policy checks, cycles, instability, and validation gates rather than style-only review.",
     "developerName": "Xopoko",
     "category": "Productivity",
     "capabilities": [

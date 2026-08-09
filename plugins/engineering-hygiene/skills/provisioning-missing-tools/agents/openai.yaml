@@ -1,6 +1,6 @@
 interface:
   display_name: "Provision Missing Tools"
-  short_description: "Install missing tools instead of stopping"
+  short_description: "Missing tools provisioned to unblock work"
   default_prompt: "Use $provisioning-missing-tools when a task is blocked by missing SDKs, CLIs, runtimes, drivers, or test utilities."
 policy:
   allow_implicit_invocation: false

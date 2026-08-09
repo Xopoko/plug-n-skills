@@ -1,6 +1,6 @@
 ---
 name: plugin-factory
-description: Use when creating, updating, validating, optionally installing/cache-refreshing, or handing off marketplace-backed agent plugins. Use for plugin manifests, local marketplace entries, plugin-pack synthesis, triggerable skill bundles, install/cache gates, separate runtime-discovery state, and Codex app deeplinks.
+description: Build or update marketplace-backed agent plugins with manifests, skill bundles, local marketplace entries, packaging, validation, optional install/cache gates, runtime-discovery status, and Codex deeplinks.
 ---
 
 # Plugin Factory
@@ -61,6 +61,10 @@ Keep `.codex-plugin/plugin.json` validation-ready:
 
 - `name` equals the outer folder name.
 - Include `version`, `description`, `author`, `skills` when skills exist, and `interface` metadata.
+- Treat `name` as a public namespace and installation identifier; rename only
+  with an explicit migration. Lead `description`, `shortDescription`, and
+  `longDescription` with the plugin's concrete domain and owned actions rather
+  than `Agent skills for`, `Help with`, or another generic wrapper.
 - Do not include unsupported fields or empty MCP/app entries.
 - Keep apps and MCP servers out of the manifest unless companion files exist.
 - Do not leave TODO placeholders.
@@ -102,6 +106,7 @@ For every marketplace-backed plugin:
 
 ```bash
 python3 "$PLUGIN_ROOT/scripts/plugin/validate_plugin.py" <plugin-dir>
+python3 "$PLUGIN_ROOT/scripts/skill/audit_description_prefixes.py" <plugin-dir>
 ```
 
 For Codex plugins, add a structured quality-review pass:

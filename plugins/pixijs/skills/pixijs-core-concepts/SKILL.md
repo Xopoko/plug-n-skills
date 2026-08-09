@@ -1,6 +1,6 @@
 ---
 name: pixijs-core-concepts
-description: "Use for PixiJS v8 renderer concepts: Application/Renderer relationship, WebGL/WebGPU/Canvas selection, render loop, systems, pipes, environment adapters, renderer fallback."
+description: "PixiJS v8 renderer architecture selects WebGL, WebGPU, or Canvas and explains Application/Renderer ownership, render loops, systems, pipes, adapters, and fallback behavior."
 license: MIT
 ---
 

@@ -1,6 +1,6 @@
 ---
 name: onboarding-difficulty
-description: "Design and critique onboarding, tutorials, FTUE, teaching, skill ramps, difficulty curves, assist modes, accessibility of challenge, failure, and mastery progression. Do not use for UI implementation or code."
+description: "Game onboarding and difficulty design covers tutorials, FTUE, teaching, skill ramps, challenge curves, assist modes, accessible challenge, failure, and mastery. Do not use for UI implementation or code."
 ---
 
 # Onboarding And Difficulty

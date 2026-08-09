@@ -13,6 +13,10 @@ Use names that are portable and searchable:
 - avoid vague catch-alls such as `helper`, `tools`, `workflow`, `assistant`, or `manager`;
 - avoid clever brand names unless the brand is the user-facing trigger.
 
+Treat an existing name as a public identifier. Rename only when the routing gain
+justifies a migration across folder names, plugin references, documentation,
+tests, deeplinks, and installed copies; description repair is the default.
+
 Prefer names like `skill-trigger-metadata`, `reviewing-api-design`, or `processing-pdfs` over abstract nouns like `optimization`, `quality`, or `documents`.
 
 ## Description Inputs
@@ -35,44 +39,54 @@ Avoid:
 - unsupported promises: "always", "guarantees", "perfectly";
 - private examples, local machine paths, credentials, or private names.
 
-## Codex Catalog Budget Pressure
+## Runtime Catalog Pressure
 
-Codex does not reserve a fixed character quota for each skill. Its initial
-`name + description + path` catalog shares a host-wide budget: at most 2% of a
-known model context window, or an 8,000-character fallback when the window is
-unknown. Current core token-mode accounting estimates `ceil(UTF-8 bytes / 4)`.
+Agent hosts do not share one skill-catalog policy. Read
+`skill-catalog-runtime-comparison.md` before applying a numeric budget or an
+overflow assumption. Some hosts hard-omit entries, some simplify descriptions
+without enforcing a final cap, and some have no dedicated aggregate budget.
 
 Design for prefix survival:
 
-1. Put the domain, task, artifact, or failure that distinguishes the skill in
-   the first clause.
-2. Put secondary synonyms and adjacent boundaries after the discriminative
+1. Put the domain, artifact, failure, or decision that distinguishes the skill
+   first, followed immediately by the action the skill owns.
+2. Remove generic lead-ins such as `Use when`, `Use for`, `Use this skill`,
+   `Help with`, or `Agent skills for` when the concrete trigger can lead.
+3. Put secondary synonyms and adjacent boundaries after the discriminative
    trigger terms.
-3. Keep procedure out of metadata even when shortening the description.
-4. Do not treat the 1,024-character per-description ceiling as a safe target;
+4. Keep procedure out of metadata even when shortening the description.
+5. Do not treat the 1,024-character per-description ceiling as a safe target;
    aggregate pressure can leave only a short prefix or omit the whole entry.
-5. Do not claim visibility from an isolated skill audit. Include the broadest
+6. Do not claim visibility from an isolated skill audit. Include the broadest
    concrete enabled inventory and the target model window.
 
-Use this description shape when Codex is a target host:
+Use the first 40 characters as a repository review probe: they should normally
+contain a concrete domain/artifact/failure cue plus an owned action. Forty is
+not a Codex runtime guarantee; the surviving prefix is inventory- and
+budget-dependent, and an entire entry can still be omitted.
+
+Use this description shape when prefix survival matters:
 
 ```yaml
-description: Use when <specific task, artifact, or failure>. <Secondary synonyms and bounded adjacent cases>.
+description: <Domain, artifact, or failure>: <owned action or decision>. <Secondary synonyms and bounded adjacent cases>.
 ```
 
-Audit the catalog after material metadata or portfolio changes:
+After material metadata or portfolio changes, bind the target runtime, exact
+version, enabled inventory, and model context before claiming visibility.
+Interpret full metadata, shortened metadata, identity-only entries,
+whole-entry omission, and empty output as distinct inventory-level states.
+Route exact Codex budget and current-session diagnosis to `codex-cli`; return
+here to repair the trigger prefix, vocabulary, or adjacent-skill boundary.
+
+Audit a source inventory with:
 
 ```bash
-python3 "$PLUGIN_ROOT/scripts/skill/codex_skill_catalog_audit.py" \
-  <skill-roots-or-plugin-roots> --context-window <tokens> --json
+python3 "$PLUGIN_ROOT/scripts/skill/audit_description_prefixes.py" <roots> --json
 ```
 
-Interpret `full_metadata_visible`, `descriptions_shortened`, and
-`skills_omitted` as inventory-level states. The audit uses a conservative
-absolute-path model; actual Codex path aliases may preserve more metadata.
-Rare manual skills can use `agents/openai.yaml` with
-`policy.allow_implicit_invocation: false` to leave the implicit catalog while
-remaining explicitly invocable.
+The default 40-character and 240-character findings are portable review probes,
+not claims about a host's runtime limits. Use `--strict` only when the portfolio
+has adopted them as explicit release gates.
 
 ## Failure Repair
 

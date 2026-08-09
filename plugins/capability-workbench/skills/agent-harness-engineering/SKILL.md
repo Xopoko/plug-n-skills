@@ -1,6 +1,6 @@
 ---
 name: agent-harness-engineering
-description: Use when designing, building, refactoring, or recovering an LLM agent runtime/control harness, including its loop, provider capabilities, typed tools/state, context/memory, policy/isolation, budgets, cancellation, recovery, or delegation, even inside a coding or non-coding product request. Not for prompt-only work, generic app architecture, vendor CLI commands, evaluation-only work, or skill creation.
+description: Design LLM agent harnesses with typed control loops, tools/state, context/memory, policy, cancellation, recovery, and delegation. Excludes prompt-only, generic app architecture, vendor CLI/config, evaluation-only work, and skill creation.
 ---
 
 # Agent Harness Engineering

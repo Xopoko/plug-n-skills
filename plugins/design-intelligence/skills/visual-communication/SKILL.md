@@ -1,6 +1,6 @@
 ---
 name: visual-communication
-description: "Use when reviewing UI screenshots, golden images, visual diffs, or visual hierarchy for scannability, emphasis, readability, grouping, density, contrast, and perceptual clarity, especially when capture state or test-harness artifacts may be mistaken for product defects. Do not use for screenshot generation/export, CSS recipes, Figma operation, or decorative styling."
+description: "Visual communication audits UI screenshots, golden images, and visual diffs for hierarchy, readability, contrast, capture state, and test-harness artifacts. Do not use for screenshot generation/export, CSS, Figma, or styling."
 ---
 
 # Visual Communication

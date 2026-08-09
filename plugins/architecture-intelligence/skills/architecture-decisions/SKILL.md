@@ -1,6 +1,6 @@
 ---
 name: architecture-decisions
-description: "Use when structural code choices need durable rationale: ADRs, tradeoffs, consequences, reversibility, ownership, review triggers, and validation plans."
+description: "Architecture decisions record structural tradeoffs, consequences, reversibility, ownership, validation, and ADR revisit triggers; skip local choices."
 ---
 
 # Architecture Decisions

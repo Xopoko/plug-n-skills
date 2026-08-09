@@ -1,6 +1,6 @@
 ---
 name: kmp-security-privacy
-description: Review Kotlin Multiplatform security and privacy across secure storage, tokens, Ktor auth, TLS, certificate pinning, logging redaction, runtime protection, platform APIs, and commonMain boundaries.
+description: Kotlin Multiplatform security and privacy review for secure storage, token handling, Ktor auth, TLS and pinning, log redaction, runtime protection, platform APIs, and commonMain boundaries.
 ---
 
 # KMP Security And Privacy

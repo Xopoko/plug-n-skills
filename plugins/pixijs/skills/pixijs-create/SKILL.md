@@ -1,6 +1,6 @@
 ---
 name: pixijs-create
-description: "Use for PixiJS v8 project scaffolding with create-pixi: npm/yarn/pnpm/bun create commands, Vite templates, React template, non-interactive flags, existing project setup."
+description: "PixiJS v8 create-pixi scaffolding creates Vite or React projects with npm, yarn, pnpm, or Bun, supports non-interactive --template flows, and adds PixiJS to existing apps."
 license: MIT
 ---
 

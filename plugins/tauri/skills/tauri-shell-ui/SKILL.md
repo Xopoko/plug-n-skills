@@ -1,6 +1,6 @@
 ---
 name: tauri-shell-ui
-description: "Build or review Tauri 2 desktop shell features: windows, webviews, menus, tray icons, custom titlebars, resources, icons, state, sidecars, opener/shell APIs, deep links, and native-feeling desktop interactions."
+description: Tauri 2 desktop-shell UI implementation and review for windows, webviews, menus, tray icons, titlebars, resources, app icons, state, sidecars, opener/shell APIs, deep links, and native-feeling interactions.
 ---
 
 # Tauri Shell UI

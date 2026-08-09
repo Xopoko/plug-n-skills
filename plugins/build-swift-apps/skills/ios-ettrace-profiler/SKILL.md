@@ -1,6 +1,6 @@
 ---
 name: ios-ettrace-profiler
-description: Capture and interpret symbolicated ETTrace profiles for iOS simulator startup, scrolling, navigation, rendering, runtime flows, before/after comparisons, and CPU hotspots.
+description: "iOS ETTrace Simulator profiles: capture and interpret symbolicated startup, scrolling, navigation, rendering, CPU hotspots, and before/after evidence."
 ---
 
 # iOS ETTrace Profiler

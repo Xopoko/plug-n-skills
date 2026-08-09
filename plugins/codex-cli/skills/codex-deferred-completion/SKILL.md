@@ -1,6 +1,6 @@
 ---
 name: codex-deferred-completion
-description: Use when a long-running executable already publishes an atomic JSON terminal receipt and repeated native-session or remote-status polling would otherwise consume model turns; reserve a private receipt, launch the producer directly, and await it once.
+description: Complete long-running executable work through an existing atomic JSON terminal receipt, avoiding repeated native-session or remote-status polling and wasted model turns.
 ---
 
 # Codex Deferred Completion

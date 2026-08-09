@@ -1,7 +1,7 @@
 {
   "name": "codex-cli",
-  "version": "0.2.4",
-  "description": "Codex CLI operations, automation, producer-native deferred completion, diagnostics, live thread supervision with protected-policy gates and version-aware skill handoffs, plugin and MCP lifecycle, normalized session trace audits, and local environment actions.",
+  "version": "0.2.6",
+  "description": "Diagnose and operate Codex CLI: skill-catalog budgets, exec/review automation, deferred completion, task supervision, plugin/MCP lifecycle, rollout forensics, and app environments.",
   "author": {
     "name": "Xopoko"
   },
@@ -21,8 +21,8 @@
   "mcpServers": "./.codex-mcp.json",
   "interface": {
     "displayName": "Codex CLI",
-    "shortDescription": "Operate, automate, supervise, and debug Codex safely.",
-    "longDescription": "A Codex CLI operations pack for local CLI surface inspection, non-interactive exec and review automation, one-shot producer-native receipt completion without model polling, live multi-thread supervision with protected-policy gates, version-aware skill handoffs, source/runtime separation, versioned evidence corrections, and bounded aggregate-claim checks, plugin marketplace and MCP server lifecycle work, doctor/debug/sandbox/app-server diagnostics, redacted session log forensics, and Codex app local environment actions.",
+    "shortDescription": "Operate Codex CLI and diagnose skill-catalog pressure.",
+    "longDescription": "Diagnose and operate Codex CLI across pinned skill-catalog budget modeling, shortened descriptions and whole-entry omission, local CLI inspection, non-interactive exec/review automation, producer-native deferred completion, live task supervision, version-aware skill handoffs, source/runtime separation, plugin marketplace and MCP lifecycle, doctor/debug/sandbox/app-server failures, redacted rollout forensics, and Codex app environment actions.",
     "developerName": "Xopoko",
     "category": "Coding",
     "capabilities": [
@@ -33,11 +33,12 @@
       "Codex plugin marketplace visibility, install, removal, and cache-check workflows",
       "Codex MCP server list, get, add, remove, login, logout, stdio, HTTP, bearer-token-env, and OAuth workflows",
       "Codex doctor, debug, feature flag, sandbox denial, app-server, remote-control, and remote connection diagnostics",
+      "Version-pinned Codex skill metadata catalog budgeting, root-alias caveats, overflow diagnosis, and supported mitigation boundaries",
       "Live Codex task and thread supervision with cursor-based transitions, attention gates, protected-policy gates, version-aware skill handoffs, source/runtime separation, versioned evidence corrections, aggregate coverage claim boundaries, and privacy-safe capability mining",
       "Redacted Codex rollout JSONL discovery, lineage normalization, active-scope views, deterministic trace audits, search, and log health checks",
       "Codex app local environment.toml actions for Run, Test, Preview, dev server, browser, and simulator workflows"
     ],
-    "defaultPrompt": "Help me operate, automate, or debug the Codex CLI safely.",
+    "defaultPrompt": "Help me operate, automate, or debug Codex CLI behavior, including its model-visible skill catalog, safely.",
     "brandColor": "#0EA5E9",
     "composerIcon": "./assets/icon.png",
     "logo": "./assets/icon.png"

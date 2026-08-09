@@ -1,13 +1,6 @@
 ---
 name: async-state-consistency
-description: >-
-  Use when designing, reviewing, debugging, or testing asynchronous state
-  holders, caches, observers, subscriber notifications, memoized or coalesced
-  loads, replay, or one-shot reads where invalidation, late subscribers, stale
-  in-flight completion, read or publish races, out-of-order completion, or
-  keyed/global ownership can expose stale state. Not for UI-only loading
-  presentation, deployment topology, distributed consensus, or unrelated test
-  flakiness.
+description: "Asynchronous state consistency: cache races, subscriber notifications, memoized/coalesced loads, replay, one-shot reads, invalidation, stale results. Excludes UI-only display, deployment topology, distributed consensus, unrelated flakiness."
 ---
 
 # Async State Consistency

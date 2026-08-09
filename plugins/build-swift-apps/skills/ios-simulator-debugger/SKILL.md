@@ -1,6 +1,6 @@
 ---
 name: ios-simulator-debugger
-description: Build, run, launch, inspect, interact with, and debug iOS simulator apps using XcodeBuildMCP tools, UI descriptions, screenshots, and log capture. Prefer ios-simulator-browser for user-facing browser mirrors, visible simulator proof, or SwiftUI preview viewing.
+description: Debug iOS Simulator apps with XcodeBuildMCP for build, run, launch, UI inspection, interaction, screenshots, and logs; route user-visible mirrors and SwiftUI previews to `ios-simulator-browser`.
 ---
 
 # iOS Simulator Debugger

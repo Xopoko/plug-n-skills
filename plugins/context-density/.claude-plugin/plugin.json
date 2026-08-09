@@ -1,7 +1,7 @@
 {
   "name": "context-density",
-  "version": "0.4.2",
-  "description": "Context design, prompt-contract optimization, typed state validation, research-backed acceptance gates, compression validation, and structural handoff for agent skills, plugins, prompts, docs, and workflows.",
+  "version": "0.4.3",
+  "description": "Agent context audits measure token cost, validate prompt/output contracts and typed state, test compression, and route structural skill or plugin overlap to Capability Workbench.",
   "author": {
     "name": "Xopoko"
   },

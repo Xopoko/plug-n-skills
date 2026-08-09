@@ -1,7 +1,7 @@
 {
   "name": "codex-cli",
-  "version": "0.2.4",
-  "description": "Codex CLI operations, automation, producer-native deferred completion, diagnostics, live thread supervision with protected-policy gates and version-aware skill handoffs, plugin and MCP lifecycle, normalized session trace audits, and local environment actions.",
+  "version": "0.2.6",
+  "description": "Diagnose and operate Codex CLI: skill-catalog budgets, exec/review automation, deferred completion, task supervision, plugin/MCP lifecycle, rollout forensics, and app environments.",
   "author": {
     "name": "Xopoko"
   },

@@ -1,12 +1,9 @@
 ---
 name: agent-guidance-factory
 description: >-
-  Create, refresh, audit, or migrate repository agent guidance files such as
-  AGENTS.md, AGENTS.override.md, CLAUDE.md, .claude/rules, and Cursor rules.
-  Use when a repo needs durable coding-agent instructions, instruction
-  load-order decisions, nested guidance, or cleanup of bloated or stale agent
-  docs. Do not use for ordinary human README or CONTRIBUTING docs unless they
-  must feed agent guidance.
+  Author repository agent guidance such as AGENTS.md, CLAUDE.md, and scoped
+  rules for load order, nested instructions, migration, audits, or stale-doc
+  cleanup. Excludes ordinary human docs unless agents consume them.
 ---
 
 # Agent Guidance Factory

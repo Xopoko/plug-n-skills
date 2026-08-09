@@ -1,6 +1,10 @@
 ---
 name: code-maintenance-audit
-description: "Code maintenance sweep for changed and adjacent code. Use when implementing, modifying, reviewing, or finishing code changes, to catch dead code, stale leftovers, unused imports/variables/types/functions/components, duplicate branches/components/classes, obsolete tests/fixtures, and safe local consolidation opportunities before claiming done. Applies across languages and frameworks. Excludes speculative architecture rewrites, style-only churn, and performance/algorithm optimization unless the user explicitly asks."
+description: >-
+  Changed-code audits find dead or unused symbols, stale leftovers, duplicate
+  logic, obsolete tests, and consolidation before completion. Not for
+  speculative architecture, style churn, or performance optimization unless
+  explicitly requested.
 ---
 
 # Code Maintenance Audit

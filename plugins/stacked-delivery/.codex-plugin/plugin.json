@@ -1,7 +1,7 @@
 {
   "name": "stacked-delivery",
-  "version": "0.1.5",
-  "description": "Dependency-safe delivery for stacked pull requests, merge requests, and dependent changes with exact parent-head binding, descendant invalidation, per-node proof, post-rewrite proof-record freshness, provenance and publication-authority boundaries, safe landing order, and guarded handoff receipts.",
+  "version": "0.1.6",
+  "description": "Stacked pull requests and merge requests preserve exact parent-head binding, descendant invalidation, per-node proof freshness, contribution provenance, publication-authority boundaries, safe landing order, and guarded handoff receipts.",
   "author": {
     "name": "Xopoko"
   },
@@ -18,8 +18,8 @@
   "skills": "./skills/",
   "interface": {
     "displayName": "Stacked Delivery",
-    "shortDescription": "Deliver dependent changes without stack drift.",
-    "longDescription": "A cross-agent, cross-forge workflow for freezing a stacked-change chain, proving every child against the exact current parent head, invalidating descendants after ancestor drift, rebinding proof-bearing descriptions, statuses, checkpoints, and handoffs after rewrites, keeping CI evidence node-local, separating contribution provenance from publication authority, enforcing safe landing prefixes, and handing off current state or prepared history mutations with guarded receipts.",
+    "shortDescription": "Stacked changes retain exact parent heads.",
+    "longDescription": "Stacked pull requests and merge requests preserve exact parent-head binding across rewrites, CI, landing, and handoff. The plugin invalidates descendants after ancestor drift; keeps descriptions, statuses, checkpoints, and handoffs proof-fresh and node-local; separates contribution provenance from publication authority; and supports safe landing prefixes plus guarded current-state or prepared-mutation receipts.",
     "developerName": "Xopoko",
     "category": "Coding",
     "capabilities": [

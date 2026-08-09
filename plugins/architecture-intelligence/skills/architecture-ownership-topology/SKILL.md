@@ -1,6 +1,6 @@
 ---
 name: architecture-ownership-topology
-description: "Use when architecture crosses ownership or review boundaries: CODEOWNERS/OWNERS, module coverage, cross-owned dependencies, socio-technical coordination, and governance paths."
+description: "Architecture ownership analysis maps CODEOWNERS/OWNERS coverage, ownerless modules, cross-owned dependencies, review paths, and governance risk without inferring team health."
 ---
 
 # Architecture Ownership Topology

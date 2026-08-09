@@ -1,6 +1,6 @@
 interface:
   display_name: "Signature Map"
-  short_description: "Index and query code declarations without broad repo scans"
+  short_description: "Code declarations indexed without broad scans"
   default_prompt: "Use $signature-map to refresh the repository's signatures.json declaration index, look up symbols by exact name or regex, and open source code around matched declarations with bounded context."
 policy:
   allow_implicit_invocation: true

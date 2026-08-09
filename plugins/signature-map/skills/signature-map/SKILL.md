@@ -1,6 +1,9 @@
 ---
 name: signature-map
-description: Generates and queries signatures.json, a lightweight declaration index for fast, low-token code navigation. Use when locating type/function/method declarations in a medium or large repository, before broad rg/grep scans, when opening code around a known symbol, or when a repo's signatures.json index looks stale or broken.
+description: >-
+  Signature Map indexes and queries `signatures.json` to locate declarations,
+  survey medium or large repositories, open bounded source around symbols, or
+  diagnose a stale index. Not for call-site search or a single small file.
 ---
 
 # Signature Map

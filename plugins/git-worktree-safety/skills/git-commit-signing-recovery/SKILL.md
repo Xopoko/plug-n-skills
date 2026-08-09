@@ -1,11 +1,12 @@
 ---
 name: git-commit-signing-recovery
 description: >-
-  Use when an ordinary Git commit fails before ref advancement at SSH signing
-  with signer, agent, socket, helper-program, or signing-key evidence. Preserves
-  the staged state, records private recovery state, issues one single-use signed
-  retry authorization after a relevant signer-state change, and verifies the
-  resulting commit, parent, diff, signer identity, and residual worktree state.
+  SSH signing recovery applies when an ordinary Git commit fails before ref
+  advancement with signer, agent, socket, helper-program, or
+  signing-key evidence. Preserves the staged state, records private recovery
+  state, issues one single-use signed retry authorization after a relevant
+  signer-state change, and verifies the resulting commit, parent, diff, signer
+  identity, and residual worktree state.
   Do not use for hook failures or hook-mutated state, conflicts, index or
   object corruption, remote authentication, OpenPGP or X.509 commit signing,
   editor/template or cleanup-transformed commit messages, artifact or release

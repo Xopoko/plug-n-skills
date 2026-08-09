@@ -1,6 +1,6 @@
 ---
 name: pixijs-math
-description: "Use for PixiJS v8 math: Point, ObservablePoint, Matrix, Rectangle, Circle, Ellipse, Polygon, Triangle, hit testing, bounds, toGlobal/toLocal, math-extras."
+description: "PixiJS v8 math transforms Point/ObservablePoint/Matrix, Rectangle/Circle/Ellipse/Polygon/Triangle for hit tests, bounds, toGlobal/toLocal, math-extras."
 license: MIT
 ---
 

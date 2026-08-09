@@ -1,6 +1,6 @@
 interface:
   display_name: "Code Maintenance Audit"
-  short_description: "Dead-code and duplication sweep"
+  short_description: "Audit dead code and duplicates"
   default_prompt: "Use $code-maintenance-audit to review these code changes for dead code, stale leftovers, duplication, and safe consolidation opportunities."
 policy:
   allow_implicit_invocation: false

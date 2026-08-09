@@ -1,7 +1,7 @@
 {
   "name": "tauri",
-  "version": "0.1.2",
-  "description": "Tauri 2 development: project setup/migration, tauri.conf & capabilities/security, Rust IPC & plugins, shell UI, debug/test, and distribution/mobile release.",
+  "version": "0.1.3",
+  "description": "Tauri 2 project scaffolding/migration, security, Rust IPC/plugins, shell UI, debugging, testing, packaging, signing, updates, and desktop/mobile release.",
   "author": {
     "name": "Xopoko"
   },
@@ -18,8 +18,8 @@
   "skills": "./skills/",
   "interface": {
     "displayName": "Tauri",
-    "shortDescription": "Build, secure, test, and package Tauri 2 apps.",
-    "longDescription": "A focused marketplace plugin for Tauri 2 development with agent skills. It provides separate skills for scaffolding and migration, tauri.conf and capabilities, Rust IPC and plugins, shell UI features, debug/test workflows, and distribution/mobile release readiness.",
+    "shortDescription": "Tauri 2 apps: build, secure, test, package.",
+    "longDescription": "Tauri 2 app development for project scaffolding and migration, tauri.conf/capability security, Rust IPC and plugins, desktop-shell UI, debugging and tests, distribution, signing, updater delivery, and Android/iOS release readiness.",
     "developerName": "Xopoko",
     "category": "Coding",
     "capabilities": [
