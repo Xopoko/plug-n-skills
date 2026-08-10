@@ -1,4 +1,4 @@
-![Plug'n Skills dashboard header](assets/plugin-dashboard-header.png)
+![Plug'n Skills dashboard header](assets/plugin-dashboard-header.webp)
 
 # Plug'n Skills
 

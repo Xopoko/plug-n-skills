@@ -1,3 +1,4 @@
+import hashlib
 import json
 import re
 import unittest
@@ -129,14 +130,40 @@ class RepoStructureTest(unittest.TestCase):
 
     def test_readme_dashboard_header_renderer_exists(self):
         readme = (ROOT / "README.md").read_text()
-        self.assertIn("assets/plugin-dashboard-header.png", readme)
+        self.assertIn("assets/plugin-dashboard-header.webp", readme)
         self.assertTrue(
             (ROOT / "assets" / "plugin-dashboard-background.png").is_file(),
             "missing generated dashboard background",
         )
         self.assertTrue(
-            (ROOT / "assets" / "plugin-dashboard-header.png").is_file(),
+            (ROOT / "assets" / "plugin-dashboard-background-prompt.md").is_file(),
+            "missing dashboard background prompt provenance",
+        )
+        self.assertTrue(
+            (ROOT / "assets" / "plugin-dashboard-header.webp").is_file(),
             "missing rendered dashboard header",
+        )
+        self.assertFalse(
+            (ROOT / "assets" / "plugin-dashboard-header.png").exists(),
+            "superseded PNG dashboard header should not be retained",
+        )
+        for font_asset in ("InterVariable.ttf", "LICENSE.txt", "SOURCE.md"):
+            self.assertTrue(
+                (ROOT / "assets" / "fonts" / "inter" / font_asset).is_file(),
+                f"missing dashboard font asset {font_asset}",
+            )
+        font = ROOT / "assets" / "fonts" / "inter" / "InterVariable.ttf"
+        self.assertEqual(
+            hashlib.sha256(font.read_bytes()).hexdigest(),
+            "4989b125924991b90d05b2d16e0e388c48f7d5bb8b30539bbf9c755278d0ccaf",
+        )
+        background = ROOT / "assets" / "plugin-dashboard-background.png"
+        background_prompt = (
+            ROOT / "assets" / "plugin-dashboard-background-prompt.md"
+        ).read_text()
+        self.assertIn(
+            hashlib.sha256(background.read_bytes()).hexdigest(),
+            background_prompt,
         )
         self.assertTrue(
             (ROOT / "scripts" / "render_plugin_dashboard_header.py").is_file(),
