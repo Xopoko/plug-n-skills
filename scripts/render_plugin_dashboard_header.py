@@ -20,37 +20,37 @@ FONT = ROOT / "assets" / "fonts" / "inter" / "InterVariable.ttf"
 WEBP_QUALITY = 94
 
 PLUGIN_LAYOUT_ROWS = [
+    # Agent operating system: runtime, capability lifecycle, context, delivery, hygiene.
     [
-        "build-swift-apps",
-        "codex-cli",
-        "claude-code",
-        "tauri",
-        "kotlin-multiplatform",
-        "git-workflows",
-    ],
-    [
-        "pixijs",
-        "design-intelligence",
-        "architecture-intelligence",
-        "scheduled-automation",
-        "spec-driven-development",
-        "engineering-hygiene",
-    ],
-    [
+        "agent-harness",
         "capability-workbench",
         "context-density",
+        "git-workflows",
+        "engineering-hygiene",
+    ],
+    # Evidence and engineering method, from discovery through maintenance.
+    [
         "scientific-research",
-        "game-design-intelligence",
         "technology-intelligence",
+        "design-intelligence",
+        "architecture-intelligence",
+        "spec-driven-development",
+    ],
+    # Product platforms and domains.
+    [
+        "build-swift-apps",
+        "kotlin-multiplatform",
+        "tauri",
+        "pixijs",
+        "game-design-intelligence",
     ],
 ]
 
 PLUGIN_SUMMARIES = {
     "architecture-intelligence": "Architecture decisions, drift, and topology.",
+    "agent-harness": "Codex, Claude, harnesses, and automation.",
     "build-swift-apps": "Build, debug, profile, and ship Apple apps.",
     "capability-workbench": "Design, vet, package, and repair capabilities.",
-    "claude-code": "Sessions, hooks, plugins, MCP, and diagnostics.",
-    "codex-cli": "Automation, logs, plugins, MCP, and diagnostics.",
     "context-density": "Measure, compress, and verify agent context.",
     "design-intelligence": "Product framing, UX, access, and systems.",
     "engineering-hygiene": "Code, logic, UI, and toolchain maintenance.",
@@ -59,7 +59,6 @@ PLUGIN_SUMMARIES = {
     "kotlin-multiplatform": "KMP migration, Gradle, Compose, and publishing.",
     "pixijs": "PixiJS scenes, rendering, events, and performance.",
     "scientific-research": "Scholarly discovery with auditable evidence.",
-    "scheduled-automation": "Schedulers, canaries, receipts, and missed runs.",
     "spec-driven-development": "Specifications through traceable delivery.",
     "technology-intelligence": "Current evidence for technology decisions.",
     "tauri": "Secure Tauri IPC, testing, packaging, and release.",

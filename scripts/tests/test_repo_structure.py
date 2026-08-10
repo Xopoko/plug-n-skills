@@ -1,3 +1,4 @@
+import ast
 import hashlib
 import json
 import re
@@ -6,23 +7,21 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[2]
 PLUGINS = [
-    "build-swift-apps",
-    "pixijs",
-    "tauri",
-    "scientific-research",
-    "context-density",
+    "agent-harness",
     "capability-workbench",
-    "codex-cli",
-    "scheduled-automation",
+    "context-density",
     "git-workflows",
-    "technology-intelligence",
-    "claude-code",
-    "architecture-intelligence",
-    "design-intelligence",
-    "game-design-intelligence",
-    "kotlin-multiplatform",
-    "spec-driven-development",
     "engineering-hygiene",
+    "scientific-research",
+    "technology-intelligence",
+    "design-intelligence",
+    "architecture-intelligence",
+    "spec-driven-development",
+    "build-swift-apps",
+    "kotlin-multiplatform",
+    "tauri",
+    "pixijs",
+    "game-design-intelligence",
 ]
 
 
@@ -93,9 +92,9 @@ class RepoStructureTest(unittest.TestCase):
         self.assertTrue(wire_helper.is_file(), "missing Workbench icon manifest helper")
         self.assertIn("$imagegen", factory.read_text())
 
-    def test_capability_workbench_harness_contract_exists(self):
-        plugin = ROOT / "plugins" / "capability-workbench"
-        router = (plugin / "skills" / "capability-workbench" / "SKILL.md").read_text()
+    def test_agent_harness_contract_exists(self):
+        plugin = ROOT / "plugins" / "agent-harness"
+        router = (plugin / "skills" / "agent-harness" / "SKILL.md").read_text()
         validator = plugin / "scripts" / "harness" / "validate_harness_artifact.py"
         references = (
             "agent-harness-contracts.md",
@@ -104,10 +103,10 @@ class RepoStructureTest(unittest.TestCase):
             "agent-harness-landscape.md",
         )
 
-        self.assertTrue(validator.is_file(), "missing Workbench harness validator")
+        self.assertTrue(validator.is_file(), "missing Agent Harness validator")
         for name in ("agent-harness-engineering", "agent-harness-evaluation"):
             skill = plugin / "skills" / name / "SKILL.md"
-            self.assertTrue(skill.is_file(), f"missing Workbench harness skill {name}")
+            self.assertTrue(skill.is_file(), f"missing Agent Harness skill {name}")
             self.assertIn(name, router)
             self.assertIn(
                 "scripts/harness/validate_harness_artifact.py",
@@ -125,7 +124,28 @@ class RepoStructureTest(unittest.TestCase):
         for name in references:
             self.assertTrue(
                 (plugin / "references" / name).is_file(),
-                f"missing Workbench harness reference {name}",
+                f"missing Agent Harness reference {name}",
+            )
+
+    def test_harness_surface_is_not_duplicated_in_capability_workbench(self):
+        workbench = ROOT / "plugins" / "capability-workbench"
+        retired_paths = (
+            workbench / "skills" / "agent-harness-engineering",
+            workbench / "skills" / "agent-harness-evaluation",
+            workbench / "scripts" / "harness",
+            workbench / "references" / "agent-harness-contracts.md",
+            workbench / "references" / "agent-harness-patterns.md",
+            workbench / "references" / "agent-harness-evaluation.md",
+            workbench / "references" / "agent-harness-landscape.md",
+        )
+        for path in retired_paths:
+            self.assertFalse(path.exists(), f"duplicated harness surface: {path}")
+
+    def test_retired_plugin_directories_are_absent(self):
+        for name in ("codex-cli", "claude-code", "scheduled-automation"):
+            self.assertFalse(
+                (ROOT / "plugins" / name).exists(),
+                f"retired top-level plugin directory still exists: {name}",
             )
 
     def test_readme_dashboard_header_renderer_exists(self):
@@ -169,6 +189,25 @@ class RepoStructureTest(unittest.TestCase):
             (ROOT / "scripts" / "render_plugin_dashboard_header.py").is_file(),
             "missing dashboard header renderer",
         )
+
+    def test_dashboard_layout_matches_the_canonical_three_row_catalog(self):
+        renderer = ROOT / "scripts" / "render_plugin_dashboard_header.py"
+        tree = ast.parse(renderer.read_text(encoding="utf-8"))
+        assignments = {
+            target.id: ast.literal_eval(node.value)
+            for node in tree.body
+            if isinstance(node, ast.Assign)
+            for target in node.targets
+            if isinstance(target, ast.Name)
+            and target.id in {"PLUGIN_LAYOUT_ROWS", "PLUGIN_SUMMARIES"}
+        }
+
+        rows = assignments["PLUGIN_LAYOUT_ROWS"]
+        summaries = assignments["PLUGIN_SUMMARIES"]
+        flattened = [name for row in rows for name in row]
+        self.assertEqual([5, 5, 5], [len(row) for row in rows])
+        self.assertEqual(PLUGINS, flattened)
+        self.assertEqual(set(PLUGINS), set(summaries))
 
     def test_readme_token_report_generator_exists(self):
         readme = (ROOT / "README.md").read_text()

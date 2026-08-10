@@ -1,7 +1,7 @@
 {
   "name": "capability-workbench",
-  "version": "0.4.2",
-  "description": "Design, audit, synthesize, and package agent skills/plugins with portfolio architecture, trigger metadata, catalog-pressure analysis, guidance authoring, harness engineering/evaluation, vetting, repair, and validation.",
+  "version": "0.5.0",
+  "description": "Design, audit, synthesize, package, install, repair, and reshape agent skills and plugins with trigger metadata, catalog analysis, guidance authoring, vetting, and validation.",
   "author": {
     "name": "Xopoko"
   },
@@ -20,15 +20,14 @@
     "evidence-coverage",
     "validation",
     "repair",
-    "agent-harness",
-    "agent-runtime",
-    "evaluation"
+    "portfolio",
+    "guidance"
   ],
   "skills": "./skills/",
   "interface": {
     "displayName": "Capability Workbench",
     "shortDescription": "Design, audit, and package reliable agent capabilities.",
-    "longDescription": "Design, audit, synthesize, and package reliable agent skills and plugins. Capability Workbench covers web-first discovery, portfolio architecture, trigger metadata and catalog-pressure analysis, skill authoring, AGENTS.md and CLAUDE.md guidance, reality repair, safety vetting, optional installation, plugin packaging, icon workflows, evidence-coverage gates, and context-density tooling. It also supports vendor-neutral LLM agent harness engineering and evaluation across control loops, typed tools and state, memory, policy, isolation, recovery, delegation, traces, benchmarks, and release gates. Runtime comparisons stay version-pinned and distinguish model-visible metadata, entry omission, body loading, disk/cache state, and exact vendor-specific diagnosis. Artifacts remain on the validated source surface unless the user explicitly requests installed or global use.",
+    "longDescription": "Design, audit, synthesize, and package reliable agent skills and plugins. Capability Workbench covers web-first discovery, portfolio architecture, trigger metadata and catalog-pressure analysis, skill authoring, AGENTS.md and CLAUDE.md guidance, reality repair, safety vetting, optional installation, plugin packaging, icon workflows, evidence-coverage gates, and context-density tooling. Runtime comparisons stay version-pinned and distinguish model-visible metadata, entry omission, body loading, disk/cache state, and exact vendor-specific diagnosis. Agent runtime operation, harness engineering, and harness evaluation belong to Agent Harness. Artifacts remain on the validated source surface unless the user explicitly requests installed or global use.",
     "developerName": "Xopoko",
     "category": "Productivity",
     "capabilities": [
@@ -45,9 +44,7 @@
       "Reality repair for stale or false skill, script, plugin, and MCP contracts",
       "Global agent skill installation with safety vetting",
       "Agent marketplace plugin creation and global visibility validation",
-      "Context-density and prompt-contract audits",
-      "Outcome-neutral LLM agent harness engineering",
-      "Harness evaluation, replay, reliability analysis, and release gates"
+      "Context-density and prompt-contract audits"
     ],
     "defaultPrompt": [
       "Use Capability Workbench to decide whether this request needs skill creation, skill installation, plugin packaging, synthesis, or audit.",
@@ -59,9 +56,7 @@
       "Use Capability Workbench to validate a broad audit claim against an exact declared item-by-dimension evidence matrix.",
       "Use Capability Workbench to repair a stale skill, script, plugin, or MCP contract that contradicted live behavior during work.",
       "Use Capability Workbench to generate a coherent imagegen-backed icon for a new marketplace-backed plugin and wire it into the plugin manifest.",
-      "Use Capability Workbench to validate and install an agent marketplace plugin so it is visible globally in the host agent.",
-      "Use Capability Workbench to design or refactor an LLM agent harness with bounded control, typed tools and state, explicit policy, recovery, and an evaluation handoff.",
-      "Use Capability Workbench to build an evidence-backed evaluation, replay, or release gate for an LLM agent harness."
+      "Use Capability Workbench to validate and install an agent marketplace plugin so it is visible globally in the host agent."
     ],
     "brandColor": "#0F766E",
     "composerIcon": "./assets/icon.png",

@@ -232,7 +232,7 @@ For script or validator changes, run the relevant tests:
 
 ```bash
 python3 -m unittest discover -s scripts/tests
-python3 -m unittest discover -s plugins/codex-cli/tests
+python3 -m unittest discover -s plugins/agent-harness/tests
 ```
 
 For README token-table changes, regenerate or verify the report:

@@ -22,6 +22,9 @@ from agent_target import resolve_agent  # noqa: E402
 
 
 LEGACY_PLUGIN_RENAMES = {
+    "codex-cli": "agent-harness",
+    "claude-code": "agent-harness",
+    "scheduled-automation": "agent-harness",
     "gitlab-review": "git-workflows",
     "stacked-delivery": "git-workflows",
     "git-worktree-safety": "git-workflows",

@@ -75,7 +75,8 @@ After material metadata or portfolio changes, bind the target runtime, exact
 version, enabled inventory, and model context before claiming visibility.
 Interpret full metadata, shortened metadata, identity-only entries,
 whole-entry omission, and empty output as distinct inventory-level states.
-Route exact Codex budget and current-session diagnosis to `codex-cli`; return
+Route exact Codex budget and current-session diagnosis to the `codex-cli` skill
+in `agent-harness`; return
 here to repair the trigger prefix, vocabulary, or adjacent-skill boundary.
 
 Audit a source inventory with:

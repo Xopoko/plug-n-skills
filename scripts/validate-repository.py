@@ -12,23 +12,21 @@ from typing import Any
 
 
 PLUGIN_NAMES = [
-    "build-swift-apps",
-    "pixijs",
-    "tauri",
-    "scientific-research",
-    "context-density",
+    "agent-harness",
     "capability-workbench",
-    "codex-cli",
-    "scheduled-automation",
+    "context-density",
     "git-workflows",
-    "technology-intelligence",
-    "claude-code",
-    "architecture-intelligence",
-    "design-intelligence",
-    "game-design-intelligence",
-    "kotlin-multiplatform",
-    "spec-driven-development",
     "engineering-hygiene",
+    "scientific-research",
+    "technology-intelligence",
+    "design-intelligence",
+    "architecture-intelligence",
+    "spec-driven-development",
+    "build-swift-apps",
+    "kotlin-multiplatform",
+    "tauri",
+    "pixijs",
+    "game-design-intelligence",
 ]
 
 TEXT_EXTENSIONS = {
@@ -230,7 +228,7 @@ def main() -> None:
             )
 
     errors.extend(validate_marketplace(root))
-    errors.extend(validate_capability_workbench_harness_surface(root))
+    errors.extend(validate_agent_harness_surface(root))
     errors.extend(scan_files(root))
 
     if errors:
@@ -305,11 +303,11 @@ def validate_marketplace(root: Path) -> list[str]:
     return errors
 
 
-def validate_capability_workbench_harness_surface(root: Path) -> list[str]:
-    """Keep the Workbench harness routes, contracts, and validator coherent."""
+def validate_agent_harness_surface(root: Path) -> list[str]:
+    """Keep the Agent Harness routes, contracts, and validator coherent."""
     errors: list[str] = []
-    plugin = root / "plugins" / "capability-workbench"
-    router = plugin / "skills" / "capability-workbench" / "SKILL.md"
+    plugin = root / "plugins" / "agent-harness"
+    router = plugin / "skills" / "agent-harness" / "SKILL.md"
     validator = plugin / "scripts" / "harness" / "validate_harness_artifact.py"
     skill_names = ("agent-harness-engineering", "agent-harness-evaluation")
     reference_names = (
@@ -328,22 +326,22 @@ def validate_capability_workbench_harness_surface(root: Path) -> list[str]:
     for name in skill_names:
         skill = plugin / "skills" / name / "SKILL.md"
         if not skill.is_file():
-            errors.append(f"plugins/capability-workbench: missing harness skill {name}")
+            errors.append(f"plugins/agent-harness: missing harness skill {name}")
             continue
         text = skill.read_text(encoding="utf-8")
         if "scripts/harness/validate_harness_artifact.py" not in text:
             errors.append(
-                f"plugins/capability-workbench/skills/{name}/SKILL.md: "
+                f"plugins/agent-harness/skills/{name}/SKILL.md: "
                 "missing shared harness artifact validation command"
             )
         if name not in router_text:
             errors.append(
-                f"plugins/capability-workbench/skills/capability-workbench/SKILL.md: "
+                f"plugins/agent-harness/skills/agent-harness/SKILL.md: "
                 f"missing route for {name}"
             )
 
     if not validator.is_file():
-        errors.append("plugins/capability-workbench: missing harness artifact validator")
+        errors.append("plugins/agent-harness: missing harness artifact validator")
         validator_text = ""
     else:
         validator_text = validator.read_text(encoding="utf-8")
@@ -351,18 +349,18 @@ def validate_capability_workbench_harness_surface(root: Path) -> list[str]:
     for name in reference_names:
         path = plugin / "references" / name
         if not path.is_file():
-            errors.append(f"plugins/capability-workbench: missing harness reference {name}")
+            errors.append(f"plugins/agent-harness: missing harness reference {name}")
 
     contracts = plugin / "references" / "agent-harness-contracts.md"
     contracts_text = contracts.read_text(encoding="utf-8") if contracts.is_file() else ""
     for schema in schema_names:
         if schema not in contracts_text:
             errors.append(
-                f"plugins/capability-workbench/references/agent-harness-contracts.md: missing {schema}"
+                f"plugins/agent-harness/references/agent-harness-contracts.md: missing {schema}"
             )
         if schema not in validator_text:
             errors.append(
-                f"plugins/capability-workbench/scripts/harness/validate_harness_artifact.py: missing {schema}"
+                f"plugins/agent-harness/scripts/harness/validate_harness_artifact.py: missing {schema}"
             )
 
     skill_schema_contracts = {
@@ -378,7 +376,7 @@ def validate_capability_workbench_harness_surface(root: Path) -> list[str]:
         for schema in required_schemas:
             if schema not in text:
                 errors.append(
-                    f"plugins/capability-workbench/skills/{skill_name}/SKILL.md: missing {schema}"
+                    f"plugins/agent-harness/skills/{skill_name}/SKILL.md: missing {schema}"
                 )
 
     return errors

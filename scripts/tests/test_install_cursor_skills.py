@@ -54,6 +54,34 @@ class CursorInstallerTest(unittest.TestCase):
                 ["git-workflows"],
             )
 
+    def test_legacy_harness_plugin_names_route_to_one_consolidated_plugin(self):
+        selected, unknown = install_cursor_skills.select_plugins(
+            ["agent-harness", "capability-workbench"],
+            ["codex-cli", "claude-code", "scheduled-automation"],
+            [],
+        )
+
+        self.assertEqual(unknown, [])
+        self.assertEqual(selected, ["agent-harness"])
+
+    def test_legacy_harness_alias_conflicts_with_canonical_exclusion(self):
+        with self.assertRaises(SystemExit):
+            install_cursor_skills.select_plugins(
+                ["agent-harness"],
+                ["claude-code"],
+                ["agent-harness"],
+            )
+
+    def test_legacy_harness_alias_excludes_canonical_default(self):
+        selected, unknown = install_cursor_skills.select_plugins(
+            ["agent-harness", "capability-workbench"],
+            [],
+            ["scheduled-automation"],
+        )
+
+        self.assertEqual(unknown, [])
+        self.assertEqual(selected, ["capability-workbench"])
+
 
 if __name__ == "__main__":
     unittest.main()

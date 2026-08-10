@@ -1,0 +1,85 @@
+{
+  "schema": "agent_harness.router_trigger_cases.v1",
+  "should_route": [
+    {
+      "id": "harness-control-loop",
+      "prompt": "Design a typed LLM control loop with policy, checkpoints, cancellation, and recovery.",
+      "expected_leaf": "agent-harness-engineering"
+    },
+    {
+      "id": "harness-release-gate",
+      "prompt": "Replay this agent harness under tool failures and build a reliability release gate.",
+      "expected_leaf": "agent-harness-evaluation"
+    },
+    {
+      "id": "codex-exec",
+      "prompt": "Run Codex non-interactively with JSONL and a last-message receipt.",
+      "expected_leaf": "codex-exec-automation"
+    },
+    {
+      "id": "codex-rollout",
+      "prompt": "Find this exact Codex task by thread id and reconstruct its rollout trace.",
+      "expected_leaf": "codex-log-reader"
+    },
+    {
+      "id": "deferred-completion",
+      "prompt": "Await one producer-native terminal receipt without repeated model polling.",
+      "expected_leaf": "codex-deferred-completion"
+    },
+    {
+      "id": "claude-print",
+      "prompt": "Automate Claude Code print mode with stream-json and a JSON schema.",
+      "expected_leaf": "claude-print-automation"
+    },
+    {
+      "id": "claude-hooks",
+      "prompt": "Diagnose Claude Code hooks, settings sources, and tool permissions.",
+      "expected_leaf": "claude-hooks-settings"
+    },
+    {
+      "id": "vendor-mcp",
+      "prompt": "Inspect and repair the Codex or Claude MCP server lifecycle for this agent runtime.",
+      "expected_leaf_any": [
+        "codex-plugin-mcp-manager",
+        "claude-plugin-mcp-manager"
+      ]
+    },
+    {
+      "id": "claude-session",
+      "prompt": "Resume a Claude Code PR-linked session in an isolated worktree.",
+      "expected_leaf": "claude-agent-worktrees"
+    },
+    {
+      "id": "scheduler-proof",
+      "prompt": "Prove the current Windows Task Scheduler run came from its native trigger, not a demand run.",
+      "expected_leaf": "scheduled-automation-runtime"
+    }
+  ],
+  "should_not_route": [
+    {
+      "id": "skill-authoring",
+      "prompt": "Create and package a reusable Codex skill plugin with better trigger metadata.",
+      "expected_owner": "capability-workbench"
+    },
+    {
+      "id": "plugin-portfolio",
+      "prompt": "Audit this plugin portfolio and decide which skills should merge or move.",
+      "expected_owner": "capability-workbench"
+    },
+    {
+      "id": "generic-architecture",
+      "prompt": "Refactor service boundaries and dependency direction in this ordinary application.",
+      "expected_owner": "architecture-intelligence"
+    },
+    {
+      "id": "ordinary-app-bug",
+      "prompt": "Fix this React form validation bug.",
+      "expected_owner": null
+    },
+    {
+      "id": "cloud-scheduler",
+      "prompt": "Configure this managed cloud scheduler service.",
+      "expected_owner": null
+    }
+  ]
+}

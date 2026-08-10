@@ -1,0 +1,1807 @@
+{
+  "schema": "agent_harness.portfolio_migration.v1",
+  "source_snapshot": {
+    "commit": "703c99cee30b663aaf2234e28fccdb86e820fc5e",
+    "root_tree": "bfce3b635eb39021d83f8d22da8f984bfaa9307f",
+    "git_object_format": "sha1",
+    "content_hash_algorithm": "sha256",
+    "blob_resolver": "git show <commit>:<source_path>",
+    "retired_plugin_file_count": 60,
+    "workbench_harness_file_count": 9,
+    "entry_count": 69,
+    "source_roots": [
+      {
+        "source_root": "plugins/codex-cli",
+        "coverage": "complete_retired_plugin_tree",
+        "git_tree": "0178af8f653dc0b62ee7f41c3e4d90be7809677e",
+        "expected_file_count": 33
+      },
+      {
+        "source_root": "plugins/claude-code",
+        "coverage": "complete_retired_plugin_tree",
+        "git_tree": "3cbe1f9222a52df1df91b4b420206f6d7e4b5cb7",
+        "expected_file_count": 15
+      },
+      {
+        "source_root": "plugins/scheduled-automation",
+        "coverage": "complete_retired_plugin_tree",
+        "git_tree": "2aa8f20e884bd199d9a1800f14c1bbc240b20d22",
+        "expected_file_count": 12
+      },
+      {
+        "source_root": "plugins/capability-workbench",
+        "coverage": "selected_harness_files",
+        "git_tree": "45e6a6b3365bff29284e4b253fedd6a74e1d614d",
+        "expected_file_count": 9,
+        "selected_paths": [
+          "plugins/capability-workbench/skills/agent-harness-engineering/SKILL.md",
+          "plugins/capability-workbench/skills/agent-harness-engineering/agents/openai.yaml",
+          "plugins/capability-workbench/skills/agent-harness-evaluation/SKILL.md",
+          "plugins/capability-workbench/skills/agent-harness-evaluation/agents/openai.yaml",
+          "plugins/capability-workbench/references/agent-harness-contracts.md",
+          "plugins/capability-workbench/references/agent-harness-evaluation.md",
+          "plugins/capability-workbench/references/agent-harness-landscape.md",
+          "plugins/capability-workbench/references/agent-harness-patterns.md",
+          "plugins/capability-workbench/scripts/harness/validate_harness_artifact.py"
+        ]
+      }
+    ],
+    "entries": [
+      {
+        "source_path": "plugins/capability-workbench/references/agent-harness-contracts.md",
+        "source_plugin": "capability-workbench",
+        "source_git_blob": "f3ab68a336bab4bc4b9da7e4ec3e0106ed3c7913",
+        "source_bytes": 14625,
+        "source_sha256": "07ba1477a988c3d179500ffc5ce7d42834059f4b313d54b4c8d752034daa7480"
+      },
+      {
+        "source_path": "plugins/capability-workbench/references/agent-harness-evaluation.md",
+        "source_plugin": "capability-workbench",
+        "source_git_blob": "98d94444ba256e6e252c39ead82e9ee22c6ac613",
+        "source_bytes": 11011,
+        "source_sha256": "51f89b92a5ec252f3cf1f775f02d812f754d74b3c96e21e6e1368ce5d0d94f56"
+      },
+      {
+        "source_path": "plugins/capability-workbench/references/agent-harness-landscape.md",
+        "source_plugin": "capability-workbench",
+        "source_git_blob": "0afef9e6724e3017454d422df92017c5f231f51d",
+        "source_bytes": 11438,
+        "source_sha256": "2eb94c8c27cb983fc8af79cebc4b99dceee871a9982efa70de371a6978dd85b4"
+      },
+      {
+        "source_path": "plugins/capability-workbench/references/agent-harness-patterns.md",
+        "source_plugin": "capability-workbench",
+        "source_git_blob": "99843ff830c57ceeb1149845369f2b92724268eb",
+        "source_bytes": 10177,
+        "source_sha256": "ec158826253971040f10267e079161a903bc6325103c2c0d3976e5f89d824716"
+      },
+      {
+        "source_path": "plugins/capability-workbench/scripts/harness/validate_harness_artifact.py",
+        "source_plugin": "capability-workbench",
+        "source_git_blob": "89b3c2f068b4b561302abd46951b49d598d06b54",
+        "source_bytes": 31439,
+        "source_sha256": "af36c1b20f22801d9e0d0b6a77fff80dbd39371223465710b492d026f9d38ab2"
+      },
+      {
+        "source_path": "plugins/capability-workbench/skills/agent-harness-engineering/SKILL.md",
+        "source_plugin": "capability-workbench",
+        "source_git_blob": "7e57cbee35513187b97c4114c3edbbb26ced50fa",
+        "source_bytes": 6263,
+        "source_sha256": "ed78401dbd6329ae9ceec8aa601fd5ba819bab7de3073ef08dbe1edde1b0a379"
+      },
+      {
+        "source_path": "plugins/capability-workbench/skills/agent-harness-engineering/agents/openai.yaml",
+        "source_plugin": "capability-workbench",
+        "source_git_blob": "4a43ec3383b88e4b18bb1e3e81ddb988633cdbd2",
+        "source_bytes": 507,
+        "source_sha256": "05a947a9bf398a364f1b6910730e58e0c34f9e55b9b26a51abd24a26e33727a7"
+      },
+      {
+        "source_path": "plugins/capability-workbench/skills/agent-harness-evaluation/SKILL.md",
+        "source_plugin": "capability-workbench",
+        "source_git_blob": "977a50c7716acea84bce164387a6a612ab006d6b",
+        "source_bytes": 6279,
+        "source_sha256": "4cca09e1ffc97a9a48f7214279392b49bc488bb41e41d549f2248196f45a7188"
+      },
+      {
+        "source_path": "plugins/capability-workbench/skills/agent-harness-evaluation/agents/openai.yaml",
+        "source_plugin": "capability-workbench",
+        "source_git_blob": "59ed8659c3a3b39ec5b624a45e85e37ae332815b",
+        "source_bytes": 516,
+        "source_sha256": "d93c191633cec3e594ee4d7724c592933932c8810a0814d877a01c1c821ac950"
+      },
+      {
+        "source_path": "plugins/claude-code/.claude-plugin/plugin.json",
+        "source_plugin": "claude-code",
+        "source_git_blob": "6628d5791934f67513df7ab6d01e629425309373",
+        "source_bytes": 417,
+        "source_sha256": "549aa9ad4d6826a43a6afbc2085c53a41055f8ac438e77a2dd9338a54e658b9b"
+      },
+      {
+        "source_path": "plugins/claude-code/.codex-plugin/plugin.json",
+        "source_plugin": "claude-code",
+        "source_git_blob": "25c31ddad4abfe7f129306c84099f596ffb8fb75",
+        "source_bytes": 2192,
+        "source_sha256": "7f8c324289e76e987736cf44305d9902dcd8ae5a821a67feeba1e0abf8e55f74"
+      },
+      {
+        "source_path": "plugins/claude-code/README.md",
+        "source_plugin": "claude-code",
+        "source_git_blob": "d3b3dc94ee0f7e1a65da087fb0293f27263cec62",
+        "source_bytes": 1576,
+        "source_sha256": "b9141c93ab4d66643cb6b63a94dbad4d5689ee79940640b62ec2ca06f6bb01b7"
+      },
+      {
+        "source_path": "plugins/claude-code/assets/icon.png",
+        "source_plugin": "claude-code",
+        "source_git_blob": "29d4786dedb543b1b6ca4b712298ff6543e4c02d",
+        "source_bytes": 1062838,
+        "source_sha256": "ef2f816d40bec6bc40dd15097265f000d2d8af35b67c29e3a84014e2b9597536"
+      },
+      {
+        "source_path": "plugins/claude-code/assets/icon.svg",
+        "source_plugin": "claude-code",
+        "source_git_blob": "b415d78ef40ed9fb3e0eb33da0f6eabc3c0d0a34",
+        "source_bytes": 649,
+        "source_sha256": "8237c5cf1a19ddde5ca0527fdb206c12c6b160ef08beed1390050de055232dfa"
+      },
+      {
+        "source_path": "plugins/claude-code/references/cli-operation-contracts.md",
+        "source_plugin": "claude-code",
+        "source_git_blob": "f364c42c3d1fcd569aa0b5d221c02ab8c679bcef",
+        "source_bytes": 3971,
+        "source_sha256": "5f57f83f9c431cec02249b9631327e987012bf01404c8613d7eb94376e18ac7c"
+      },
+      {
+        "source_path": "plugins/claude-code/references/hooks-settings.md",
+        "source_plugin": "claude-code",
+        "source_git_blob": "835d8c11dbacc0a651275350c68eaf4ff9f4b7bd",
+        "source_bytes": 2962,
+        "source_sha256": "d44416d13b9982b4888f794d15f7042d89133724f263200cf29fcf5c8ce90810"
+      },
+      {
+        "source_path": "plugins/claude-code/scripts/claude_code_inspector.py",
+        "source_plugin": "claude-code",
+        "source_git_blob": "e70b8e187c931239776210ca4f449c9e39e0094d",
+        "source_bytes": 8823,
+        "source_sha256": "a45dc1190cf9259c2c4ece5e6fc5a137a36b7b7d71a1004ed256de0e6950dfea"
+      },
+      {
+        "source_path": "plugins/claude-code/skills/claude-agent-worktrees/SKILL.md",
+        "source_plugin": "claude-code",
+        "source_git_blob": "06d9e5396bc86fcf7b30f60698f77d63ed42b504",
+        "source_bytes": 3664,
+        "source_sha256": "f4ff87d8103522cda9bc4118c41475be37e35997a04623a0c7b869b173c262f1"
+      },
+      {
+        "source_path": "plugins/claude-code/skills/claude-code/SKILL.md",
+        "source_plugin": "claude-code",
+        "source_git_blob": "19c5512e8fa17145e43a573401c1f2a92512f2c5",
+        "source_bytes": 3677,
+        "source_sha256": "15eb1278142eb05e40a7a2e9208ab5ee455f67e2e7291df9ca9dc00a4d2cb4d6"
+      },
+      {
+        "source_path": "plugins/claude-code/skills/claude-doctor-debugger/SKILL.md",
+        "source_plugin": "claude-code",
+        "source_git_blob": "0703da33db5d22c26ec556d5671521b4a187ec61",
+        "source_bytes": 3583,
+        "source_sha256": "50358566fe6fb3dd0b23b7c85fc9be1f0b0bb0fcf2659e754c9aeb5386f1364e"
+      },
+      {
+        "source_path": "plugins/claude-code/skills/claude-hooks-settings/SKILL.md",
+        "source_plugin": "claude-code",
+        "source_git_blob": "50837bc6c218cac1ba2551532d7761548eeb5957",
+        "source_bytes": 3538,
+        "source_sha256": "93e531e918949e8c101ff403ed40853c90e1c672a17ddd642144364fffb645bf"
+      },
+      {
+        "source_path": "plugins/claude-code/skills/claude-plugin-mcp-manager/SKILL.md",
+        "source_plugin": "claude-code",
+        "source_git_blob": "e8f82ccf5fd7a92fa174a879fa5596a12c90d17e",
+        "source_bytes": 3921,
+        "source_sha256": "b38446eb7e37dbfd77d4962a1085f272667672e34979721c9385545133db683c"
+      },
+      {
+        "source_path": "plugins/claude-code/skills/claude-print-automation/SKILL.md",
+        "source_plugin": "claude-code",
+        "source_git_blob": "e45164e9e330882c5702a803219f353b1bb31163",
+        "source_bytes": 3946,
+        "source_sha256": "0f7a4675968b8677371f1ea16f0284b995f36dafa9e1f4eadf9255fa90c38beb"
+      },
+      {
+        "source_path": "plugins/claude-code/tests/test_claude_code_inspector.py",
+        "source_plugin": "claude-code",
+        "source_git_blob": "ec7b2377dff2f9aabebdd39bfc1e3a8aba6ae0aa",
+        "source_bytes": 5065,
+        "source_sha256": "af533b2dbe4988ca5656bde72c68fb04b5066cfaf9ff1c452e18ca697e1b289f"
+      },
+      {
+        "source_path": "plugins/codex-cli/.claude-plugin/plugin.json",
+        "source_plugin": "codex-cli",
+        "source_git_blob": "9e348a7b429e6c096130e07ce24b01d7289238ef",
+        "source_bytes": 444,
+        "source_sha256": "2e89b63d933a16a5e211d1f858ba60166bb1531fba7a5502a872e5f2c9ddb48d"
+      },
+      {
+        "source_path": "plugins/codex-cli/.codex-mcp.json",
+        "source_plugin": "codex-cli",
+        "source_git_blob": "a5654f3b7d9d1b82066f7007f575b8db4eab53cb",
+        "source_bytes": 180,
+        "source_sha256": "2edd22dd2f529ae1a4b82134870424b8df036508ff63ec5f1ecb6f5333368c3c"
+      },
+      {
+        "source_path": "plugins/codex-cli/.codex-plugin/plugin.json",
+        "source_plugin": "codex-cli",
+        "source_git_blob": "a7f5eec200f47bf3a9d55fe3c9d1aaa26cd225cc",
+        "source_bytes": 2945,
+        "source_sha256": "c0fc06e74025f575c9d685450af4a72a29c564d83c50df66385e6a0986b92767"
+      },
+      {
+        "source_path": "plugins/codex-cli/.mcp.json",
+        "source_plugin": "codex-cli",
+        "source_git_blob": "c5ec73c63fed33675f805f7c9bbe93e70ac53658",
+        "source_bytes": 187,
+        "source_sha256": "edd7b83046013a859bc1609d2aea39d0fb2d34102e7ba02522866d06ae3d28fd"
+      },
+      {
+        "source_path": "plugins/codex-cli/README.md",
+        "source_plugin": "codex-cli",
+        "source_git_blob": "24af93e7869b930295dd398c3f7e3d5b2bfc9e2b",
+        "source_bytes": 3480,
+        "source_sha256": "674704753ef0fb36e6a1eff916879d987e0eb51df7ebdbeeb18a95995a731974"
+      },
+      {
+        "source_path": "plugins/codex-cli/assets/icon.png",
+        "source_plugin": "codex-cli",
+        "source_git_blob": "ea7ecf8bd7acded03372ca5606a5e67f11c194a9",
+        "source_bytes": 863334,
+        "source_sha256": "fcd23c79c5a76ca58f04280d17c71f330775bfb2595d94b129b59bfddaef6e42"
+      },
+      {
+        "source_path": "plugins/codex-cli/assets/icon.svg",
+        "source_plugin": "codex-cli",
+        "source_git_blob": "1f56c439e4bfe5d8f26523dd14cd0c6c067c88ba",
+        "source_bytes": 647,
+        "source_sha256": "5765a1b0c9ef33ca17a42a57e7e03452889af366c4f73c308acd424a8a493867"
+      },
+      {
+        "source_path": "plugins/codex-cli/lib/native_completion_contract.py",
+        "source_plugin": "codex-cli",
+        "source_git_blob": "3442b7fba26e05986585acb294496a61e4c70701",
+        "source_bytes": 11111,
+        "source_sha256": "a544b05b65ae88f6edc74bdadda79adff44b6896749ef63bf7688aa8f176a692"
+      },
+      {
+        "source_path": "plugins/codex-cli/mcp/server.py",
+        "source_plugin": "codex-cli",
+        "source_git_blob": "8f86e1d010ea6043038956f8cb4c6140f86303a7",
+        "source_bytes": 42064,
+        "source_sha256": "820d44af384277e3f4d53383ab90e03264a60281408b4b01eb5112add032582a"
+      },
+      {
+        "source_path": "plugins/codex-cli/references/cli-operation-contracts.md",
+        "source_plugin": "codex-cli",
+        "source_git_blob": "a759c539d32dbeb00cbcb7c45f5ec5f98488457b",
+        "source_bytes": 3927,
+        "source_sha256": "bb4b0c0195e76ef3e56a8db571d8d10d886dea0285235577739ef52140110391"
+      },
+      {
+        "source_path": "plugins/codex-cli/references/environment-actions.md",
+        "source_plugin": "codex-cli",
+        "source_git_blob": "7fc31fee6e3db23660f4bf96add8dfed25731ccd",
+        "source_bytes": 3714,
+        "source_sha256": "46bffd620e98160fb0f002044f2c7d6b12bf03d51571e480e43d04b4b67f9b9c"
+      },
+      {
+        "source_path": "plugins/codex-cli/references/log-reader-safety.md",
+        "source_plugin": "codex-cli",
+        "source_git_blob": "dc7df63f3382e624beea476d1f77d530bc4052b6",
+        "source_bytes": 5051,
+        "source_sha256": "14073924f8da259e9317f9d13bf8d371f61726d42e9a7729c8a15b46227a832b"
+      },
+      {
+        "source_path": "plugins/codex-cli/references/skill-metadata-catalog-budget.md",
+        "source_plugin": "codex-cli",
+        "source_git_blob": "a6896a2c75ab9c0f7ce0a1feb2126a5b7bfb6bb3",
+        "source_bytes": 8533,
+        "source_sha256": "480d7e7fa77bde72f4228d532b1da355ece49eb7784620526b69e991e5cb934b"
+      },
+      {
+        "source_path": "plugins/codex-cli/references/thread-skill-handoff-contract.md",
+        "source_plugin": "codex-cli",
+        "source_git_blob": "2cd6040a9b65449d6d1c0e68bf568c239586c5db",
+        "source_bytes": 11583,
+        "source_sha256": "4ca7726e3f9d97576113769f0b125195b0260fdda4df2594a20f8428352ad77a"
+      },
+      {
+        "source_path": "plugins/codex-cli/references/thread-supervision-contract.md",
+        "source_plugin": "codex-cli",
+        "source_git_blob": "7387f04edde5a4dc4a1b61dc0f7a09c88aee41b9",
+        "source_bytes": 64893,
+        "source_sha256": "d82c32c31a7508429b5f026ca92aa69ee1aa225d7786fe88453ac2ae4247d431"
+      },
+      {
+        "source_path": "plugins/codex-cli/scripts/codex_cli_inspector.py",
+        "source_plugin": "codex-cli",
+        "source_git_blob": "759a9a13f009206558f8cf7b3f5ba5c2998f4df6",
+        "source_bytes": 7744,
+        "source_sha256": "b8e8c6b251753fe37fa42609826a943a6a1c3ff4c60c1c942ca63bb600403c6c"
+      },
+      {
+        "source_path": "plugins/codex-cli/scripts/codex_log_reader.py",
+        "source_plugin": "codex-cli",
+        "source_git_blob": "e446d9f730f56ac05260f342e26513d053f6fbf7",
+        "source_bytes": 63985,
+        "source_sha256": "3e53ca8653b5ba3d2d84484b0978205503081a957ca12f0487c10077fc7fe452"
+      },
+      {
+        "source_path": "plugins/codex-cli/scripts/codex_skill_catalog_audit.py",
+        "source_plugin": "codex-cli",
+        "source_git_blob": "fc78aac4f9dc7925fa2e01f24c65598daae5a852",
+        "source_bytes": 27392,
+        "source_sha256": "127d9d58fbbdbef830e1f889d1a0a018932d3423aad7dde5909e4c474a8f19b0"
+      },
+      {
+        "source_path": "plugins/codex-cli/scripts/validate_thread_skill_handoff.py",
+        "source_plugin": "codex-cli",
+        "source_git_blob": "520422953ba0383452af8ee37cd1eac400f3a61b",
+        "source_bytes": 29718,
+        "source_sha256": "88fcfc5b3dbd42f8e1e5b19b7b8caa67acdc6942596ef62b6dfb0225b51a40c7"
+      },
+      {
+        "source_path": "plugins/codex-cli/skills/codex-cli/SKILL.md",
+        "source_plugin": "codex-cli",
+        "source_git_blob": "03a8ac460996e3f082af0e648366f94196dcf8a3",
+        "source_bytes": 5247,
+        "source_sha256": "aa37b330d1a99eff1c7cea667dbc31680c41ef6a365ecb423de8dc78c9c87c17"
+      },
+      {
+        "source_path": "plugins/codex-cli/skills/codex-deferred-completion/SKILL.md",
+        "source_plugin": "codex-cli",
+        "source_git_blob": "2d2b57f0527628b79ace104637495ab92fa26eec",
+        "source_bytes": 4945,
+        "source_sha256": "df4b24e9a94f4ae51148885d3cacc63a6887af0b30f7dab320140abaeb17d03c"
+      },
+      {
+        "source_path": "plugins/codex-cli/skills/codex-doctor-debugger/SKILL.md",
+        "source_plugin": "codex-cli",
+        "source_git_blob": "76571969ce94ea574c8235653ebef38c731a92cd",
+        "source_bytes": 5151,
+        "source_sha256": "2f48176796ffae32c0566f82dd1b34c46b93e0d18afc6782d40a522f7901427c"
+      },
+      {
+        "source_path": "plugins/codex-cli/skills/codex-environments/SKILL.md",
+        "source_plugin": "codex-cli",
+        "source_git_blob": "26b6e9e5e436c4aed7d9c228b0f0ec1671667f33",
+        "source_bytes": 4896,
+        "source_sha256": "38b0419d5166e35d487f37494985620712ae0c1864cd806f665a7783f86d3633"
+      },
+      {
+        "source_path": "plugins/codex-cli/skills/codex-exec-automation/SKILL.md",
+        "source_plugin": "codex-cli",
+        "source_git_blob": "aa216906d1d14ebf08e3c680a7b53b79bd39288c",
+        "source_bytes": 4571,
+        "source_sha256": "77a8015e726331e3317fa1d39f3d77376520882a04bcda26b22317025c702db3"
+      },
+      {
+        "source_path": "plugins/codex-cli/skills/codex-log-reader/SKILL.md",
+        "source_plugin": "codex-cli",
+        "source_git_blob": "1959436ab5a4c7ddf574b75d59af6434567265a1",
+        "source_bytes": 5734,
+        "source_sha256": "23480c312dc2ccdf9d28a12d66a4fa0cfbdb3a606756335e4a68fefa0a7763df"
+      },
+      {
+        "source_path": "plugins/codex-cli/skills/codex-plugin-mcp-manager/SKILL.md",
+        "source_plugin": "codex-cli",
+        "source_git_blob": "9664e9dc37a12d2117599ce36e0d53b4f01aa329",
+        "source_bytes": 4987,
+        "source_sha256": "efc1e622ae63176e3f1c19916fea6ccafe98353743e00a3d4c3a97a983e8de40"
+      },
+      {
+        "source_path": "plugins/codex-cli/skills/codex-thread-supervisor/SKILL.md",
+        "source_plugin": "codex-cli",
+        "source_git_blob": "27f753e43738b66bffae859e8354e78d441f2a87",
+        "source_bytes": 14752,
+        "source_sha256": "5049072ba71fdeeb4d1ea50cdb3f619f00ca05e04315078ff6b64c62f78351e8"
+      },
+      {
+        "source_path": "plugins/codex-cli/tests/test_codex_cli_inspector.py",
+        "source_plugin": "codex-cli",
+        "source_git_blob": "000b30f987dd3cd7c5b23e6316798d9e18d33d88",
+        "source_bytes": 4553,
+        "source_sha256": "5007d7a6ec00224126cec54227cda750ac3ec0c0553d3ae5ce4ddf00cc62b7e7"
+      },
+      {
+        "source_path": "plugins/codex-cli/tests/test_codex_log_reader.py",
+        "source_plugin": "codex-cli",
+        "source_git_blob": "5f8ed528f2795ce01e3474ecebc5bf6a0b50555c",
+        "source_bytes": 34457,
+        "source_sha256": "a90b2060c44ed9c01fe39e09cbb29341de11194a3083ace76e982e925a0614b7"
+      },
+      {
+        "source_path": "plugins/codex-cli/tests/test_codex_skill_catalog_audit.py",
+        "source_plugin": "codex-cli",
+        "source_git_blob": "bd0f20b39c89a7c41392649718b1ea65f74edf30",
+        "source_bytes": 7863,
+        "source_sha256": "99a426725c6f604734c9645b31e2c7e6c9b03ad31d53d155d44c49d7e5f15863"
+      },
+      {
+        "source_path": "plugins/codex-cli/tests/test_deferred_completion.py",
+        "source_plugin": "codex-cli",
+        "source_git_blob": "aaba504d3a0342744f017812ebbfd15d6f93dedc",
+        "source_bytes": 31366,
+        "source_sha256": "b1a4864338b6301005e90c7614e78617f8787460f408ac924ddc37842e740f7f"
+      },
+      {
+        "source_path": "plugins/codex-cli/tests/test_thread_skill_handoff_validator.py",
+        "source_plugin": "codex-cli",
+        "source_git_blob": "84c773c18bc2f3c1f827c2ae487705e19760fe94",
+        "source_bytes": 18783,
+        "source_sha256": "0b40d79268384362b9f3ee3c14006af4a3d0e453e534d6c60bb464962e5cbd2a"
+      },
+      {
+        "source_path": "plugins/codex-cli/tests/test_thread_supervision_contract.py",
+        "source_plugin": "codex-cli",
+        "source_git_blob": "2e1158a1cfe2c8eb4fc67ff58308cdcb5a8463fd",
+        "source_bytes": 293251,
+        "source_sha256": "c94845b33c3f740f269a1a01db55313a42c05113e220bea8d1bbe56052a1dfec"
+      },
+      {
+        "source_path": "plugins/scheduled-automation/.claude-plugin/plugin.json",
+        "source_plugin": "scheduled-automation",
+        "source_git_blob": "4833819984740d3a43b4ffef90d16e27b1626b44",
+        "source_bytes": 451,
+        "source_sha256": "e3e89d7014f6a12b0c3ec74ffde2c4e80446c36595d8b1db0dbaf870c86f4469"
+      },
+      {
+        "source_path": "plugins/scheduled-automation/.codex-plugin/plugin.json",
+        "source_plugin": "scheduled-automation",
+        "source_git_blob": "8d864b72046c0de92fc9725b45dcccfb5455f0f0",
+        "source_bytes": 1917,
+        "source_sha256": "67b9b650ec7f67d05c910b1ffe96e13c3bdfe6cc221fd30d2513febd1db94ee0"
+      },
+      {
+        "source_path": "plugins/scheduled-automation/README.md",
+        "source_plugin": "scheduled-automation",
+        "source_git_blob": "3459ce4d610ba84e1e4520d7392fa51c443af67a",
+        "source_bytes": 821,
+        "source_sha256": "c4eb5b2a4d338364ed436ed3f7c9bd927560392521c12c149391bfa35e514319"
+      },
+      {
+        "source_path": "plugins/scheduled-automation/assets/icon-prompt.json",
+        "source_plugin": "scheduled-automation",
+        "source_git_blob": "b7415ed7c146023fff7445fbf13452f0eb13476a",
+        "source_bytes": 1945,
+        "source_sha256": "1f7873ca4fa6e3a969d0a7199ed96814810a225c2ce3796a2bf3d77d20e8d429"
+      },
+      {
+        "source_path": "plugins/scheduled-automation/assets/icon.png",
+        "source_plugin": "scheduled-automation",
+        "source_git_blob": "24a7ba609f4c7fc829a1a6ea73caf457e23d580a",
+        "source_bytes": 1047765,
+        "source_sha256": "55c3580319029cf62e3b52874f993204c9152967eee9e9ea71b8d8806c69749c"
+      },
+      {
+        "source_path": "plugins/scheduled-automation/references/cron-runtime-proof.md",
+        "source_plugin": "scheduled-automation",
+        "source_git_blob": "61e539dc3d25f4d23535ce30cc3d58009459bf58",
+        "source_bytes": 1750,
+        "source_sha256": "cb4abc960fa604c54478610f043ddf3682527b2249e71016884cf5279b3556de"
+      },
+      {
+        "source_path": "plugins/scheduled-automation/references/launchd-runtime-proof.md",
+        "source_plugin": "scheduled-automation",
+        "source_git_blob": "9e033fa5f0cbf562c6713c2f2afe6596c9893c2a",
+        "source_bytes": 2545,
+        "source_sha256": "1c1d2ba9e8d6cf5e49cec3f8acf9303099c67c36da5a9baf1d38a3f1df14f8b7"
+      },
+      {
+        "source_path": "plugins/scheduled-automation/references/scheduled-run-proof-contract.md",
+        "source_plugin": "scheduled-automation",
+        "source_git_blob": "9ae94ddc9e0984d087d490e49fa54309ff6fb420",
+        "source_bytes": 7374,
+        "source_sha256": "1fddf9a49e5509137c540f749fbfe56927c7c1ea611d8522943cabd1288dbdfd"
+      },
+      {
+        "source_path": "plugins/scheduled-automation/references/systemd-timer-runtime-proof.md",
+        "source_plugin": "scheduled-automation",
+        "source_git_blob": "0b1d51e8cd34536e71afb07bb7917599d4513fbd",
+        "source_bytes": 2915,
+        "source_sha256": "b518d72cb0a25b0be92e1a0090ebebc06adcb3723c1b5925cf218a65972da8bd"
+      },
+      {
+        "source_path": "plugins/scheduled-automation/references/task-scheduler-runtime-proof.md",
+        "source_plugin": "scheduled-automation",
+        "source_git_blob": "d87928949803a8481d2eb4d9373e492a039c24c0",
+        "source_bytes": 4413,
+        "source_sha256": "f4d37d707bddc2a37d977d320130e9a77f074a2e6add81bb1be89b980e28121e"
+      },
+      {
+        "source_path": "plugins/scheduled-automation/skills/scheduled-automation-runtime/SKILL.md",
+        "source_plugin": "scheduled-automation",
+        "source_git_blob": "cb643be59e669fe436b544d44100fb798c73a0f3",
+        "source_bytes": 5947,
+        "source_sha256": "94aa8624f2151f1e5b96b94873240763afb59821a524452dca28fcb1a468c587"
+      },
+      {
+        "source_path": "plugins/scheduled-automation/skills/scheduled-automation-runtime/agents/openai.yaml",
+        "source_plugin": "scheduled-automation",
+        "source_git_blob": "18274b837c6cb32654e6496e8ccf860f90946927",
+        "source_bytes": 243,
+        "source_sha256": "bd75d119f981dac303611b67c9c93b96572d3b4254fa456bf1210ce296652a67"
+      }
+    ]
+  },
+  "source_inventory": [
+    {
+      "source_plugin": "capability-workbench",
+      "source_path": "plugins/capability-workbench/references/agent-harness-contracts.md",
+      "disposition": "mapped",
+      "destination_path": "references/agent-harness-contracts.md"
+    },
+    {
+      "source_plugin": "capability-workbench",
+      "source_path": "plugins/capability-workbench/references/agent-harness-evaluation.md",
+      "disposition": "mapped",
+      "destination_path": "references/agent-harness-evaluation.md"
+    },
+    {
+      "source_plugin": "capability-workbench",
+      "source_path": "plugins/capability-workbench/references/agent-harness-landscape.md",
+      "disposition": "mapped",
+      "destination_path": "references/agent-harness-landscape.md"
+    },
+    {
+      "source_plugin": "capability-workbench",
+      "source_path": "plugins/capability-workbench/references/agent-harness-patterns.md",
+      "disposition": "mapped",
+      "destination_path": "references/agent-harness-patterns.md"
+    },
+    {
+      "source_plugin": "capability-workbench",
+      "source_path": "plugins/capability-workbench/scripts/harness/validate_harness_artifact.py",
+      "disposition": "mapped",
+      "destination_path": "scripts/harness/validate_harness_artifact.py"
+    },
+    {
+      "source_plugin": "capability-workbench",
+      "source_path": "plugins/capability-workbench/skills/agent-harness-engineering/SKILL.md",
+      "disposition": "mapped",
+      "destination_path": "skills/agent-harness-engineering/SKILL.md"
+    },
+    {
+      "source_plugin": "capability-workbench",
+      "source_path": "plugins/capability-workbench/skills/agent-harness-engineering/agents/openai.yaml",
+      "disposition": "mapped",
+      "destination_path": "skills/agent-harness-engineering/agents/openai.yaml"
+    },
+    {
+      "source_plugin": "capability-workbench",
+      "source_path": "plugins/capability-workbench/skills/agent-harness-evaluation/SKILL.md",
+      "disposition": "mapped",
+      "destination_path": "skills/agent-harness-evaluation/SKILL.md"
+    },
+    {
+      "source_plugin": "capability-workbench",
+      "source_path": "plugins/capability-workbench/skills/agent-harness-evaluation/agents/openai.yaml",
+      "disposition": "mapped",
+      "destination_path": "skills/agent-harness-evaluation/agents/openai.yaml"
+    },
+    {
+      "source_plugin": "claude-code",
+      "source_path": "plugins/claude-code/.claude-plugin/plugin.json",
+      "disposition": "replaced",
+      "replacement_surface": ".claude-plugin/plugin.json",
+      "reason": "Legacy publication metadata becomes the aligned Agent Harness manifest."
+    },
+    {
+      "source_plugin": "claude-code",
+      "source_path": "plugins/claude-code/.codex-plugin/plugin.json",
+      "disposition": "replaced",
+      "replacement_surface": ".codex-plugin/plugin.json",
+      "reason": "Legacy publication metadata becomes the aligned Agent Harness manifest."
+    },
+    {
+      "source_plugin": "claude-code",
+      "source_path": "plugins/claude-code/README.md",
+      "disposition": "replaced",
+      "replacement_surface": "README.md",
+      "reason": "Three legacy READMEs become one combined Agent Harness README."
+    },
+    {
+      "source_plugin": "claude-code",
+      "source_path": "plugins/claude-code/assets/icon.png",
+      "disposition": "omitted",
+      "reason": "Legacy branding is replaced by the new Agent Harness icon and public provenance."
+    },
+    {
+      "source_plugin": "claude-code",
+      "source_path": "plugins/claude-code/assets/icon.svg",
+      "disposition": "omitted",
+      "reason": "Legacy branding is replaced by the new Agent Harness icon and public provenance."
+    },
+    {
+      "source_plugin": "claude-code",
+      "source_path": "plugins/claude-code/references/cli-operation-contracts.md",
+      "disposition": "mapped",
+      "destination_path": "references/claude-cli-operation-contracts.md"
+    },
+    {
+      "source_plugin": "claude-code",
+      "source_path": "plugins/claude-code/references/hooks-settings.md",
+      "disposition": "mapped",
+      "destination_path": "references/hooks-settings.md"
+    },
+    {
+      "source_plugin": "claude-code",
+      "source_path": "plugins/claude-code/scripts/claude_code_inspector.py",
+      "disposition": "mapped",
+      "destination_path": "scripts/claude_code_inspector.py"
+    },
+    {
+      "source_plugin": "claude-code",
+      "source_path": "plugins/claude-code/skills/claude-agent-worktrees/SKILL.md",
+      "disposition": "mapped",
+      "destination_path": "skills/claude-agent-worktrees/SKILL.md"
+    },
+    {
+      "source_plugin": "claude-code",
+      "source_path": "plugins/claude-code/skills/claude-code/SKILL.md",
+      "disposition": "mapped",
+      "destination_path": "skills/claude-code/SKILL.md"
+    },
+    {
+      "source_plugin": "claude-code",
+      "source_path": "plugins/claude-code/skills/claude-doctor-debugger/SKILL.md",
+      "disposition": "mapped",
+      "destination_path": "skills/claude-doctor-debugger/SKILL.md"
+    },
+    {
+      "source_plugin": "claude-code",
+      "source_path": "plugins/claude-code/skills/claude-hooks-settings/SKILL.md",
+      "disposition": "mapped",
+      "destination_path": "skills/claude-hooks-settings/SKILL.md"
+    },
+    {
+      "source_plugin": "claude-code",
+      "source_path": "plugins/claude-code/skills/claude-plugin-mcp-manager/SKILL.md",
+      "disposition": "mapped",
+      "destination_path": "skills/claude-plugin-mcp-manager/SKILL.md"
+    },
+    {
+      "source_plugin": "claude-code",
+      "source_path": "plugins/claude-code/skills/claude-print-automation/SKILL.md",
+      "disposition": "mapped",
+      "destination_path": "skills/claude-print-automation/SKILL.md"
+    },
+    {
+      "source_plugin": "claude-code",
+      "source_path": "plugins/claude-code/tests/test_claude_code_inspector.py",
+      "disposition": "mapped",
+      "destination_path": "tests/test_claude_code_inspector.py"
+    },
+    {
+      "source_plugin": "codex-cli",
+      "source_path": "plugins/codex-cli/.claude-plugin/plugin.json",
+      "disposition": "replaced",
+      "replacement_surface": ".claude-plugin/plugin.json",
+      "reason": "Legacy publication metadata becomes the aligned Agent Harness manifest."
+    },
+    {
+      "source_plugin": "codex-cli",
+      "source_path": "plugins/codex-cli/.codex-mcp.json",
+      "disposition": "mapped",
+      "destination_path": ".codex-mcp.json"
+    },
+    {
+      "source_plugin": "codex-cli",
+      "source_path": "plugins/codex-cli/.codex-plugin/plugin.json",
+      "disposition": "replaced",
+      "replacement_surface": ".codex-plugin/plugin.json",
+      "reason": "Legacy publication metadata becomes the aligned Agent Harness manifest."
+    },
+    {
+      "source_plugin": "codex-cli",
+      "source_path": "plugins/codex-cli/.mcp.json",
+      "disposition": "mapped",
+      "destination_path": ".mcp.json"
+    },
+    {
+      "source_plugin": "codex-cli",
+      "source_path": "plugins/codex-cli/README.md",
+      "disposition": "replaced",
+      "replacement_surface": "README.md",
+      "reason": "Three legacy READMEs become one combined Agent Harness README."
+    },
+    {
+      "source_plugin": "codex-cli",
+      "source_path": "plugins/codex-cli/assets/icon.png",
+      "disposition": "omitted",
+      "reason": "Legacy branding is replaced by the new Agent Harness icon and public provenance."
+    },
+    {
+      "source_plugin": "codex-cli",
+      "source_path": "plugins/codex-cli/assets/icon.svg",
+      "disposition": "omitted",
+      "reason": "Legacy branding is replaced by the new Agent Harness icon and public provenance."
+    },
+    {
+      "source_plugin": "codex-cli",
+      "source_path": "plugins/codex-cli/lib/native_completion_contract.py",
+      "disposition": "mapped",
+      "destination_path": "lib/native_completion_contract.py"
+    },
+    {
+      "source_plugin": "codex-cli",
+      "source_path": "plugins/codex-cli/mcp/server.py",
+      "disposition": "mapped",
+      "destination_path": "mcp/server.py"
+    },
+    {
+      "source_plugin": "codex-cli",
+      "source_path": "plugins/codex-cli/references/cli-operation-contracts.md",
+      "disposition": "mapped",
+      "destination_path": "references/codex-cli-operation-contracts.md"
+    },
+    {
+      "source_plugin": "codex-cli",
+      "source_path": "plugins/codex-cli/references/environment-actions.md",
+      "disposition": "mapped",
+      "destination_path": "references/environment-actions.md"
+    },
+    {
+      "source_plugin": "codex-cli",
+      "source_path": "plugins/codex-cli/references/log-reader-safety.md",
+      "disposition": "mapped",
+      "destination_path": "references/log-reader-safety.md"
+    },
+    {
+      "source_plugin": "codex-cli",
+      "source_path": "plugins/codex-cli/references/skill-metadata-catalog-budget.md",
+      "disposition": "mapped",
+      "destination_path": "references/skill-metadata-catalog-budget.md"
+    },
+    {
+      "source_plugin": "codex-cli",
+      "source_path": "plugins/codex-cli/references/thread-skill-handoff-contract.md",
+      "disposition": "mapped",
+      "destination_path": "references/thread-skill-handoff-contract.md"
+    },
+    {
+      "source_plugin": "codex-cli",
+      "source_path": "plugins/codex-cli/references/thread-supervision-contract.md",
+      "disposition": "mapped",
+      "destination_path": "references/thread-supervision-contract.md"
+    },
+    {
+      "source_plugin": "codex-cli",
+      "source_path": "plugins/codex-cli/scripts/codex_cli_inspector.py",
+      "disposition": "mapped",
+      "destination_path": "scripts/codex_cli_inspector.py"
+    },
+    {
+      "source_plugin": "codex-cli",
+      "source_path": "plugins/codex-cli/scripts/codex_log_reader.py",
+      "disposition": "mapped",
+      "destination_path": "scripts/codex_log_reader.py"
+    },
+    {
+      "source_plugin": "codex-cli",
+      "source_path": "plugins/codex-cli/scripts/codex_skill_catalog_audit.py",
+      "disposition": "mapped",
+      "destination_path": "scripts/codex_skill_catalog_audit.py"
+    },
+    {
+      "source_plugin": "codex-cli",
+      "source_path": "plugins/codex-cli/scripts/validate_thread_skill_handoff.py",
+      "disposition": "mapped",
+      "destination_path": "scripts/validate_thread_skill_handoff.py"
+    },
+    {
+      "source_plugin": "codex-cli",
+      "source_path": "plugins/codex-cli/skills/codex-cli/SKILL.md",
+      "disposition": "mapped",
+      "destination_path": "skills/codex-cli/SKILL.md"
+    },
+    {
+      "source_plugin": "codex-cli",
+      "source_path": "plugins/codex-cli/skills/codex-deferred-completion/SKILL.md",
+      "disposition": "mapped",
+      "destination_path": "skills/codex-deferred-completion/SKILL.md"
+    },
+    {
+      "source_plugin": "codex-cli",
+      "source_path": "plugins/codex-cli/skills/codex-doctor-debugger/SKILL.md",
+      "disposition": "mapped",
+      "destination_path": "skills/codex-doctor-debugger/SKILL.md"
+    },
+    {
+      "source_plugin": "codex-cli",
+      "source_path": "plugins/codex-cli/skills/codex-environments/SKILL.md",
+      "disposition": "mapped",
+      "destination_path": "skills/codex-environments/SKILL.md"
+    },
+    {
+      "source_plugin": "codex-cli",
+      "source_path": "plugins/codex-cli/skills/codex-exec-automation/SKILL.md",
+      "disposition": "mapped",
+      "destination_path": "skills/codex-exec-automation/SKILL.md"
+    },
+    {
+      "source_plugin": "codex-cli",
+      "source_path": "plugins/codex-cli/skills/codex-log-reader/SKILL.md",
+      "disposition": "mapped",
+      "destination_path": "skills/codex-log-reader/SKILL.md"
+    },
+    {
+      "source_plugin": "codex-cli",
+      "source_path": "plugins/codex-cli/skills/codex-plugin-mcp-manager/SKILL.md",
+      "disposition": "mapped",
+      "destination_path": "skills/codex-plugin-mcp-manager/SKILL.md"
+    },
+    {
+      "source_plugin": "codex-cli",
+      "source_path": "plugins/codex-cli/skills/codex-thread-supervisor/SKILL.md",
+      "disposition": "mapped",
+      "destination_path": "skills/codex-thread-supervisor/SKILL.md"
+    },
+    {
+      "source_plugin": "codex-cli",
+      "source_path": "plugins/codex-cli/tests/test_codex_cli_inspector.py",
+      "disposition": "mapped",
+      "destination_path": "tests/test_codex_cli_inspector.py"
+    },
+    {
+      "source_plugin": "codex-cli",
+      "source_path": "plugins/codex-cli/tests/test_codex_log_reader.py",
+      "disposition": "mapped",
+      "destination_path": "tests/test_codex_log_reader.py"
+    },
+    {
+      "source_plugin": "codex-cli",
+      "source_path": "plugins/codex-cli/tests/test_codex_skill_catalog_audit.py",
+      "disposition": "mapped",
+      "destination_path": "tests/test_codex_skill_catalog_audit.py"
+    },
+    {
+      "source_plugin": "codex-cli",
+      "source_path": "plugins/codex-cli/tests/test_deferred_completion.py",
+      "disposition": "mapped",
+      "destination_path": "tests/test_deferred_completion.py"
+    },
+    {
+      "source_plugin": "codex-cli",
+      "source_path": "plugins/codex-cli/tests/test_thread_skill_handoff_validator.py",
+      "disposition": "mapped",
+      "destination_path": "tests/test_thread_skill_handoff_validator.py"
+    },
+    {
+      "source_plugin": "codex-cli",
+      "source_path": "plugins/codex-cli/tests/test_thread_supervision_contract.py",
+      "disposition": "mapped",
+      "destination_path": "tests/test_thread_supervision_contract.py"
+    },
+    {
+      "source_plugin": "scheduled-automation",
+      "source_path": "plugins/scheduled-automation/.claude-plugin/plugin.json",
+      "disposition": "replaced",
+      "replacement_surface": ".claude-plugin/plugin.json",
+      "reason": "Legacy publication metadata becomes the aligned Agent Harness manifest."
+    },
+    {
+      "source_plugin": "scheduled-automation",
+      "source_path": "plugins/scheduled-automation/.codex-plugin/plugin.json",
+      "disposition": "replaced",
+      "replacement_surface": ".codex-plugin/plugin.json",
+      "reason": "Legacy publication metadata becomes the aligned Agent Harness manifest."
+    },
+    {
+      "source_plugin": "scheduled-automation",
+      "source_path": "plugins/scheduled-automation/README.md",
+      "disposition": "replaced",
+      "replacement_surface": "README.md",
+      "reason": "Three legacy READMEs become one combined Agent Harness README."
+    },
+    {
+      "source_plugin": "scheduled-automation",
+      "source_path": "plugins/scheduled-automation/assets/icon-prompt.json",
+      "disposition": "omitted",
+      "reason": "Legacy branding is replaced by the new Agent Harness icon and public provenance."
+    },
+    {
+      "source_plugin": "scheduled-automation",
+      "source_path": "plugins/scheduled-automation/assets/icon.png",
+      "disposition": "omitted",
+      "reason": "Legacy branding is replaced by the new Agent Harness icon and public provenance."
+    },
+    {
+      "source_plugin": "scheduled-automation",
+      "source_path": "plugins/scheduled-automation/references/cron-runtime-proof.md",
+      "disposition": "mapped",
+      "destination_path": "references/cron-runtime-proof.md"
+    },
+    {
+      "source_plugin": "scheduled-automation",
+      "source_path": "plugins/scheduled-automation/references/launchd-runtime-proof.md",
+      "disposition": "mapped",
+      "destination_path": "references/launchd-runtime-proof.md"
+    },
+    {
+      "source_plugin": "scheduled-automation",
+      "source_path": "plugins/scheduled-automation/references/scheduled-run-proof-contract.md",
+      "disposition": "mapped",
+      "destination_path": "references/scheduled-run-proof-contract.md"
+    },
+    {
+      "source_plugin": "scheduled-automation",
+      "source_path": "plugins/scheduled-automation/references/systemd-timer-runtime-proof.md",
+      "disposition": "mapped",
+      "destination_path": "references/systemd-timer-runtime-proof.md"
+    },
+    {
+      "source_plugin": "scheduled-automation",
+      "source_path": "plugins/scheduled-automation/references/task-scheduler-runtime-proof.md",
+      "disposition": "mapped",
+      "destination_path": "references/task-scheduler-runtime-proof.md"
+    },
+    {
+      "source_plugin": "scheduled-automation",
+      "source_path": "plugins/scheduled-automation/skills/scheduled-automation-runtime/SKILL.md",
+      "disposition": "mapped",
+      "destination_path": "skills/scheduled-automation-runtime/SKILL.md"
+    },
+    {
+      "source_plugin": "scheduled-automation",
+      "source_path": "plugins/scheduled-automation/skills/scheduled-automation-runtime/agents/openai.yaml",
+      "disposition": "mapped",
+      "destination_path": "skills/scheduled-automation-runtime/agents/openai.yaml"
+    }
+  ],
+  "target_plugin": {
+    "name": "agent-harness",
+    "version": "0.1.0",
+    "display_name": "Agent Harness",
+    "expected_skill_count": 18
+  },
+  "build_scope": {
+    "mode": "additive_target_subtree",
+    "target_path": "plugins/agent-harness",
+    "source_files_modified_by_this_subtree_builder": false,
+    "runtime_or_cache_mutated": false
+  },
+  "whole_plugin_merges": [
+    {
+      "source_plugin": "codex-cli",
+      "action": "merge_into_target_then_retire_source_plugin",
+      "preserved_skills": [
+        "codex-cli",
+        "codex-exec-automation",
+        "codex-deferred-completion",
+        "codex-thread-supervisor",
+        "codex-plugin-mcp-manager",
+        "codex-doctor-debugger",
+        "codex-log-reader",
+        "codex-environments"
+      ],
+      "preserved_surfaces": [
+        "skills",
+        "references",
+        "scripts",
+        "lib",
+        "mcp",
+        "tests",
+        ".mcp.json",
+        ".codex-mcp.json"
+      ],
+      "replaced_surfaces": [
+        "README.md",
+        ".codex-plugin/plugin.json",
+        ".claude-plugin/plugin.json"
+      ],
+      "omitted_assets": [
+        "assets/icon.png",
+        "assets/icon.svg"
+      ]
+    },
+    {
+      "source_plugin": "claude-code",
+      "action": "merge_into_target_then_retire_source_plugin",
+      "preserved_skills": [
+        "claude-code",
+        "claude-print-automation",
+        "claude-plugin-mcp-manager",
+        "claude-doctor-debugger",
+        "claude-agent-worktrees",
+        "claude-hooks-settings"
+      ],
+      "preserved_surfaces": [
+        "skills",
+        "references",
+        "scripts",
+        "tests"
+      ],
+      "replaced_surfaces": [
+        "README.md",
+        ".codex-plugin/plugin.json",
+        ".claude-plugin/plugin.json"
+      ],
+      "omitted_assets": [
+        "assets/icon.png",
+        "assets/icon.svg"
+      ]
+    },
+    {
+      "source_plugin": "scheduled-automation",
+      "action": "merge_into_target_then_retire_source_plugin",
+      "preserved_skills": [
+        "scheduled-automation-runtime"
+      ],
+      "preserved_surfaces": [
+        "skills",
+        "references"
+      ],
+      "replaced_surfaces": [
+        "README.md",
+        ".codex-plugin/plugin.json",
+        ".claude-plugin/plugin.json"
+      ],
+      "omitted_assets": [
+        "assets/icon.png",
+        "assets/icon-prompt.json"
+      ]
+    }
+  ],
+  "workbench_moves": [
+    {
+      "source_plugin": "capability-workbench",
+      "skill": "agent-harness-engineering",
+      "action": "move_to_target",
+      "companions": [
+        "skills/agent-harness-engineering/agents/openai.yaml",
+        "references/agent-harness-contracts.md",
+        "references/agent-harness-patterns.md",
+        "references/agent-harness-landscape.md",
+        "scripts/harness/validate_harness_artifact.py"
+      ]
+    },
+    {
+      "source_plugin": "capability-workbench",
+      "skill": "agent-harness-evaluation",
+      "action": "move_to_target",
+      "companions": [
+        "skills/agent-harness-evaluation/agents/openai.yaml",
+        "references/agent-harness-evaluation.md",
+        "references/agent-harness-contracts.md",
+        "references/agent-harness-landscape.md",
+        "scripts/harness/validate_harness_artifact.py"
+      ]
+    }
+  ],
+  "adapted_tests": [
+    {
+      "source_path": "plugins/capability-workbench/tests/run_smoke.py#test_harness_artifact_validator",
+      "destination_path": "tests/test_harness_artifact_validator.py",
+      "action": "extract_and_adapt_to_unittest",
+      "preserved_contracts": [
+        "valid design, evaluation plan, and run result",
+        "bounded control and external-effect approval",
+        "deterministic oracle and scheduled scenario coverage",
+        "scenario and metric consistency",
+        "strict JSON constants and numeric bounds",
+        "boolean release-threshold semantics"
+      ]
+    }
+  ],
+  "workbench_keep": {
+    "source_plugin": "capability-workbench",
+    "action": "keep_plugin_and_non_harness_capabilities",
+    "retained_scope": [
+      "skill and plugin authoring",
+      "capability synthesis and audit",
+      "portfolio architecture",
+      "trigger metadata",
+      "installation vetting",
+      "reality repair",
+      "agent guidance authoring",
+      "plugin packaging and validation"
+    ],
+    "moved_out_scope": [
+      "agent harness engineering",
+      "agent harness evaluation",
+      "exclusive harness contracts and validator"
+    ]
+  },
+  "additions": [
+    {
+      "destination_path": "skills/agent-harness/SKILL.md",
+      "role": "concise portfolio router",
+      "expected_total_skill_count": 18
+    },
+    {
+      "destination_path": "tests/fixtures/router-trigger-cases.json",
+      "role": "positive and negative routing contract"
+    },
+    {
+      "destination_path": "tests/test_plugin_contract.py",
+      "role": "manifest, trigger, collision, inventory, and migration verification"
+    }
+  ],
+  "conflict_resolutions": [
+    {
+      "kind": "reference_filename_collision",
+      "source_paths": [
+        "plugins/codex-cli/references/cli-operation-contracts.md",
+        "plugins/claude-code/references/cli-operation-contracts.md"
+      ],
+      "destination_paths": [
+        "references/codex-cli-operation-contracts.md",
+        "references/claude-cli-operation-contracts.md"
+      ],
+      "resolution": "provider_prefix_and_rewrite_claude_skill_links",
+      "rationale": "Both files contain distinct vendor-specific command and safety contracts."
+    },
+    {
+      "kind": "publication_surface_collision",
+      "source_paths": [
+        "plugins/codex-cli/README.md",
+        "plugins/claude-code/README.md",
+        "plugins/scheduled-automation/README.md"
+      ],
+      "destination_paths": [
+        "README.md"
+      ],
+      "resolution": "replace_with_combined_plugin_readme"
+    },
+    {
+      "kind": "manifest_collision",
+      "source_paths": [
+        "plugins/codex-cli/.codex-plugin/plugin.json",
+        "plugins/claude-code/.codex-plugin/plugin.json",
+        "plugins/scheduled-automation/.codex-plugin/plugin.json"
+      ],
+      "destination_paths": [
+        ".codex-plugin/plugin.json",
+        ".claude-plugin/plugin.json"
+      ],
+      "resolution": "replace_with_aligned_agent_harness_manifests"
+    }
+  ],
+  "rewrite_allowlist": [
+    {
+      "source_path": "plugins/claude-code/skills/claude-code/SKILL.md",
+      "destination_path": "skills/claude-code/SKILL.md",
+      "treatment": "rewrite_reference_for_collision",
+      "allowed_changes": [
+        {
+          "old": "references/cli-operation-contracts.md",
+          "new": "references/claude-cli-operation-contracts.md",
+          "expected_replacements": 1
+        }
+      ]
+    },
+    {
+      "source_path": "plugins/claude-code/skills/claude-doctor-debugger/SKILL.md",
+      "destination_path": "skills/claude-doctor-debugger/SKILL.md",
+      "treatment": "rewrite_reference_for_collision",
+      "allowed_changes": [
+        {
+          "old": "references/cli-operation-contracts.md",
+          "new": "references/claude-cli-operation-contracts.md",
+          "expected_replacements": 1
+        }
+      ]
+    },
+    {
+      "source_path": "plugins/codex-cli/tests/test_deferred_completion.py",
+      "destination_path": "tests/test_deferred_completion.py",
+      "treatment": "adapt_for_cross_platform_safe_open_tests",
+      "allowed_changes": [
+        {
+          "contract": "Add a server-equivalent SAFE_OPEN_SUPPORTED predicate and gate only reservation-dependent tests."
+        },
+        {
+          "contract": "Keep protocol, malformed-frame, tool-input, and pre-reservation bounds tests active on non-POSIX hosts."
+        },
+        {
+          "contract": "Add an explicit non-POSIX reservation fail-closed assertion."
+        }
+      ]
+    }
+  ],
+  "file_mappings": [
+    {
+      "source_plugin": "codex-cli",
+      "source_path": "plugins/codex-cli/.codex-mcp.json",
+      "source_git_blob": "a5654f3b7d9d1b82066f7007f575b8db4eab53cb",
+      "source_sha256": "2edd22dd2f529ae1a4b82134870424b8df036508ff63ec5f1ecb6f5333368c3c",
+      "source_bytes": 180,
+      "destination_path": ".codex-mcp.json",
+      "treatment": "verbatim",
+      "destination_sha256": "2edd22dd2f529ae1a4b82134870424b8df036508ff63ec5f1ecb6f5333368c3c",
+      "destination_bytes": 180
+    },
+    {
+      "source_plugin": "codex-cli",
+      "source_path": "plugins/codex-cli/.mcp.json",
+      "source_git_blob": "c5ec73c63fed33675f805f7c9bbe93e70ac53658",
+      "source_sha256": "edd7b83046013a859bc1609d2aea39d0fb2d34102e7ba02522866d06ae3d28fd",
+      "source_bytes": 187,
+      "destination_path": ".mcp.json",
+      "treatment": "verbatim",
+      "destination_sha256": "edd7b83046013a859bc1609d2aea39d0fb2d34102e7ba02522866d06ae3d28fd",
+      "destination_bytes": 187
+    },
+    {
+      "source_plugin": "codex-cli",
+      "source_path": "plugins/codex-cli/lib/native_completion_contract.py",
+      "source_git_blob": "3442b7fba26e05986585acb294496a61e4c70701",
+      "source_sha256": "a544b05b65ae88f6edc74bdadda79adff44b6896749ef63bf7688aa8f176a692",
+      "source_bytes": 11111,
+      "destination_path": "lib/native_completion_contract.py",
+      "treatment": "verbatim",
+      "destination_sha256": "a544b05b65ae88f6edc74bdadda79adff44b6896749ef63bf7688aa8f176a692",
+      "destination_bytes": 11111
+    },
+    {
+      "source_plugin": "codex-cli",
+      "source_path": "plugins/codex-cli/mcp/server.py",
+      "source_git_blob": "8f86e1d010ea6043038956f8cb4c6140f86303a7",
+      "source_sha256": "820d44af384277e3f4d53383ab90e03264a60281408b4b01eb5112add032582a",
+      "source_bytes": 42064,
+      "destination_path": "mcp/server.py",
+      "treatment": "verbatim",
+      "destination_sha256": "820d44af384277e3f4d53383ab90e03264a60281408b4b01eb5112add032582a",
+      "destination_bytes": 42064
+    },
+    {
+      "source_plugin": "capability-workbench",
+      "source_path": "plugins/capability-workbench/references/agent-harness-contracts.md",
+      "source_git_blob": "f3ab68a336bab4bc4b9da7e4ec3e0106ed3c7913",
+      "source_sha256": "07ba1477a988c3d179500ffc5ce7d42834059f4b313d54b4c8d752034daa7480",
+      "source_bytes": 14625,
+      "destination_path": "references/agent-harness-contracts.md",
+      "treatment": "verbatim",
+      "destination_sha256": "07ba1477a988c3d179500ffc5ce7d42834059f4b313d54b4c8d752034daa7480",
+      "destination_bytes": 14625
+    },
+    {
+      "source_plugin": "capability-workbench",
+      "source_path": "plugins/capability-workbench/references/agent-harness-evaluation.md",
+      "source_git_blob": "98d94444ba256e6e252c39ead82e9ee22c6ac613",
+      "source_sha256": "51f89b92a5ec252f3cf1f775f02d812f754d74b3c96e21e6e1368ce5d0d94f56",
+      "source_bytes": 11011,
+      "destination_path": "references/agent-harness-evaluation.md",
+      "treatment": "verbatim",
+      "destination_sha256": "51f89b92a5ec252f3cf1f775f02d812f754d74b3c96e21e6e1368ce5d0d94f56",
+      "destination_bytes": 11011
+    },
+    {
+      "source_plugin": "capability-workbench",
+      "source_path": "plugins/capability-workbench/references/agent-harness-landscape.md",
+      "source_git_blob": "0afef9e6724e3017454d422df92017c5f231f51d",
+      "source_sha256": "2eb94c8c27cb983fc8af79cebc4b99dceee871a9982efa70de371a6978dd85b4",
+      "source_bytes": 11438,
+      "destination_path": "references/agent-harness-landscape.md",
+      "treatment": "verbatim",
+      "destination_sha256": "2eb94c8c27cb983fc8af79cebc4b99dceee871a9982efa70de371a6978dd85b4",
+      "destination_bytes": 11438
+    },
+    {
+      "source_plugin": "capability-workbench",
+      "source_path": "plugins/capability-workbench/references/agent-harness-patterns.md",
+      "source_git_blob": "99843ff830c57ceeb1149845369f2b92724268eb",
+      "source_sha256": "ec158826253971040f10267e079161a903bc6325103c2c0d3976e5f89d824716",
+      "source_bytes": 10177,
+      "destination_path": "references/agent-harness-patterns.md",
+      "treatment": "verbatim",
+      "destination_sha256": "ec158826253971040f10267e079161a903bc6325103c2c0d3976e5f89d824716",
+      "destination_bytes": 10177
+    },
+    {
+      "source_plugin": "claude-code",
+      "source_path": "plugins/claude-code/references/cli-operation-contracts.md",
+      "source_git_blob": "f364c42c3d1fcd569aa0b5d221c02ab8c679bcef",
+      "source_sha256": "5f57f83f9c431cec02249b9631327e987012bf01404c8613d7eb94376e18ac7c",
+      "source_bytes": 3971,
+      "destination_path": "references/claude-cli-operation-contracts.md",
+      "treatment": "rename_for_collision",
+      "destination_sha256": "5f57f83f9c431cec02249b9631327e987012bf01404c8613d7eb94376e18ac7c",
+      "destination_bytes": 3971
+    },
+    {
+      "source_plugin": "codex-cli",
+      "source_path": "plugins/codex-cli/references/cli-operation-contracts.md",
+      "source_git_blob": "a759c539d32dbeb00cbcb7c45f5ec5f98488457b",
+      "source_sha256": "bb4b0c0195e76ef3e56a8db571d8d10d886dea0285235577739ef52140110391",
+      "source_bytes": 3927,
+      "destination_path": "references/codex-cli-operation-contracts.md",
+      "treatment": "rename_for_collision",
+      "destination_sha256": "bb4b0c0195e76ef3e56a8db571d8d10d886dea0285235577739ef52140110391",
+      "destination_bytes": 3927
+    },
+    {
+      "source_plugin": "scheduled-automation",
+      "source_path": "plugins/scheduled-automation/references/cron-runtime-proof.md",
+      "source_git_blob": "61e539dc3d25f4d23535ce30cc3d58009459bf58",
+      "source_sha256": "cb4abc960fa604c54478610f043ddf3682527b2249e71016884cf5279b3556de",
+      "source_bytes": 1750,
+      "destination_path": "references/cron-runtime-proof.md",
+      "treatment": "verbatim",
+      "destination_sha256": "cb4abc960fa604c54478610f043ddf3682527b2249e71016884cf5279b3556de",
+      "destination_bytes": 1750
+    },
+    {
+      "source_plugin": "codex-cli",
+      "source_path": "plugins/codex-cli/references/environment-actions.md",
+      "source_git_blob": "7fc31fee6e3db23660f4bf96add8dfed25731ccd",
+      "source_sha256": "46bffd620e98160fb0f002044f2c7d6b12bf03d51571e480e43d04b4b67f9b9c",
+      "source_bytes": 3714,
+      "destination_path": "references/environment-actions.md",
+      "treatment": "verbatim",
+      "destination_sha256": "46bffd620e98160fb0f002044f2c7d6b12bf03d51571e480e43d04b4b67f9b9c",
+      "destination_bytes": 3714
+    },
+    {
+      "source_plugin": "claude-code",
+      "source_path": "plugins/claude-code/references/hooks-settings.md",
+      "source_git_blob": "835d8c11dbacc0a651275350c68eaf4ff9f4b7bd",
+      "source_sha256": "d44416d13b9982b4888f794d15f7042d89133724f263200cf29fcf5c8ce90810",
+      "source_bytes": 2962,
+      "destination_path": "references/hooks-settings.md",
+      "treatment": "verbatim",
+      "destination_sha256": "d44416d13b9982b4888f794d15f7042d89133724f263200cf29fcf5c8ce90810",
+      "destination_bytes": 2962
+    },
+    {
+      "source_plugin": "scheduled-automation",
+      "source_path": "plugins/scheduled-automation/references/launchd-runtime-proof.md",
+      "source_git_blob": "9e033fa5f0cbf562c6713c2f2afe6596c9893c2a",
+      "source_sha256": "1c1d2ba9e8d6cf5e49cec3f8acf9303099c67c36da5a9baf1d38a3f1df14f8b7",
+      "source_bytes": 2545,
+      "destination_path": "references/launchd-runtime-proof.md",
+      "treatment": "verbatim",
+      "destination_sha256": "1c1d2ba9e8d6cf5e49cec3f8acf9303099c67c36da5a9baf1d38a3f1df14f8b7",
+      "destination_bytes": 2545
+    },
+    {
+      "source_plugin": "codex-cli",
+      "source_path": "plugins/codex-cli/references/log-reader-safety.md",
+      "source_git_blob": "dc7df63f3382e624beea476d1f77d530bc4052b6",
+      "source_sha256": "14073924f8da259e9317f9d13bf8d371f61726d42e9a7729c8a15b46227a832b",
+      "source_bytes": 5051,
+      "destination_path": "references/log-reader-safety.md",
+      "treatment": "verbatim",
+      "destination_sha256": "14073924f8da259e9317f9d13bf8d371f61726d42e9a7729c8a15b46227a832b",
+      "destination_bytes": 5051
+    },
+    {
+      "source_plugin": "scheduled-automation",
+      "source_path": "plugins/scheduled-automation/references/scheduled-run-proof-contract.md",
+      "source_git_blob": "9ae94ddc9e0984d087d490e49fa54309ff6fb420",
+      "source_sha256": "1fddf9a49e5509137c540f749fbfe56927c7c1ea611d8522943cabd1288dbdfd",
+      "source_bytes": 7374,
+      "destination_path": "references/scheduled-run-proof-contract.md",
+      "treatment": "verbatim",
+      "destination_sha256": "1fddf9a49e5509137c540f749fbfe56927c7c1ea611d8522943cabd1288dbdfd",
+      "destination_bytes": 7374
+    },
+    {
+      "source_plugin": "codex-cli",
+      "source_path": "plugins/codex-cli/references/skill-metadata-catalog-budget.md",
+      "source_git_blob": "a6896a2c75ab9c0f7ce0a1feb2126a5b7bfb6bb3",
+      "source_sha256": "480d7e7fa77bde72f4228d532b1da355ece49eb7784620526b69e991e5cb934b",
+      "source_bytes": 8533,
+      "destination_path": "references/skill-metadata-catalog-budget.md",
+      "treatment": "verbatim",
+      "destination_sha256": "480d7e7fa77bde72f4228d532b1da355ece49eb7784620526b69e991e5cb934b",
+      "destination_bytes": 8533
+    },
+    {
+      "source_plugin": "scheduled-automation",
+      "source_path": "plugins/scheduled-automation/references/systemd-timer-runtime-proof.md",
+      "source_git_blob": "0b1d51e8cd34536e71afb07bb7917599d4513fbd",
+      "source_sha256": "b518d72cb0a25b0be92e1a0090ebebc06adcb3723c1b5925cf218a65972da8bd",
+      "source_bytes": 2915,
+      "destination_path": "references/systemd-timer-runtime-proof.md",
+      "treatment": "verbatim",
+      "destination_sha256": "b518d72cb0a25b0be92e1a0090ebebc06adcb3723c1b5925cf218a65972da8bd",
+      "destination_bytes": 2915
+    },
+    {
+      "source_plugin": "scheduled-automation",
+      "source_path": "plugins/scheduled-automation/references/task-scheduler-runtime-proof.md",
+      "source_git_blob": "d87928949803a8481d2eb4d9373e492a039c24c0",
+      "source_sha256": "f4d37d707bddc2a37d977d320130e9a77f074a2e6add81bb1be89b980e28121e",
+      "source_bytes": 4413,
+      "destination_path": "references/task-scheduler-runtime-proof.md",
+      "treatment": "verbatim",
+      "destination_sha256": "f4d37d707bddc2a37d977d320130e9a77f074a2e6add81bb1be89b980e28121e",
+      "destination_bytes": 4413
+    },
+    {
+      "source_plugin": "codex-cli",
+      "source_path": "plugins/codex-cli/references/thread-skill-handoff-contract.md",
+      "source_git_blob": "2cd6040a9b65449d6d1c0e68bf568c239586c5db",
+      "source_sha256": "4ca7726e3f9d97576113769f0b125195b0260fdda4df2594a20f8428352ad77a",
+      "source_bytes": 11583,
+      "destination_path": "references/thread-skill-handoff-contract.md",
+      "treatment": "verbatim",
+      "destination_sha256": "4ca7726e3f9d97576113769f0b125195b0260fdda4df2594a20f8428352ad77a",
+      "destination_bytes": 11583
+    },
+    {
+      "source_plugin": "codex-cli",
+      "source_path": "plugins/codex-cli/references/thread-supervision-contract.md",
+      "source_git_blob": "7387f04edde5a4dc4a1b61dc0f7a09c88aee41b9",
+      "source_sha256": "d82c32c31a7508429b5f026ca92aa69ee1aa225d7786fe88453ac2ae4247d431",
+      "source_bytes": 64893,
+      "destination_path": "references/thread-supervision-contract.md",
+      "treatment": "verbatim",
+      "destination_sha256": "d82c32c31a7508429b5f026ca92aa69ee1aa225d7786fe88453ac2ae4247d431",
+      "destination_bytes": 64893
+    },
+    {
+      "source_plugin": "claude-code",
+      "source_path": "plugins/claude-code/scripts/claude_code_inspector.py",
+      "source_git_blob": "e70b8e187c931239776210ca4f449c9e39e0094d",
+      "source_sha256": "a45dc1190cf9259c2c4ece5e6fc5a137a36b7b7d71a1004ed256de0e6950dfea",
+      "source_bytes": 8823,
+      "destination_path": "scripts/claude_code_inspector.py",
+      "treatment": "verbatim",
+      "destination_sha256": "a45dc1190cf9259c2c4ece5e6fc5a137a36b7b7d71a1004ed256de0e6950dfea",
+      "destination_bytes": 8823
+    },
+    {
+      "source_plugin": "codex-cli",
+      "source_path": "plugins/codex-cli/scripts/codex_cli_inspector.py",
+      "source_git_blob": "759a9a13f009206558f8cf7b3f5ba5c2998f4df6",
+      "source_sha256": "b8e8c6b251753fe37fa42609826a943a6a1c3ff4c60c1c942ca63bb600403c6c",
+      "source_bytes": 7744,
+      "destination_path": "scripts/codex_cli_inspector.py",
+      "treatment": "verbatim",
+      "destination_sha256": "b8e8c6b251753fe37fa42609826a943a6a1c3ff4c60c1c942ca63bb600403c6c",
+      "destination_bytes": 7744
+    },
+    {
+      "source_plugin": "codex-cli",
+      "source_path": "plugins/codex-cli/scripts/codex_log_reader.py",
+      "source_git_blob": "e446d9f730f56ac05260f342e26513d053f6fbf7",
+      "source_sha256": "3e53ca8653b5ba3d2d84484b0978205503081a957ca12f0487c10077fc7fe452",
+      "source_bytes": 63985,
+      "destination_path": "scripts/codex_log_reader.py",
+      "treatment": "verbatim",
+      "destination_sha256": "3e53ca8653b5ba3d2d84484b0978205503081a957ca12f0487c10077fc7fe452",
+      "destination_bytes": 63985
+    },
+    {
+      "source_plugin": "codex-cli",
+      "source_path": "plugins/codex-cli/scripts/codex_skill_catalog_audit.py",
+      "source_git_blob": "fc78aac4f9dc7925fa2e01f24c65598daae5a852",
+      "source_sha256": "127d9d58fbbdbef830e1f889d1a0a018932d3423aad7dde5909e4c474a8f19b0",
+      "source_bytes": 27392,
+      "destination_path": "scripts/codex_skill_catalog_audit.py",
+      "treatment": "verbatim",
+      "destination_sha256": "127d9d58fbbdbef830e1f889d1a0a018932d3423aad7dde5909e4c474a8f19b0",
+      "destination_bytes": 27392
+    },
+    {
+      "source_plugin": "capability-workbench",
+      "source_path": "plugins/capability-workbench/scripts/harness/validate_harness_artifact.py",
+      "source_git_blob": "89b3c2f068b4b561302abd46951b49d598d06b54",
+      "source_sha256": "af36c1b20f22801d9e0d0b6a77fff80dbd39371223465710b492d026f9d38ab2",
+      "source_bytes": 31439,
+      "destination_path": "scripts/harness/validate_harness_artifact.py",
+      "treatment": "verbatim",
+      "destination_sha256": "af36c1b20f22801d9e0d0b6a77fff80dbd39371223465710b492d026f9d38ab2",
+      "destination_bytes": 31439
+    },
+    {
+      "source_plugin": "codex-cli",
+      "source_path": "plugins/codex-cli/scripts/validate_thread_skill_handoff.py",
+      "source_git_blob": "520422953ba0383452af8ee37cd1eac400f3a61b",
+      "source_sha256": "88fcfc5b3dbd42f8e1e5b19b7b8caa67acdc6942596ef62b6dfb0225b51a40c7",
+      "source_bytes": 29718,
+      "destination_path": "scripts/validate_thread_skill_handoff.py",
+      "treatment": "verbatim",
+      "destination_sha256": "88fcfc5b3dbd42f8e1e5b19b7b8caa67acdc6942596ef62b6dfb0225b51a40c7",
+      "destination_bytes": 29718
+    },
+    {
+      "source_plugin": "capability-workbench",
+      "source_path": "plugins/capability-workbench/skills/agent-harness-engineering/agents/openai.yaml",
+      "source_git_blob": "4a43ec3383b88e4b18bb1e3e81ddb988633cdbd2",
+      "source_sha256": "05a947a9bf398a364f1b6910730e58e0c34f9e55b9b26a51abd24a26e33727a7",
+      "source_bytes": 507,
+      "destination_path": "skills/agent-harness-engineering/agents/openai.yaml",
+      "treatment": "verbatim",
+      "destination_sha256": "05a947a9bf398a364f1b6910730e58e0c34f9e55b9b26a51abd24a26e33727a7",
+      "destination_bytes": 507
+    },
+    {
+      "source_plugin": "capability-workbench",
+      "source_path": "plugins/capability-workbench/skills/agent-harness-engineering/SKILL.md",
+      "source_git_blob": "7e57cbee35513187b97c4114c3edbbb26ced50fa",
+      "source_sha256": "ed78401dbd6329ae9ceec8aa601fd5ba819bab7de3073ef08dbe1edde1b0a379",
+      "source_bytes": 6263,
+      "destination_path": "skills/agent-harness-engineering/SKILL.md",
+      "treatment": "verbatim",
+      "destination_sha256": "ed78401dbd6329ae9ceec8aa601fd5ba819bab7de3073ef08dbe1edde1b0a379",
+      "destination_bytes": 6263
+    },
+    {
+      "source_plugin": "capability-workbench",
+      "source_path": "plugins/capability-workbench/skills/agent-harness-evaluation/agents/openai.yaml",
+      "source_git_blob": "59ed8659c3a3b39ec5b624a45e85e37ae332815b",
+      "source_sha256": "d93c191633cec3e594ee4d7724c592933932c8810a0814d877a01c1c821ac950",
+      "source_bytes": 516,
+      "destination_path": "skills/agent-harness-evaluation/agents/openai.yaml",
+      "treatment": "verbatim",
+      "destination_sha256": "d93c191633cec3e594ee4d7724c592933932c8810a0814d877a01c1c821ac950",
+      "destination_bytes": 516
+    },
+    {
+      "source_plugin": "capability-workbench",
+      "source_path": "plugins/capability-workbench/skills/agent-harness-evaluation/SKILL.md",
+      "source_git_blob": "977a50c7716acea84bce164387a6a612ab006d6b",
+      "source_sha256": "4cca09e1ffc97a9a48f7214279392b49bc488bb41e41d549f2248196f45a7188",
+      "source_bytes": 6279,
+      "destination_path": "skills/agent-harness-evaluation/SKILL.md",
+      "treatment": "verbatim",
+      "destination_sha256": "4cca09e1ffc97a9a48f7214279392b49bc488bb41e41d549f2248196f45a7188",
+      "destination_bytes": 6279
+    },
+    {
+      "source_plugin": "claude-code",
+      "source_path": "plugins/claude-code/skills/claude-agent-worktrees/SKILL.md",
+      "source_git_blob": "06d9e5396bc86fcf7b30f60698f77d63ed42b504",
+      "source_sha256": "f4ff87d8103522cda9bc4118c41475be37e35997a04623a0c7b869b173c262f1",
+      "source_bytes": 3664,
+      "destination_path": "skills/claude-agent-worktrees/SKILL.md",
+      "treatment": "verbatim",
+      "destination_sha256": "f4ff87d8103522cda9bc4118c41475be37e35997a04623a0c7b869b173c262f1",
+      "destination_bytes": 3664
+    },
+    {
+      "source_plugin": "claude-code",
+      "source_path": "plugins/claude-code/skills/claude-code/SKILL.md",
+      "source_git_blob": "19c5512e8fa17145e43a573401c1f2a92512f2c5",
+      "source_sha256": "15eb1278142eb05e40a7a2e9208ab5ee455f67e2e7291df9ca9dc00a4d2cb4d6",
+      "source_bytes": 3677,
+      "destination_path": "skills/claude-code/SKILL.md",
+      "treatment": "rewrite_reference_for_collision",
+      "destination_sha256": "e4fbdb285d6b90d398ad693d01e5f8d86bdfb14d92d1c10cce90bd9cebee5ca3",
+      "destination_bytes": 3684
+    },
+    {
+      "source_plugin": "claude-code",
+      "source_path": "plugins/claude-code/skills/claude-doctor-debugger/SKILL.md",
+      "source_git_blob": "0703da33db5d22c26ec556d5671521b4a187ec61",
+      "source_sha256": "50358566fe6fb3dd0b23b7c85fc9be1f0b0bb0fcf2659e754c9aeb5386f1364e",
+      "source_bytes": 3583,
+      "destination_path": "skills/claude-doctor-debugger/SKILL.md",
+      "treatment": "rewrite_reference_for_collision",
+      "destination_sha256": "aba8424862e6c95d1264c5414905fc3df552da6716ec95829266f381199c274a",
+      "destination_bytes": 3590
+    },
+    {
+      "source_plugin": "claude-code",
+      "source_path": "plugins/claude-code/skills/claude-hooks-settings/SKILL.md",
+      "source_git_blob": "50837bc6c218cac1ba2551532d7761548eeb5957",
+      "source_sha256": "93e531e918949e8c101ff403ed40853c90e1c672a17ddd642144364fffb645bf",
+      "source_bytes": 3538,
+      "destination_path": "skills/claude-hooks-settings/SKILL.md",
+      "treatment": "verbatim",
+      "destination_sha256": "93e531e918949e8c101ff403ed40853c90e1c672a17ddd642144364fffb645bf",
+      "destination_bytes": 3538
+    },
+    {
+      "source_plugin": "claude-code",
+      "source_path": "plugins/claude-code/skills/claude-plugin-mcp-manager/SKILL.md",
+      "source_git_blob": "e8f82ccf5fd7a92fa174a879fa5596a12c90d17e",
+      "source_sha256": "b38446eb7e37dbfd77d4962a1085f272667672e34979721c9385545133db683c",
+      "source_bytes": 3921,
+      "destination_path": "skills/claude-plugin-mcp-manager/SKILL.md",
+      "treatment": "verbatim",
+      "destination_sha256": "b38446eb7e37dbfd77d4962a1085f272667672e34979721c9385545133db683c",
+      "destination_bytes": 3921
+    },
+    {
+      "source_plugin": "claude-code",
+      "source_path": "plugins/claude-code/skills/claude-print-automation/SKILL.md",
+      "source_git_blob": "e45164e9e330882c5702a803219f353b1bb31163",
+      "source_sha256": "0f7a4675968b8677371f1ea16f0284b995f36dafa9e1f4eadf9255fa90c38beb",
+      "source_bytes": 3946,
+      "destination_path": "skills/claude-print-automation/SKILL.md",
+      "treatment": "verbatim",
+      "destination_sha256": "0f7a4675968b8677371f1ea16f0284b995f36dafa9e1f4eadf9255fa90c38beb",
+      "destination_bytes": 3946
+    },
+    {
+      "source_plugin": "codex-cli",
+      "source_path": "plugins/codex-cli/skills/codex-cli/SKILL.md",
+      "source_git_blob": "03a8ac460996e3f082af0e648366f94196dcf8a3",
+      "source_sha256": "aa37b330d1a99eff1c7cea667dbc31680c41ef6a365ecb423de8dc78c9c87c17",
+      "source_bytes": 5247,
+      "destination_path": "skills/codex-cli/SKILL.md",
+      "treatment": "verbatim",
+      "destination_sha256": "aa37b330d1a99eff1c7cea667dbc31680c41ef6a365ecb423de8dc78c9c87c17",
+      "destination_bytes": 5247
+    },
+    {
+      "source_plugin": "codex-cli",
+      "source_path": "plugins/codex-cli/skills/codex-deferred-completion/SKILL.md",
+      "source_git_blob": "2d2b57f0527628b79ace104637495ab92fa26eec",
+      "source_sha256": "df4b24e9a94f4ae51148885d3cacc63a6887af0b30f7dab320140abaeb17d03c",
+      "source_bytes": 4945,
+      "destination_path": "skills/codex-deferred-completion/SKILL.md",
+      "treatment": "verbatim",
+      "destination_sha256": "df4b24e9a94f4ae51148885d3cacc63a6887af0b30f7dab320140abaeb17d03c",
+      "destination_bytes": 4945
+    },
+    {
+      "source_plugin": "codex-cli",
+      "source_path": "plugins/codex-cli/skills/codex-doctor-debugger/SKILL.md",
+      "source_git_blob": "76571969ce94ea574c8235653ebef38c731a92cd",
+      "source_sha256": "2f48176796ffae32c0566f82dd1b34c46b93e0d18afc6782d40a522f7901427c",
+      "source_bytes": 5151,
+      "destination_path": "skills/codex-doctor-debugger/SKILL.md",
+      "treatment": "verbatim",
+      "destination_sha256": "2f48176796ffae32c0566f82dd1b34c46b93e0d18afc6782d40a522f7901427c",
+      "destination_bytes": 5151
+    },
+    {
+      "source_plugin": "codex-cli",
+      "source_path": "plugins/codex-cli/skills/codex-environments/SKILL.md",
+      "source_git_blob": "26b6e9e5e436c4aed7d9c228b0f0ec1671667f33",
+      "source_sha256": "38b0419d5166e35d487f37494985620712ae0c1864cd806f665a7783f86d3633",
+      "source_bytes": 4896,
+      "destination_path": "skills/codex-environments/SKILL.md",
+      "treatment": "verbatim",
+      "destination_sha256": "38b0419d5166e35d487f37494985620712ae0c1864cd806f665a7783f86d3633",
+      "destination_bytes": 4896
+    },
+    {
+      "source_plugin": "codex-cli",
+      "source_path": "plugins/codex-cli/skills/codex-exec-automation/SKILL.md",
+      "source_git_blob": "aa216906d1d14ebf08e3c680a7b53b79bd39288c",
+      "source_sha256": "77a8015e726331e3317fa1d39f3d77376520882a04bcda26b22317025c702db3",
+      "source_bytes": 4571,
+      "destination_path": "skills/codex-exec-automation/SKILL.md",
+      "treatment": "verbatim",
+      "destination_sha256": "77a8015e726331e3317fa1d39f3d77376520882a04bcda26b22317025c702db3",
+      "destination_bytes": 4571
+    },
+    {
+      "source_plugin": "codex-cli",
+      "source_path": "plugins/codex-cli/skills/codex-log-reader/SKILL.md",
+      "source_git_blob": "1959436ab5a4c7ddf574b75d59af6434567265a1",
+      "source_sha256": "23480c312dc2ccdf9d28a12d66a4fa0cfbdb3a606756335e4a68fefa0a7763df",
+      "source_bytes": 5734,
+      "destination_path": "skills/codex-log-reader/SKILL.md",
+      "treatment": "verbatim",
+      "destination_sha256": "23480c312dc2ccdf9d28a12d66a4fa0cfbdb3a606756335e4a68fefa0a7763df",
+      "destination_bytes": 5734
+    },
+    {
+      "source_plugin": "codex-cli",
+      "source_path": "plugins/codex-cli/skills/codex-plugin-mcp-manager/SKILL.md",
+      "source_git_blob": "9664e9dc37a12d2117599ce36e0d53b4f01aa329",
+      "source_sha256": "efc1e622ae63176e3f1c19916fea6ccafe98353743e00a3d4c3a97a983e8de40",
+      "source_bytes": 4987,
+      "destination_path": "skills/codex-plugin-mcp-manager/SKILL.md",
+      "treatment": "verbatim",
+      "destination_sha256": "efc1e622ae63176e3f1c19916fea6ccafe98353743e00a3d4c3a97a983e8de40",
+      "destination_bytes": 4987
+    },
+    {
+      "source_plugin": "codex-cli",
+      "source_path": "plugins/codex-cli/skills/codex-thread-supervisor/SKILL.md",
+      "source_git_blob": "27f753e43738b66bffae859e8354e78d441f2a87",
+      "source_sha256": "5049072ba71fdeeb4d1ea50cdb3f619f00ca05e04315078ff6b64c62f78351e8",
+      "source_bytes": 14752,
+      "destination_path": "skills/codex-thread-supervisor/SKILL.md",
+      "treatment": "verbatim",
+      "destination_sha256": "5049072ba71fdeeb4d1ea50cdb3f619f00ca05e04315078ff6b64c62f78351e8",
+      "destination_bytes": 14752
+    },
+    {
+      "source_plugin": "scheduled-automation",
+      "source_path": "plugins/scheduled-automation/skills/scheduled-automation-runtime/agents/openai.yaml",
+      "source_git_blob": "18274b837c6cb32654e6496e8ccf860f90946927",
+      "source_sha256": "bd75d119f981dac303611b67c9c93b96572d3b4254fa456bf1210ce296652a67",
+      "source_bytes": 243,
+      "destination_path": "skills/scheduled-automation-runtime/agents/openai.yaml",
+      "treatment": "verbatim",
+      "destination_sha256": "bd75d119f981dac303611b67c9c93b96572d3b4254fa456bf1210ce296652a67",
+      "destination_bytes": 243
+    },
+    {
+      "source_plugin": "scheduled-automation",
+      "source_path": "plugins/scheduled-automation/skills/scheduled-automation-runtime/SKILL.md",
+      "source_git_blob": "cb643be59e669fe436b544d44100fb798c73a0f3",
+      "source_sha256": "94aa8624f2151f1e5b96b94873240763afb59821a524452dca28fcb1a468c587",
+      "source_bytes": 5947,
+      "destination_path": "skills/scheduled-automation-runtime/SKILL.md",
+      "treatment": "verbatim",
+      "destination_sha256": "94aa8624f2151f1e5b96b94873240763afb59821a524452dca28fcb1a468c587",
+      "destination_bytes": 5947
+    },
+    {
+      "source_plugin": "claude-code",
+      "source_path": "plugins/claude-code/tests/test_claude_code_inspector.py",
+      "source_git_blob": "ec7b2377dff2f9aabebdd39bfc1e3a8aba6ae0aa",
+      "source_sha256": "af533b2dbe4988ca5656bde72c68fb04b5066cfaf9ff1c452e18ca697e1b289f",
+      "source_bytes": 5065,
+      "destination_path": "tests/test_claude_code_inspector.py",
+      "treatment": "verbatim",
+      "destination_sha256": "af533b2dbe4988ca5656bde72c68fb04b5066cfaf9ff1c452e18ca697e1b289f",
+      "destination_bytes": 5065
+    },
+    {
+      "source_plugin": "codex-cli",
+      "source_path": "plugins/codex-cli/tests/test_codex_cli_inspector.py",
+      "source_git_blob": "000b30f987dd3cd7c5b23e6316798d9e18d33d88",
+      "source_sha256": "5007d7a6ec00224126cec54227cda750ac3ec0c0553d3ae5ce4ddf00cc62b7e7",
+      "source_bytes": 4553,
+      "destination_path": "tests/test_codex_cli_inspector.py",
+      "treatment": "verbatim",
+      "destination_sha256": "5007d7a6ec00224126cec54227cda750ac3ec0c0553d3ae5ce4ddf00cc62b7e7",
+      "destination_bytes": 4553
+    },
+    {
+      "source_plugin": "codex-cli",
+      "source_path": "plugins/codex-cli/tests/test_codex_log_reader.py",
+      "source_git_blob": "5f8ed528f2795ce01e3474ecebc5bf6a0b50555c",
+      "source_sha256": "a90b2060c44ed9c01fe39e09cbb29341de11194a3083ace76e982e925a0614b7",
+      "source_bytes": 34457,
+      "destination_path": "tests/test_codex_log_reader.py",
+      "treatment": "verbatim",
+      "destination_sha256": "a90b2060c44ed9c01fe39e09cbb29341de11194a3083ace76e982e925a0614b7",
+      "destination_bytes": 34457
+    },
+    {
+      "source_plugin": "codex-cli",
+      "source_path": "plugins/codex-cli/tests/test_codex_skill_catalog_audit.py",
+      "source_git_blob": "bd0f20b39c89a7c41392649718b1ea65f74edf30",
+      "source_sha256": "99a426725c6f604734c9645b31e2c7e6c9b03ad31d53d155d44c49d7e5f15863",
+      "source_bytes": 7863,
+      "destination_path": "tests/test_codex_skill_catalog_audit.py",
+      "treatment": "verbatim",
+      "destination_sha256": "99a426725c6f604734c9645b31e2c7e6c9b03ad31d53d155d44c49d7e5f15863",
+      "destination_bytes": 7863
+    },
+    {
+      "source_plugin": "codex-cli",
+      "source_path": "plugins/codex-cli/tests/test_deferred_completion.py",
+      "source_git_blob": "aaba504d3a0342744f017812ebbfd15d6f93dedc",
+      "source_sha256": "b1a4864338b6301005e90c7614e78617f8787460f408ac924ddc37842e740f7f",
+      "source_bytes": 31366,
+      "destination_path": "tests/test_deferred_completion.py",
+      "treatment": "adapt_for_cross_platform_safe_open_tests",
+      "destination_sha256": "7504450d3522a1f82e84401be7f77086ef26c45caf9a414d4db97d9e9f0d48d5",
+      "destination_bytes": 32835
+    },
+    {
+      "source_plugin": "codex-cli",
+      "source_path": "plugins/codex-cli/tests/test_thread_skill_handoff_validator.py",
+      "source_git_blob": "84c773c18bc2f3c1f827c2ae487705e19760fe94",
+      "source_sha256": "0b40d79268384362b9f3ee3c14006af4a3d0e453e534d6c60bb464962e5cbd2a",
+      "source_bytes": 18783,
+      "destination_path": "tests/test_thread_skill_handoff_validator.py",
+      "treatment": "verbatim",
+      "destination_sha256": "0b40d79268384362b9f3ee3c14006af4a3d0e453e534d6c60bb464962e5cbd2a",
+      "destination_bytes": 18783
+    },
+    {
+      "source_plugin": "codex-cli",
+      "source_path": "plugins/codex-cli/tests/test_thread_supervision_contract.py",
+      "source_git_blob": "2e1158a1cfe2c8eb4fc67ff58308cdcb5a8463fd",
+      "source_sha256": "c94845b33c3f740f269a1a01db55313a42c05113e220bea8d1bbe56052a1dfec",
+      "source_bytes": 293251,
+      "destination_path": "tests/test_thread_supervision_contract.py",
+      "treatment": "verbatim",
+      "destination_sha256": "c94845b33c3f740f269a1a01db55313a42c05113e220bea8d1bbe56052a1dfec",
+      "destination_bytes": 293251
+    }
+  ]
+}

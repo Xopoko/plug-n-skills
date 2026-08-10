@@ -1,7 +1,7 @@
 {
   "name": "capability-workbench",
-  "version": "0.4.2",
-  "description": "Design, audit, synthesize, and package agent skills/plugins with portfolio architecture, trigger metadata, catalog-pressure analysis, guidance authoring, harness engineering/evaluation, vetting, repair, and validation.",
+  "version": "0.5.0",
+  "description": "Design, audit, synthesize, package, install, repair, and reshape agent skills and plugins with trigger metadata, catalog analysis, guidance authoring, vetting, and validation.",
   "author": {
     "name": "Xopoko"
   },
@@ -19,8 +19,7 @@
     "evidence-coverage",
     "validation",
     "repair",
-    "agent-harness",
-    "agent-runtime",
-    "evaluation"
+    "portfolio",
+    "guidance"
   ]
 }

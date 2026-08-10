@@ -116,7 +116,8 @@ states. Separate model-context loading from disk reads or in-process caching.
 
 Use the target host's vendor plugin for executable/version-specific diagnosis.
 For Codex, route budget arithmetic, root aliases, current prompt or rollout
-evidence, and the deterministic catalog audit to `codex-cli`. Keep metadata
+evidence, and the deterministic catalog audit to the `codex-cli` skill in
+`agent-harness`. Keep metadata
 redesign here after the runtime finding identifies which prefixes or boundaries
 failed.
 

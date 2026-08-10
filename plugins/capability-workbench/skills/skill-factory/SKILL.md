@@ -72,7 +72,8 @@ After material metadata or skill-count changes, read
 `$PLUGIN_ROOT/references/skill-catalog-runtime-comparison.md` and validate the
 target runtime's aggregate catalog behavior. Do not substitute an isolated
 description-length check. Route Codex-specific source modeling and exact
-live-prompt or rollout budget diagnosis to `codex-cli`, then use
+live-prompt or rollout budget diagnosis to the `codex-cli` skill in
+`agent-harness`, then use
 `skill-trigger-metadata` to repair prefix information scent when descriptions
 were shortened.
 

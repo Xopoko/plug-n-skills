@@ -106,7 +106,7 @@ Catalog budget:
   rare enabled skill out of the model-visible catalog while preserving
   explicit selection.
 
-Use the `codex-cli` plugin for Codex-specific source modeling, exact live-prompt
+Use the `codex-cli` skill in `agent-harness` for Codex-specific source modeling, exact live-prompt
 or rollout evidence, version/config checks, and the deterministic
 `scripts/codex_skill_catalog_audit.py` command. Workbench owns portable
 authoring and cross-runtime comparison, not the current Codex executable.

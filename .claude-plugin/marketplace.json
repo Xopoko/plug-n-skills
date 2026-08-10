@@ -9,24 +9,14 @@
   },
   "plugins": [
     {
-      "name": "build-swift-apps",
-      "source": "./plugins/build-swift-apps",
-      "description": "Build, debug, profile, test, refactor, and release Swift apps across iOS, macOS, Xcode, SwiftUI, SwiftPM, Tuist, and App Store Connect."
+      "name": "agent-harness",
+      "source": "./plugins/agent-harness",
+      "description": "Agent harness design and evaluation plus Codex CLI, Claude Code, MCP, hooks, sessions, deferred completion, and local scheduler proof."
     },
     {
-      "name": "pixijs",
-      "source": "./plugins/pixijs",
-      "description": "PixiJS v8 scene tooling builds and debugs Applications, assets, events, filters, shaders, performance, v7 migrations, and create-pixi projects."
-    },
-    {
-      "name": "tauri",
-      "source": "./plugins/tauri",
-      "description": "Tauri 2 project scaffolding/migration, security, Rust IPC/plugins, shell UI, debugging, testing, packaging, signing, updates, and desktop/mobile release."
-    },
-    {
-      "name": "scientific-research",
-      "source": "./plugins/scientific-research",
-      "description": "Scholarly research discovers papers, deduplicates DOIs, extracts source-backed claims, and validates evidence across arXiv, OpenAlex, Crossref, Europe PMC, Semantic Scholar, PubMed, and OpenCitations."
+      "name": "capability-workbench",
+      "source": "./plugins/capability-workbench",
+      "description": "Design, audit, synthesize, package, install, repair, and reshape agent skills and plugins with trigger metadata, catalog analysis, guidance authoring, vetting, and validation."
     },
     {
       "name": "context-density",
@@ -34,24 +24,19 @@
       "description": "Agent context audits measure token cost, validate prompt/output contracts and typed state, test compression, and route structural skill or plugin overlap to Capability Workbench."
     },
     {
-      "name": "capability-workbench",
-      "source": "./plugins/capability-workbench",
-      "description": "Design, audit, synthesize, and package agent skills/plugins with portfolio architecture, trigger metadata, catalog-pressure analysis, guidance authoring, harness engineering/evaluation, vetting, repair, and validation."
-    },
-    {
-      "name": "codex-cli",
-      "source": "./plugins/codex-cli",
-      "description": "Diagnose and operate Codex CLI: skill-catalog budgets, exec/review automation, deferred completion, task supervision, plugin/MCP lifecycle, rollout forensics, and app environments."
-    },
-    {
-      "name": "scheduled-automation",
-      "source": "./plugins/scheduled-automation",
-      "description": "Local scheduler diagnostics prove launchd, systemd timer, cron, and Windows Task Scheduler runs, compare scheduler-owned context, and analyze missed or divergent executions."
-    },
-    {
       "name": "git-workflows",
       "source": "./plugins/git-workflows",
       "description": "Git code review, GitLab discussion response, stacked-change delivery, worktree recovery, and SSH commit-signing recovery use exact-state, capability-selected, fail-closed workflows."
+    },
+    {
+      "name": "engineering-hygiene",
+      "source": "./plugins/engineering-hygiene",
+      "description": "Engineering hygiene audits changed code, untangles business logic, inspects rendered UI, and provisions missing tools with evidence-first, touched-surface discipline."
+    },
+    {
+      "name": "scientific-research",
+      "source": "./plugins/scientific-research",
+      "description": "Scholarly research discovers papers, deduplicates DOIs, extracts source-backed claims, and validates evidence across arXiv, OpenAlex, Crossref, Europe PMC, Semantic Scholar, PubMed, and OpenCitations."
     },
     {
       "name": "technology-intelligence",
@@ -59,9 +44,9 @@
       "description": "Evidence-backed technology decisions compare frameworks, platforms, infrastructure, and CLI/MCP/API delivery modes with dated primary-source observations, explicit gaps, staleness checks, and review-gated refreshes."
     },
     {
-      "name": "claude-code",
-      "source": "./plugins/claude-code",
-      "description": "Claude Code CLI manages print automation, diagnostics, plugins, MCP, hooks, settings, agents, sessions, remote control, and worktrees."
+      "name": "design-intelligence",
+      "source": "./plugins/design-intelligence",
+      "description": "Product and UX design judgment grounded in evidence: framing, information architecture, interaction, usability/accessibility review, visual communication, and design-system governance; excludes Figma, CSS, and framework recipes."
     },
     {
       "name": "architecture-intelligence",
@@ -69,14 +54,14 @@
       "description": "Software architecture audits and decisions grounded in source evidence: boundaries, ownership/runtime topology, async state consistency, conformance, ADRs, fitness functions, and staged refactoring."
     },
     {
-      "name": "design-intelligence",
-      "source": "./plugins/design-intelligence",
-      "description": "Product and UX design judgment grounded in evidence: framing, information architecture, interaction, usability/accessibility review, visual communication, and design-system governance; excludes Figma, CSS, and framework recipes."
+      "name": "spec-driven-development",
+      "source": "./plugins/spec-driven-development",
+      "description": "Spec-Driven Development routes intent through specs, plans, traceable tasks, implementation, and proof."
     },
     {
-      "name": "game-design-intelligence",
-      "source": "./plugins/game-design-intelligence",
-      "description": "Game design judgment grounded in evidence: core loops, gameplay systems, progression/economy/balance, motivation/retention, onboarding/difficulty, and multiplayer/live-service health; excludes engines, graphics, assets, and code."
+      "name": "build-swift-apps",
+      "source": "./plugins/build-swift-apps",
+      "description": "Build, debug, profile, test, refactor, and release Swift apps across iOS, macOS, Xcode, SwiftUI, SwiftPM, Tuist, and App Store Connect."
     },
     {
       "name": "kotlin-multiplatform",
@@ -84,14 +69,19 @@
       "description": "Kotlin Multiplatform design, Gradle repair, Compose UI, data/interop architecture, migration, testing, governance, security, performance, CI, publishing, and readiness review."
     },
     {
-      "name": "spec-driven-development",
-      "source": "./plugins/spec-driven-development",
-      "description": "Spec-Driven Development routes intent through specs, plans, traceable tasks, implementation, and proof."
+      "name": "tauri",
+      "source": "./plugins/tauri",
+      "description": "Tauri 2 project scaffolding/migration, security, Rust IPC/plugins, shell UI, debugging, testing, packaging, signing, updates, and desktop/mobile release."
     },
     {
-      "name": "engineering-hygiene",
-      "source": "./plugins/engineering-hygiene",
-      "description": "Engineering hygiene audits changed code, untangles business logic, inspects rendered UI, and provisions missing tools with evidence-first, touched-surface discipline."
+      "name": "pixijs",
+      "source": "./plugins/pixijs",
+      "description": "PixiJS v8 scene tooling builds and debugs Applications, assets, events, filters, shaders, performance, v7 migrations, and create-pixi projects."
+    },
+    {
+      "name": "game-design-intelligence",
+      "source": "./plugins/game-design-intelligence",
+      "description": "Game design judgment grounded in evidence: core loops, gameplay systems, progression/economy/balance, motivation/retention, onboarding/difficulty, and multiplayer/live-service health; excludes engines, graphics, assets, and code."
     }
   ]
 }

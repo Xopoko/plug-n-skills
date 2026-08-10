@@ -310,6 +310,38 @@ class CodexInstallerTest(unittest.TestCase):
 
         self.assertEqual(["git-workflows"], selected)
 
+    def test_legacy_harness_plugin_names_route_to_one_consolidated_plugin(self):
+        selected = install_codex_plugins.select_plugins(
+            ["codex-cli", "claude-code", "scheduled-automation"],
+            [],
+        )
+
+        self.assertEqual(["agent-harness"], selected)
+
+    def test_canonical_harness_and_legacy_aliases_are_deduplicated(self):
+        selected = install_codex_plugins.select_plugins(
+            ["agent-harness", "codex-cli", "claude-code"],
+            [],
+        )
+
+        self.assertEqual(["agent-harness"], selected)
+
+    def test_legacy_harness_plugin_alias_conflicts_with_canonical_exclusion(self):
+        with self.assertRaises(SystemExit):
+            install_codex_plugins.select_plugins(
+                ["claude-code"],
+                ["agent-harness"],
+            )
+
+    def test_legacy_harness_alias_excludes_canonical_default(self):
+        selected = install_codex_plugins.select_plugins(
+            None,
+            ["scheduled-automation"],
+        )
+
+        self.assertNotIn("agent-harness", selected)
+        self.assertIn("capability-workbench", selected)
+
     def test_legacy_git_plugin_alias_conflicts_with_canonical_exclusion(self):
         with self.assertRaises(SystemExit):
             install_codex_plugins.select_plugins(
@@ -332,7 +364,8 @@ class CodexInstallerTest(unittest.TestCase):
                                     "path": f"./plugins/{name}",
                                 },
                             }
-                            for name in install_codex_plugins.LEGACY_PLUGIN_RENAMES
+                            for name, target in install_codex_plugins.LEGACY_PLUGIN_RENAMES.items()
+                            if target == "git-workflows"
                         ],
                     }
                 ),
@@ -373,14 +406,150 @@ class CodexInstallerTest(unittest.TestCase):
             install_codex_plugins.ensure_marketplace_file(
                 marketplace_path=marketplace_path,
                 canonical_source_root=Path(tmp) / "plugins",
-                manifests={"codex-cli": {"interface": {"category": "Developer Tools"}}},
+                manifests={
+                    "capability-workbench": {
+                        "interface": {"category": "Developer Tools"}
+                    }
+                },
                 dry_run=False,
             )
 
             marketplace = json.loads(marketplace_path.read_text(encoding="utf-8"))
             names = [entry["name"] for entry in marketplace["plugins"]]
             self.assertEqual(
-                ["codex-cli", "gitlab-review", "stacked-delivery"],
+                ["capability-workbench", "gitlab-review", "stacked-delivery"],
+                names,
+            )
+
+    def test_marketplace_update_removes_legacy_harness_plugin_entries(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            marketplace_path = Path(tmp) / "marketplace.json"
+            marketplace_path.write_text(
+                json.dumps(
+                    {
+                        "name": "local",
+                        "plugins": [
+                            {"name": "codex-cli"},
+                            {"name": "claude-code"},
+                            {"name": "scheduled-automation"},
+                        ],
+                    }
+                ),
+                encoding="utf-8",
+            )
+
+            install_codex_plugins.ensure_marketplace_file(
+                marketplace_path=marketplace_path,
+                canonical_source_root=Path(tmp) / "plugins",
+                manifests={
+                    "agent-harness": {
+                        "interface": {"category": "Developer Tools"}
+                    }
+                },
+                dry_run=False,
+            )
+
+            marketplace = json.loads(marketplace_path.read_text(encoding="utf-8"))
+            names = [entry["name"] for entry in marketplace["plugins"]]
+            self.assertEqual(["agent-harness"], names)
+
+    def test_targeted_git_update_preserves_legacy_harness_entries(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            marketplace_path = Path(tmp) / "marketplace.json"
+            marketplace_path.write_text(
+                json.dumps(
+                    {
+                        "name": "local",
+                        "plugins": [
+                            {"name": "codex-cli"},
+                            {"name": "claude-code"},
+                            {"name": "gitlab-review"},
+                        ],
+                    }
+                ),
+                encoding="utf-8",
+            )
+
+            install_codex_plugins.ensure_marketplace_file(
+                marketplace_path=marketplace_path,
+                canonical_source_root=Path(tmp) / "plugins",
+                manifests={
+                    "git-workflows": {
+                        "interface": {"category": "Developer Tools"}
+                    }
+                },
+                dry_run=False,
+            )
+
+            marketplace = json.loads(marketplace_path.read_text(encoding="utf-8"))
+            names = [entry["name"] for entry in marketplace["plugins"]]
+            self.assertEqual(
+                ["git-workflows", "claude-code", "codex-cli"],
+                names,
+            )
+
+    def test_selecting_both_targets_migrates_both_legacy_groups(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            marketplace_path = Path(tmp) / "marketplace.json"
+            marketplace_path.write_text(
+                json.dumps(
+                    {
+                        "name": "local",
+                        "plugins": [
+                            {"name": legacy_name}
+                            for legacy_name in install_codex_plugins.LEGACY_PLUGIN_RENAMES
+                        ],
+                    }
+                ),
+                encoding="utf-8",
+            )
+
+            manifests = {
+                target: {"interface": {"category": "Developer Tools"}}
+                for target in {"agent-harness", "git-workflows"}
+            }
+            install_codex_plugins.ensure_marketplace_file(
+                marketplace_path=marketplace_path,
+                canonical_source_root=Path(tmp) / "plugins",
+                manifests=manifests,
+                dry_run=False,
+            )
+
+            marketplace = json.loads(marketplace_path.read_text(encoding="utf-8"))
+            names = [entry["name"] for entry in marketplace["plugins"]]
+            self.assertEqual(["agent-harness", "git-workflows"], names)
+
+    def test_unrelated_targeted_update_preserves_legacy_harness_entries(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            marketplace_path = Path(tmp) / "marketplace.json"
+            marketplace_path.write_text(
+                json.dumps(
+                    {
+                        "name": "local",
+                        "plugins": [
+                            {"name": "codex-cli"},
+                            {"name": "claude-code"},
+                        ],
+                    }
+                ),
+                encoding="utf-8",
+            )
+
+            install_codex_plugins.ensure_marketplace_file(
+                marketplace_path=marketplace_path,
+                canonical_source_root=Path(tmp) / "plugins",
+                manifests={
+                    "capability-workbench": {
+                        "interface": {"category": "Developer Tools"}
+                    }
+                },
+                dry_run=False,
+            )
+
+            marketplace = json.loads(marketplace_path.read_text(encoding="utf-8"))
+            names = [entry["name"] for entry in marketplace["plugins"]]
+            self.assertEqual(
+                ["capability-workbench", "claude-code", "codex-cli"],
                 names,
             )
 
@@ -425,7 +594,11 @@ class CodexInstallerTest(unittest.TestCase):
             retired = install_codex_plugins.ensure_marketplace_file(
                 marketplace_path=marketplace_path,
                 canonical_source_root=global_source_root,
-                manifests={"codex-cli": {"interface": {"category": "Developer Tools"}}},
+                manifests={
+                    "capability-workbench": {
+                        "interface": {"category": "Developer Tools"}
+                    }
+                },
                 dry_run=False,
             )
 
@@ -433,7 +606,7 @@ class CodexInstallerTest(unittest.TestCase):
             names = [entry["name"] for entry in marketplace["plugins"]]
             self.assertEqual(["retired-plugin"], retired)
             self.assertEqual(
-                ["codex-cli", "existing-local-plugin", "external-plugin"],
+                ["capability-workbench", "existing-local-plugin", "external-plugin"],
                 names,
             )
 
@@ -469,6 +642,42 @@ class CodexInstallerTest(unittest.TestCase):
             self.assertIn(str(cache_root / "local" / "stacked-delivery"), report)
             self.assertIn(str(source_path), report)
             self.assertNotIn("stacked-delivery@local", report)
+            self.assertTrue(cache_path.is_dir())
+            self.assertTrue(source_path.is_dir())
+
+    def test_harness_residual_report_is_group_scoped_and_read_only(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            config_path = root / "config.toml"
+            config_path.write_text(
+                '[plugins."claude-code@local"]\n'
+                "enabled = true\n\n"
+                '[plugins."gitlab-review@local"]\n'
+                "enabled = true\n",
+                encoding="utf-8",
+            )
+            cache_root = root / "cache"
+            cache_path = cache_root / "local" / "codex-cli" / "0.2.6"
+            cache_path.mkdir(parents=True)
+            source_root = root / "sources"
+            source_path = source_root / "scheduled-automation"
+            source_path.mkdir(parents=True)
+
+            stdout = io.StringIO()
+            with contextlib.redirect_stdout(stdout):
+                found = install_codex_plugins.report_legacy_plugin_residuals(
+                    target_plugin="agent-harness",
+                    config_path=config_path,
+                    cache_root=cache_root,
+                    global_source_root=source_root,
+                )
+
+            self.assertTrue(found)
+            report = stdout.getvalue()
+            self.assertIn("claude-code@local", report)
+            self.assertIn(str(cache_root / "local" / "codex-cli"), report)
+            self.assertIn(str(source_path), report)
+            self.assertNotIn("gitlab-review@local", report)
             self.assertTrue(cache_path.is_dir())
             self.assertTrue(source_path.is_dir())
 

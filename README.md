@@ -15,12 +15,13 @@ of improvising from a prompt.
 Use it when you want an agent to handle more than generic code edits:
 
 - build, debug, profile, test, package, and release Swift apps;
-- work with Kotlin Multiplatform, Tauri, PixiJS, Codex CLI, and Claude Code;
+- operate Codex, Claude Code, agent harnesses, schedulers, and Git workflows;
+- work with Kotlin Multiplatform, Tauri, PixiJS, and Apple platforms;
 - review architecture, product direction, interface quality, and game systems;
 - plan scientific research, spec-driven delivery, context compression, and
   agent capability synthesis.
 
-The repository ships 17 installable plugin packs and 150+ focused agent
+The repository ships 15 installable plugin packs and 150+ focused agent
 skills, all plain repository content: manifests, `SKILL.md` files, references,
 validators, and helper scripts. Inspect it, validate it from a fresh clone,
 install only the packs you need, and keep generated local marketplace or cache
@@ -138,22 +139,21 @@ replaced to match the repository source, and repeated runs converge.
 
 | Plugin | Use it for |
 | --- | --- |
-| `architecture-intelligence` | Source-backed architecture audits, async state consistency, ownership and runtime topology, module boundaries, ADRs, fitness functions, conformance checks, and refactoring strategy. |
-| `build-swift-apps` | Building, debugging, profiling, testing, packaging, and releasing Swift apps across iOS and macOS. |
-| `capability-workbench` | Capability discovery, synthesis, portfolio design, skill/plugin and agent-guidance authoring, trigger metadata, cross-runtime skill catalog and exact evidence-coverage audits, LLM agent harness engineering and evaluation, install-scope decisions, vetting, repair, icon workflows, install/cache checks, and separate runtime-discovery checks. |
-| `claude-code` | Claude Code CLI operations, print-mode automation, diagnostics, plugin and MCP lifecycle, hooks, settings, agents, sessions, and worktrees. |
-| `codex-cli` | Codex CLI operations, 2 percent skill-catalog budget and overflow diagnostics, automation, producer-native deferred completion, live thread supervision with protected-policy gates, version-aware skill handoffs with source/runtime separation, evidence corrections, aggregate claim boundaries, plugin and MCP lifecycle, normalized session trace audits, and local environment actions. |
-| `scheduled-automation` | Local scheduler diagnostics, real-runtime proof, safe canaries, correlated run receipts, missed-run analysis, and rollback-aware repair. |
-| `git-workflows` | Capability-bound read-only GitHub/GitLab code review, race-safe GitLab review response, stacked change delivery, worktree recovery, and SSH commit-signing recovery across eligible MCP, connector, CLI, and API adapters. |
-| `technology-intelligence` | Dated, source-backed technology adoption, trial, replacement, and delivery-mode decisions with explicit context, alternatives, confidence, and evidence freshness. |
+| `agent-harness` | Agent harness design and evaluation; Codex and Claude Code operations, automation, diagnostics, MCP, hooks, sessions, deferred completion, and local scheduler proof. |
+| `capability-workbench` | Capability discovery, synthesis, portfolio design, skill/plugin and agent-guidance authoring, trigger metadata, cross-runtime catalog and evidence-coverage audits, vetting, repair, icon workflows, and explicit install/cache checks. |
 | `context-density` | Context design, long-context placement, typed state and companion-drift validation, research-backed acceptance gates, prompt contracts, skill compression, structural handoff, and validation reporting. |
-| `design-intelligence` | Product framing, interface architecture, interaction design, visual hierarchy, accessibility, and design-system governance. |
-| `game-design-intelligence` | Gameplay loops, systems, progression, economies, motivation, retention, onboarding, difficulty, multiplayer, and live-service critique. |
-| `kotlin-multiplatform` | Kotlin Multiplatform architecture, Gradle diagnosis, Compose Multiplatform, iOS interop, testing, security, publishing, and production readiness. |
-| `pixijs` | PixiJS v8 application setup, scene graph, rendering, assets, events, filters, migration, and performance. |
+| `git-workflows` | Capability-bound read-only GitHub/GitLab code review, race-safe GitLab review response, stacked change delivery, worktree recovery, and SSH commit-signing recovery across eligible MCP, connector, CLI, and API adapters. |
+| `engineering-hygiene` | Touched-surface code maintenance, business-logic untangling, rendered UI inspection, and evidence-first missing-tool provisioning. |
 | `scientific-research` | Scholarly discovery, deduplication, source routing, claim ledgers, provenance, and evidence quality gates. |
+| `technology-intelligence` | Dated, source-backed technology adoption, trial, replacement, and delivery-mode decisions with explicit context, alternatives, confidence, and evidence freshness. |
+| `design-intelligence` | Product framing, interface architecture, interaction design, visual hierarchy, accessibility, and design-system governance. |
+| `architecture-intelligence` | Source-backed architecture audits, async state consistency, ownership and runtime topology, module boundaries, ADRs, fitness functions, conformance checks, and refactoring strategy. |
 | `spec-driven-development` | Spec-driven workflows with lane selection, Spec Kit integration, requirements quality, traceability, implementation, and proof gates. |
+| `build-swift-apps` | Building, debugging, profiling, testing, packaging, and releasing Swift apps across iOS and macOS. |
+| `kotlin-multiplatform` | Kotlin Multiplatform architecture, Gradle diagnosis, Compose Multiplatform, iOS interop, testing, security, publishing, and production readiness. |
 | `tauri` | Tauri 2 setup, migration, configuration security, IPC, plugins, shell UI, debugging, testing, distribution, and mobile workflows. |
+| `pixijs` | PixiJS v8 application setup, scene graph, rendering, assets, events, filters, migration, and performance. |
+| `game-design-intelligence` | Gameplay loops, systems, progression, economies, motivation, retention, onboarding, difficulty, multiplayer, and live-service critique. |
 
 See [plugins/README.md](plugins/README.md) for the per-plugin source index and
 manifest identifiers.
@@ -179,6 +179,28 @@ each old ID at the same install scope, then reload plugins:
 
 Source validation never mutates installed host state.
 
+The former `codex-cli`, `claude-code`, and `scheduled-automation` packages are
+consolidated into `agent-harness`. Their focused skill names remain available
+inside the new package. `agent-harness-engineering` and
+`agent-harness-evaluation` also moved there from Capability Workbench; install
+both packs when you need capability authoring and runtime harness work. The
+repository's Codex and Cursor helpers accept any old package name as an alias
+for `agent-harness`; host plugin runtimes do not.
+A targeted Codex install migrates only the matching local marketplace entries
+and reports, but never deletes, old config, cache, or copied-source residuals.
+
+Claude Code requires an explicit same-scope migration:
+
+```text
+/plugin install agent-harness@xopoko-plug-n-skills
+/plugin uninstall codex-cli@xopoko-plug-n-skills
+/plugin uninstall claude-code@xopoko-plug-n-skills
+/plugin uninstall scheduled-automation@xopoko-plug-n-skills
+/reload-plugins
+```
+
+Verify `agent-harness` before disabling or uninstalling an old package.
+
 ## Token Efficiency
 
 This collection is designed around progressive disclosure. Agents can
@@ -193,12 +215,12 @@ instructions.
 
 | Metric | Count | Tokens | Notes |
 | --- | ---: | ---: | --- |
-| Plugin packs | 17 | - | Installable packages under `plugins/`. |
-| Skill entrypoints | 175 | - | `SKILL.md` files exposed through plugin metadata. |
-| Reference files | 251 | - | Longer ledgers, contracts, scorecards, and source notes. |
+| Plugin packs | 15 | - | Installable packages under `plugins/`. |
+| Skill entrypoints | 176 | - | `SKILL.md` files exposed through plugin metadata. |
+| Reference files | 252 | - | Longer ledgers, contracts, scorecards, and source notes. |
 | Helper and validator scripts | 90 | - | Deterministic plugin-local helpers. |
-| Startup metadata | 175 skills | 12,663 | Skill name, description, and file pointer for routing. |
-| On-demand skill bodies | 175 skills | 129,665 | Instruction bodies after frontmatter, loaded only when selected. |
+| Startup metadata | 176 skills | 12,751 | Skill name, description, and file pointer for routing. |
+| On-demand skill bodies | 176 skills | 130,054 | Instruction bodies after frontmatter, loaded only when selected. |
 
 Regenerate the report after skill edits:
 
@@ -215,49 +237,158 @@ Token columns are `startup metadata / on-demand body`.
 
 | Plugin | Skills | Refs | Scripts | Startup | Body |
 | --- | ---: | ---: | ---: | ---: | ---: |
-| `build-swift-apps` | 61 | 90 | 36 | 4,423 | 36,116 |
-| `pixijs` | 26 | 64 | 0 | 1,837 | 7,967 |
-| `tauri` | 6 | 0 | 1 | 438 | 3,235 |
-| `scientific-research` | 1 | 4 | 1 | 84 | 2,024 |
+| `agent-harness` | 18 | 18 | 6 | 1,385 | 19,194 |
+| `capability-workbench` | 10 | 16 | 23 | 731 | 13,608 |
 | `context-density` | 1 | 9 | 8 | 70 | 2,806 |
-| `capability-workbench` | 12 | 20 | 24 | 883 | 16,045 |
-| `codex-cli` | 8 | 6 | 4 | 596 | 10,541 |
-| `scheduled-automation` | 1 | 5 | 0 | 78 | 1,158 |
 | `git-workflows` | 5 | 10 | 6 | 416 | 7,339 |
-| `technology-intelligence` | 2 | 4 | 1 | 143 | 897 |
-| `claude-code` | 6 | 2 | 1 | 471 | 4,669 |
-| `architecture-intelligence` | 9 | 8 | 2 | 579 | 7,585 |
-| `design-intelligence` | 7 | 2 | 1 | 455 | 5,399 |
-| `game-design-intelligence` | 6 | 2 | 1 | 452 | 2,916 |
-| `kotlin-multiplatform` | 14 | 22 | 2 | 1,101 | 14,462 |
-| `spec-driven-development` | 6 | 0 | 2 | 318 | 3,267 |
 | `engineering-hygiene` | 4 | 3 | 0 | 319 | 3,239 |
+| `scientific-research` | 1 | 4 | 1 | 84 | 2,024 |
+| `technology-intelligence` | 2 | 4 | 1 | 143 | 897 |
+| `design-intelligence` | 7 | 2 | 1 | 455 | 5,399 |
+| `architecture-intelligence` | 9 | 8 | 2 | 579 | 7,585 |
+| `spec-driven-development` | 6 | 0 | 2 | 318 | 3,267 |
+| `build-swift-apps` | 61 | 90 | 36 | 4,423 | 36,116 |
+| `kotlin-multiplatform` | 14 | 22 | 2 | 1,101 | 14,462 |
+| `tauri` | 6 | 0 | 1 | 438 | 3,235 |
+| `pixijs` | 26 | 64 | 0 | 1,837 | 7,967 |
+| `game-design-intelligence` | 6 | 2 | 1 | 452 | 2,916 |
 
 ### Plugin Focus
 
 | Plugin | Description |
 | --- | --- |
-| `build-swift-apps` | Build, debug, profile, test, refactor, and release Swift apps across iOS, macOS, Xcode, SwiftUI, SwiftPM, Tuist, and App Store Connect. |
-| `pixijs` | PixiJS v8 scene tooling builds and debugs Applications, assets, events, filters, shaders, performance, v7 migrations, and create-pixi projects. |
-| `tauri` | Tauri 2 project scaffolding/migration, security, Rust IPC/plugins, shell UI, debugging, testing, packaging, signing, updates, and desktop/mobile release. |
-| `scientific-research` | Scholarly research discovers papers, deduplicates DOIs, extracts source-backed claims, and validates evidence across arXiv, OpenAlex, Crossref, Europe PMC, Semantic Scholar, PubMed, and OpenCitations. |
+| `agent-harness` | Agent harness design and evaluation plus Codex CLI, Claude Code, MCP, hooks, sessions, deferred completion, and local scheduler proof. |
+| `capability-workbench` | Design, audit, synthesize, package, install, repair, and reshape agent skills and plugins with trigger metadata, catalog analysis, guidance authoring, vetting, and validation. |
 | `context-density` | Agent context audits measure token cost, validate prompt/output contracts and typed state, test compression, and route structural skill or plugin overlap to Capability Workbench. |
-| `capability-workbench` | Design, audit, synthesize, and package agent skills/plugins with portfolio architecture, trigger metadata, catalog-pressure analysis, guidance authoring, harness engineering/evaluation, vetting, repair, and validation. |
-| `codex-cli` | Diagnose and operate Codex CLI: skill-catalog budgets, exec/review automation, deferred completion, task supervision, plugin/MCP lifecycle, rollout forensics, and app environments. |
-| `scheduled-automation` | Local scheduler diagnostics prove launchd, systemd timer, cron, and Windows Task Scheduler runs, compare scheduler-owned context, and analyze missed or divergent executions. |
 | `git-workflows` | Git code review, GitLab discussion response, stacked-change delivery, worktree recovery, and SSH commit-signing recovery use exact-state, capability-selected, fail-closed workflows. |
-| `technology-intelligence` | Evidence-backed technology decisions compare frameworks, platforms, infrastructure, and CLI/MCP/API delivery modes with dated primary-source observations, explicit gaps, staleness checks, and review-gated refreshes. |
-| `claude-code` | Claude Code CLI manages print automation, diagnostics, plugins, MCP, hooks, settings, agents, sessions, remote control, and worktrees. |
-| `architecture-intelligence` | Software architecture audits and decisions grounded in source evidence: boundaries, ownership/runtime topology, async state consistency, conformance, ADRs, fitness functions, and staged refactoring. |
-| `design-intelligence` | Product and UX design judgment grounded in evidence: framing, information architecture, interaction, usability/accessibility review, visual communication, and design-system governance; excludes Figma, CSS, and framework recipes. |
-| `game-design-intelligence` | Game design judgment grounded in evidence: core loops, gameplay systems, progression/economy/balance, motivation/retention, onboarding/difficulty, and multiplayer/live-service health; excludes engines, graphics, assets, and code. |
-| `kotlin-multiplatform` | Kotlin Multiplatform design, Gradle repair, Compose UI, data/interop architecture, migration, testing, governance, security, performance, CI, publishing, and readiness review. |
-| `spec-driven-development` | Spec-Driven Development routes intent through specs, plans, traceable tasks, implementation, and proof. |
 | `engineering-hygiene` | Engineering hygiene audits changed code, untangles business logic, inspects rendered UI, and provisions missing tools with evidence-first, touched-surface discipline. |
+| `scientific-research` | Scholarly research discovers papers, deduplicates DOIs, extracts source-backed claims, and validates evidence across arXiv, OpenAlex, Crossref, Europe PMC, Semantic Scholar, PubMed, and OpenCitations. |
+| `technology-intelligence` | Evidence-backed technology decisions compare frameworks, platforms, infrastructure, and CLI/MCP/API delivery modes with dated primary-source observations, explicit gaps, staleness checks, and review-gated refreshes. |
+| `design-intelligence` | Product and UX design judgment grounded in evidence: framing, information architecture, interaction, usability/accessibility review, visual communication, and design-system governance; excludes Figma, CSS, and framework recipes. |
+| `architecture-intelligence` | Software architecture audits and decisions grounded in source evidence: boundaries, ownership/runtime topology, async state consistency, conformance, ADRs, fitness functions, and staged refactoring. |
+| `spec-driven-development` | Spec-Driven Development routes intent through specs, plans, traceable tasks, implementation, and proof. |
+| `build-swift-apps` | Build, debug, profile, test, refactor, and release Swift apps across iOS, macOS, Xcode, SwiftUI, SwiftPM, Tuist, and App Store Connect. |
+| `kotlin-multiplatform` | Kotlin Multiplatform design, Gradle repair, Compose UI, data/interop architecture, migration, testing, governance, security, performance, CI, publishing, and readiness review. |
+| `tauri` | Tauri 2 project scaffolding/migration, security, Rust IPC/plugins, shell UI, debugging, testing, packaging, signing, updates, and desktop/mobile release. |
+| `pixijs` | PixiJS v8 scene tooling builds and debugs Applications, assets, events, filters, shaders, performance, v7 migrations, and create-pixi projects. |
+| `game-design-intelligence` | Game design judgment grounded in evidence: core loops, gameplay systems, progression/economy/balance, motivation/retention, onboarding/difficulty, and multiplayer/live-service health; excludes engines, graphics, assets, and code. |
 
 ### Skill Token Index
 
 Token cells are shown as `startup/body`.
+
+#### `agent-harness`
+
+| Skill | Tokens | Description |
+| --- | ---: | --- |
+| `agent-harness` | 82/452 | Agent harnesses and Codex/Claude runtimes: route design/evaluation, Codex CLI, Claude Code, MCP, hooks, sessions, deferred completion, and scheduler proof. Excludes skill/plugin authoring (Capability Workbench) and generic app architecture. |
+| `agent-harness-engineering` | 82/1,176 | Design LLM agent harnesses with typed control loops, tools/state, context/memory, policy, cancellation, recovery, and delegation. Excludes prompt-only, generic app architecture, vendor CLI/config, evaluation-only work, and skill creation. |
+| `agent-harness-evaluation` | 76/1,194 | Evaluate LLM agent harness reliability through replay, regression, failure/restart, cancellation, context pressure, and release gates. Excludes generic tests, surveys, prompt/model-only benchmarks, and design without empirical evidence. |
+| `claude-agent-worktrees` | 84/756 | Claude Code sessions coordinate background agents, `claude agents --json`, dispatched-session defaults, worktrees, tmux/iTerm panes, resume/continue/from-pr/fork-session, names and IDs, remote control, and cloud ultrareview runs. |
+| `claude-code` | 69/791 | Claude Code CLI routes local inspection, interactive or print-mode automation, plugin and MCP lifecycle, diagnostics, hooks/settings, background agents, worktrees, sessions, remote control, and ultrareview. |
+| `claude-doctor-debugger` | 83/740 | Claude Code diagnostics isolate install, update, auth, configuration health, broken customizations, safe/bare modes, debug logs, auto-mode, keychain/API-key boundaries, IDE/Chrome integration, doctor warnings, and setup-token failures. |
+| `claude-hooks-settings` | 78/708 | Claude Code settings and hooks are created, audited, or debugged across CLAUDE.md/rules loading, custom agents, tool permissions, output styles, workflows, setting sources, safe/bare modes, and plugin customizations. |
+| `claude-plugin-mcp-manager` | 78/838 | Claude Code plugins and MCP servers are managed across marketplaces, validation, token cost, install/update/remove/prune, session-only sources, MCP approvals, strict config, transports, headers, OAuth, and lifecycle failures. |
+| `claude-print-automation` | 79/840 | Claude Code print-mode runs are prepared or debugged with `claude --print`, text/JSON/stream-json I/O, JSON Schema, budgets, fallback models, no persistence, prompt suggestions, and trusted-directory CI. |
+| `codex-cli` | 71/1,131 | Route Codex CLI operations across skill-catalog diagnostics, CLI inspection, exec/review automation, deferred completion, task supervision, plugin/MCP management, doctor/debug, rollout forensics, and app environments. |
+| `codex-deferred-completion` | 62/1,031 | Complete long-running executable work through an existing atomic JSON terminal receipt, avoiding repeated native-session or remote-status polling and wasted model turns. |
+| `codex-doctor-debugger` | 88/1,084 | Diagnose current Codex CLI health and model-visible skill catalogs: metadata truncation/omission, install, config, auth, sandbox, prompt, app-server, remote-control, and runtime failures. For what an existing task saw, use codex-log-reader. |
+| `codex-environments` | 72/995 | Manage Codex app project environments and actions in `.codex/environments/environment.toml`, including Run/Test/Preview buttons, startup commands, launchers, environment variables, and repeatable local commands. |
+| `codex-exec-automation` | 78/1,018 | Automate non-interactive Codex CLI runs with `codex exec`, resume, review, JSONL events, output schemas, last-message files, cwd/profile/config, sandbox/approval modes, and CI. |
+| `codex-log-reader` | 73/1,279 | Inspect Codex rollout JSONL by CODEX_THREAD_ID, cwd, query, issue, project, lineage, malformed or large logs, permission concerns, and "what happened in this task?" forensics. |
+| `codex-plugin-mcp-manager` | 69/1,049 | Manage Codex plugins, local marketplaces, cache visibility, and MCP server list/get/add/remove/login/logout, bearer-token environment bindings, and plugin/MCP installation failures. |
+| `codex-thread-supervisor` | 83/2,954 | Supervise live Codex tasks by ID with cursor waits, attention/completion gates, bounded claims, checkpoints, skill/evidence handoffs, and privacy-safe capability mining. Excludes rollout forensics, current-turn subagents, and external jobs. |
+| `scheduled-automation-runtime` | 78/1,158 | Local scheduler jobs need proof when launchd, systemd, cron, or Windows Task Scheduler differ from manual runs or lack runtime proof. Not for vendor CLI command construction, architecture inventory, cloud schedulers, or job business logic. |
+
+#### `capability-workbench`
+
+| Skill | Tokens | Description |
+| --- | ---: | --- |
+| `agent-guidance-factory` | 79/678 | Author repository agent guidance such as AGENTS.md, CLAUDE.md, and scoped rules for load order, nested instructions, migration, audits, or stale-doc cleanup. Excludes ordinary human docs unless agents consume them. |
+| `capability-auditor` | 77/1,709 | Audit agent skills/plugins for safety, evidence coverage, duplication, context cost, prompt contracts, dependencies, and install risk. Excludes code line/branch/mutation/test coverage; use portfolio architect for structural changes. |
+| `capability-portfolio-architect` | 76/947 | Reshape skill/plugin portfolios when routing overlaps, capabilities duplicate or disappear, or split/merge/move/delete/router/reference/script boundaries need decisions. Use capability-auditor for single-artifact quality. |
+| `capability-reality-repair` | 73/836 | Repair stale or false skill/script/plugin/MCP contracts when commands, schemas, paths, outputs, dependencies, install state, connector guidance, validators, or docs disagree with live reality. |
+| `capability-synthesizer` | 68/2,228 | Synthesize or strengthen well-vetted agent skills/plugins from broad public sources and local or user-provided candidates, with evidence-backed comparison and adoption/rejection. |
+| `capability-workbench` | 72/1,998 | Route agent skill and plugin lifecycle work across discovery, synthesis, creation, installation, packaging, audit, portfolio design, trigger metadata, guidance authoring, and repair. Excludes runtime harness operations. |
+| `plugin-factory` | 68/1,489 | Build or update marketplace-backed agent plugins with manifests, skill bundles, local marketplace entries, packaging, validation, optional install/cache gates, runtime-discovery status, and Codex deeplinks. |
+| `skill-factory` | 72/1,468 | Create or refactor portable agent skills across SKILL.md bodies, progressive disclosure, scripts/references/assets, packaging, and validation. For name/description-only routing work, use skill-trigger-metadata first. |
+| `skill-installer-vetter` | 72/942 | Find, compare, vet, install, or update agent skills from catalogs, GitHub, local folders, or user references with provenance, safety, dependency, capability, and destination checks. |
+| `skill-trigger-metadata` | 74/1,313 | Optimize skill names/descriptions for reliable routing under catalog truncation, omission, and cross-runtime pressure. For instruction, resource, packaging, or installation changes, continue with skill-factory or plugin-factory. |
+
+#### `context-density`
+
+| Skill | Tokens | Description |
+| --- | ---: | --- |
+| `context-density` | 70/2,806 | Agent context audits measure token cost, provenance, compression, typed-state drift, trigger overlap, and prompt/output contracts across AGENTS.md, prompts, skills, plugins, MCP/tool schemas, current-state artifacts, and agent handoffs. |
+
+#### `git-workflows`
+
+| Skill | Tokens | Description |
+| --- | ---: | --- |
+| `forge-code-review` | 82/1,085 | Read-only review for GitHub PR or GitLab MR links through a probed MCP, connector, CLI, or REST adapter. Binds exact head and complete discussions; never posts, approves, resolves, merges, pushes, edits, or performs broad repository audits. |
+| `git-commit-signing-recovery` | 88/1,455 | Recover a Git commit that failed before ref advancement due to an SSH signer, agent, socket, or helper. Preserves staged state for one verified retry. Excludes hooks, conflicts, remote auth, non-SSH signing, and amend/merge/rebase. |
+| `git-worktree-recovery` | 81/1,014 | Recover a missing/stale/broken Git worktree path or symlink when a registered replacement holds the branch. Audits retention and guards POSIX-only repair. Excludes worktree administration, ref restoration, restacking, and unsaved content. |
+| `gitlab-review-response` | 81/1,624 | GitLab MR discussions: address feedback, bind pushes to source project/SHA, prove exact-head CI, and reply idempotently. Per-thread resolution needs authorization. Excludes broad review, GitHub PRs, approvals, merges, and bulk resolution. |
+| `stacked-change-delivery` | 84/2,161 | Stacked PR/MR delivery binds children to exact parent heads, restacks after changes, records CI proof, lands bottom-up/atomically, and hands off safely. Excludes independent changes, review replies, and automatic merge/force-push authority. |
+
+#### `engineering-hygiene`
+
+| Skill | Tokens | Description |
+| --- | ---: | --- |
+| `code-maintenance-audit` | 73/908 | Changed-code audits find dead or unused symbols, stale leftovers, duplicate logic, obsolete tests, and consolidation before completion. Not for speculative architecture, style churn, or performance optimization unless explicitly requested. |
+| `provisioning-missing-tools` | 89/678 | Missing toolchains are provisioned when absent, outdated, weak, or misconfigured commands, SDKs, runtimes, package managers, drivers, CLIs, simulators, emulators, or test/profiling utilities block or downgrade end-to-end work. |
+| `ui-visual-audit` | 79/835 | Rendered UI and screenshot audits verify changes and catch unrelated occlusion, clipping, overlap, broken icons, poor contrast, spacing/alignment, platform-control, data-plausibility, responsive text, and visible accessibility defects. |
+| `untangle-business-logic` | 78/818 | Business-logic refactors separate rules from UI/IO/platform/concurrency/lifecycle, state, and error policy while preserving behavior, targeting duplicated meaning and hidden invariants rather than dead-code cleanup or performance tuning. |
+
+#### `scientific-research`
+
+| Skill | Tokens | Description |
+| --- | ---: | --- |
+| `scientific-research` | 84/2,024 | Scholarly research discovers papers, builds traceable corpora, deduplicates DOIs, extracts source-backed claims, synthesizes evidence, and validates quality across arXiv, OpenAlex, Crossref, Europe PMC, Semantic Scholar, and PubMed. |
+
+#### `technology-intelligence`
+
+| Skill | Tokens | Description |
+| --- | ---: | --- |
+| `technology-advisor` | 70/486 | Compare software frameworks, databases, platforms, and CLI/MCP/API delivery modes for an explicit adoption or migration decision using dated evidence and constraints. Excludes routine coding and running or installing already-selected tools. |
+| `technology-evidence-maintainer` | 73/411 | Validate, inspect, diff, or explicitly refresh Technology Intelligence evidence, provenance, staleness, rights, and coverage. Excludes stack selection, runtime discovery, installation, and automatic recommendation changes. |
+
+#### `design-intelligence`
+
+| Skill | Tokens | Description |
+| --- | ---: | --- |
+| `design-intelligence` | 64/852 | Product and UX design routing covers framing, information architecture, interaction, usability, accessibility, visual communication, and design-system governance; excludes Figma, CSS, automation, and assets. |
+| `design-system-governance` | 67/764 | Design-system governance defines reusable patterns, contribution rules, accessibility evidence, ownership, maturity, adoption, and drift; excludes CSS, Figma libraries, and token tooling unless requested. |
+| `interaction-design` | 60/768 | Interaction design shapes task flows, affordances, feedback, state coverage, error prevention, recovery, undo, progressive disclosure, input burden, and keyboard/touch behavior. |
+| `interface-architecture` | 54/748 | Interface architecture structures navigation, taxonomy, labels, content models, screen priority, findability, search/browse, and information hierarchy. |
+| `product-framing` | 63/505 | Product framing clarifies user needs, Jobs-to-be-Done, outcomes, strategy, assumptions, opportunity-solution trees, HEART/GSM metrics, and discovery before interface design. |
+| `usability-accessibility-review` | 73/742 | Usability and accessibility review audits screens, flows, or specs for heuristics, cognitive-walkthrough risks, WCAG/APG/COGA concerns, inclusive design, ethical UX, and dark patterns. |
+| `visual-communication` | 74/1,020 | Visual communication audits UI screenshots, golden images, and visual diffs for hierarchy, readability, contrast, capture state, and test-harness artifacts. Do not use for screenshot generation/export, CSS, Figma, or styling. |
+
+#### `architecture-intelligence`
+
+| Skill | Tokens | Description |
+| --- | ---: | --- |
+| `architecture-conformance` | 57/546 | Architecture conformance compares intended rules with implementation for dependencies, ADRs, ownership constraints, drift, erosion, recovered models, and classifications. |
+| `architecture-decisions` | 55/383 | Architecture decisions record structural tradeoffs, consequences, reversibility, ownership, validation, and ADR revisit triggers; skip local choices. |
+| `architecture-fitness-functions` | 62/625 | Architecture fitness functions turn intended boundaries into dependency rules, cycle checks, ownership gates, ADR conformance, runtime/resilience checks, and staged CI enforcement. |
+| `architecture-intelligence` | 66/1,199 | Software architecture routing covers module boundaries, dependencies, runtime topology, async state, ownership, ADRs, fitness functions, and staged refactoring; excludes UI/UX and routine cleanup. |
+| `architecture-ownership-topology` | 66/583 | Architecture ownership analysis maps CODEOWNERS/OWNERS coverage, ownerless modules, cross-owned dependencies, review paths, and governance risk without inferring team health. |
+| `architecture-refactoring-strategy` | 64/517 | Architecture refactoring strategy stages boundary extraction, modularization, dependency inversion, migrations, anti-corruption layers, validation, and rollback instead of rewrites. |
+| `architecture-runtime-topology` | 63/579 | Runtime architecture analysis maps services, app/CLI/background flows, deployment/IaC, integrations, observability, resilience, and coupling without claiming production truth. |
+| `async-state-consistency` | 79/2,314 | Asynchronous state consistency: cache races, subscriber notifications, memoized/coalesced loads, replay, one-shot reads, invalidation, stale results. Excludes UI-only display, deployment topology, distributed consensus, unrelated flakiness. |
+| `codebase-architecture-audit` | 67/839 | Codebase architecture audits recover actual modules, dependencies, domain seams, runtime coupling, ownership, quality attributes, tests, docs, and risks before structural code changes. |
+
+#### `spec-driven-development`
+
+| Skill | Tokens | Description |
+| --- | ---: | --- |
+| `sdd` | 57/760 | Spec-Driven Development routes lightweight, Spec Kit, Kiro-style, OpenSpec-style, brownfield, bugfix, planning, implementation, and audit lanes. |
+| `sdd-audit` | 49/411 | SDD artifact audits verify traceability, surface selection, and completion evidence before implementation or final delivery. |
+| `sdd-implement` | 55/511 | SDD task execution: execute approved tasks, update status, handle spec drift, and require fresh completion evidence before any done claim. |
+| `sdd-plan-tasks` | 51/513 | SDD plans convert approved specs into designs, contracts, quickstarts, and traceable task lists. |
+| `sdd-spec-kit` | 54/574 | GitHub Spec Kit projects route constitution, specify, clarify, plan, tasks, analyze, implement, extensions, and presets. |
+| `sdd-specify` | 52/498 | SDD specifications capture requirements, assumptions, non-goals, acceptance criteria, success metrics, and retrofit truth markers. |
 
 #### `build-swift-apps`
 
@@ -325,6 +456,36 @@ Token cells are shown as `startup/body`.
 | `xcode-project-auditor` | 66/483 | Audit Xcode project and target overhead across schemes, settings, dependencies, run scripts, module maps, and explicit modules; require approval before changes. |
 | `xcode-ui-test-stabilizer` | 82/451 | Build and stabilize Xcode UI end-to-end tests with XCUIApplication/xcodebuild for new or unreliable automation, covering environment setup, focus/input reliability, waits, logs, attachments, and flakiness triage. |
 
+#### `kotlin-multiplatform`
+
+| Skill | Tokens | Description |
+| --- | ---: | --- |
+| `kmp-architecture` | 68/932 | Kotlin Multiplatform architecture design for module boundaries, source-set hierarchies, shared logic versus UI, platform APIs, interop seams, and cross-platform library fit. |
+| `kmp-compose-ui` | 68/1,242 | Compose Multiplatform UI implementation and repair across state, navigation, external-URI effects, resources, platform entry points, previews, accessibility, performance, and UI testing. |
+| `kmp-data-layer` | 81/2,178 | KMP data-layer design/review for repositories, source-of-truth, migrations, DTO/domain mapping, offline sync, storage/errors, shared/coalesced work, cancellation and admission races, causal receipts, threading, and API exposure. |
+| `kmp-ecosystem-selection` | 81/400 | Kotlin Multiplatform ecosystem selection for libraries/tools spanning persistence, networking, DI, navigation, logging, observability, testing, code quality, resources, images, docs, payments, and templates without imposing one stack. |
+| `kmp-gradle-doctor` | 80/1,904 | Kotlin Multiplatform Gradle diagnosis and repair for source sets, dependency failures including private dependency resolution or consumption failures, Android targets, Compose, KGP/AGP, tests, static analysis, and CI. |
+| `kmp-interop-bridges` | 90/581 | KMP platform-bridge design/review for source-set placement, expect/actual, entry-point wiring, cinterop, Swift API readiness, SKIE, KMP-NativeCoroutines, KDoctor, XCFrameworks, and SwiftPM export. |
+| `kmp-migration-release` | 85/727 | Kotlin Multiplatform migration and release execution for AGP 9 Android-KMP adoption, monolithic composeApp splits, CocoaPods-to-SwiftPM moves, cinterop, iOS frameworks, CI, publishing, and app-store readiness. |
+| `kmp-performance-observability` | 77/461 | Kotlin Multiplatform performance and observability diagnosis across Gradle build time, Kotlin/Native memory/GC, Compose jank, binary size, startup, runtime logging, and release-mode verification. |
+| `kmp-production-governance` | 76/681 | Kotlin Multiplatform build-governance review for convention plugins, version catalogs, repository policy, module APIs, Klibs targets, ABI validation, publishing, production readiness, and adoption risk. |
+| `kmp-production-readiness` | 74/416 | Kotlin Multiplatform production-readiness audits with scorecards, release blockers, risk ownership, and deferred checks across architecture, build, testing, interop, security, performance, and publishing. |
+| `kmp-publishing-ci` | 78/510 | Kotlin Multiplatform CI and publishing design for Maven publications, Gradle metadata, ABI validation, XCFrameworks, SwiftPM export, KMMBridge, artifact hosting, signing boundaries, and app release gates. |
+| `kmp-security-privacy` | 75/326 | Kotlin Multiplatform security and privacy review for secure storage, token handling, Ktor auth, TLS and pinning, log redaction, runtime protection, platform APIs, and commonMain boundaries. |
+| `kmp-testing-quality` | 81/2,366 | KMP testing covers diagnosing KMP test failures, especially DI fixture or container missing bindings, plus commonTest, kotlin.test, platform/Compose UI and screenshot tests, test doubles, refactor safety, review gates, and regressions. |
+| `kotlin-multiplatform` | 87/1,738 | Kotlin Multiplatform routing and execution across architecture, Gradle/private dependencies, Compose UI, Android-KMP migration, iOS interop, CocoaPods/SwiftPM moves, testing, performance, security, CI, publishing, and production readiness. |
+
+#### `tauri`
+
+| Skill | Tokens | Description |
+| --- | ---: | --- |
+| `tauri-config-security` | 69/658 | Tauri 2 configuration and security review for tauri.conf, capabilities, permissions, CSP, scoped filesystem/network/shell access, window labels, plugin permissions, and frontend-exposed native APIs. |
+| `tauri-debug-testing` | 72/577 | Tauri 2 debugging and test stabilization for Rust compile/runtime errors, frontend API mocks, permission failures, dev/build mismatches, WebDriver, CI, logs, DevTools, and platform-specific coverage gaps. |
+| `tauri-distribution-mobile` | 72/470 | Tauri 2 desktop/mobile distribution and release validation for bundle targets, signing, notarization, updater signatures, Windows/macOS/Linux packaging, Android/iOS setup, CI gates, and store readiness. |
+| `tauri-ipc-plugins` | 73/465 | Tauri 2 IPC and plugin implementation review for Rust commands, invoke wrappers, events, Channels, custom errors, state, official or custom plugins, permissions, JavaScript, and mobile surfaces. |
+| `tauri-projects` | 74/605 | Tauri 2 project scaffolding, inspection, and migration for new apps, existing frontends, src-tauri layout, package-manager or framework selection, repository orientation, and Tauri 1-to-2 upgrades. |
+| `tauri-shell-ui` | 78/460 | Tauri 2 desktop-shell UI implementation and review for windows, webviews, menus, tray icons, titlebars, resources, app icons, state, sidecars, opener/shell APIs, deep links, and native-feeling interactions. |
+
 #### `pixijs`
 
 | Skill | Tokens | Description |
@@ -356,119 +517,6 @@ Token cells are shown as `startup/body`.
 | `pixijs-scene-text` | 69/258 | PixiJS v8 text builds Text/TextStyle, BitmapText, HTMLText, SplitText, and SplitBitmapText for dynamic labels, glyph-atlas speed, and styled markup. |
 | `pixijs-ticker` | 73/271 | PixiJS v8 Ticker controls render loops and schedules add/addOnce/remove callbacks with deltaTime/deltaMS/elapsedMS, UPDATE_PRIORITY, maxFPS/minFPS, speed, and shared/private tickers. |
 
-#### `tauri`
-
-| Skill | Tokens | Description |
-| --- | ---: | --- |
-| `tauri-config-security` | 69/658 | Tauri 2 configuration and security review for tauri.conf, capabilities, permissions, CSP, scoped filesystem/network/shell access, window labels, plugin permissions, and frontend-exposed native APIs. |
-| `tauri-debug-testing` | 72/577 | Tauri 2 debugging and test stabilization for Rust compile/runtime errors, frontend API mocks, permission failures, dev/build mismatches, WebDriver, CI, logs, DevTools, and platform-specific coverage gaps. |
-| `tauri-distribution-mobile` | 72/470 | Tauri 2 desktop/mobile distribution and release validation for bundle targets, signing, notarization, updater signatures, Windows/macOS/Linux packaging, Android/iOS setup, CI gates, and store readiness. |
-| `tauri-ipc-plugins` | 73/465 | Tauri 2 IPC and plugin implementation review for Rust commands, invoke wrappers, events, Channels, custom errors, state, official or custom plugins, permissions, JavaScript, and mobile surfaces. |
-| `tauri-projects` | 74/605 | Tauri 2 project scaffolding, inspection, and migration for new apps, existing frontends, src-tauri layout, package-manager or framework selection, repository orientation, and Tauri 1-to-2 upgrades. |
-| `tauri-shell-ui` | 78/460 | Tauri 2 desktop-shell UI implementation and review for windows, webviews, menus, tray icons, titlebars, resources, app icons, state, sidecars, opener/shell APIs, deep links, and native-feeling interactions. |
-
-#### `scientific-research`
-
-| Skill | Tokens | Description |
-| --- | ---: | --- |
-| `scientific-research` | 84/2,024 | Scholarly research discovers papers, builds traceable corpora, deduplicates DOIs, extracts source-backed claims, synthesizes evidence, and validates quality across arXiv, OpenAlex, Crossref, Europe PMC, Semantic Scholar, and PubMed. |
-
-#### `context-density`
-
-| Skill | Tokens | Description |
-| --- | ---: | --- |
-| `context-density` | 70/2,806 | Agent context audits measure token cost, provenance, compression, typed-state drift, trigger overlap, and prompt/output contracts across AGENTS.md, prompts, skills, plugins, MCP/tool schemas, current-state artifacts, and agent handoffs. |
-
-#### `capability-workbench`
-
-| Skill | Tokens | Description |
-| --- | ---: | --- |
-| `agent-guidance-factory` | 79/678 | Author repository agent guidance such as AGENTS.md, CLAUDE.md, and scoped rules for load order, nested instructions, migration, audits, or stale-doc cleanup. Excludes ordinary human docs unless agents consume them. |
-| `agent-harness-engineering` | 83/1,176 | Design LLM agent harnesses with typed control loops, tools/state, context/memory, policy, cancellation, recovery, and delegation. Excludes prompt-only, generic app architecture, vendor CLI/config, evaluation-only work, and skill creation. |
-| `agent-harness-evaluation` | 77/1,194 | Evaluate LLM agent harness reliability through replay, regression, failure/restart, cancellation, context pressure, and release gates. Excludes generic tests, surveys, prompt/model-only benchmarks, and design without empirical evidence. |
-| `capability-auditor` | 77/1,700 | Audit agent skills/plugins for safety, evidence coverage, duplication, context cost, prompt contracts, dependencies, and install risk. Excludes code line/branch/mutation/test coverage; use portfolio architect for structural changes. |
-| `capability-portfolio-architect` | 76/947 | Reshape skill/plugin portfolios when routing overlaps, capabilities duplicate or disappear, or split/merge/move/delete/router/reference/script boundaries need decisions. Use capability-auditor for single-artifact quality. |
-| `capability-reality-repair` | 73/836 | Repair stale or false skill/script/plugin/MCP contracts when commands, schemas, paths, outputs, dependencies, install state, connector guidance, validators, or docs disagree with live reality. |
-| `capability-synthesizer` | 68/2,228 | Synthesize or strengthen well-vetted agent skills/plugins from broad public sources and local or user-provided candidates, with evidence-backed comparison and adoption/rejection. |
-| `capability-workbench` | 64/2,092 | Route agent capability lifecycle work across discovery, synthesis, skill/plugin creation, installation, packaging, audit, portfolio design, and LLM harness engineering or evaluation. |
-| `plugin-factory` | 68/1,489 | Build or update marketplace-backed agent plugins with manifests, skill bundles, local marketplace entries, packaging, validation, optional install/cache gates, runtime-discovery status, and Codex deeplinks. |
-| `skill-factory` | 72/1,459 | Create or refactor portable agent skills across SKILL.md bodies, progressive disclosure, scripts/references/assets, packaging, and validation. For name/description-only routing work, use skill-trigger-metadata first. |
-| `skill-installer-vetter` | 72/942 | Find, compare, vet, install, or update agent skills from catalogs, GitHub, local folders, or user references with provenance, safety, dependency, capability, and destination checks. |
-| `skill-trigger-metadata` | 74/1,304 | Optimize skill names/descriptions for reliable routing under catalog truncation, omission, and cross-runtime pressure. For instruction, resource, packaging, or installation changes, continue with skill-factory or plugin-factory. |
-
-#### `codex-cli`
-
-| Skill | Tokens | Description |
-| --- | ---: | --- |
-| `codex-cli` | 71/1,131 | Route Codex CLI operations across skill-catalog diagnostics, CLI inspection, exec/review automation, deferred completion, task supervision, plugin/MCP management, doctor/debug, rollout forensics, and app environments. |
-| `codex-deferred-completion` | 62/1,031 | Complete long-running executable work through an existing atomic JSON terminal receipt, avoiding repeated native-session or remote-status polling and wasted model turns. |
-| `codex-doctor-debugger` | 88/1,084 | Diagnose current Codex CLI health and model-visible skill catalogs: metadata truncation/omission, install, config, auth, sandbox, prompt, app-server, remote-control, and runtime failures. For what an existing task saw, use codex-log-reader. |
-| `codex-environments` | 72/995 | Manage Codex app project environments and actions in `.codex/environments/environment.toml`, including Run/Test/Preview buttons, startup commands, launchers, environment variables, and repeatable local commands. |
-| `codex-exec-automation` | 78/1,018 | Automate non-interactive Codex CLI runs with `codex exec`, resume, review, JSONL events, output schemas, last-message files, cwd/profile/config, sandbox/approval modes, and CI. |
-| `codex-log-reader` | 73/1,279 | Inspect Codex rollout JSONL by CODEX_THREAD_ID, cwd, query, issue, project, lineage, malformed or large logs, permission concerns, and "what happened in this task?" forensics. |
-| `codex-plugin-mcp-manager` | 69/1,049 | Manage Codex plugins, local marketplaces, cache visibility, and MCP server list/get/add/remove/login/logout, bearer-token environment bindings, and plugin/MCP installation failures. |
-| `codex-thread-supervisor` | 83/2,954 | Supervise live Codex tasks by ID with cursor waits, attention/completion gates, bounded claims, checkpoints, skill/evidence handoffs, and privacy-safe capability mining. Excludes rollout forensics, current-turn subagents, and external jobs. |
-
-#### `scheduled-automation`
-
-| Skill | Tokens | Description |
-| --- | ---: | --- |
-| `scheduled-automation-runtime` | 78/1,158 | Local scheduler jobs need proof when launchd, systemd, cron, or Windows Task Scheduler differ from manual runs or lack runtime proof. Not for vendor CLI command construction, architecture inventory, cloud schedulers, or job business logic. |
-
-#### `git-workflows`
-
-| Skill | Tokens | Description |
-| --- | ---: | --- |
-| `forge-code-review` | 82/1,085 | Read-only review for GitHub PR or GitLab MR links through a probed MCP, connector, CLI, or REST adapter. Binds exact head and complete discussions; never posts, approves, resolves, merges, pushes, edits, or performs broad repository audits. |
-| `git-commit-signing-recovery` | 88/1,455 | Recover a Git commit that failed before ref advancement due to an SSH signer, agent, socket, or helper. Preserves staged state for one verified retry. Excludes hooks, conflicts, remote auth, non-SSH signing, and amend/merge/rebase. |
-| `git-worktree-recovery` | 81/1,014 | Recover a missing/stale/broken Git worktree path or symlink when a registered replacement holds the branch. Audits retention and guards POSIX-only repair. Excludes worktree administration, ref restoration, restacking, and unsaved content. |
-| `gitlab-review-response` | 81/1,624 | GitLab MR discussions: address feedback, bind pushes to source project/SHA, prove exact-head CI, and reply idempotently. Per-thread resolution needs authorization. Excludes broad review, GitHub PRs, approvals, merges, and bulk resolution. |
-| `stacked-change-delivery` | 84/2,161 | Stacked PR/MR delivery binds children to exact parent heads, restacks after changes, records CI proof, lands bottom-up/atomically, and hands off safely. Excludes independent changes, review replies, and automatic merge/force-push authority. |
-
-#### `technology-intelligence`
-
-| Skill | Tokens | Description |
-| --- | ---: | --- |
-| `technology-advisor` | 70/486 | Compare software frameworks, databases, platforms, and CLI/MCP/API delivery modes for an explicit adoption or migration decision using dated evidence and constraints. Excludes routine coding and running or installing already-selected tools. |
-| `technology-evidence-maintainer` | 73/411 | Validate, inspect, diff, or explicitly refresh Technology Intelligence evidence, provenance, staleness, rights, and coverage. Excludes stack selection, runtime discovery, installation, and automatic recommendation changes. |
-
-#### `claude-code`
-
-| Skill | Tokens | Description |
-| --- | ---: | --- |
-| `claude-agent-worktrees` | 84/756 | Claude Code sessions coordinate background agents, `claude agents --json`, dispatched-session defaults, worktrees, tmux/iTerm panes, resume/continue/from-pr/fork-session, names and IDs, remote control, and cloud ultrareview runs. |
-| `claude-code` | 69/789 | Claude Code CLI routes local inspection, interactive or print-mode automation, plugin and MCP lifecycle, diagnostics, hooks/settings, background agents, worktrees, sessions, remote control, and ultrareview. |
-| `claude-doctor-debugger` | 83/738 | Claude Code diagnostics isolate install, update, auth, configuration health, broken customizations, safe/bare modes, debug logs, auto-mode, keychain/API-key boundaries, IDE/Chrome integration, doctor warnings, and setup-token failures. |
-| `claude-hooks-settings` | 78/708 | Claude Code settings and hooks are created, audited, or debugged across CLAUDE.md/rules loading, custom agents, tool permissions, output styles, workflows, setting sources, safe/bare modes, and plugin customizations. |
-| `claude-plugin-mcp-manager` | 78/838 | Claude Code plugins and MCP servers are managed across marketplaces, validation, token cost, install/update/remove/prune, session-only sources, MCP approvals, strict config, transports, headers, OAuth, and lifecycle failures. |
-| `claude-print-automation` | 79/840 | Claude Code print-mode runs are prepared or debugged with `claude --print`, text/JSON/stream-json I/O, JSON Schema, budgets, fallback models, no persistence, prompt suggestions, and trusted-directory CI. |
-
-#### `architecture-intelligence`
-
-| Skill | Tokens | Description |
-| --- | ---: | --- |
-| `architecture-conformance` | 57/546 | Architecture conformance compares intended rules with implementation for dependencies, ADRs, ownership constraints, drift, erosion, recovered models, and classifications. |
-| `architecture-decisions` | 55/383 | Architecture decisions record structural tradeoffs, consequences, reversibility, ownership, validation, and ADR revisit triggers; skip local choices. |
-| `architecture-fitness-functions` | 62/625 | Architecture fitness functions turn intended boundaries into dependency rules, cycle checks, ownership gates, ADR conformance, runtime/resilience checks, and staged CI enforcement. |
-| `architecture-intelligence` | 66/1,199 | Software architecture routing covers module boundaries, dependencies, runtime topology, async state, ownership, ADRs, fitness functions, and staged refactoring; excludes UI/UX and routine cleanup. |
-| `architecture-ownership-topology` | 66/583 | Architecture ownership analysis maps CODEOWNERS/OWNERS coverage, ownerless modules, cross-owned dependencies, review paths, and governance risk without inferring team health. |
-| `architecture-refactoring-strategy` | 64/517 | Architecture refactoring strategy stages boundary extraction, modularization, dependency inversion, migrations, anti-corruption layers, validation, and rollback instead of rewrites. |
-| `architecture-runtime-topology` | 63/579 | Runtime architecture analysis maps services, app/CLI/background flows, deployment/IaC, integrations, observability, resilience, and coupling without claiming production truth. |
-| `async-state-consistency` | 79/2,314 | Asynchronous state consistency: cache races, subscriber notifications, memoized/coalesced loads, replay, one-shot reads, invalidation, stale results. Excludes UI-only display, deployment topology, distributed consensus, unrelated flakiness. |
-| `codebase-architecture-audit` | 67/839 | Codebase architecture audits recover actual modules, dependencies, domain seams, runtime coupling, ownership, quality attributes, tests, docs, and risks before structural code changes. |
-
-#### `design-intelligence`
-
-| Skill | Tokens | Description |
-| --- | ---: | --- |
-| `design-intelligence` | 64/852 | Product and UX design routing covers framing, information architecture, interaction, usability, accessibility, visual communication, and design-system governance; excludes Figma, CSS, automation, and assets. |
-| `design-system-governance` | 67/764 | Design-system governance defines reusable patterns, contribution rules, accessibility evidence, ownership, maturity, adoption, and drift; excludes CSS, Figma libraries, and token tooling unless requested. |
-| `interaction-design` | 60/768 | Interaction design shapes task flows, affordances, feedback, state coverage, error prevention, recovery, undo, progressive disclosure, input burden, and keyboard/touch behavior. |
-| `interface-architecture` | 54/748 | Interface architecture structures navigation, taxonomy, labels, content models, screen priority, findability, search/browse, and information hierarchy. |
-| `product-framing` | 63/505 | Product framing clarifies user needs, Jobs-to-be-Done, outcomes, strategy, assumptions, opportunity-solution trees, HEART/GSM metrics, and discovery before interface design. |
-| `usability-accessibility-review` | 73/742 | Usability and accessibility review audits screens, flows, or specs for heuristics, cognitive-walkthrough risks, WCAG/APG/COGA concerns, inclusive design, ethical UX, and dark patterns. |
-| `visual-communication` | 74/1,020 | Visual communication audits UI screenshots, golden images, and visual diffs for hierarchy, readability, contrast, capture state, and test-harness artifacts. Do not use for screenshot generation/export, CSS, Figma, or styling. |
-
 #### `game-design-intelligence`
 
 | Skill | Tokens | Description |
@@ -479,45 +527,6 @@ Token cells are shown as `startup/body`.
 | `multiplayer-live-service` | 80/476 | Multiplayer/live-service design: co-op/competition, social systems, fairness, toxicity, matchmaking, seasons, events, cadence, and late-game health. Do not use for networking implementation, backend architecture, graphics, assets, or code. |
 | `onboarding-difficulty` | 70/384 | Game onboarding and difficulty design covers tutorials, FTUE, teaching, skill ramps, challenge curves, assist modes, accessible challenge, failure, and mastery. Do not use for UI implementation or code. |
 | `progression-economy-balance` | 84/519 | Game progression/economy/balance design covers rewards, power curves, currencies, sources/sinks, pacing, tuning, dominant strategies, and unlocks. Do not use for implementation, analytics instrumentation, or monetization dark patterns. |
-
-#### `kotlin-multiplatform`
-
-| Skill | Tokens | Description |
-| --- | ---: | --- |
-| `kmp-architecture` | 68/932 | Kotlin Multiplatform architecture design for module boundaries, source-set hierarchies, shared logic versus UI, platform APIs, interop seams, and cross-platform library fit. |
-| `kmp-compose-ui` | 68/1,242 | Compose Multiplatform UI implementation and repair across state, navigation, external-URI effects, resources, platform entry points, previews, accessibility, performance, and UI testing. |
-| `kmp-data-layer` | 81/2,178 | KMP data-layer design/review for repositories, source-of-truth, migrations, DTO/domain mapping, offline sync, storage/errors, shared/coalesced work, cancellation and admission races, causal receipts, threading, and API exposure. |
-| `kmp-ecosystem-selection` | 81/400 | Kotlin Multiplatform ecosystem selection for libraries/tools spanning persistence, networking, DI, navigation, logging, observability, testing, code quality, resources, images, docs, payments, and templates without imposing one stack. |
-| `kmp-gradle-doctor` | 80/1,904 | Kotlin Multiplatform Gradle diagnosis and repair for source sets, dependency failures including private dependency resolution or consumption failures, Android targets, Compose, KGP/AGP, tests, static analysis, and CI. |
-| `kmp-interop-bridges` | 90/581 | KMP platform-bridge design/review for source-set placement, expect/actual, entry-point wiring, cinterop, Swift API readiness, SKIE, KMP-NativeCoroutines, KDoctor, XCFrameworks, and SwiftPM export. |
-| `kmp-migration-release` | 85/727 | Kotlin Multiplatform migration and release execution for AGP 9 Android-KMP adoption, monolithic composeApp splits, CocoaPods-to-SwiftPM moves, cinterop, iOS frameworks, CI, publishing, and app-store readiness. |
-| `kmp-performance-observability` | 77/461 | Kotlin Multiplatform performance and observability diagnosis across Gradle build time, Kotlin/Native memory/GC, Compose jank, binary size, startup, runtime logging, and release-mode verification. |
-| `kmp-production-governance` | 76/681 | Kotlin Multiplatform build-governance review for convention plugins, version catalogs, repository policy, module APIs, Klibs targets, ABI validation, publishing, production readiness, and adoption risk. |
-| `kmp-production-readiness` | 74/416 | Kotlin Multiplatform production-readiness audits with scorecards, release blockers, risk ownership, and deferred checks across architecture, build, testing, interop, security, performance, and publishing. |
-| `kmp-publishing-ci` | 78/510 | Kotlin Multiplatform CI and publishing design for Maven publications, Gradle metadata, ABI validation, XCFrameworks, SwiftPM export, KMMBridge, artifact hosting, signing boundaries, and app release gates. |
-| `kmp-security-privacy` | 75/326 | Kotlin Multiplatform security and privacy review for secure storage, token handling, Ktor auth, TLS and pinning, log redaction, runtime protection, platform APIs, and commonMain boundaries. |
-| `kmp-testing-quality` | 81/2,366 | KMP testing covers diagnosing KMP test failures, especially DI fixture or container missing bindings, plus commonTest, kotlin.test, platform/Compose UI and screenshot tests, test doubles, refactor safety, review gates, and regressions. |
-| `kotlin-multiplatform` | 87/1,738 | Kotlin Multiplatform routing and execution across architecture, Gradle/private dependencies, Compose UI, Android-KMP migration, iOS interop, CocoaPods/SwiftPM moves, testing, performance, security, CI, publishing, and production readiness. |
-
-#### `spec-driven-development`
-
-| Skill | Tokens | Description |
-| --- | ---: | --- |
-| `sdd` | 57/760 | Spec-Driven Development routes lightweight, Spec Kit, Kiro-style, OpenSpec-style, brownfield, bugfix, planning, implementation, and audit lanes. |
-| `sdd-audit` | 49/411 | SDD artifact audits verify traceability, surface selection, and completion evidence before implementation or final delivery. |
-| `sdd-implement` | 55/511 | SDD task execution: execute approved tasks, update status, handle spec drift, and require fresh completion evidence before any done claim. |
-| `sdd-plan-tasks` | 51/513 | SDD plans convert approved specs into designs, contracts, quickstarts, and traceable task lists. |
-| `sdd-spec-kit` | 54/574 | GitHub Spec Kit projects route constitution, specify, clarify, plan, tasks, analyze, implement, extensions, and presets. |
-| `sdd-specify` | 52/498 | SDD specifications capture requirements, assumptions, non-goals, acceptance criteria, success metrics, and retrofit truth markers. |
-
-#### `engineering-hygiene`
-
-| Skill | Tokens | Description |
-| --- | ---: | --- |
-| `code-maintenance-audit` | 73/908 | Changed-code audits find dead or unused symbols, stale leftovers, duplicate logic, obsolete tests, and consolidation before completion. Not for speculative architecture, style churn, or performance optimization unless explicitly requested. |
-| `provisioning-missing-tools` | 89/678 | Missing toolchains are provisioned when absent, outdated, weak, or misconfigured commands, SDKs, runtimes, package managers, drivers, CLIs, simulators, emulators, or test/profiling utilities block or downgrade end-to-end work. |
-| `ui-visual-audit` | 79/835 | Rendered UI and screenshot audits verify changes and catch unrelated occlusion, clipping, overlap, broken icons, poor contrast, spacing/alignment, platform-control, data-plausibility, responsive text, and visible accessibility defects. |
-| `untangle-business-logic` | 78/818 | Business-logic refactors separate rules from UI/IO/platform/concurrency/lifecycle, state, and error policy while preserving behavior, targeting duplicated meaning and hidden invariants rather than dead-code cleanup or performance tuning. |
 
 ## Repository Design
 

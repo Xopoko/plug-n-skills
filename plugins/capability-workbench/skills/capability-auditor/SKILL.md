@@ -45,7 +45,8 @@ python3 "$PLUGIN_ROOT/scripts/context/context_density_audit.py" <skill-or-plugin
 For model-visible catalog pressure, read
 `$PLUGIN_ROOT/references/skill-catalog-runtime-comparison.md` and use the target
 host's vendor diagnostics. Route Codex-specific source modeling and exact
-live-prompt or rollout budget evidence to `codex-cli`; keep this audit focused
+live-prompt or rollout budget evidence to the `codex-cli` skill in
+`agent-harness`; keep this audit focused
 on portable artifact quality and the resulting trigger repair.
 
 Aggregate evidence coverage:

@@ -1,0 +1,22 @@
+{
+  "name": "agent-harness",
+  "version": "0.1.0",
+  "description": "Agent harness design and evaluation plus Codex CLI, Claude Code, MCP, hooks, sessions, deferred completion, and local scheduler proof.",
+  "author": {
+    "name": "Xopoko"
+  },
+  "license": "MIT",
+  "keywords": [
+    "agent-harness",
+    "agents",
+    "automation",
+    "claude-code",
+    "cli",
+    "codex",
+    "evaluation",
+    "hooks",
+    "mcp",
+    "scheduler",
+    "sessions"
+  ]
+}

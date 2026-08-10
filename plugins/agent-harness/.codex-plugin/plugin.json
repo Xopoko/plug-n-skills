@@ -1,0 +1,44 @@
+{
+  "name": "agent-harness",
+  "version": "0.1.0",
+  "description": "Agent harness design and evaluation plus Codex CLI, Claude Code, MCP, hooks, sessions, deferred completion, and local scheduler proof.",
+  "author": {
+    "name": "Xopoko"
+  },
+  "repository": "https://github.com/Xopoko/plug-n-skills/tree/main/plugins/agent-harness",
+  "license": "MIT",
+  "keywords": [
+    "agent-harness",
+    "agents",
+    "automation",
+    "claude-code",
+    "cli",
+    "codex",
+    "evaluation",
+    "hooks",
+    "mcp",
+    "scheduler",
+    "sessions"
+  ],
+  "skills": "./skills/",
+  "mcpServers": "./.codex-mcp.json",
+  "interface": {
+    "displayName": "Agent Harness",
+    "shortDescription": "Build, evaluate, operate, and prove agent runtimes.",
+    "longDescription": "Design and evaluate reliable LLM agent harnesses, operate Codex CLI and Claude Code, manage plugins, MCP servers, hooks, settings, sessions, worktrees, and environments, inspect rollout evidence, use producer-native deferred completion, and prove local operating-system scheduler runs.",
+    "developerName": "Xopoko",
+    "category": "Coding",
+    "capabilities": [
+      "Vendor-neutral agent harness design with typed control, state, policy, recovery, cancellation, and delegation",
+      "Harness evaluation, replay, failure attribution, reliability analysis, and release gates",
+      "Codex CLI inspection, exec and review automation, diagnostics, environments, plugins, MCP, task supervision, and rollout forensics",
+      "Claude Code inspection, print automation, diagnostics, hooks, settings, agents, worktrees, sessions, plugins, and MCP",
+      "Producer-native deferred completion receipts through a bundled MCP server",
+      "Local launchd, systemd timer, cron, and Windows Task Scheduler runtime proof"
+    ],
+    "defaultPrompt": "Route this agent harness or Codex/Claude runtime task to the narrowest safe workflow and verify the result.",
+    "brandColor": "#2563EB",
+    "composerIcon": "./assets/icon.png",
+    "logo": "./assets/icon.png"
+  }
+}

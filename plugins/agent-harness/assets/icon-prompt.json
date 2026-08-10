@@ -1,0 +1,31 @@
+{
+  "schema": "capability_workbench.plugin_icon_prompt.v1",
+  "plugin_name": "agent-harness",
+  "brandColor": "#2563EB",
+  "recommended_asset_path": "assets/icon.png",
+  "imagegen_mode": "built-in",
+  "prompt": "Use case: logo-brand\nAsset type: 1024x1024 marketplace plugin icon for an agent runtime and automation toolkit named Agent Harness\nPrimary request: Create a distinctive abstract icon that communicates one orchestrating harness coordinating several execution paths. Use a bold central luminous core connected to three compact nodes by a single elegant loop or bridle-like orbit. The mark should feel engineered, trustworthy, and energetic, with superb clarity at 32 px and 64 px.\nScene/backdrop: full-bleed deep midnight-indigo square background, subtle dimensional depth but no scenery\nStyle/medium: premium modern 3D-vector hybrid, crisp geometric silhouette, restrained glass-and-metal highlights, not photorealistic\nComposition/framing: one large centered symbol occupying about 68 percent of the canvas, generous safe margin, balanced and nearly symmetrical\nLighting/mood: controlled cyan and violet glow with one small warm amber accent, high contrast, polished developer-tool aesthetic\nColor palette: midnight navy, electric cyan, ultraviolet, tiny amber accent\nConstraints: no text, no letters, no words, no logos, no terminal prompt glyph, no robot, no human, no brand imitation, no watermark; avoid thin lines and tiny details; the silhouette must remain recognizable when downscaled; square corners, no transparency, no border frame\n",
+  "provenance": {
+    "generated_by": "built-in image_gen",
+    "generator_model_version_receipt": null,
+    "receipt_note": "The built-in generator did not expose a model or version receipt.",
+    "machine_local_generation_path_committed": false,
+    "postprocessing": "Normalized to a 1024x1024 opaque RGB PNG.",
+    "selected_asset": {
+      "path": "assets/icon.png",
+      "sha256": "0d4b27d1ef99995b8e1c8e1ea4c6cf4626907533760bc53f36a268178d58b7b1",
+      "bytes": 992295,
+      "width": 1024,
+      "height": 1024,
+      "color_mode": "RGB"
+    }
+  },
+  "checks": [
+    "save the selected image into the plugin workspace as assets/icon.png",
+    "normalize the selected asset to a 1024x1024 opaque RGB PNG",
+    "inspect the image at 1024, 64, and 32 px",
+    "reject visible text, letters, tiny details, screenshots, photos, watermarks, brand imitation, or low contrast",
+    "wire interface.composerIcon, interface.logo, and interface.brandColor after the file exists",
+    "record the SHA-256 of the final post-processed asset, not the generator source"
+  ]
+}

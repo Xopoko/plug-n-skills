@@ -19,26 +19,27 @@ from agent_target import AgentResolutionError, resolve_codex_plugin_state_paths
 
 
 PLUGIN_NAMES = [
-    "engineering-hygiene",
-    "build-swift-apps",
-    "pixijs",
-    "tauri",
-    "scientific-research",
-    "context-density",
+    "agent-harness",
     "capability-workbench",
-    "codex-cli",
-    "scheduled-automation",
+    "context-density",
     "git-workflows",
+    "engineering-hygiene",
+    "scientific-research",
     "technology-intelligence",
-    "claude-code",
-    "architecture-intelligence",
     "design-intelligence",
-    "game-design-intelligence",
-    "kotlin-multiplatform",
+    "architecture-intelligence",
     "spec-driven-development",
+    "build-swift-apps",
+    "kotlin-multiplatform",
+    "tauri",
+    "pixijs",
+    "game-design-intelligence",
 ]
 
 LEGACY_PLUGIN_RENAMES = {
+    "codex-cli": "agent-harness",
+    "claude-code": "agent-harness",
+    "scheduled-automation": "agent-harness",
     "gitlab-review": "git-workflows",
     "stacked-delivery": "git-workflows",
     "git-worktree-safety": "git-workflows",
@@ -234,12 +235,15 @@ def main() -> None:
             )
         run(command)
 
-    if "git-workflows" in selected:
-        report_legacy_plugin_residuals(
-            config_path=config_path,
-            cache_root=cache_root,
-            global_source_root=global_source_root,
-        )
+    legacy_targets = set(LEGACY_PLUGIN_RENAMES.values())
+    for target_plugin in selected:
+        if target_plugin in legacy_targets:
+            report_legacy_plugin_residuals(
+                target_plugin=target_plugin,
+                config_path=config_path,
+                cache_root=cache_root,
+                global_source_root=global_source_root,
+            )
     if retired_plugins:
         report_plugin_residuals(
             plugin_names=retired_plugins,
@@ -355,20 +359,21 @@ def ensure_marketplace_file(
         action = "would retire" if dry_run else "retired"
         print(f"{action} marketplace entries: " + ", ".join(retired_plugins))
 
-    removed_legacy = (
-        sorted(set(by_name) & set(LEGACY_PLUGIN_RENAMES))
-        if "git-workflows" in manifests
-        else []
-    )
-    for legacy_name in removed_legacy:
-        del by_name[legacy_name]
-    if removed_legacy:
-        action = "would migrate" if dry_run else "migrated"
-        print(
-            f"{action} legacy marketplace entries: "
-            + ", ".join(removed_legacy)
-            + " -> git-workflows"
+    for target_plugin in manifests:
+        removed_legacy = sorted(
+            legacy_name
+            for legacy_name, canonical_name in LEGACY_PLUGIN_RENAMES.items()
+            if canonical_name == target_plugin and legacy_name in by_name
         )
+        for legacy_name in removed_legacy:
+            del by_name[legacy_name]
+        if removed_legacy:
+            action = "would migrate" if dry_run else "migrated"
+            print(
+                f"{action} legacy marketplace entries: "
+                + ", ".join(removed_legacy)
+                + f" -> {target_plugin}"
+            )
 
     for name, manifest in manifests.items():
         interface = manifest.get("interface")
@@ -499,19 +504,25 @@ def append_block(text: str, block: list[str]) -> str:
 
 def report_legacy_plugin_residuals(
     *,
+    target_plugin: str = "git-workflows",
     config_path: Path,
     cache_root: Path,
     global_source_root: Path,
 ) -> bool:
-    """Report legacy Git plugin state without mutating host configuration."""
+    """Report legacy plugin state for one canonical replacement without mutation."""
+    legacy_names = sorted(
+        legacy_name
+        for legacy_name, canonical_name in LEGACY_PLUGIN_RENAMES.items()
+        if canonical_name == target_plugin
+    )
     return report_plugin_residuals(
-        plugin_names=LEGACY_PLUGIN_RENAMES,
+        plugin_names=legacy_names,
         heading=(
-            "legacy Git plugin residuals detected; no residual was deleted "
+            f"legacy {target_plugin} plugin residuals detected; no residual was deleted "
             "automatically:"
         ),
         remediation=(
-            "Verify git-workflows first, then use the host's explicit "
+            f"Verify {target_plugin} first, then use the host's explicit "
             "uninstall/disable lifecycle for each legacy ID."
         ),
         config_path=config_path,

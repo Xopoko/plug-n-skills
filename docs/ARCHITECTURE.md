@@ -138,6 +138,18 @@ enabled config, cache, and copied-source residuals without removing them.
 Existing host state requires an explicit install, disable, or uninstall
 lifecycle action and is never changed by source validation.
 
+`codex-cli`, `claude-code`, and `scheduled-automation` were consolidated into
+`agent-harness`. Their focused skills, MCP identities, scripts, references, and
+runtime-proof contracts remain inside the new package. The Codex and Cursor
+helpers canonicalize all three legacy package names to `agent-harness`,
+deduplicate mixed legacy/canonical selections, and apply exclusions at the
+canonical target. A targeted migration removes only the matching repo-owned
+marketplace entries; config, cache, and copied-source residuals remain
+read-only findings until an explicit host lifecycle action removes them.
+The `agent-harness-engineering` and `agent-harness-evaluation` skills and their
+exclusive contracts moved from Capability Workbench into the same target;
+Capability Workbench remains a separate install for capability lifecycle work.
+
 General plugin retirement follows the same source/runtime boundary. During an
 install write, the Codex installer removes a generated marketplace entry only
 when it uses the standard repo-owned `./plugins/<name>` source shape and the
@@ -145,11 +157,22 @@ canonical checkout no longer contains that plugin directory. Unknown custom
 entries are preserved. Enabled config, cache, and copied-source residuals are
 read-only findings until the host's explicit lifecycle removes them.
 
-Claude Code has no repository-defined alias. Its migration is an explicit
-install of `git-workflows@xopoko-plug-n-skills`, followed by explicit uninstall
-of the three old IDs at the same scope and a plugin reload. Cursor has no plugin
-marketplace; its aliases select the consolidated source while the unchanged
-legacy skill names converge into the same flat skill destinations.
+Claude Code has no repository-defined alias. Each migration is an explicit
+install of the canonical ID, followed by explicit uninstall of that group's old
+IDs at the same scope and a plugin reload. Cursor has no plugin marketplace;
+its aliases select the consolidated source while unchanged focused skill names
+converge into the same flat skill destinations. Repository helper aliases are
+selection conveniences, not runtime plugin aliases.
+
+For Claude Code, the Agent Harness migration is therefore explicit:
+
+```text
+/plugin install agent-harness@xopoko-plug-n-skills
+/plugin uninstall codex-cli@xopoko-plug-n-skills
+/plugin uninstall claude-code@xopoko-plug-n-skills
+/plugin uninstall scheduled-automation@xopoko-plug-n-skills
+/reload-plugins
+```
 
 ## Claude Code Install Model
 

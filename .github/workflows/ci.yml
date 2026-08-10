@@ -36,8 +36,8 @@ jobs:
         run: python3 -m unittest discover -s plugins/kotlin-multiplatform/tests
       - name: context-density plugin tests
         run: python3 -m unittest discover -s plugins/context-density/tests
-      - name: codex-cli plugin tests
-        run: python3 -m unittest discover -s plugins/codex-cli/tests
+      - name: agent-harness plugin tests
+        run: python3 -m unittest discover -s plugins/agent-harness/tests
       - name: git-workflows plugin tests
         run: python3 -m unittest discover -s plugins/git-workflows/tests
       - name: technology-intelligence plugin tests
