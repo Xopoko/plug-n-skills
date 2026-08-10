@@ -20,9 +20,8 @@ PLUGIN_NAMES = [
     "capability-workbench",
     "codex-cli",
     "scheduled-automation",
-    "gitlab-review",
-    "stacked-delivery",
-    "git-worktree-safety",
+    "git-workflows",
+    "technology-intelligence",
     "claude-code",
     "architecture-intelligence",
     "design-intelligence",
@@ -30,7 +29,6 @@ PLUGIN_NAMES = [
     "kotlin-multiplatform",
     "spec-driven-development",
     "engineering-hygiene",
-    "signature-map",
 ]
 
 TEXT_EXTENSIONS = {
@@ -168,6 +166,17 @@ def main() -> None:
         errors.append(f"missing validator: {validate_helper}")
     if not external_dependency_helper.is_file():
         errors.append(f"missing validator: {external_dependency_helper}")
+
+    manifest_plugin_names = {
+        path.parent.parent.name
+        for path in (root / "plugins").glob("*/.codex-plugin/plugin.json")
+    }
+    unexpected_plugins = sorted(manifest_plugin_names - set(PLUGIN_NAMES))
+    if unexpected_plugins:
+        errors.append(
+            "unexpected manifest-bearing plugin directories: "
+            + ", ".join(unexpected_plugins)
+        )
 
     for name in PLUGIN_NAMES:
         plugin_dir = root / "plugins" / name

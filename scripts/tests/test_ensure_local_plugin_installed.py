@@ -4,11 +4,13 @@ import io
 import json
 import os
 import shutil
+import stat
 import subprocess
 import sys
 import tempfile
 import unittest
 from pathlib import Path
+from types import SimpleNamespace
 from unittest import mock
 
 ROOT = Path(__file__).resolve().parents[2]
@@ -875,6 +877,34 @@ class LocalPluginVisibilityTest(unittest.TestCase):
             )
 
         self.assertNotIn("PRIVATE_SENTINEL", str(error.exception))
+
+    @unittest.skipUnless(os.name == "nt", "Windows file identity regression")
+    def test_build_manifest_accepts_regular_windows_files(self):
+        manifest = ensure_local_plugin_installed.build_installable_tree_manifest(
+            self.plugin_root
+        )
+
+        self.assertEqual("file", manifest["README.md"].kind)
+        self.assertEqual(
+            len((self.plugin_root / "README.md").read_bytes()),
+            manifest["README.md"].size,
+        )
+
+    def test_zero_expected_identity_is_not_a_wildcard(self):
+        common = {
+            "st_mode": stat.S_IFREG | 0o644,
+            "st_size": 1,
+            "st_mtime_ns": 1,
+            "st_ctime_ns": 1,
+        }
+        expected = SimpleNamespace(st_dev=0, st_ino=0, **common)
+        actual = SimpleNamespace(st_dev=1, st_ino=2, **common)
+
+        with self.assertRaisesRegex(
+            ValueError,
+            r"changed or contains an unsafe file",
+        ):
+            ensure_local_plugin_installed.ensure_same_open_file(expected, actual)
 
     def test_internal_tree_digest_uses_canonical_utf8_names(self):
         (self.plugin_root / "café.txt").write_text("coffee\n", encoding="utf-8")

@@ -1,0 +1,21 @@
+{
+  "name": "technology-intelligence",
+  "version": "0.1.0",
+  "description": "Evidence-backed technology decisions compare frameworks, platforms, infrastructure, and CLI/MCP/API delivery modes with dated primary-source observations, explicit gaps, staleness checks, and review-gated refreshes.",
+  "author": {
+    "name": "Xopoko"
+  },
+  "license": "MIT",
+  "keywords": [
+    "technology-selection",
+    "frameworks",
+    "architecture",
+    "evidence",
+    "technology-radar",
+    "cli",
+    "mcp",
+    "api",
+    "staleness",
+    "decision-support"
+  ]
+}

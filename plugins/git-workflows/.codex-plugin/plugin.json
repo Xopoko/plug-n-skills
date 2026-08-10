@@ -1,0 +1,43 @@
+{
+  "name": "git-workflows",
+  "version": "0.1.0",
+  "description": "Git code review, GitLab discussion response, stacked-change delivery, worktree recovery, and SSH commit-signing recovery use exact-state, capability-selected, fail-closed workflows.",
+  "author": {
+    "name": "Xopoko"
+  },
+  "repository": "https://github.com/Xopoko/plug-n-skills/tree/main/plugins/git-workflows",
+  "license": "MIT",
+  "keywords": [
+    "code-review",
+    "git",
+    "github",
+    "gitlab",
+    "merge-requests",
+    "pull-requests",
+    "recovery",
+    "stacked-changes",
+    "worktrees"
+  ],
+  "skills": "./skills/",
+  "interface": {
+    "displayName": "Git Workflows",
+    "shortDescription": "Git reviews, delivery, and recovery stay exact-state.",
+    "longDescription": "GitHub pull requests and GitLab merge requests can be reviewed through capability-selected read adapters; GitLab discussions retain their race-safe exact-head reply transaction; stacked changes preserve parent-head and proof freshness across descriptions, statuses, checkpoints, and handoffs; and worktree pointers plus SSH-signed commits retain their existing fail-closed recovery contracts. Forge access keeps MCP, connector, CLI, and REST transports interchangeable only where their probed evidence semantics are genuinely equivalent.",
+    "developerName": "Xopoko",
+    "category": "Coding",
+    "capabilities": [
+      "Read-only GitHub pull request and GitLab merge request review with complete changed-file pagination and explicit truncation detection",
+      "Capability-probed MCP, connector, CLI, and REST forge adapter selection",
+      "Complete pagination, exact identity, and ambiguous-write degradation gates",
+      "Race-safe GitLab discussion replies and separately authorized resolution",
+      "Source-project-bound exact-SHA GitLab publication preparation",
+      "Exact parent-head stacked-change validation, landing, and handoff",
+      "Fail-closed Git worktree pointer recovery",
+      "SSH-signed-commit snapshots with one-use retry recovery and post-commit verification"
+    ],
+    "defaultPrompt": "Inspect this Git review, delivery, or recovery task and choose the narrow exact-state workflow that applies.",
+    "brandColor": "#173F5F",
+    "composerIcon": "./assets/icon.png",
+    "logo": "./assets/icon.png"
+  }
+}

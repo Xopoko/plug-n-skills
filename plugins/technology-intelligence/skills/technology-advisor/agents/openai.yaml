@@ -1,0 +1,4 @@
+interface:
+  display_name: "Technology Advisor"
+  short_description: "Compare technology fit with dated evidence"
+  default_prompt: "Compare current technology options for this project and recommend a context-appropriate shortlist with dated evidence and explicit gaps."

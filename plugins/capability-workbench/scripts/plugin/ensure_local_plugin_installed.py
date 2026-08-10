@@ -1121,7 +1121,11 @@ def build_installable_tree_manifest(root: Path) -> dict[str, TreeEntry]:
                 raise ValueError(
                     "plugin source and cache trees must not contain symlinks"
                 )
-            metadata = child.stat(follow_symlinks=False)
+            # On Windows, DirEntry.stat() can report zero st_dev/st_ino even
+            # though os.fstat() exposes the real file identity. Re-stat the
+            # path without following links so the pre-open identity remains
+            # comparable to the opened descriptor.
+            metadata = os.stat(child_path, follow_symlinks=False)
             mode = stat.S_IMODE(metadata.st_mode)
             if stat.S_ISDIR(metadata.st_mode):
                 entries[relative_key] = TreeEntry(

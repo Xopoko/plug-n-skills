@@ -21,6 +21,13 @@ sys.path.insert(0, str(Path(__file__).resolve().parent))
 from agent_target import resolve_agent  # noqa: E402
 
 
+LEGACY_PLUGIN_RENAMES = {
+    "gitlab-review": "git-workflows",
+    "stacked-delivery": "git-workflows",
+    "git-worktree-safety": "git-workflows",
+}
+
+
 def repo_root() -> Path:
     return Path(__file__).resolve().parents[1]
 
@@ -158,18 +165,28 @@ def select_plugins(
     excluded: list[str],
 ) -> tuple[list[str], list[str]]:
     known = set(available)
-    unknown = sorted((set(included) | set(excluded)) - known)
+    unknown = sorted(
+        name
+        for name in set(included) | set(excluded)
+        if LEGACY_PLUGIN_RENAMES.get(name, name) not in known
+    )
     if unknown:
         return [], unknown
-    overlap = sorted(set(included) & set(excluded))
+    canonical_included = list(
+        dict.fromkeys(LEGACY_PLUGIN_RENAMES.get(name, name) for name in included)
+    )
+    canonical_excluded = list(
+        dict.fromkeys(LEGACY_PLUGIN_RENAMES.get(name, name) for name in excluded)
+    )
+    overlap = sorted(set(canonical_included) & set(canonical_excluded))
     if overlap:
         print(
             f"plugin(s) cannot be both selected and excluded: {', '.join(overlap)}",
             file=sys.stderr,
         )
         raise SystemExit(2)
-    base = included or available
-    selected = [name for name in base if name not in set(excluded)]
+    base = canonical_included or available
+    selected = [name for name in base if name not in set(canonical_excluded)]
     if not selected:
         print("no plugins selected after applying --exclude-plugin", file=sys.stderr)
         raise SystemExit(2)

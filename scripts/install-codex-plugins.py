@@ -20,7 +20,6 @@ from agent_target import AgentResolutionError, resolve_codex_plugin_state_paths
 
 PLUGIN_NAMES = [
     "engineering-hygiene",
-    "signature-map",
     "build-swift-apps",
     "pixijs",
     "tauri",
@@ -29,9 +28,8 @@ PLUGIN_NAMES = [
     "capability-workbench",
     "codex-cli",
     "scheduled-automation",
-    "gitlab-review",
-    "stacked-delivery",
-    "git-worktree-safety",
+    "git-workflows",
+    "technology-intelligence",
     "claude-code",
     "architecture-intelligence",
     "design-intelligence",
@@ -39,6 +37,12 @@ PLUGIN_NAMES = [
     "kotlin-multiplatform",
     "spec-driven-development",
 ]
+
+LEGACY_PLUGIN_RENAMES = {
+    "gitlab-review": "git-workflows",
+    "stacked-delivery": "git-workflows",
+    "git-worktree-safety": "git-workflows",
+}
 
 
 def repo_root() -> Path:
@@ -50,13 +54,13 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument(
         "--plugin",
         action="append",
-        choices=PLUGIN_NAMES,
+        choices=[*PLUGIN_NAMES, *LEGACY_PLUGIN_RENAMES],
         help="Install one plugin. Repeat to install several. Defaults to all.",
     )
     parser.add_argument(
         "--exclude-plugin",
         action="append",
-        choices=PLUGIN_NAMES,
+        choices=[*PLUGIN_NAMES, *LEGACY_PLUGIN_RENAMES],
         default=[],
         help=(
             "Exclude a plugin from the selected set. Repeat to exclude several. "
@@ -189,8 +193,9 @@ def main() -> None:
         print("check-only passed")
         return
 
-    ensure_marketplace_file(
+    retired_plugins = ensure_marketplace_file(
         marketplace_path=marketplace_path,
+        canonical_source_root=source_root,
         manifests=manifests,
         dry_run=args.dry_run,
     )
@@ -229,13 +234,43 @@ def main() -> None:
             )
         run(command)
 
+    if "git-workflows" in selected:
+        report_legacy_plugin_residuals(
+            config_path=config_path,
+            cache_root=cache_root,
+            global_source_root=global_source_root,
+        )
+    if retired_plugins:
+        report_plugin_residuals(
+            plugin_names=retired_plugins,
+            heading=(
+                "retired plugin residuals detected; no residual was deleted "
+                "automatically:"
+            ),
+            remediation=(
+                "Use the host's explicit uninstall/disable lifecycle for each "
+                "retired ID."
+            ),
+            config_path=config_path,
+            cache_root=cache_root,
+            global_source_root=global_source_root,
+        )
+
     print("install complete" if not args.dry_run else "dry run complete")
 
 
 def select_plugins(included: list[str] | None, excluded: list[str]) -> list[str]:
-    include_set = list(included) if included else list(PLUGIN_NAMES)
-    excluded_set = set(excluded)
-    overlap = sorted(set(included or []) & excluded_set)
+    canonical_included = list(
+        dict.fromkeys(
+            LEGACY_PLUGIN_RENAMES.get(name, name) for name in (included or [])
+        )
+    )
+    canonical_excluded = list(
+        dict.fromkeys(LEGACY_PLUGIN_RENAMES.get(name, name) for name in excluded)
+    )
+    include_set = canonical_included if included else list(PLUGIN_NAMES)
+    excluded_set = set(canonical_excluded)
+    overlap = sorted(set(canonical_included) & excluded_set)
     if overlap:
         raise SystemExit(
             "plugin(s) cannot be both selected and excluded: " + ", ".join(overlap)
@@ -276,9 +311,10 @@ def run(command: list[str]) -> None:
 def ensure_marketplace_file(
     *,
     marketplace_path: Path,
+    canonical_source_root: Path,
     manifests: dict[str, dict[str, Any]],
     dry_run: bool,
-) -> None:
+) -> list[str]:
     if marketplace_path.exists():
         marketplace = load_json(marketplace_path)
     else:
@@ -302,6 +338,38 @@ def ensure_marketplace_file(
         else:
             passthrough.append(entry)
 
+    retired_plugins = sorted(
+        name
+        for name, entry in by_name.items()
+        if name not in PLUGIN_NAMES
+        and name not in LEGACY_PLUGIN_RENAMES
+        and is_missing_repo_owned_entry(
+            name=name,
+            entry=entry,
+            canonical_source_root=canonical_source_root,
+        )
+    )
+    for retired_name in retired_plugins:
+        del by_name[retired_name]
+    if retired_plugins:
+        action = "would retire" if dry_run else "retired"
+        print(f"{action} marketplace entries: " + ", ".join(retired_plugins))
+
+    removed_legacy = (
+        sorted(set(by_name) & set(LEGACY_PLUGIN_RENAMES))
+        if "git-workflows" in manifests
+        else []
+    )
+    for legacy_name in removed_legacy:
+        del by_name[legacy_name]
+    if removed_legacy:
+        action = "would migrate" if dry_run else "migrated"
+        print(
+            f"{action} legacy marketplace entries: "
+            + ", ".join(removed_legacy)
+            + " -> git-workflows"
+        )
+
     for name, manifest in manifests.items():
         interface = manifest.get("interface")
         category = "Productivity"
@@ -322,6 +390,20 @@ def ensure_marketplace_file(
     marketplace["plugins"] = passthrough + [by_name[name] for name in ordered_names]
     marketplace["updatedAt"] = datetime.now(timezone.utc).isoformat(timespec="seconds")
     write_json(marketplace_path, marketplace, dry_run=dry_run)
+    return retired_plugins
+
+
+def is_missing_repo_owned_entry(
+    *,
+    name: str,
+    entry: dict[str, Any],
+    canonical_source_root: Path,
+) -> bool:
+    source = entry.get("source")
+    return (
+        source == {"source": "local", "path": f"./plugins/{name}"}
+        and not (canonical_source_root / name).exists()
+    )
 
 
 def ensure_codex_marketplace_config(
@@ -413,6 +495,77 @@ def append_block(text: str, block: list[str]) -> str:
     if normalized and not normalized.endswith("\n\n"):
         normalized += "\n"
     return normalized + "\n".join(block) + "\n"
+
+
+def report_legacy_plugin_residuals(
+    *,
+    config_path: Path,
+    cache_root: Path,
+    global_source_root: Path,
+) -> bool:
+    """Report legacy Git plugin state without mutating host configuration."""
+    return report_plugin_residuals(
+        plugin_names=LEGACY_PLUGIN_RENAMES,
+        heading=(
+            "legacy Git plugin residuals detected; no residual was deleted "
+            "automatically:"
+        ),
+        remediation=(
+            "Verify git-workflows first, then use the host's explicit "
+            "uninstall/disable lifecycle for each legacy ID."
+        ),
+        config_path=config_path,
+        cache_root=cache_root,
+        global_source_root=global_source_root,
+    )
+
+
+def report_plugin_residuals(
+    *,
+    plugin_names: list[str] | tuple[str, ...] | set[str] | dict[str, str],
+    heading: str,
+    remediation: str,
+    config_path: Path,
+    cache_root: Path,
+    global_source_root: Path,
+) -> bool:
+    """Report plugin config/cache/source residuals without mutating them."""
+    config_text = config_path.read_text(encoding="utf-8") if config_path.is_file() else ""
+    config_lines = config_text.splitlines()
+    enabled_ids: list[str] = []
+    cache_paths: list[Path] = []
+    source_paths: list[Path] = []
+
+    for plugin_name in plugin_names:
+        plugin_id = f"{plugin_name}@local"
+        section = find_section(config_lines, f'[plugins."{plugin_id}"]')
+        if section is not None:
+            end = next_section(config_lines, section + 1)
+            if any(
+                line.strip() == "enabled = true"
+                for line in config_lines[section + 1 : end]
+            ):
+                enabled_ids.append(plugin_id)
+
+        cache_path = cache_root / "local" / plugin_name
+        if cache_path.exists():
+            cache_paths.append(cache_path)
+        source_path = global_source_root / plugin_name
+        if source_path.exists():
+            source_paths.append(source_path)
+
+    if not (enabled_ids or cache_paths or source_paths):
+        return False
+
+    print(heading)
+    if enabled_ids:
+        print("- enabled config IDs: " + ", ".join(enabled_ids))
+    if cache_paths:
+        print("- cache paths: " + ", ".join(str(path) for path in cache_paths))
+    if source_paths:
+        print("- source paths: " + ", ".join(str(path) for path in source_paths))
+    print(remediation)
+    return True
 
 
 def sync_plugin_source(source: Path, destination: Path, *, dry_run: bool) -> None:

@@ -79,6 +79,78 @@ flowchart LR
   D --> E["Normal plugin validation and install"]
 ```
 
+## Capability-Bound Tool Access
+
+Domain workflows declare the operations they require instead of requiring one
+CLI, MCP server, connector, or SDK. A deterministic selector validates a
+task-local adapter inventory and emits a typed execution plan. Installation,
+reachability, authentication, authorization, and operation support remain
+separate states; an advertised tool is not automatically an eligible executor.
+
+The first native implementation lives in `git-workflows`. It can bind GitHub or
+GitLab operations to a host-exposed MCP tool, connector, authenticated CLI API
+surface, or direct API client when that adapter proves the required semantics.
+Provider-specific pagination, identity, exact-head, readback, and mutation
+rules remain explicit. An opaque common-denominator adapter must degrade to a
+read-only or report-only mode instead of claiming parity.
+
+```mermaid
+flowchart LR
+  A["Workflow requirements"] --> B["Adapter inventory"]
+  B --> C["Deterministic capability gate"]
+  C --> D["Bound execution plan"]
+  D --> E["Invocation receipt"]
+  C --> F["Degraded or report-only result"]
+```
+
+The selector never installs tools, starts login flows, or probes a write by
+performing it. Those effects remain explicit user-authorized lifecycle steps.
+After an ambiguous mutation result, adapters cannot be switched to retry the
+write; only authoritative readback may recover a unique receipt.
+
+## Technology Evidence Model
+
+`technology-intelligence` separates four layers that change at different
+cadences:
+
+- source snapshots record provenance, edition, retrieval time, content
+  identity, methodology, licensing, and known bias;
+- observations record source-backed maintenance, adoption, security, maturity,
+  compatibility, cost, and operational signals;
+- reviewed assessments apply explicit decision profiles and hard gates;
+- runtime capability inventories describe what is installed, enabled,
+  authenticated, healthy, and callable in one environment.
+
+Evidence refreshes may produce a proposed diff, but they never silently change
+an adoption disposition. Published recommendations remain versioned and
+reviewable. Runtime inventory is short-lived input and is never committed as a
+universal fact. The plugin uses local deterministic queries and validators; it
+does not require an MCP server or a network request for ordinary use.
+
+## Plugin Identity Migration
+
+`gitlab-review`, `stacked-delivery`, and `git-worktree-safety` were consolidated
+into `git-workflows`. Their focused skill contracts remain independently
+triggerable inside the new package. The Codex and Cursor installers accept each
+legacy plugin name as an alias for `git-workflows`. A targeted Codex
+`git-workflows` install replaces legacy marketplace entries and reports old
+enabled config, cache, and copied-source residuals without removing them.
+Existing host state requires an explicit install, disable, or uninstall
+lifecycle action and is never changed by source validation.
+
+General plugin retirement follows the same source/runtime boundary. During an
+install write, the Codex installer removes a generated marketplace entry only
+when it uses the standard repo-owned `./plugins/<name>` source shape and the
+canonical checkout no longer contains that plugin directory. Unknown custom
+entries are preserved. Enabled config, cache, and copied-source residuals are
+read-only findings until the host's explicit lifecycle removes them.
+
+Claude Code has no repository-defined alias. Its migration is an explicit
+install of `git-workflows@xopoko-plug-n-skills`, followed by explicit uninstall
+of the three old IDs at the same scope and a plugin reload. Cursor has no plugin
+marketplace; its aliases select the consolidated source while the unchanged
+legacy skill names converge into the same flat skill destinations.
+
 ## Claude Code Install Model
 
 Claude Code uses the root marketplace:

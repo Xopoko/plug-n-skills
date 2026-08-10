@@ -1,0 +1,9 @@
+{
+  "schema_version": "technology_intelligence.trigger_contract.v1",
+  "advisor_markers": ["recommend", "compare", "choose", "adopt", "replace", "shortlist", "which stack", "what should we use", "cli or mcp", "mcp or api"],
+  "maintainer_markers": ["refresh evidence", "audit evidence", "source ledger", "staleness", "stale evidence", "diff snapshot", "licensing metadata"],
+  "runtime_markers": ["install", "invoke", "run now", "authenticate", "log in", "available tools", "enabled mcp", "configure mcp"],
+  "routine_markers": ["fix bug", "debug", "syntax", "implement component", "write endpoint", "update dependency"],
+  "precedence": ["maintainer", "advisor", "runtime-or-routine-none"],
+  "note": "This deterministic contract guards obvious metadata drift; it is not a model-routing benchmark. Explicit comparison markers outrank runtime words, so 'compare CLI or MCP' remains advisory."
+}

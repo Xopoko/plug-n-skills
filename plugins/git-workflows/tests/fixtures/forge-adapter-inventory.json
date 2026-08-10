@@ -1,0 +1,188 @@
+{
+  "schema": "git_workflows.forge_adapter_inventory.v1",
+  "adapters": [
+    {
+      "id": "full-gitlab-mcp",
+      "kind": "mcp",
+      "version": "1.0.0-test",
+      "forges": ["gitlab"],
+      "host": "gitlab.example.test",
+      "actor": {"id": "101", "verified": true},
+      "evidence": {
+        "explicit_host_per_call": true,
+        "raw_structured_payload": true,
+        "stable_object_ids": true,
+        "full_commit_ids": true,
+        "pagination": "page-chain-v1",
+        "change_diff_truncation": "explicit",
+        "write_retry": "never",
+        "unknown_write_result": "exposed",
+        "server_receipt_id": true
+      },
+      "capabilities": {
+        "forge.auth.current-user.read.v1": {"support": "probed", "operation": "mcp.gitlab.current_user"},
+        "forge.repository.read.v1": {"support": "probed", "operation": "mcp.gitlab.project_get"},
+        "forge.repository.branch.read.v1": {"support": "probed", "operation": "mcp.gitlab.branch_get"},
+        "forge.change.read.v1": {"support": "probed", "operation": "mcp.gitlab.merge_request_get"},
+        "forge.change.files.list-complete.v1": {"support": "probed", "operation": "mcp.gitlab.merge_request_files_pages_with_truncation"},
+        "forge.change.diff.read.v1": {"support": "probed", "operation": "mcp.gitlab.merge_request_diff"},
+        "forge.change.discussions.list-complete.v1": {"support": "probed", "operation": "mcp.gitlab.discussions_pages"},
+        "forge.change.discussion.read.v1": {"support": "probed", "operation": "mcp.gitlab.discussion_get"},
+        "gitlab.change.diff-versions.list-complete.v1": {"support": "probed", "operation": "mcp.gitlab.diff_versions_pages"},
+        "gitlab.change.diff-version.read.v1": {"support": "probed", "operation": "mcp.gitlab.diff_version_get"},
+        "gitlab.change.pipelines.list-complete.v1": {"support": "probed", "operation": "mcp.gitlab.mr_pipelines_pages"},
+        "gitlab.change.discussion.reply.create.v1": {"support": "probed", "operation": "mcp.gitlab.discussion_reply"},
+        "gitlab.change.discussion.resolve.set.v1": {"support": "probed", "operation": "mcp.gitlab.discussion_resolve"}
+      }
+    },
+    {
+      "id": "github-read-connector",
+      "kind": "connector",
+      "version": "1.0.0-test",
+      "forges": ["github"],
+      "host": "github.example.test",
+      "actor": {"id": null, "verified": false},
+      "evidence": {
+        "explicit_host_per_call": true,
+        "raw_structured_payload": true,
+        "stable_object_ids": true,
+        "full_commit_ids": true,
+        "pagination": "page-chain-v1",
+        "change_diff_truncation": "explicit",
+        "write_retry": "unknown",
+        "unknown_write_result": "hidden",
+        "server_receipt_id": false
+      },
+      "capabilities": {
+        "forge.change.read.v1": {"support": "probed", "operation": "connector.github.pull_request_get"},
+        "forge.change.files.list-complete.v1": {"support": "probed", "operation": "connector.github.pull_request_files_pages_with_truncation"},
+        "forge.change.diff.read.v1": {"support": "probed", "operation": "connector.github.pull_request_diff"},
+        "forge.change.discussions.list-complete.v1": {"support": "probed", "operation": "connector.github.review_threads_pages"},
+        "forge.change.discussion.read.v1": {"support": "probed", "operation": "connector.github.review_thread_get"}
+      }
+    },
+    {
+      "id": "glab-or-rest",
+      "kind": "cli",
+      "version": "1.0.0-test",
+      "forges": ["gitlab"],
+      "host": "gitlab.example.test",
+      "actor": {"id": "101", "verified": true},
+      "evidence": {
+        "explicit_host_per_call": true,
+        "raw_structured_payload": true,
+        "stable_object_ids": true,
+        "full_commit_ids": true,
+        "pagination": "page-chain-v1",
+        "change_diff_truncation": "explicit",
+        "write_retry": "never",
+        "unknown_write_result": "exposed",
+        "server_receipt_id": true
+      },
+      "capabilities": {
+        "forge.auth.current-user.read.v1": {"support": "probed", "operation": "GET /user via glab api or REST"},
+        "forge.repository.read.v1": {"support": "probed", "operation": "GET /projects/:id via glab api or REST"},
+        "forge.repository.branch.read.v1": {"support": "probed", "operation": "GET /projects/:id/repository/branches/:branch via glab api or REST"},
+        "forge.change.read.v1": {"support": "probed", "operation": "GET /projects/:id/merge_requests/:iid via glab api or REST"},
+        "forge.change.files.list-complete.v1": {"support": "probed", "operation": "GET complete merge request file pages with truncation evidence via glab api or REST"},
+        "forge.change.diff.read.v1": {"support": "probed", "operation": "GET merge request changes via glab api or REST"},
+        "forge.change.discussions.list-complete.v1": {"support": "probed", "operation": "GET discussions pages via glab api or REST"},
+        "forge.change.discussion.read.v1": {"support": "probed", "operation": "GET discussion via glab api or REST"},
+        "gitlab.change.diff-versions.list-complete.v1": {"support": "probed", "operation": "GET versions pages via glab api or REST"},
+        "gitlab.change.diff-version.read.v1": {"support": "probed", "operation": "GET version via glab api or REST"},
+        "gitlab.change.pipelines.list-complete.v1": {"support": "probed", "operation": "GET merge request pipelines pages via glab api or REST"},
+        "gitlab.change.discussion.reply.create.v1": {"support": "probed", "operation": "POST discussion note via glab api or REST"},
+        "gitlab.change.discussion.resolve.set.v1": {"support": "probed", "operation": "PUT discussion resolution via glab api or REST"}
+      }
+    },
+    {
+      "id": "opaque-github-connector",
+      "kind": "connector",
+      "version": "1.0.0-test",
+      "forges": ["github"],
+      "host": "github.example.test",
+      "actor": {"id": null, "verified": false},
+      "evidence": {
+        "explicit_host_per_call": true,
+        "raw_structured_payload": true,
+        "stable_object_ids": true,
+        "full_commit_ids": true,
+        "pagination": "opaque",
+        "change_diff_truncation": "hidden",
+        "write_retry": "unknown",
+        "unknown_write_result": "hidden",
+        "server_receipt_id": false
+      },
+      "capabilities": {
+        "forge.change.read.v1": {"support": "probed", "operation": "connector.github.pull_request_get"},
+        "forge.change.files.list-complete.v1": {"support": "probed", "operation": "connector.github.pull_request_files_aggregate"},
+        "forge.change.diff.read.v1": {"support": "probed", "operation": "connector.github.pull_request_diff"},
+        "forge.change.discussions.list-complete.v1": {"support": "probed", "operation": "connector.github.review_threads_aggregate"}
+      }
+    },
+    {
+      "id": "unsafe-gitlab-writer",
+      "kind": "rest",
+      "version": "1.0.0-test",
+      "forges": ["gitlab"],
+      "host": "gitlab.example.test",
+      "actor": {"id": "101", "verified": true},
+      "evidence": {
+        "explicit_host_per_call": true,
+        "raw_structured_payload": true,
+        "stable_object_ids": true,
+        "full_commit_ids": true,
+        "pagination": "page-chain-v1",
+        "change_diff_truncation": "none",
+        "write_retry": "automatic",
+        "unknown_write_result": "hidden",
+        "server_receipt_id": false
+      },
+      "capabilities": {
+        "forge.auth.current-user.read.v1": {"support": "probed", "operation": "GET /user"},
+        "forge.repository.read.v1": {"support": "probed", "operation": "GET /projects/:id"},
+        "forge.repository.branch.read.v1": {"support": "probed", "operation": "GET branch"},
+        "forge.change.read.v1": {"support": "probed", "operation": "GET merge request"},
+        "forge.change.discussions.list-complete.v1": {"support": "probed", "operation": "GET discussion pages"},
+        "forge.change.discussion.read.v1": {"support": "probed", "operation": "GET discussion"},
+        "gitlab.change.diff-versions.list-complete.v1": {"support": "probed", "operation": "GET version pages"},
+        "gitlab.change.diff-version.read.v1": {"support": "probed", "operation": "GET version"},
+        "gitlab.change.pipelines.list-complete.v1": {"support": "probed", "operation": "GET pipeline pages"},
+        "gitlab.change.discussion.reply.create.v1": {"support": "probed", "operation": "POST reply with automatic retries"},
+        "gitlab.change.discussion.resolve.set.v1": {"support": "probed", "operation": "PUT resolve with automatic retries"}
+      }
+    },
+    {
+      "id": "wrong-identity-mcp",
+      "kind": "mcp",
+      "version": "1.0.0-test",
+      "forges": ["gitlab"],
+      "host": "gitlab.example.test",
+      "actor": {"id": "999", "verified": true},
+      "evidence": {
+        "explicit_host_per_call": true,
+        "raw_structured_payload": true,
+        "stable_object_ids": true,
+        "full_commit_ids": true,
+        "pagination": "page-chain-v1",
+        "change_diff_truncation": "none",
+        "write_retry": "never",
+        "unknown_write_result": "exposed",
+        "server_receipt_id": true
+      },
+      "capabilities": {
+        "forge.auth.current-user.read.v1": {"support": "probed", "operation": "mcp.gitlab.current_user"},
+        "forge.repository.read.v1": {"support": "probed", "operation": "mcp.gitlab.project_get"},
+        "forge.repository.branch.read.v1": {"support": "probed", "operation": "mcp.gitlab.branch_get"},
+        "forge.change.read.v1": {"support": "probed", "operation": "mcp.gitlab.merge_request_get"},
+        "forge.change.discussions.list-complete.v1": {"support": "probed", "operation": "mcp.gitlab.discussions_pages"},
+        "forge.change.discussion.read.v1": {"support": "probed", "operation": "mcp.gitlab.discussion_get"},
+        "gitlab.change.diff-versions.list-complete.v1": {"support": "probed", "operation": "mcp.gitlab.diff_versions_pages"},
+        "gitlab.change.diff-version.read.v1": {"support": "probed", "operation": "mcp.gitlab.diff_version_get"},
+        "gitlab.change.pipelines.list-complete.v1": {"support": "probed", "operation": "mcp.gitlab.mr_pipelines_pages"},
+        "gitlab.change.discussion.reply.create.v1": {"support": "probed", "operation": "mcp.gitlab.discussion_reply"},
+        "gitlab.change.discussion.resolve.set.v1": {"support": "probed", "operation": "mcp.gitlab.discussion_resolve"}
+      }
+    }
+  ]
+}

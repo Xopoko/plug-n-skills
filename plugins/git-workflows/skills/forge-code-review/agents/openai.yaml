@@ -1,0 +1,4 @@
+interface:
+  display_name: "Forge Code Review"
+  short_description: "Review a GitHub PR or GitLab MR read-only"
+  default_prompt: "Use $forge-code-review to review this GitHub pull request or GitLab merge request without posting or changing forge or repository state."

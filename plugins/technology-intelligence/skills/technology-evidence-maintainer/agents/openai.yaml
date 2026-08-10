@@ -1,0 +1,4 @@
+interface:
+  display_name: "Technology Evidence Maintainer"
+  short_description: "Validate and review dated evidence snapshots"
+  default_prompt: "Audit the Technology Intelligence evidence snapshot, report stale or weak coverage, and prepare only reviewable source updates."

@@ -1,0 +1,20 @@
+{
+  "name": "git-workflows",
+  "version": "0.1.0",
+  "description": "Git code review, GitLab discussion response, stacked-change delivery, worktree recovery, and SSH commit-signing recovery use exact-state, capability-selected, fail-closed workflows.",
+  "author": {
+    "name": "Xopoko"
+  },
+  "license": "MIT",
+  "keywords": [
+    "code-review",
+    "git",
+    "github",
+    "gitlab",
+    "merge-requests",
+    "pull-requests",
+    "recovery",
+    "stacked-changes",
+    "worktrees"
+  ]
+}

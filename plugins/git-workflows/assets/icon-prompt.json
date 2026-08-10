@@ -1,0 +1,14 @@
+{
+  "schema": "capability_workbench.plugin_icon_prompt.v1",
+  "plugin_name": "git-workflows",
+  "brandColor": "#173F5F",
+  "recommended_asset_path": "assets/icon.png",
+  "imagegen_mode": "built-in",
+  "prompt": "Use case: logo-brand\nAsset type: 1024x1024 marketplace plugin icon\nPrimary request: Create a premium minimal bitmap icon for exact-state Git review, stacked delivery, and safe recovery workflows.\nSubject: one bold branching path passing through three aligned checkpoints and ending inside a restrained safety ring; the silhouette should suggest review flow, dependent changes, and recovery without copying a forge logo.\nStyle/medium: polished modern app icon, vector-friendly but rendered as a high-quality bitmap, flat geometric foreground with subtle dimensional polish.\nComposition/framing: centered, one dominant readable silhouette, generous safe area, no small details, readable at 32x32.\nScene/backdrop: full-bleed rounded-square app-icon background built around deep blue #173F5F with a restrained teal-to-indigo gradient.\nColor palette: warm white primary path with mint and coral checkpoint accents meeting WCAG non-text contrast.\nMaterials/textures: crisp solid shapes, subtle soft highlights, no busy texture, no photo material, no UI screenshot.\nText (verbatim): none.\nConstraints: no visible letters, words, numbers, code, brand logos, mascots, tiny badges, thin-line illustration, product UI, watermark, or private names.\nAvoid: GitHub or GitLab trademark imitation, generic Git branch mark, object collage, complex scene, skeuomorphic clutter, low contrast, or text inside the icon.\n",
+  "checks": [
+    "save the selected image into the plugin workspace as assets/icon.png",
+    "inspect the image at 1024, 64, and 32 px",
+    "reject visible text, letters, tiny details, screenshots, photos, watermarks, proprietary logos, or low contrast",
+    "wire interface.composerIcon and interface.logo only after the bitmap exists"
+  ]
+}

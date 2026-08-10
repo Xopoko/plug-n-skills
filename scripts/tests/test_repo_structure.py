@@ -13,9 +13,8 @@ PLUGINS = [
     "capability-workbench",
     "codex-cli",
     "scheduled-automation",
-    "gitlab-review",
-    "stacked-delivery",
-    "git-worktree-safety",
+    "git-workflows",
+    "technology-intelligence",
     "claude-code",
     "architecture-intelligence",
     "design-intelligence",
@@ -23,7 +22,6 @@ PLUGINS = [
     "kotlin-multiplatform",
     "spec-driven-development",
     "engineering-hygiene",
-    "signature-map",
 ]
 
 

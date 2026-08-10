@@ -24,7 +24,7 @@ PLUGIN_LAYOUT_ROWS = [
         "claude-code",
         "tauri",
         "kotlin-multiplatform",
-        "git-worktree-safety",
+        "git-workflows",
     ],
     [
         "pixijs",
@@ -32,14 +32,14 @@ PLUGIN_LAYOUT_ROWS = [
         "architecture-intelligence",
         "scheduled-automation",
         "spec-driven-development",
+        "engineering-hygiene",
     ],
     [
         "capability-workbench",
         "context-density",
         "scientific-research",
         "game-design-intelligence",
-        "gitlab-review",
-        "stacked-delivery",
+        "technology-intelligence",
     ],
 ]
 
@@ -51,15 +51,15 @@ PLUGIN_SUMMARIES = {
     "codex-cli": "Codex automation, diagnostics, logs, plugins, and MCP operations.",
     "context-density": "Token measurement, compression, provenance, and prompt contracts.",
     "design-intelligence": "Product framing, UI architecture, accessibility, and design systems.",
+    "engineering-hygiene": "Code, business logic, UI, and missing-tool hygiene with evidence.",
     "game-design-intelligence": "Loops, progression, economies, onboarding, difficulty, and retention.",
-    "gitlab-review": "Review-thread races, evidence replies, ownership, and exact-head proof.",
-    "git-worktree-safety": "Guard worktree pointers and SSH-signed commits.",
+    "git-workflows": "Forge access, code review, stacked delivery, and Git recovery.",
     "kotlin-multiplatform": "KMP migration, Gradle, Compose UI, tests, and publishing.",
     "pixijs": "PixiJS v8 scenes, assets, rendering, events, and performance.",
     "scientific-research": "Scholarly discovery, deduplication, evidence ledgers, and quality gates.",
     "scheduled-automation": "Native scheduler proof, safe canaries, receipts, and missed-run analysis.",
     "spec-driven-development": "Specs, plans, tasks, traceable implementation, and proof.",
-    "stacked-delivery": "Exact parent heads, fresh proof, safe stack landing, and handoff.",
+    "technology-intelligence": "Dated evidence for technology adoption, trials, and replacement.",
     "tauri": "Secure Tauri 2 setup, IPC, testing, packaging, and release.",
 }
 

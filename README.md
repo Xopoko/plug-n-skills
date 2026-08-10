@@ -20,7 +20,7 @@ Use it when you want an agent to handle more than generic code edits:
 - plan scientific research, spec-driven delivery, context compression, and
   agent capability synthesis.
 
-The repository ships 16 installable plugin packs and 150+ focused agent
+The repository ships 17 installable plugin packs and 150+ focused agent
 skills, all plain repository content: manifests, `SKILL.md` files, references,
 validators, and helper scripts. Inspect it, validate it from a fresh clone,
 install only the packs you need, and keep generated local marketplace or cache
@@ -87,6 +87,12 @@ under the active Codex home: `$CODEX_HOME` when it is nonempty, otherwise
 `~/.codex`. A configured `CODEX_HOME` must resolve to an existing directory.
 Explicit `--config-path` and `--cache-root` values take precedence.
 
+If the canonical checkout removes a repo-owned plugin, an install write retires
+only its standard missing `./plugins/<name>` entry from the generated local
+marketplace. Custom entries are preserved. Enabled config, cache, or copied
+source residuals are reported and require the host's explicit uninstall or
+disable lifecycle.
+
 `.agents/` and Codex cache directories are local runtime state, not part of
 the published source tree.
 
@@ -138,9 +144,8 @@ replaced to match the repository source, and repeated runs converge.
 | `claude-code` | Claude Code CLI operations, print-mode automation, diagnostics, plugin and MCP lifecycle, hooks, settings, agents, sessions, and worktrees. |
 | `codex-cli` | Codex CLI operations, 2 percent skill-catalog budget and overflow diagnostics, automation, producer-native deferred completion, live thread supervision with protected-policy gates, version-aware skill handoffs with source/runtime separation, evidence corrections, aggregate claim boundaries, plugin and MCP lifecycle, normalized session trace audits, and local environment actions. |
 | `scheduled-automation` | Local scheduler diagnostics, real-runtime proof, safe canaries, correlated run receipts, missed-run analysis, and rollback-aware repair. |
-| `gitlab-review` | Race-safe GitLab merge request review response with source-project-bound exact-SHA pushes, reviewer-owned resolution, idempotent thread replies, and exact-head proof. |
-| `stacked-delivery` | Dependency-safe stacked change delivery with exact parent-head binding, descendant invalidation, node-local proof, post-rewrite proof-record freshness, distinct provenance and publication-authority gates, safe landing order, and guarded handoff receipts. |
-| `git-worktree-safety` | Git pointer and SSH-signed-commit recovery with redacted evidence, exact-state journals, one-use authorization, and fail-closed proof. |
+| `git-workflows` | Capability-bound read-only GitHub/GitLab code review, race-safe GitLab review response, stacked change delivery, worktree recovery, and SSH commit-signing recovery across eligible MCP, connector, CLI, and API adapters. |
+| `technology-intelligence` | Dated, source-backed technology adoption, trial, replacement, and delivery-mode decisions with explicit context, alternatives, confidence, and evidence freshness. |
 | `context-density` | Context design, long-context placement, typed state and companion-drift validation, research-backed acceptance gates, prompt contracts, skill compression, structural handoff, and validation reporting. |
 | `design-intelligence` | Product framing, interface architecture, interaction design, visual hierarchy, accessibility, and design-system governance. |
 | `game-design-intelligence` | Gameplay loops, systems, progression, economies, motivation, retention, onboarding, difficulty, multiplayer, and live-service critique. |
@@ -152,6 +157,27 @@ replaced to match the repository source, and repeated runs converge.
 
 See [plugins/README.md](plugins/README.md) for the per-plugin source index and
 manifest identifiers.
+
+The former `gitlab-review`, `stacked-delivery`, and `git-worktree-safety`
+packages are consolidated into `git-workflows`. The Codex and Cursor installers
+accept any of those legacy names as an alias for the consolidated package.
+When `git-workflows` is selected, the Codex installer replaces legacy local
+marketplace entries and reports any old enabled config, cache, or copied-source
+residuals without deleting them. Verify the consolidated plugin first, then use
+the host's explicit uninstall or disable lifecycle for every reported old ID.
+
+Claude Code has no repository-defined plugin alias. Install the new ID, remove
+each old ID at the same install scope, then reload plugins:
+
+```text
+/plugin install git-workflows@xopoko-plug-n-skills
+/plugin uninstall gitlab-review@xopoko-plug-n-skills
+/plugin uninstall stacked-delivery@xopoko-plug-n-skills
+/plugin uninstall git-worktree-safety@xopoko-plug-n-skills
+/reload-plugins
+```
+
+Source validation never mutates installed host state.
 
 ## Token Efficiency
 
@@ -167,12 +193,12 @@ instructions.
 
 | Metric | Count | Tokens | Notes |
 | --- | ---: | ---: | --- |
-| Plugin packs | 19 | - | Installable packages under `plugins/`. |
-| Skill entrypoints | 173 | - | `SKILL.md` files exposed through plugin metadata. |
-| Reference files | 247 | - | Longer ledgers, contracts, scorecards, and source notes. |
-| Helper and validator scripts | 91 | - | Deterministic plugin-local helpers. |
-| Startup metadata | 173 skills | 12,726 | Skill name, description, and file pointer for routing. |
-| On-demand skill bodies | 173 skills | 128,292 | Instruction bodies after frontmatter, loaded only when selected. |
+| Plugin packs | 17 | - | Installable packages under `plugins/`. |
+| Skill entrypoints | 175 | - | `SKILL.md` files exposed through plugin metadata. |
+| Reference files | 251 | - | Longer ledgers, contracts, scorecards, and source notes. |
+| Helper and validator scripts | 90 | - | Deterministic plugin-local helpers. |
+| Startup metadata | 175 skills | 12,663 | Skill name, description, and file pointer for routing. |
+| On-demand skill bodies | 175 skills | 129,665 | Instruction bodies after frontmatter, loaded only when selected. |
 
 Regenerate the report after skill edits:
 
@@ -197,9 +223,8 @@ Token columns are `startup metadata / on-demand body`.
 | `capability-workbench` | 12 | 20 | 24 | 883 | 16,045 |
 | `codex-cli` | 8 | 6 | 4 | 596 | 10,541 |
 | `scheduled-automation` | 1 | 5 | 0 | 78 | 1,158 |
-| `gitlab-review` | 1 | 3 | 2 | 81 | 1,484 |
-| `stacked-delivery` | 1 | 4 | 1 | 86 | 2,100 |
-| `git-worktree-safety` | 2 | 2 | 2 | 386 | 2,469 |
+| `git-workflows` | 5 | 10 | 6 | 416 | 7,339 |
+| `technology-intelligence` | 2 | 4 | 1 | 143 | 897 |
 | `claude-code` | 6 | 2 | 1 | 471 | 4,669 |
 | `architecture-intelligence` | 9 | 8 | 2 | 579 | 7,585 |
 | `design-intelligence` | 7 | 2 | 1 | 455 | 5,399 |
@@ -207,7 +232,6 @@ Token columns are `startup metadata / on-demand body`.
 | `kotlin-multiplatform` | 14 | 22 | 2 | 1,101 | 14,462 |
 | `spec-driven-development` | 6 | 0 | 2 | 318 | 3,267 |
 | `engineering-hygiene` | 4 | 3 | 0 | 319 | 3,239 |
-| `signature-map` | 1 | 1 | 3 | 69 | 810 |
 
 ### Plugin Focus
 
@@ -221,9 +245,8 @@ Token columns are `startup metadata / on-demand body`.
 | `capability-workbench` | Design, audit, synthesize, and package agent skills/plugins with portfolio architecture, trigger metadata, catalog-pressure analysis, guidance authoring, harness engineering/evaluation, vetting, repair, and validation. |
 | `codex-cli` | Diagnose and operate Codex CLI: skill-catalog budgets, exec/review automation, deferred completion, task supervision, plugin/MCP lifecycle, rollout forensics, and app environments. |
 | `scheduled-automation` | Local scheduler diagnostics prove launchd, systemd timer, cron, and Windows Task Scheduler runs, compare scheduler-owned context, and analyze missed or divergent executions. |
-| `gitlab-review` | GitLab merge-request discussions get race-safe fixes with complete discussion inventory, source-project-bound exact-SHA pushes, reviewer-owned resolution, idempotent replies, and exact-head CI handoff proof. |
-| `stacked-delivery` | Stacked pull requests and merge requests preserve exact parent-head binding, descendant invalidation, per-node proof freshness, contribution provenance, publication-authority boundaries, safe landing order, and guarded handoff receipts. |
-| `git-worktree-safety` | Git worktree pointers and SSH-signed commits recover fail-closed with redacted evidence, exact-state journals, one-use authorization, and explicit POSIX and host boundaries. |
+| `git-workflows` | Git code review, GitLab discussion response, stacked-change delivery, worktree recovery, and SSH commit-signing recovery use exact-state, capability-selected, fail-closed workflows. |
+| `technology-intelligence` | Evidence-backed technology decisions compare frameworks, platforms, infrastructure, and CLI/MCP/API delivery modes with dated primary-source observations, explicit gaps, staleness checks, and review-gated refreshes. |
 | `claude-code` | Claude Code CLI manages print automation, diagnostics, plugins, MCP, hooks, settings, agents, sessions, remote control, and worktrees. |
 | `architecture-intelligence` | Software architecture audits and decisions grounded in source evidence: boundaries, ownership/runtime topology, async state consistency, conformance, ADRs, fitness functions, and staged refactoring. |
 | `design-intelligence` | Product and UX design judgment grounded in evidence: framing, information architecture, interaction, usability/accessibility review, visual communication, and design-system governance; excludes Figma, CSS, and framework recipes. |
@@ -231,7 +254,6 @@ Token columns are `startup metadata / on-demand body`.
 | `kotlin-multiplatform` | Kotlin Multiplatform design, Gradle repair, Compose UI, data/interop architecture, migration, testing, governance, security, performance, CI, publishing, and readiness review. |
 | `spec-driven-development` | Spec-Driven Development routes intent through specs, plans, traceable tasks, implementation, and proof. |
 | `engineering-hygiene` | Engineering hygiene audits changed code, untangles business logic, inspects rendered UI, and provisions missing tools with evidence-first, touched-surface discipline. |
-| `signature-map` | Signature Map indexes and queries code declarations in signatures.json for low-token navigation across Swift, Objective-C, C/C++, Kotlin, Java, JavaScript/TypeScript, Python, Ruby, and shell. |
 
 ### Skill Token Index
 
@@ -393,24 +415,22 @@ Token cells are shown as `startup/body`.
 | --- | ---: | --- |
 | `scheduled-automation-runtime` | 78/1,158 | Local scheduler jobs need proof when launchd, systemd, cron, or Windows Task Scheduler differ from manual runs or lack runtime proof. Not for vendor CLI command construction, architecture inventory, cloud schedulers, or job business logic. |
 
-#### `gitlab-review`
+#### `git-workflows`
 
 | Skill | Tokens | Description |
 | --- | ---: | --- |
-| `gitlab-review-response` | 81/1,484 | GitLab MR discussions: address feedback, bind pushes to source project/SHA, prove exact-head CI, and reply idempotently. Per-thread resolution needs authorization. Excludes broad review, GitHub PRs, approvals, merges, and bulk resolution. |
+| `forge-code-review` | 82/1,085 | Read-only review for GitHub PR or GitLab MR links through a probed MCP, connector, CLI, or REST adapter. Binds exact head and complete discussions; never posts, approves, resolves, merges, pushes, edits, or performs broad repository audits. |
+| `git-commit-signing-recovery` | 88/1,455 | Recover a Git commit that failed before ref advancement due to an SSH signer, agent, socket, or helper. Preserves staged state for one verified retry. Excludes hooks, conflicts, remote auth, non-SSH signing, and amend/merge/rebase. |
+| `git-worktree-recovery` | 81/1,014 | Recover a missing/stale/broken Git worktree path or symlink when a registered replacement holds the branch. Audits retention and guards POSIX-only repair. Excludes worktree administration, ref restoration, restacking, and unsaved content. |
+| `gitlab-review-response` | 81/1,624 | GitLab MR discussions: address feedback, bind pushes to source project/SHA, prove exact-head CI, and reply idempotently. Per-thread resolution needs authorization. Excludes broad review, GitHub PRs, approvals, merges, and bulk resolution. |
+| `stacked-change-delivery` | 84/2,161 | Stacked PR/MR delivery binds children to exact parent heads, restacks after changes, records CI proof, lands bottom-up/atomically, and hands off safely. Excludes independent changes, review replies, and automatic merge/force-push authority. |
 
-#### `stacked-delivery`
-
-| Skill | Tokens | Description |
-| --- | ---: | --- |
-| `stacked-change-delivery` | 86/2,100 | Stacked PR/MR delivery binds children to exact parent heads, restacks after changes, records CI proof, lands bottom-up/atomically, and hands off safely. Excludes independent changes, review replies, and automatic merge/force-push authority. |
-
-#### `git-worktree-safety`
+#### `technology-intelligence`
 
 | Skill | Tokens | Description |
 | --- | ---: | --- |
-| `git-commit-signing-recovery` | 223/1,455 | SSH signing recovery applies when an ordinary Git commit fails before ref advancement with signer, agent, socket, helper-program, or signing-key evidence. Preserves the staged state, records private recovery state, issues one single-use signed retry authorization after a relevant signer-state change, and verifies the resulting commit, parent, diff, signer identity, and residual worktree state. Do not use for hook failures or hook-mutated state, conflicts, index or object corruption, remote authentication, OpenPGP or X.509 commit signing, editor/template or cleanup-transformed commit messages, artifact or release signing, key generation or rotation, initial or root commits, amend, merge, empty commits, index-altering `-a`/pathspec/interactive commit modes, non-signer command-scoped Git configuration or commit-metadata environment overrides, rebase/cherry-pick sequencers, unsigned-policy changes, or ordinary commit creation. |
-| `git-worktree-recovery` | 163/1,014 | Git worktree recovery applies when an expected Git worktree path or convenience symlink is missing, stale, or broken and a registered replacement may already hold the branch. Classifies branch-ref, reflog-only, object-only, or missing retention and guards POSIX-only exact symlink repair when directory-relative primitives are available. Do not use for Git administrative worktree repair after moving a main or linked worktree, ordinary worktree creation/removal/pruning, ref restoration, checkout/reset, stacked-change restacking, host-specific session orchestration, recovery of unsaved content from a vanished checkout, or arbitrary non-Git symlink repair. |
+| `technology-advisor` | 70/486 | Compare software frameworks, databases, platforms, and CLI/MCP/API delivery modes for an explicit adoption or migration decision using dated evidence and constraints. Excludes routine coding and running or installing already-selected tools. |
+| `technology-evidence-maintainer` | 73/411 | Validate, inspect, diff, or explicitly refresh Technology Intelligence evidence, provenance, staleness, rights, and coverage. Excludes stack selection, runtime discovery, installation, and automatic recommendation changes. |
 
 #### `claude-code`
 
@@ -498,12 +518,6 @@ Token cells are shown as `startup/body`.
 | `provisioning-missing-tools` | 89/678 | Missing toolchains are provisioned when absent, outdated, weak, or misconfigured commands, SDKs, runtimes, package managers, drivers, CLIs, simulators, emulators, or test/profiling utilities block or downgrade end-to-end work. |
 | `ui-visual-audit` | 79/835 | Rendered UI and screenshot audits verify changes and catch unrelated occlusion, clipping, overlap, broken icons, poor contrast, spacing/alignment, platform-control, data-plausibility, responsive text, and visible accessibility defects. |
 | `untangle-business-logic` | 78/818 | Business-logic refactors separate rules from UI/IO/platform/concurrency/lifecycle, state, and error policy while preserving behavior, targeting duplicated meaning and hidden invariants rather than dead-code cleanup or performance tuning. |
-
-#### `signature-map`
-
-| Skill | Tokens | Description |
-| --- | ---: | --- |
-| `signature-map` | 69/810 | Signature Map indexes and queries `signatures.json` to locate declarations, survey medium or large repositories, open bounded source around symbols, or diagnose a stale index. Not for call-site search or a single small file. |
 
 ## Repository Design
 

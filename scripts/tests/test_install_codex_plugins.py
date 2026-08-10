@@ -1,4 +1,6 @@
+import contextlib
 import importlib.util
+import io
 import json
 import os
 import subprocess
@@ -127,7 +129,11 @@ class CodexInstallerTest(unittest.TestCase):
 
             with (
                 mock.patch.object(sys, "argv", argv),
-                mock.patch.dict(os.environ, {"HOME": str(home)}, clear=True),
+                mock.patch.dict(
+                    os.environ,
+                    {"HOME": str(home), "USERPROFILE": str(home)},
+                    clear=True,
+                ),
                 mock.patch.object(install_codex_plugins, "run") as run,
                 self.assertRaisesRegex(
                     SystemExit,
@@ -295,6 +301,207 @@ class CodexInstallerTest(unittest.TestCase):
     def test_plugin_cannot_be_selected_and_excluded(self):
         with self.assertRaises(SystemExit):
             install_codex_plugins.select_plugins(["codex-cli"], ["codex-cli"])
+
+    def test_legacy_git_plugin_names_route_to_one_consolidated_plugin(self):
+        selected = install_codex_plugins.select_plugins(
+            ["gitlab-review", "stacked-delivery", "git-worktree-safety"],
+            [],
+        )
+
+        self.assertEqual(["git-workflows"], selected)
+
+    def test_legacy_git_plugin_alias_conflicts_with_canonical_exclusion(self):
+        with self.assertRaises(SystemExit):
+            install_codex_plugins.select_plugins(
+                ["gitlab-review"],
+                ["git-workflows"],
+            )
+
+    def test_marketplace_update_removes_legacy_git_plugin_entries(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            marketplace_path = Path(tmp) / "marketplace.json"
+            marketplace_path.write_text(
+                json.dumps(
+                    {
+                        "name": "local",
+                        "plugins": [
+                            {
+                                "name": name,
+                                "source": {
+                                    "source": "local",
+                                    "path": f"./plugins/{name}",
+                                },
+                            }
+                            for name in install_codex_plugins.LEGACY_PLUGIN_RENAMES
+                        ],
+                    }
+                ),
+                encoding="utf-8",
+            )
+
+            install_codex_plugins.ensure_marketplace_file(
+                marketplace_path=marketplace_path,
+                canonical_source_root=Path(tmp) / "plugins",
+                manifests={
+                    "git-workflows": {
+                        "interface": {"category": "Developer Tools"}
+                    }
+                },
+                dry_run=False,
+            )
+
+            marketplace = json.loads(marketplace_path.read_text(encoding="utf-8"))
+            names = [entry["name"] for entry in marketplace["plugins"]]
+            self.assertEqual(["git-workflows"], names)
+
+    def test_unrelated_targeted_update_preserves_legacy_git_plugin_entries(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            marketplace_path = Path(tmp) / "marketplace.json"
+            marketplace_path.write_text(
+                json.dumps(
+                    {
+                        "name": "local",
+                        "plugins": [
+                            {"name": "gitlab-review"},
+                            {"name": "stacked-delivery"},
+                        ],
+                    }
+                ),
+                encoding="utf-8",
+            )
+
+            install_codex_plugins.ensure_marketplace_file(
+                marketplace_path=marketplace_path,
+                canonical_source_root=Path(tmp) / "plugins",
+                manifests={"codex-cli": {"interface": {"category": "Developer Tools"}}},
+                dry_run=False,
+            )
+
+            marketplace = json.loads(marketplace_path.read_text(encoding="utf-8"))
+            names = [entry["name"] for entry in marketplace["plugins"]]
+            self.assertEqual(
+                ["codex-cli", "gitlab-review", "stacked-delivery"],
+                names,
+            )
+
+    def test_marketplace_update_retires_only_missing_repo_owned_entries(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            marketplace_path = root / "marketplace.json"
+            global_source_root = root / "plugins"
+            (global_source_root / "existing-local-plugin").mkdir(parents=True)
+            marketplace_path.write_text(
+                json.dumps(
+                    {
+                        "name": "local",
+                        "plugins": [
+                            {
+                                "name": "retired-plugin",
+                                "source": {
+                                    "source": "local",
+                                    "path": "./plugins/retired-plugin",
+                                },
+                            },
+                            {
+                                "name": "existing-local-plugin",
+                                "source": {
+                                    "source": "local",
+                                    "path": "./plugins/existing-local-plugin",
+                                },
+                            },
+                            {
+                                "name": "external-plugin",
+                                "source": {
+                                    "source": "local",
+                                    "path": "../external/plugin",
+                                },
+                            },
+                        ],
+                    }
+                ),
+                encoding="utf-8",
+            )
+
+            retired = install_codex_plugins.ensure_marketplace_file(
+                marketplace_path=marketplace_path,
+                canonical_source_root=global_source_root,
+                manifests={"codex-cli": {"interface": {"category": "Developer Tools"}}},
+                dry_run=False,
+            )
+
+            marketplace = json.loads(marketplace_path.read_text(encoding="utf-8"))
+            names = [entry["name"] for entry in marketplace["plugins"]]
+            self.assertEqual(["retired-plugin"], retired)
+            self.assertEqual(
+                ["codex-cli", "existing-local-plugin", "external-plugin"],
+                names,
+            )
+
+    def test_legacy_residual_report_is_read_only_and_complete(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            config_path = root / "config.toml"
+            config_path.write_text(
+                '[plugins."gitlab-review@local"]\n'
+                "enabled = true\n\n"
+                '[plugins."stacked-delivery@local"]\n'
+                "enabled = false\n",
+                encoding="utf-8",
+            )
+            cache_root = root / "cache"
+            cache_path = cache_root / "local" / "stacked-delivery" / "0.1.0"
+            cache_path.mkdir(parents=True)
+            source_root = root / "sources"
+            source_path = source_root / "git-worktree-safety"
+            source_path.mkdir(parents=True)
+
+            stdout = io.StringIO()
+            with contextlib.redirect_stdout(stdout):
+                found = install_codex_plugins.report_legacy_plugin_residuals(
+                    config_path=config_path,
+                    cache_root=cache_root,
+                    global_source_root=source_root,
+                )
+
+            self.assertTrue(found)
+            report = stdout.getvalue()
+            self.assertIn("gitlab-review@local", report)
+            self.assertIn(str(cache_root / "local" / "stacked-delivery"), report)
+            self.assertIn(str(source_path), report)
+            self.assertNotIn("stacked-delivery@local", report)
+            self.assertTrue(cache_path.is_dir())
+            self.assertTrue(source_path.is_dir())
+
+    def test_retired_residual_report_is_read_only(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            config_path = root / "config.toml"
+            config_path.write_text(
+                '[plugins."retired-plugin@local"]\n' "enabled = true\n",
+                encoding="utf-8",
+            )
+            cache_root = root / "cache"
+            cache_path = cache_root / "local" / "retired-plugin" / "0.1.0"
+            cache_path.mkdir(parents=True)
+            source_root = root / "sources"
+
+            stdout = io.StringIO()
+            with contextlib.redirect_stdout(stdout):
+                found = install_codex_plugins.report_plugin_residuals(
+                    plugin_names=["retired-plugin"],
+                    heading="retired residuals:",
+                    remediation="remove explicitly",
+                    config_path=config_path,
+                    cache_root=cache_root,
+                    global_source_root=source_root,
+                )
+
+            self.assertTrue(found)
+            report = stdout.getvalue()
+            self.assertIn("retired-plugin@local", report)
+            self.assertIn(str(cache_root / "local" / "retired-plugin"), report)
+            self.assertIn("remove explicitly", report)
+            self.assertTrue(cache_path.is_dir())
 
     def test_custom_global_source_check_binds_repository_source_to_cache(self):
         with tempfile.TemporaryDirectory() as tmp:

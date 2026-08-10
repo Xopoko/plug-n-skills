@@ -49,19 +49,14 @@
       "description": "Local scheduler diagnostics prove launchd, systemd timer, cron, and Windows Task Scheduler runs, compare scheduler-owned context, and analyze missed or divergent executions."
     },
     {
-      "name": "gitlab-review",
-      "source": "./plugins/gitlab-review",
-      "description": "GitLab merge-request discussions get race-safe fixes with complete discussion inventory, source-project-bound exact-SHA pushes, reviewer-owned resolution, idempotent replies, and exact-head CI handoff proof."
+      "name": "git-workflows",
+      "source": "./plugins/git-workflows",
+      "description": "Git code review, GitLab discussion response, stacked-change delivery, worktree recovery, and SSH commit-signing recovery use exact-state, capability-selected, fail-closed workflows."
     },
     {
-      "name": "stacked-delivery",
-      "source": "./plugins/stacked-delivery",
-      "description": "Stacked pull requests and merge requests preserve exact parent-head binding, descendant invalidation, per-node proof freshness, contribution provenance, publication-authority boundaries, safe landing order, and guarded handoff receipts."
-    },
-    {
-      "name": "git-worktree-safety",
-      "source": "./plugins/git-worktree-safety",
-      "description": "Git worktree pointers and SSH-signed commits recover fail-closed with redacted evidence, exact-state journals, one-use authorization, and explicit POSIX and host boundaries."
+      "name": "technology-intelligence",
+      "source": "./plugins/technology-intelligence",
+      "description": "Evidence-backed technology decisions compare frameworks, platforms, infrastructure, and CLI/MCP/API delivery modes with dated primary-source observations, explicit gaps, staleness checks, and review-gated refreshes."
     },
     {
       "name": "claude-code",
@@ -97,11 +92,6 @@
       "name": "engineering-hygiene",
       "source": "./plugins/engineering-hygiene",
       "description": "Engineering hygiene audits changed code, untangles business logic, inspects rendered UI, and provisions missing tools with evidence-first, touched-surface discipline."
-    },
-    {
-      "name": "signature-map",
-      "source": "./plugins/signature-map",
-      "description": "Signature Map indexes and queries code declarations in signatures.json for low-token navigation across Swift, Objective-C, C/C++, Kotlin, Java, JavaScript/TypeScript, Python, Ruby, and shell."
     }
   ]
 }

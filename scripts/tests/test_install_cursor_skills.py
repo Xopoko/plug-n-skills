@@ -36,6 +36,24 @@ class CursorInstallerTest(unittest.TestCase):
         with self.assertRaises(SystemExit):
             install_cursor_skills.select_plugins(["a"], ["a"], ["a"])
 
+    def test_legacy_git_plugin_names_route_to_one_consolidated_plugin(self):
+        selected, unknown = install_cursor_skills.select_plugins(
+            ["git-workflows", "technology-intelligence"],
+            ["gitlab-review", "stacked-delivery", "git-worktree-safety"],
+            [],
+        )
+
+        self.assertEqual(unknown, [])
+        self.assertEqual(selected, ["git-workflows"])
+
+    def test_legacy_git_alias_conflicts_with_canonical_exclusion(self):
+        with self.assertRaises(SystemExit):
+            install_cursor_skills.select_plugins(
+                ["git-workflows"],
+                ["gitlab-review"],
+                ["git-workflows"],
+            )
+
 
 if __name__ == "__main__":
     unittest.main()

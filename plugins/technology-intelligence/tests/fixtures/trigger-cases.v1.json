@@ -1,0 +1,29 @@
+{
+  "schema_version": "technology_intelligence.trigger_cases.v1",
+  "cases": [
+    {"id": "advisor-frontend-recommend", "prompt": "Recommend a frontend framework for this content-heavy startup.", "expected_skill": "technology-advisor"},
+    {"id": "advisor-database-compare", "prompt": "Compare PostgreSQL and SQLite for an offline-first desktop app.", "expected_skill": "technology-advisor"},
+    {"id": "advisor-stack-choose", "prompt": "Help us choose a web stack for a three-person experiment.", "expected_skill": "technology-advisor"},
+    {"id": "advisor-kubernetes-adopt", "prompt": "Should this scale-up adopt Kubernetes now?", "expected_skill": "technology-advisor"},
+    {"id": "advisor-framework-replace", "prompt": "Should we replace Django with FastAPI for this service boundary?", "expected_skill": "technology-advisor"},
+    {"id": "advisor-shortlist", "prompt": "Shortlist backend frameworks under these operational constraints.", "expected_skill": "technology-advisor"},
+    {"id": "advisor-cli-mcp", "prompt": "Compare CLI or MCP delivery for a local agent tool.", "expected_skill": "technology-advisor"},
+    {"id": "advisor-mcp-api", "prompt": "MCP or API for a remote multi-client capability?", "expected_skill": "technology-advisor"},
+    {"id": "advisor-explicit-use", "prompt": "What should we use for a durable event stream with replay?", "expected_skill": "technology-advisor"},
+    {"id": "maintainer-refresh", "prompt": "Refresh evidence for sources that are due, with receipts only.", "expected_skill": "technology-evidence-maintainer"},
+    {"id": "maintainer-audit", "prompt": "Audit evidence coverage for every positive assessment.", "expected_skill": "technology-evidence-maintainer"},
+    {"id": "maintainer-source-ledger", "prompt": "Review the source ledger and its provenance fields.", "expected_skill": "technology-evidence-maintainer"},
+    {"id": "maintainer-staleness", "prompt": "Run the staleness check as of today.", "expected_skill": "technology-evidence-maintainer"},
+    {"id": "maintainer-diff", "prompt": "Diff snapshot v1 against the proposed evidence snapshot.", "expected_skill": "technology-evidence-maintainer"},
+    {"id": "maintainer-licensing", "prompt": "Audit licensing metadata before importing a survey extract.", "expected_skill": "technology-evidence-maintainer"},
+    {"id": "none-debug", "prompt": "Debug this React hydration bug.", "expected_skill": null},
+    {"id": "none-implement", "prompt": "Implement component tests for this Vue dialog.", "expected_skill": null},
+    {"id": "none-cli-run", "prompt": "Run now the installed formatter CLI on this file.", "expected_skill": null},
+    {"id": "none-install-mcp", "prompt": "Install this MCP server and authenticate it.", "expected_skill": null},
+    {"id": "none-runtime-list", "prompt": "Which MCP servers are enabled on this host?", "expected_skill": null},
+    {"id": "none-write-endpoint", "prompt": "Write endpoint validation for the existing FastAPI route.", "expected_skill": null},
+    {"id": "none-update-dependency", "prompt": "Update dependency versions in package.json.", "expected_skill": null},
+    {"id": "none-syntax", "prompt": "Explain the syntax error in this Spring configuration.", "expected_skill": null},
+    {"id": "none-auth", "prompt": "Log in to the provider and configure MCP credentials.", "expected_skill": null}
+  ]
+}

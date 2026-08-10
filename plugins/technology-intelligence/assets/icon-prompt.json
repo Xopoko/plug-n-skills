@@ -1,0 +1,14 @@
+{
+  "schema": "capability_workbench.plugin_icon_prompt.v1",
+  "plugin_name": "technology-intelligence",
+  "brandColor": "#163A5F",
+  "recommended_asset_path": "assets/icon.png",
+  "imagegen_mode": "built-in",
+  "prompt": "Use case: logo-brand\nAsset type: 1024x1024 marketplace plugin icon\nPrimary request: Create a premium minimal bitmap icon for evidence-backed technology selection and dated decision intelligence.\nSubject: one bold compass lens containing three clean branching paths that converge on a single highlighted choice, suggesting contextual comparison rather than a universal ranking.\nStyle/medium: polished modern app icon, vector-friendly but rendered as a high-quality bitmap, flat geometric foreground with restrained dimensional polish.\nComposition/framing: centered, one dominant readable silhouette, at most three meaningful foreground groups, generous safe area, readable at 32x32.\nScene/backdrop: full-bleed rounded-square app-icon background built around deep navy #163A5F.\nColor palette: high-contrast warm ivory main mark, restrained mint and amber accents, all meaningful foreground elements at least 3:1 against the background.\nMaterials/textures: crisp filled shapes, subtle depth, no busy texture, no photo material, no UI screenshot.\nText (verbatim): none.\nConstraints: no visible letters, words, numbers, score badges, tiny dots, thin-line illustration, proprietary logos, product UI, watermark, private names, or ranking podium.\nAvoid: generic radar sweep, stock analytics chart, mascot, detailed circuit board, technology-logo collage, skeuomorphic clutter, low contrast, and text inside the icon.\n",
+  "checks": [
+    "save the selected image into the plugin workspace as assets/icon.png",
+    "inspect the image at 1024, 64, and 32 px",
+    "reject visible text, ranking numbers, tiny details, screenshots, photos, watermarks, copied logos, or low contrast",
+    "wire interface.composerIcon, interface.logo, and interface.brandColor after the file exists"
+  ]
+}

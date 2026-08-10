@@ -17,9 +17,8 @@ workflow.
 | `capability-workbench` | `capability-workbench@local` | `capability-workbench@xopoko-plug-n-skills` | Design, audit, synthesize, and package agent skills/plugins and LLM harnesses. |
 | `codex-cli` | `codex-cli@local` | `codex-cli@xopoko-plug-n-skills` | Diagnose and operate Codex CLI, skill catalogs, automation, tasks, plugins/MCP, logs, and environments. |
 | `scheduled-automation` | `scheduled-automation@local` | `scheduled-automation@xopoko-plug-n-skills` | Diagnose and prove local scheduler runs across launchd, systemd, cron, and Windows Task Scheduler. |
-| `gitlab-review` | `gitlab-review@local` | `gitlab-review@xopoko-plug-n-skills` | Resolve GitLab merge-request discussions with a complete inventory, source-project-bound exact-SHA pushes, explicit per-thread authorization, idempotent replies, reviewer-owned resolution, and exact-head CI proof. |
-| `stacked-delivery` | `stacked-delivery@local` | `stacked-delivery@xopoko-plug-n-skills` | Deliver stacked PRs/MRs with exact parent heads, fresh proof, safe landing, and guarded handoffs. |
-| `git-worktree-safety` | `git-worktree-safety@local` | `git-worktree-safety@xopoko-plug-n-skills` | Recover Git worktree pointers and SSH-signed commits through fail-closed proof. |
+| `git-workflows` | `git-workflows@local` | `git-workflows@xopoko-plug-n-skills` | Bind eligible GitHub/GitLab access, review code and feedback, deliver stacked changes, and recover worktrees or signed commits with fail-closed proof. |
+| `technology-intelligence` | `technology-intelligence@local` | `technology-intelligence@xopoko-plug-n-skills` | Compare technology adoption, trial, replacement, and delivery-mode options through dated evidence and explicit decision profiles. |
 | `claude-code` | `claude-code@local` | `claude-code@xopoko-plug-n-skills` | Operate and diagnose Claude Code CLI automation, plugins/MCP, hooks, agents, sessions, and worktrees. |
 | `architecture-intelligence` | `architecture-intelligence@local` | `architecture-intelligence@xopoko-plug-n-skills` | Audit and evolve software architecture, topology, async state consistency, conformance, ADRs, and refactoring. |
 | `design-intelligence` | `design-intelligence@local` | `design-intelligence@xopoko-plug-n-skills` | Frame and critique product/UX architecture, interaction, accessibility, visual communication, and design systems. |
@@ -27,7 +26,6 @@ workflow.
 | `kotlin-multiplatform` | `kotlin-multiplatform@local` | `kotlin-multiplatform@xopoko-plug-n-skills` | Design, build, diagnose, test, secure, publish, and release Kotlin Multiplatform systems. |
 | `spec-driven-development` | `spec-driven-development@local` | `spec-driven-development@xopoko-plug-n-skills` | Specify, plan, implement, and audit traceable Spec-Driven Development work. |
 | `engineering-hygiene` | `engineering-hygiene@local` | `engineering-hygiene@xopoko-plug-n-skills` | Audit changed code, untangle business logic, inspect rendered UI, and provision missing tools. |
-| `signature-map` | `signature-map@local` | `signature-map@xopoko-plug-n-skills` | Index and query code declarations in `signatures.json` for low-token navigation. |
 
 ## Expected Plugin Shape
 
