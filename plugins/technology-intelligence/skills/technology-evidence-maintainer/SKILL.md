@@ -25,6 +25,8 @@ path of this skill folder's `../..`.
    ```bash
    python3 "$PLUGIN_ROOT/scripts/technology_intelligence.py" validate
    python3 "$PLUGIN_ROOT/scripts/technology_intelligence.py" stale --as-of <YYYY-MM-DD>
+   python3 "$PLUGIN_ROOT/scripts/technology_intelligence.py" evidence-window \
+     --since <YYYY-MM-DD> --as-of <YYYY-MM-DD>
    ```
 
 3. For a source update, name one allowlisted `source-id`, state the expected
@@ -39,9 +41,10 @@ path of this skill folder's `../..`.
      --output-dir <ignored-or-temporary-directory>
    ```
 
-   The command captures one bounded artifact and an immutable receipt. It does
+   The command captures one bounded artifact and a hash-bound receipt. It does
    not normalize observations or edit assessments.
-5. Review methodology, licensing, changed claims, source scope, and bias. Then
+5. Review publication and measurement dates, methodology, licensing, candidate
+   affiliation, changed claims, source scope, contradictions, and bias. Then
    make a separate source edit to observations. Make any assessment change as a
    second, explicit review step with rationale, alternatives, expiry, and
    evidence coverage.

@@ -1,6 +1,6 @@
 {
   "schema_version": "technology_intelligence.assessments.v1",
-  "snapshot_id": "seed-2026-08-10",
+  "snapshot_id": "research-2026-08-11",
   "method": "profile-specific dispositions with hard gates; no universal score",
   "assessments": [
     {
@@ -12,13 +12,13 @@
         "constraints": ["team accepts ecosystem assembly", "accessibility and performance budgets are enforced"]
       },
       "disposition": "consider",
-      "rationale": ["The documented component model fits stateful product interfaces and leaves architecture choices outside the UI library."],
+      "rationale": ["The documented component model fits stateful product interfaces and leaves architecture choices outside the UI library.", "The 2026 foundation transfer is a material governance change, but it is not yet evidence of maintenance outcomes or project fit."],
       "hard_gates": ["Prototype the highest-interaction screen and measure accessibility, hydration, bundle, and maintenance costs.", "Choose routing, data, rendering, and deployment layers explicitly rather than treating React as a complete stack."],
-      "evidence_ids": ["react-first-party-capabilities", "react-independent-survey-context"],
+      "evidence_ids": ["react-first-party-capabilities", "react-independent-survey-context", "react-foundation-governance-2026"],
       "verification_gap": "Extract a current candidate-specific independent adoption or retention signal and audit the selected framework/toolchain versions before commitment.",
       "confidence": "medium",
-      "reviewed_at": "2026-08-10",
-      "expires_at": "2026-11-08",
+      "reviewed_at": "2026-08-11",
+      "expires_at": "2026-11-09",
       "alternatives": ["vue", "svelte"]
     },
     {
@@ -30,13 +30,13 @@
         "constraints": ["deployment target supports required runtime features", "team accepts framework release cadence and rendering model"]
       },
       "disposition": "pilot",
-      "rationale": ["The documented integrated surface can reduce initial assembly work when React, routing, rendering, and server behavior belong in one application boundary."],
+      "rationale": ["The documented integrated surface can reduce initial assembly work when React, routing, rendering, and server behavior belong in one application boundary.", "Version 16.2 makes adapter portability more testable, while project-run performance claims still require reproduction on the target workload."],
       "hard_gates": ["Run the representative deployment adapter and cache behavior in the intended hosting environment.", "Verify data, authentication, observability, and rollback behavior under production-like rendering paths."],
-      "evidence_ids": ["nextjs-first-party-capabilities", "nextjs-independent-survey-context"],
+      "evidence_ids": ["nextjs-first-party-capabilities", "nextjs-independent-survey-context", "nextjs-16-2-release-2026"],
       "verification_gap": "No seed evidence compares current operational complexity, upgrade burden, or hosting portability against the other full-stack candidates.",
       "confidence": "medium",
-      "reviewed_at": "2026-08-10",
-      "expires_at": "2026-11-08",
+      "reviewed_at": "2026-08-11",
+      "expires_at": "2026-11-09",
       "alternatives": ["nuxt", "sveltekit", "astro"]
     },
     {
@@ -53,8 +53,8 @@
       "evidence_ids": ["vue-first-party-capabilities", "vue-independent-survey-context"],
       "verification_gap": "The seed snapshot has no candidate-specific independent maintenance, hiring, or ecosystem-retention extract.",
       "confidence": "medium",
-      "reviewed_at": "2026-08-10",
-      "expires_at": "2026-11-08",
+      "reviewed_at": "2026-08-11",
+      "expires_at": "2026-11-09",
       "alternatives": ["react", "svelte"]
     },
     {
@@ -71,8 +71,8 @@
       "evidence_ids": ["nuxt-first-party-capabilities", "nuxt-independent-survey-context"],
       "verification_gap": "No seed evidence compares current module maintenance, upgrade burden, or deployment portability against other full-stack frameworks.",
       "confidence": "medium",
-      "reviewed_at": "2026-08-10",
-      "expires_at": "2026-11-08",
+      "reviewed_at": "2026-08-11",
+      "expires_at": "2026-11-09",
       "alternatives": ["nextjs", "sveltekit", "astro"]
     },
     {
@@ -89,8 +89,8 @@
       "evidence_ids": ["svelte-first-party-capabilities", "svelte-independent-survey-context"],
       "verification_gap": "The seed snapshot lacks a candidate-specific independent retention, ecosystem coverage, and production-maintenance extract.",
       "confidence": "medium",
-      "reviewed_at": "2026-08-10",
-      "expires_at": "2026-11-08",
+      "reviewed_at": "2026-08-11",
+      "expires_at": "2026-11-09",
       "alternatives": ["vue", "react"]
     },
     {
@@ -107,8 +107,8 @@
       "evidence_ids": ["sveltekit-first-party-capabilities", "sveltekit-independent-survey-context"],
       "verification_gap": "No seed evidence compares current hosting portability, ecosystem depth, or upgrade burden against Nuxt and Next.js.",
       "confidence": "medium",
-      "reviewed_at": "2026-08-10",
-      "expires_at": "2026-11-08",
+      "reviewed_at": "2026-08-11",
+      "expires_at": "2026-11-09",
       "alternatives": ["nextjs", "nuxt", "astro"]
     },
     {
@@ -120,13 +120,13 @@
         "constraints": ["most pages do not require application-wide client state", "content and build pipelines fit the deployment target"]
       },
       "disposition": "consider",
-      "rationale": ["Astro's documented content-oriented, server-first, opt-in-interactivity model aligns with pages where client JavaScript should be deliberate."],
+      "rationale": ["Astro's documented content-oriented, server-first, opt-in-interactivity model aligns with pages where client JavaScript should be deliberate.", "Astro 6 adds stable security and content surfaces, but its Node.js 22 floor and experimental components are explicit upgrade gates."],
       "hard_gates": ["Confirm that interaction requirements remain island-shaped rather than application-shell shaped.", "Validate content collections, localization, preview, build time, and deployment behavior on representative content."],
-      "evidence_ids": ["astro-first-party-capabilities", "astro-independent-survey-context"],
+      "evidence_ids": ["astro-first-party-capabilities", "astro-independent-survey-context", "astro-6-release-2026"],
       "verification_gap": "The seed snapshot has no candidate-specific independent operational or ecosystem-retention extract.",
       "confidence": "medium",
-      "reviewed_at": "2026-08-10",
-      "expires_at": "2026-11-08",
+      "reviewed_at": "2026-08-11",
+      "expires_at": "2026-11-09",
       "alternatives": ["nextjs", "nuxt", "sveltekit"]
     },
     {
@@ -138,13 +138,13 @@
         "constraints": ["Python is a product constraint", "the team owns validation, persistence, security, and operations choices"]
       },
       "disposition": "pilot",
-      "rationale": ["The type-hint and generated OpenAPI surface supports a fast vertical-slice test for a Python service interface."],
+      "rationale": ["The type-hint and generated OpenAPI surface supports a fast vertical-slice test for a Python service interface.", "The current release line moved its compatibility floor beyond Python 3.9, so runtime support is a hard adoption check."],
       "hard_gates": ["Load-test the real sync and async dependency path rather than a synthetic hello-world route.", "Verify authentication, validation, persistence, migrations, error contracts, telemetry, and deployment ownership."],
-      "evidence_ids": ["fastapi-first-party-capabilities", "fastapi-independent-survey-context"],
+      "evidence_ids": ["fastapi-first-party-capabilities", "fastapi-independent-survey-context", "fastapi-python-floor-2026"],
       "verification_gap": "A current candidate-specific maintenance, security, dependency, and production-operations signal has not been extracted.",
       "confidence": "medium",
-      "reviewed_at": "2026-08-10",
-      "expires_at": "2026-11-08",
+      "reviewed_at": "2026-08-11",
+      "expires_at": "2026-11-09",
       "alternatives": ["django", "spring-boot"]
     },
     {
@@ -161,8 +161,8 @@
       "evidence_ids": ["django-first-party-capabilities", "django-independent-survey-context"],
       "verification_gap": "The seed snapshot lacks a current candidate-specific dependency health, hiring, upgrade, and workload-fit signal.",
       "confidence": "medium",
-      "reviewed_at": "2026-08-10",
-      "expires_at": "2026-11-08",
+      "reviewed_at": "2026-08-11",
+      "expires_at": "2026-11-09",
       "alternatives": ["fastapi", "spring-boot"]
     },
     {
@@ -179,8 +179,8 @@
       "evidence_ids": ["spring-boot-first-party-capabilities", "spring-boot-independent-survey-context"],
       "verification_gap": "No current candidate-specific comparison of operational cost, upgrade load, staffing, or dependency risk was extracted.",
       "confidence": "medium",
-      "reviewed_at": "2026-08-10",
-      "expires_at": "2026-11-08",
+      "reviewed_at": "2026-08-11",
+      "expires_at": "2026-11-09",
       "alternatives": ["django", "fastapi"]
     },
     {
@@ -192,13 +192,13 @@
         "constraints": ["relational consistency is useful", "operations or a managed service are budgeted"]
       },
       "disposition": "consider",
-      "rationale": ["The documented transactional, concurrency, indexing, replication, and extensibility surface covers many system-of-record requirements without assuming one hosting model."],
+      "rationale": ["The documented transactional, concurrency, indexing, replication, and extensibility surface covers many system-of-record requirements without assuming one hosting model.", "The February 2026 security-update regressions make staged rollout and rollback receipts part of the adoption contract."],
       "hard_gates": ["Prototype the hardest transaction and query shapes using representative data volume and concurrency.", "Define backup, restore, migration, high-availability, capacity, and managed-service exit procedures."],
-      "evidence_ids": ["postgresql-first-party-capabilities", "postgresql-independent-survey-context"],
+      "evidence_ids": ["postgresql-first-party-capabilities", "postgresql-independent-survey-context", "postgresql-security-regression-2026"],
       "verification_gap": "The seed snapshot has no workload-specific benchmark, managed-provider assessment, current vulnerability scan, or dependency-health receipt.",
       "confidence": "medium",
-      "reviewed_at": "2026-08-10",
-      "expires_at": "2026-11-08",
+      "reviewed_at": "2026-08-11",
+      "expires_at": "2026-11-09",
       "alternatives": ["sqlite"]
     },
     {
@@ -210,13 +210,13 @@
         "constraints": ["replay and partitioned ordering are explicit requirements", "the team can own or buy cluster operations"]
       },
       "disposition": "pilot",
-      "rationale": ["Kafka's documented partitioned, replicated log and producer, consumer, and stream APIs match requirements that truly need replayable multi-consumer streams."],
+      "rationale": ["Kafka's documented partitioned, replicated log and producer, consumer, and stream APIs match requirements that truly need replayable multi-consumer streams.", "The 4.3.1 critical memory-leak fix makes exact version and upgrade validation load-bearing evidence."],
       "hard_gates": ["Prove that a database outbox, managed queue, or batch pipeline cannot satisfy the same requirement more simply.", "Run failure, rebalance, schema-evolution, retention, recovery, and cost tests with production-shaped traffic."],
-      "evidence_ids": ["apache-kafka-first-party-capabilities", "apache-kafka-independent-landscape-context"],
+      "evidence_ids": ["apache-kafka-first-party-capabilities", "apache-kafka-independent-landscape-context", "kafka-4-3-1-fix-2026"],
       "verification_gap": "The independent evidence is landscape context only; no current candidate-specific operations, security, or comparative workload signal was extracted.",
       "confidence": "low",
-      "reviewed_at": "2026-08-10",
-      "expires_at": "2026-11-08",
+      "reviewed_at": "2026-08-11",
+      "expires_at": "2026-11-09",
       "alternatives": ["postgresql"]
     },
     {
@@ -228,13 +228,13 @@
         "constraints": ["service and team scale justifies a platform", "platform engineering or a managed control plane is funded"]
       },
       "disposition": "consider",
-      "rationale": ["Kubernetes' documented declarative APIs and controllers are relevant when a shared orchestration control plane is itself a justified platform requirement."],
+      "rationale": ["Kubernetes' documented declarative APIs and controllers are relevant when a shared orchestration control plane is itself a justified platform requirement.", "Version 1.36 carries a broad upgrade and removal surface; release velocity is not evidence that a smaller system needs the platform."],
       "hard_gates": ["Demonstrate why a simpler managed application or container service does not satisfy the reliability and deployment needs.", "Budget platform ownership, upgrades, policy, networking, secrets, observability, incident response, and workload portability."],
-      "evidence_ids": ["kubernetes-first-party-capabilities", "kubernetes-independent-lifecycle-context"],
+      "evidence_ids": ["kubernetes-first-party-capabilities", "kubernetes-independent-lifecycle-context", "kubernetes-1-36-release-2026"],
       "verification_gap": "The lifecycle evidence supplies governance method but this seed does not record a current project-stage receipt, security posture, provider comparison, or team-operability test.",
       "confidence": "medium",
-      "reviewed_at": "2026-08-10",
-      "expires_at": "2026-11-08",
+      "reviewed_at": "2026-08-11",
+      "expires_at": "2026-11-09",
       "alternatives": []
     },
     {
@@ -246,13 +246,13 @@
         "constraints": ["multiple services or backends justify standardization", "signal and language maturity are verified"]
       },
       "disposition": "pilot",
-      "rationale": ["The documented vendor-neutral APIs, SDKs, protocol, semantics, and collector create a plausible interoperability boundary for distributed observability."],
+      "rationale": ["The documented vendor-neutral APIs, SDKs, protocol, semantics, and collector create a plausible interoperability boundary for distributed observability.", "Declarative configuration reached schema stability in 2026, but language and component maturity still differ and must be checked separately."],
       "hard_gates": ["Verify every required language, signal, instrumentation library, semantic convention, collector component, and backend exporter at current versions.", "Measure telemetry loss, cardinality, sampling, cost, privacy, and failure behavior under representative load."],
-      "evidence_ids": ["opentelemetry-first-party-capabilities", "opentelemetry-independent-landscape-context"],
-      "verification_gap": "The seed snapshot does not record component-by-component stability or a target-backend compatibility test.",
+      "evidence_ids": ["opentelemetry-first-party-capabilities", "opentelemetry-independent-landscape-context", "opentelemetry-config-stable-2026"],
+      "verification_gap": "The snapshot has no candidate-relative independent adoption or operations signal, component-by-component stability receipt, or target-backend compatibility test.",
       "confidence": "medium",
-      "reviewed_at": "2026-08-10",
-      "expires_at": "2026-11-08",
+      "reviewed_at": "2026-08-11",
+      "expires_at": "2026-11-09",
       "alternatives": []
     },
     {
@@ -264,13 +264,13 @@
         "constraints": ["a separate database server is unnecessary", "write contention and independent scaling are bounded"]
       },
       "disposition": "consider",
-      "rationale": ["SQLite's documented embedded, file-backed transactional model removes a server boundary where locality and operational simplicity dominate."],
+      "rationale": ["SQLite's documented embedded, file-backed transactional model removes a server boundary where locality and operational simplicity dominate.", "The 2026 withdrawal and WAL-reset fix make patch-level pinning plus representative concurrency tests mandatory."],
       "hard_gates": ["Test the actual concurrency, locking, durability, backup, migration, and file-lifecycle behavior on every target platform.", "Define the threshold and migration path for moving to a service database if multi-writer or independent-scale needs appear."],
-      "evidence_ids": ["sqlite-first-party-capabilities", "sqlite-independent-survey-context"],
+      "evidence_ids": ["sqlite-first-party-capabilities", "sqlite-independent-survey-context", "sqlite-release-correction-2026"],
       "verification_gap": "The seed snapshot has no workload-specific concurrency benchmark, binding assessment, or target-platform filesystem test.",
       "confidence": "medium",
-      "reviewed_at": "2026-08-10",
-      "expires_at": "2026-11-08",
+      "reviewed_at": "2026-08-11",
+      "expires_at": "2026-11-09",
       "alternatives": ["postgresql"]
     },
     {
@@ -287,8 +287,8 @@
       "evidence_ids": ["cli-first-party-interface", "cli-independent-evaluation-context"],
       "verification_gap": "POSIX utility syntax does not establish a complete cross-platform process contract, Windows behavior, discovery, or security model.",
       "confidence": "medium",
-      "reviewed_at": "2026-08-10",
-      "expires_at": "2026-11-08",
+      "reviewed_at": "2026-08-11",
+      "expires_at": "2026-11-09",
       "alternatives": ["http-json-api", "mcp-stdio"]
     },
     {
@@ -305,8 +305,8 @@
       "evidence_ids": ["http-api-first-party-interface", "http-api-independent-evaluation-context"],
       "verification_gap": "RFC 9110 is only the transport semantics layer; the target API contract and operational evidence remain unspecified.",
       "confidence": "medium",
-      "reviewed_at": "2026-08-10",
-      "expires_at": "2026-11-08",
+      "reviewed_at": "2026-08-11",
+      "expires_at": "2026-11-09",
       "alternatives": ["native-sdk-integration", "mcp-streamable-http", "cli-process-interface"]
     },
     {
@@ -323,8 +323,8 @@
       "evidence_ids": ["native-sdk-evidence-gap", "native-sdk-independent-evaluation-context"],
       "verification_gap": "There is deliberately no first-party evidence until a concrete SDK is supplied.",
       "confidence": "high",
-      "reviewed_at": "2026-08-10",
-      "expires_at": "2026-11-08",
+      "reviewed_at": "2026-08-11",
+      "expires_at": "2026-11-09",
       "alternatives": ["http-json-api", "cli-process-interface", "mcp-stdio"]
     },
     {
@@ -336,13 +336,13 @@
         "constraints": ["the host supports the required MCP revision", "the server can run locally with least privilege"]
       },
       "disposition": "consider",
-      "rationale": ["The revisioned MCP contract adds structured capability and tool discovery to a local client-managed process boundary."],
+      "rationale": ["The revisioned MCP contract adds structured capability and tool discovery to a local client-managed process boundary.", "The July 2026 revision is a breaking migration boundary, and independent security work keeps target-specific controls as a hard gate."],
       "hard_gates": ["Verify host and server protocol-version compatibility, process lifecycle, cancellation, timeouts, schema behavior, and log separation.", "Review server provenance and permissions, isolate secrets and filesystem/network access, and test failure recovery."],
-      "evidence_ids": ["mcp-stdio-first-party-interface", "mcp-stdio-independent-activity-context"],
+      "evidence_ids": ["mcp-stdio-first-party-interface", "mcp-stdio-independent-activity-context", "mcp-stdio-breaking-revision-2026", "mcp-stdio-threat-model-2026"],
       "verification_gap": "Ecosystem activity does not verify the trust, quality, installation state, or usefulness of any particular server.",
       "confidence": "medium",
-      "reviewed_at": "2026-08-10",
-      "expires_at": "2026-11-08",
+      "reviewed_at": "2026-08-11",
+      "expires_at": "2026-11-09",
       "alternatives": ["cli-process-interface", "mcp-streamable-http", "http-json-api"]
     },
     {
@@ -354,13 +354,13 @@
         "constraints": ["multiple remote clients justify service ownership", "identity, authorization, tenancy, and audit controls are funded"]
       },
       "disposition": "pilot",
-      "rationale": ["The revisioned MCP HTTP transport can preserve protocol-level tool discovery for a capability that genuinely must be remote."],
+      "rationale": ["The revisioned MCP HTTP transport can preserve protocol-level tool discovery for a capability that genuinely must be remote.", "The stateless July 2026 core improves routing options but creates a breaking migration and does not remove server-trust or authorization work."],
       "hard_gates": ["Verify protocol revision, authorization, origin and network controls, session behavior, tenancy, audit, rate limits, timeouts, retries, and revocation.", "Test at least one target client end to end and treat registry metadata as discovery only."],
-      "evidence_ids": ["mcp-http-first-party-interface", "mcp-http-independent-registry-context"],
+      "evidence_ids": ["mcp-http-first-party-interface", "mcp-http-independent-registry-context", "mcp-http-breaking-revision-2026", "mcp-http-threat-model-2026"],
       "verification_gap": "The registry is preview discovery metadata and supplies no trust, health, data-residency, or client-interoperability proof for a target server.",
       "confidence": "low",
-      "reviewed_at": "2026-08-10",
-      "expires_at": "2026-11-08",
+      "reviewed_at": "2026-08-11",
+      "expires_at": "2026-11-09",
       "alternatives": ["http-json-api", "mcp-stdio"]
     },
     {
@@ -377,9 +377,45 @@
       "evidence_ids": ["agent-skill-first-party-interface", "agent-skill-independent-host-context"],
       "verification_gap": "The seed evidence proves one host implementation but not conformance or identical allowed-tools and discovery behavior across Codex, Claude Code, Cursor, and future hosts.",
       "confidence": "medium",
-      "reviewed_at": "2026-08-10",
-      "expires_at": "2026-11-08",
+      "reviewed_at": "2026-08-11",
+      "expires_at": "2026-11-09",
       "alternatives": ["cli-process-interface", "mcp-stdio"]
+    },
+    {
+      "id": "a2a-cross-agent-delegation-profile",
+      "technology_id": "a2a-protocol",
+      "profile": {
+        "stages": ["scale-up", "enterprise-critical"],
+        "use_cases": ["cross-system agent delegation", "long-running remote agent tasks"],
+        "constraints": ["independent agent systems must interoperate", "task lifecycle and capability discovery are explicit product requirements"]
+      },
+      "disposition": "pilot",
+      "rationale": ["A2A v1.0 provides a stable, multi-binding contract for agent discovery and delegation where a tool protocol alone is insufficient.", "Independent security analysis is still early, so a bounded interoperability and trust pilot is more defensible than broad adoption."],
+      "hard_gates": ["Prove that the requirement is agent-to-agent delegation rather than tool access or an ordinary HTTP API.", "Pin protocol and SDK versions, validate Agent Cards, authentication, authorization, identity, cancellation, audit, retries, and cross-vendor conformance."],
+      "evidence_ids": ["a2a-stable-protocol-2026", "a2a-v1-release-changes-2026", "a2a-threat-model-2026"],
+      "verification_gap": "No target-specific SDK conformance, production interoperability, identity, authorization, or operations receipt has been recorded.",
+      "confidence": "medium",
+      "reviewed_at": "2026-08-11",
+      "expires_at": "2026-11-09",
+      "alternatives": ["mcp-streamable-http", "http-json-api"]
+    },
+    {
+      "id": "acp-editor-coding-agent-profile",
+      "technology_id": "agent-client-protocol",
+      "profile": {
+        "stages": ["experiment", "startup", "scale-up"],
+        "use_cases": ["coding agent embedded in multiple editors", "portable editor-to-agent session lifecycle"],
+        "constraints": ["the interactive editor is a durable client boundary", "target clients and agents support the same stable protocol methods"]
+      },
+      "disposition": "pilot",
+      "rationale": ["ACP's stabilized session list, resume, and close methods address an editor-to-coding-agent boundary that CLI and tool protocols do not model directly."],
+      "hard_gates": ["Run an interoperability matrix across every target client, agent, wrapper, and SDK version.", "Verify permissions, tool-call approval, cancellation, session cleanup, authentication, audit, and degraded behavior before enabling side effects."],
+      "evidence_ids": ["acp-session-lifecycle-2026"],
+      "verification_gap": "No independent conformance or security study and no target-client interoperability receipt has been recorded.",
+      "confidence": "low",
+      "reviewed_at": "2026-08-11",
+      "expires_at": "2026-11-09",
+      "alternatives": ["cli-process-interface", "mcp-stdio", "native-sdk-integration"]
     }
   ]
 }

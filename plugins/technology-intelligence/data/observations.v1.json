@@ -1,6 +1,6 @@
 {
   "schema_version": "technology_intelligence.observations.v1",
-  "snapshot_id": "seed-2026-08-10",
+  "snapshot_id": "research-2026-08-11",
   "observations": [
     {
       "id": "react-first-party-capabilities",
@@ -306,7 +306,7 @@
       "claim": "The CNCF landscape provides maintained ecosystem placement and repository metadata for cloud-native projects including observability tooling.",
       "source_id": "cncf-landscape",
       "observed_at": "2026-08-10",
-      "scope": "Independent inventory context, not an endorsement or compatibility guarantee.",
+      "scope": "Affiliated CNCF inventory context, not an independent adoption signal, endorsement, or compatibility guarantee.",
       "confidence": "medium",
       "limitations": "The landscape does not verify signal-by-signal maturity or target-backend compatibility."
     },
@@ -463,6 +463,193 @@
       "scope": "Independent host implementation signal relative to the format publisher.",
       "confidence": "high",
       "limitations": "One vendor's support is not a cross-host conformance result."
+    },
+    {
+      "id": "react-foundation-governance-2026",
+      "technology_id": "react",
+      "signal": "governance-change",
+      "claim": "React, React Native, and JSX moved from Meta ownership to the independent React Foundation hosted by the Linux Foundation in February 2026.",
+      "source_id": "react-foundation-2026-02-24",
+      "observed_at": "2026-08-11",
+      "scope": "Project ownership and governance only.",
+      "confidence": "high",
+      "limitations": "The new structure has too little operating history to demonstrate maintenance, neutrality, or project-fit outcomes."
+    },
+    {
+      "id": "nextjs-16-2-release-2026",
+      "technology_id": "nextjs",
+      "signal": "release-and-portability",
+      "claim": "Next.js 16.2 stabilized its Adapter API and reported development and rendering improvements, while retaining experimental cache and navigation features.",
+      "source_id": "nextjs-16-2-2026-03-18",
+      "observed_at": "2026-08-11",
+      "scope": "Release surface and project-run measurements for 16.2.",
+      "confidence": "high",
+      "limitations": "The performance figures are project-authored and workload-specific; target-host correctness and current security patch level still require verification."
+    },
+    {
+      "id": "astro-6-release-2026",
+      "technology_id": "astro",
+      "signal": "major-release-compatibility",
+      "claim": "Astro 6 added stable CSP, fonts, and live-content features, refactored development runtime behavior, and raised the minimum runtime to Node.js 22.",
+      "source_id": "astro-6-2026-03-10",
+      "observed_at": "2026-08-11",
+      "scope": "Astro 6 compatibility boundary and release capabilities.",
+      "confidence": "high",
+      "limitations": "Experimental compiler, routing, and caching features remain outside a stable production-fit claim."
+    },
+    {
+      "id": "fastapi-python-floor-2026",
+      "technology_id": "fastapi",
+      "signal": "compatibility-change",
+      "claim": "FastAPI's release history through 0.141.1 shows that 0.129.0 dropped Python 3.9 and that 0.137.0 introduced documented breaking internal changes.",
+      "source_id": "fastapi-release-history-2026-07-29",
+      "observed_at": "2026-08-11",
+      "scope": "Runtime and internal-extension compatibility gates for adoption or upgrade.",
+      "confidence": "high",
+      "limitations": "This does not evaluate transitive dependencies, production performance, or target-specific reliance on internal APIs."
+    },
+    {
+      "id": "postgresql-security-regression-2026",
+      "technology_id": "postgresql",
+      "signal": "security-update-regression",
+      "claim": "The February 2026 PostgreSQL security update required an out-of-cycle corrective release after introducing non-ASCII substring and standby transaction-status regressions.",
+      "source_id": "postgresql-out-of-cycle-2026-02-16",
+      "observed_at": "2026-08-11",
+      "scope": "Patch and rollback planning for supported PostgreSQL versions.",
+      "confidence": "high",
+      "limitations": "A specific update incident is not a general reliability score and does not replace workload or provider validation."
+    },
+    {
+      "id": "kafka-4-3-1-fix-2026",
+      "technology_id": "apache-kafka",
+      "signal": "critical-bugfix-release",
+      "claim": "Kafka 4.3.1 was issued as a bugfix release with several critical fixes, including a Kafka Streams RocksDB native memory leak.",
+      "source_id": "kafka-4-3-1-2026-06-25",
+      "observed_at": "2026-08-11",
+      "scope": "Version pinning and upgrade gate for Kafka 4.3 deployments.",
+      "confidence": "high",
+      "limitations": "Release notes do not quantify impact for a target topology or compare Kafka with managed queues and batch pipelines."
+    },
+    {
+      "id": "kubernetes-1-36-release-2026",
+      "technology_id": "kubernetes",
+      "signal": "release-and-deprecation",
+      "claim": "Kubernetes 1.36 shipped 70 enhancements alongside deprecations and removals, including permanent disabling of the deprecated gitRepo volume plugin for security reasons.",
+      "source_id": "kubernetes-1-36-2026-04-22",
+      "observed_at": "2026-08-11",
+      "scope": "Upgrade surface and compatibility gates for version 1.36.",
+      "confidence": "high",
+      "limitations": "Release volume and contributor activity do not prove that a project needs Kubernetes or can operate it safely."
+    },
+    {
+      "id": "opentelemetry-config-stable-2026",
+      "technology_id": "opentelemetry",
+      "signal": "specification-stability",
+      "claim": "OpenTelemetry marked the declarative configuration schema and core representations stable at 1.0, while language implementations remained at different maturity levels.",
+      "source_id": "otel-config-1-0-2026-03-05",
+      "observed_at": "2026-08-11",
+      "scope": "Configuration portability and component-level stability.",
+      "confidence": "high",
+      "limitations": "Schema stability is not equivalent to stable support in every language, signal, exporter, or backend."
+    },
+    {
+      "id": "sqlite-release-correction-2026",
+      "technology_id": "sqlite",
+      "signal": "release-withdrawal-and-fix",
+      "claim": "SQLite withdrew 3.52.0, fixed a long-lived WAL-reset corruption bug in 3.51.3 and 3.53.0, and shipped multiple 3.53 patch releases through July 2026.",
+      "source_id": "sqlite-release-history-2026-07-24",
+      "observed_at": "2026-08-11",
+      "scope": "Version selection and regression-aware upgrade planning.",
+      "confidence": "high",
+      "limitations": "Release history does not establish safe behavior for a target binding, filesystem, concurrency pattern, or process topology."
+    },
+    {
+      "id": "mcp-stdio-breaking-revision-2026",
+      "technology_id": "mcp-stdio",
+      "signal": "breaking-protocol-revision",
+      "claim": "MCP 2026-07-28 removed the initialize handshake and protocol sessions, added discovery and multi-round-trip requests, moved Tasks to an extension, and deprecated several earlier primitives.",
+      "source_id": "mcp-release-2026-07-28",
+      "observed_at": "2026-08-11",
+      "scope": "Protocol and SDK compatibility for local MCP integrations.",
+      "confidence": "high",
+      "limitations": "The release announcement does not prove that a chosen client and server both implement the new revision correctly."
+    },
+    {
+      "id": "mcp-http-breaking-revision-2026",
+      "technology_id": "mcp-streamable-http",
+      "signal": "breaking-protocol-revision",
+      "claim": "MCP 2026-07-28 made the HTTP core stateless, added routing headers and cacheable list results, hardened authorization, and deprecated legacy HTTP+SSE with a twelve-month offramp.",
+      "source_id": "mcp-release-2026-07-28",
+      "observed_at": "2026-08-11",
+      "scope": "Remote MCP migration, authorization, gateway, and scaling behavior.",
+      "confidence": "high",
+      "limitations": "The protocol design does not establish server trust, data residency, client interoperability, or production operating cost."
+    },
+    {
+      "id": "mcp-stdio-threat-model-2026",
+      "technology_id": "mcp-stdio",
+      "signal": "independent-security-analysis",
+      "claim": "A February 2026 preprint found standardized threat modeling for emerging agent protocols limited and identified protocol-level risks that require deployment-specific controls.",
+      "source_id": "agent-protocol-threat-model-2026-02-11",
+      "observed_at": "2026-08-11",
+      "scope": "Independent caution signal for local MCP deployment design.",
+      "confidence": "medium",
+      "limitations": "The current preprint revision is dated April 2026 and therefore predates the July 2026 MCP revision."
+    },
+    {
+      "id": "mcp-http-threat-model-2026",
+      "technology_id": "mcp-streamable-http",
+      "signal": "independent-security-analysis",
+      "claim": "A February 2026 preprint found standardized threat modeling for emerging agent protocols limited and identified cross-protocol risks across creation, operation, and update phases.",
+      "source_id": "agent-protocol-threat-model-2026-02-11",
+      "observed_at": "2026-08-11",
+      "scope": "Independent caution signal for remote MCP trust and lifecycle controls.",
+      "confidence": "medium",
+      "limitations": "The current preprint revision is dated April 2026 and therefore predates the July 2026 MCP revision."
+    },
+    {
+      "id": "a2a-stable-protocol-2026",
+      "technology_id": "a2a-protocol",
+      "signal": "stable-protocol-release",
+      "claim": "The A2A project's v1.0 announcement presents a stable protocol for agent discovery, task delegation, version negotiation, and multiple interaction bindings, complementary to tool-oriented MCP.",
+      "source_id": "a2a-v1-announcement-live",
+      "observed_at": "2026-08-11",
+      "scope": "Cross-agent interoperability contract.",
+      "confidence": "high",
+      "limitations": "The announcement is a live, project-authored page without an exposed publication date; stable status does not prove target SDK conformance, agent trust, observability, or ecosystem reach."
+    },
+    {
+      "id": "a2a-v1-release-changes-2026",
+      "technology_id": "a2a-protocol",
+      "signal": "versioned-protocol-release",
+      "claim": "The dated A2A v1.0.0 release records breaking protocol cleanup plus task listing, modernized OAuth flows, multi-tenancy support, transport refactoring, and backward-compatibility support.",
+      "source_id": "a2a-1-0-0-2026-03-12",
+      "observed_at": "2026-08-11",
+      "scope": "Versioned A2A v1 protocol and migration surface.",
+      "confidence": "high",
+      "limitations": "Release-note features do not establish cross-vendor SDK conformance, deployment security, ecosystem adoption, or production operating cost."
+    },
+    {
+      "id": "a2a-threat-model-2026",
+      "technology_id": "a2a-protocol",
+      "signal": "independent-security-analysis",
+      "claim": "A February 2026 preprint classified A2A among rapidly evolving protocols with limited standardized threat modeling and deployment-specific trust assumptions.",
+      "source_id": "agent-protocol-threat-model-2026-02-11",
+      "observed_at": "2026-08-11",
+      "scope": "Independent security caution for A2A evaluation.",
+      "confidence": "medium",
+      "limitations": "The preprint's current April 2026 revision does not validate a production implementation or final cross-vendor SDK conformance."
+    },
+    {
+      "id": "acp-session-lifecycle-2026",
+      "technology_id": "agent-client-protocol",
+      "signal": "protocol-stabilization",
+      "claim": "Agent Client Protocol stabilized session list, resume, and close methods in March and April 2026, expanding interoperable session lifecycle support between clients and coding agents.",
+      "source_id": "acp-session-updates-2026-04-23",
+      "observed_at": "2026-08-11",
+      "scope": "Editor-to-coding-agent session lifecycle contract.",
+      "confidence": "high",
+      "limitations": "The update log does not prove complete or identical implementation across agents, editors, wrappers, and SDK versions."
     }
   ]
 }

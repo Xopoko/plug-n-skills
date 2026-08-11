@@ -6,15 +6,22 @@ explains how to use it; it does not replace source-specific terms.
 ## Admission
 
 Admit a source only when it is an official project, standards body, foundation,
-survey publisher, platform telemetry publisher, security service, registry, or
-repository controlled by the responsible publisher. Record direct URL,
-edition/version, publication and retrieval dates, cadence, limitations,
-evidence role, refresh policy, and usage mode.
+survey or telemetry publisher, security service, registry, responsible
+repository, or attributable scholarly primary study. Record direct URL,
+edition/version, publication and retrieval dates, the measurement window when
+the source samples or benchmarks a period, cadence, limitations, evidence role,
+refresh policy, and usage mode. Mark preprints explicitly and keep them
+provisional.
 
 First-party material is authoritative for what a project promises, supports,
 licenses, and releases, but is not independent comparative evidence. Surveys,
 telemetry, landscapes, and automated security systems provide different
 signals; each retains its methodology and scope.
+
+Independence is candidate-relative. Use `affiliated_technology_ids` when a
+foundation, registry, steward, or publisher has a direct relationship to a
+candidate. Such material can still be useful context but does not satisfy the
+candidate's independent-evidence gate by itself.
 
 ## Seed Ledger Boundaries
 

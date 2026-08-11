@@ -11,6 +11,7 @@ import argparse
 import hashlib
 import json
 import os
+import re
 import sys
 import tempfile
 import urllib.error
@@ -36,6 +37,15 @@ SINGLETON_FILES = {
     "runtime-capability-schema": "runtime-capability.schema.v1.json",
     "trigger-contract": "trigger-contract.v1.json",
 }
+EXPECTED_SCHEMA_VERSIONS = {
+    "sources": "technology_intelligence.sources.v1",
+    "technologies": "technology_intelligence.technologies.v1",
+    "observations": "technology_intelligence.observations.v1",
+    "assessments": "technology_intelligence.assessments.v1",
+    "runtime-capability-schema": "technology_intelligence.runtime_capability_schema.v1",
+    "trigger-contract": "technology_intelligence.trigger_contract.v1",
+}
+SAFE_RECORD_ID = re.compile(r"^[a-z0-9]+(?:-[a-z0-9]+)*$")
 POSITIVE_DISPOSITIONS = {"recommend", "consider", "pilot"}
 ALLOWED_DISPOSITIONS = POSITIVE_DISPOSITIONS | {"watch", "avoid"}
 ALLOWED_ROLES = {"first-party", "independent-signal"}
@@ -103,6 +113,8 @@ def _ids(records: Any, label: str, errors: list[str]) -> dict[str, dict[str, Any
         record_id = record.get("id")
         if not isinstance(record_id, str) or not record_id:
             errors.append(f"{label}[{position}] has no non-empty id")
+        elif SAFE_RECORD_ID.fullmatch(record_id) is None:
+            errors.append(f"{label}[{position}] id must be a lowercase kebab-case identifier: {record_id!r}")
         elif record_id in indexed:
             errors.append(f"duplicate {label} id: {record_id}")
         else:
@@ -119,6 +131,43 @@ def _walk_keys(value: Any, path: str = "$") -> Iterable[tuple[str, str]]:
     elif isinstance(value, list):
         for index, child in enumerate(value):
             yield from _walk_keys(child, f"{path}[{index}]")
+
+
+def _profile_identity(profile: dict[str, Any]) -> tuple[tuple[str, ...], ...] | None:
+    """Return an order-insensitive identity for a valid decision profile."""
+    normalized_fields: list[tuple[str, ...]] = []
+    for field in ("stages", "use_cases", "constraints"):
+        values = profile.get(field)
+        if not isinstance(values, list) or not values:
+            return None
+        normalized: list[str] = []
+        for value in values:
+            if not isinstance(value, str) or not value.strip():
+                return None
+            normalized.append(" ".join(value.split()).casefold())
+        normalized_fields.append(tuple(sorted(set(normalized))))
+    return tuple(normalized_fields)
+
+
+def _record_unique_profile(
+    assessment_id: str,
+    technology_id: Any,
+    profile: Any,
+    assessed_profiles: dict[tuple[str, tuple[tuple[str, ...], ...]], str],
+    errors: list[str],
+) -> None:
+    """Record a valid profile identity or report a duplicate for one technology."""
+    if not isinstance(technology_id, str) or not isinstance(profile, dict):
+        return
+    profile_identity = _profile_identity(profile)
+    if profile_identity is None:
+        return
+    profile_key = (technology_id, profile_identity)
+    previous_assessment = assessed_profiles.get(profile_key)
+    if previous_assessment is not None:
+        errors.append(f"assessment {assessment_id} duplicates decision profile from {previous_assessment}")
+    else:
+        assessed_profiles[profile_key] = assessment_id
 
 
 def load_snapshot(data_dir: Path | str = DATA_DIR) -> dict[str, Any]:
@@ -144,30 +193,60 @@ def classify_prompt(prompt: str, contract: dict[str, Any]) -> str | None:
     return None
 
 
-def validate_runtime_inventory(inventory: Any, schema: dict[str, Any]) -> list[str]:
+def validate_runtime_inventory(
+    inventory: Any,
+    schema: dict[str, Any],
+    *,
+    known_technology_ids: set[str] | None = None,
+    reference_time: datetime | None = None,
+) -> list[str]:
     """Validate caller-supplied runtime facts without retaining them."""
     errors: list[str] = []
     if not isinstance(inventory, dict):
         return ["runtime inventory must be an object"]
     required = schema.get("required_top_level", [])
+    optional = schema.get("optional_top_level", [])
+    allowed_top_level = set(required) | set(optional)
     for field in required:
         if field not in inventory:
             errors.append(f"runtime inventory missing {field}")
+    for field in inventory:
+        if field not in allowed_top_level:
+            errors.append(f"runtime inventory has unsupported field {field}")
+    forbidden = {str(item).casefold() for item in schema.get("forbidden_fields", [])}
+    for key_path, key in _walk_keys(inventory):
+        if key.casefold() in forbidden:
+            errors.append(f"{key_path} is forbidden")
     if inventory.get("schema_version") != schema.get("runtime_schema_version"):
         errors.append("runtime inventory schema_version does not match runtime schema")
+    observed_at: datetime | None = None
     try:
-        _parse_datetime(inventory.get("observed_at"), "runtime inventory observed_at")
+        observed_at = _parse_datetime(inventory.get("observed_at"), "runtime inventory observed_at")
     except SnapshotError as exc:
         errors.append(str(exc))
     capabilities = inventory.get("capabilities")
     if not isinstance(capabilities, list):
         errors.append("runtime inventory capabilities must be an array")
         return errors
-    forbidden = {str(item).casefold() for item in schema.get("forbidden_fields", [])}
     allowed_surfaces = set(schema.get("allowed_surfaces", []))
     allowed_auth = set(schema.get("allowed_auth_states", []))
     allowed_health = set(schema.get("allowed_health_states", []))
     required_capability = schema.get("capability_required", [])
+    optional_capability = schema.get("capability_optional", [])
+    allowed_capability = set(required_capability) | set(optional_capability)
+    max_age_seconds = schema.get("max_capability_age_seconds")
+    consumed_at = reference_time or datetime.now(timezone.utc)
+    if consumed_at.tzinfo is None:
+        errors.append("runtime inventory reference_time must include a timezone")
+        consumed_at = consumed_at.replace(tzinfo=timezone.utc)
+    consumed_at = consumed_at.astimezone(timezone.utc)
+    if observed_at is not None:
+        observed_at = observed_at.astimezone(timezone.utc)
+        if observed_at > consumed_at:
+            errors.append("runtime inventory observed_at cannot be in the future")
+        elif isinstance(max_age_seconds, int) and (consumed_at - observed_at).total_seconds() > max_age_seconds:
+            errors.append(f"runtime inventory observed_at exceeds max age of {max_age_seconds} seconds")
+    seen_capabilities: set[tuple[str, str, str]] = set()
     for index, capability in enumerate(capabilities):
         label = f"runtime capability[{index}]"
         if not isinstance(capability, dict):
@@ -176,9 +255,16 @@ def validate_runtime_inventory(inventory: Any, schema: dict[str, Any]) -> list[s
         for field in required_capability:
             if field not in capability:
                 errors.append(f"{label} missing {field}")
-        for key_path, key in _walk_keys(capability, label):
-            if key.casefold() in forbidden:
-                errors.append(f"{key_path} is forbidden")
+        for field in capability:
+            if field not in allowed_capability:
+                errors.append(f"{label} has unsupported field {field}")
+        for field in ("technology_id", "surface", "identifier", "auth_state", "health"):
+            value = capability.get(field)
+            if not isinstance(value, str) or not value.strip():
+                errors.append(f"{label} {field} must be a non-empty string")
+        technology_id = capability.get("technology_id")
+        if known_technology_ids is not None and technology_id not in known_technology_ids:
+            errors.append(f"{label} references unknown technology {technology_id!r}")
         if capability.get("surface") not in allowed_surfaces:
             errors.append(f"{label} has unsupported surface")
         if capability.get("auth_state") not in allowed_auth:
@@ -189,10 +275,44 @@ def validate_runtime_inventory(inventory: Any, schema: dict[str, Any]) -> list[s
             errors.append(f"{label} installed must be boolean")
         if not isinstance(capability.get("enabled"), bool):
             errors.append(f"{label} enabled must be boolean")
+        if capability.get("installed") is False and capability.get("enabled") is True:
+            errors.append(f"{label} cannot be enabled when not installed")
+        if capability.get("installed") is False and capability.get("health") == "healthy":
+            errors.append(f"{label} cannot be healthy when not installed")
+        if capability.get("enabled") is False and capability.get("health") == "healthy":
+            errors.append(f"{label} cannot be healthy when disabled")
+        if capability.get("auth_state") == "verified" and (
+            capability.get("installed") is not True or capability.get("enabled") is not True
+        ):
+            errors.append(f"{label} cannot have verified auth unless installed and enabled")
+        if "version" in capability and not isinstance(capability.get("version"), str):
+            errors.append(f"{label} version must be a string")
+        if "permissions" in capability:
+            permissions = capability.get("permissions")
+            if not isinstance(permissions, list) or any(
+                not isinstance(permission, str) or not permission.strip() for permission in permissions
+            ):
+                errors.append(f"{label} permissions must be an array of non-empty strings")
+        if "notes" in capability and not isinstance(capability.get("notes"), str):
+            errors.append(f"{label} notes must be a string")
+        checked_at: datetime | None = None
         try:
-            _parse_datetime(capability.get("checked_at"), f"{label} checked_at")
+            checked_at = _parse_datetime(capability.get("checked_at"), f"{label} checked_at")
         except SnapshotError as exc:
             errors.append(str(exc))
+        if checked_at is not None and observed_at is not None:
+            if checked_at > observed_at:
+                errors.append(f"{label} checked_at cannot follow observed_at")
+            elif isinstance(max_age_seconds, int) and (observed_at - checked_at).total_seconds() > max_age_seconds:
+                errors.append(f"{label} checked_at exceeds max age of {max_age_seconds} seconds")
+        identity = (
+            str(capability.get("technology_id")),
+            str(capability.get("surface")),
+            str(capability.get("identifier")),
+        )
+        if identity in seen_capabilities:
+            errors.append(f"{label} duplicates capability identity {identity!r}")
+        seen_capabilities.add(identity)
     return errors
 
 
@@ -227,6 +347,7 @@ def validate_plugin(root: Path | str = PLUGIN_ROOT, check_manifest: bool = True)
             errors.append(f"missing agents/openai.yaml for {skill_name}")
     for reference in (
         "evidence-methodology.md",
+        "decision-evidence-contract.md",
         "source-and-licensing-ledger.md",
         "refresh-policy.md",
         "runtime-boundary.md",
@@ -244,15 +365,7 @@ def validate_plugin(root: Path | str = PLUGIN_ROOT, check_manifest: bool = True)
     technology_doc = snapshot["technologies"]
     observation_doc = snapshot["observations"]
     assessment_doc = snapshot["assessments"]
-    schema_versions = {
-        "sources": "technology_intelligence.sources.v1",
-        "technologies": "technology_intelligence.technologies.v1",
-        "observations": "technology_intelligence.observations.v1",
-        "assessments": "technology_intelligence.assessments.v1",
-        "runtime-capability-schema": "technology_intelligence.runtime_capability_schema.v1",
-        "trigger-contract": "technology_intelligence.trigger_contract.v1",
-    }
-    for name, expected in schema_versions.items():
+    for name, expected in EXPECTED_SCHEMA_VERSIONS.items():
         if snapshot[name].get("schema_version") != expected:
             errors.append(f"{name} schema_version must be {expected}")
     snapshot_ids = {
@@ -261,6 +374,31 @@ def validate_plugin(root: Path | str = PLUGIN_ROOT, check_manifest: bool = True)
     }
     if len(snapshot_ids) != 1 or None in snapshot_ids:
         errors.append("core dataset snapshot_id values must be identical and non-null")
+    manifest = snapshot.get("manifest")
+    snapshot_generated_at: datetime | None = None
+    snapshot_cutoff: date | None = None
+    if isinstance(manifest, dict):
+        try:
+            snapshot_generated_at = _parse_datetime(
+                manifest.get("generated_at"), "snapshot manifest generated_at"
+            ).astimezone(timezone.utc)
+            snapshot_cutoff = snapshot_generated_at.date()
+        except SnapshotError as exc:
+            errors.append(str(exc))
+    for document_name, document in (
+        ("sources", source_doc),
+        ("technologies", technology_doc),
+        ("observations", observation_doc),
+        ("assessments", assessment_doc),
+    ):
+        if "generated_at" not in document:
+            continue
+        try:
+            generated_at = _parse_datetime(document.get("generated_at"), f"{document_name} generated_at")
+            if snapshot_generated_at is not None and generated_at.astimezone(timezone.utc) != snapshot_generated_at:
+                errors.append(f"{document_name} generated_at does not match snapshot manifest")
+        except SnapshotError as exc:
+            errors.append(str(exc))
 
     sources = _ids(source_doc.get("sources"), "sources", errors)
     technologies = _ids(technology_doc.get("technologies"), "technologies", errors)
@@ -268,20 +406,43 @@ def validate_plugin(root: Path | str = PLUGIN_ROOT, check_manifest: bool = True)
     assessments = _ids(assessment_doc.get("assessments"), "assessments", errors)
 
     for source_id, source in sources.items():
+        for field in ("publisher", "title", "source_type", "edition", "scope", "limitations"):
+            if not isinstance(source.get(field), str) or not source.get(field).strip():
+                errors.append(f"source {source_id} {field} must be a non-empty string")
         if source.get("evidence_role") not in ALLOWED_ROLES:
             errors.append(f"source {source_id} has unsupported evidence_role")
         parsed_url = urllib.parse.urlparse(str(source.get("url", "")))
         if parsed_url.scheme != "https" or not parsed_url.hostname:
             errors.append(f"source {source_id} must use an absolute HTTPS URL")
+        retrieved: date | None = None
+        published: date | None = None
         try:
-            _parse_date(source.get("retrieved_at"), f"source {source_id} retrieved_at")
+            retrieved = _parse_date(source.get("retrieved_at"), f"source {source_id} retrieved_at")
         except SnapshotError as exc:
             errors.append(str(exc))
+        if retrieved is not None and snapshot_cutoff is not None and retrieved > snapshot_cutoff:
+            errors.append(f"source {source_id} retrieved_at follows snapshot generation")
         if source.get("published_at") is not None:
             try:
-                _parse_date(source.get("published_at"), f"source {source_id} published_at")
+                published = _parse_date(source.get("published_at"), f"source {source_id} published_at")
             except SnapshotError as exc:
                 errors.append(str(exc))
+        if retrieved is not None and published is not None and published > retrieved:
+            errors.append(f"source {source_id} published_at cannot follow retrieved_at")
+        measurement_window = source.get("measurement_window")
+        if measurement_window is not None:
+            if not isinstance(measurement_window, dict):
+                errors.append(f"source {source_id} measurement_window must be an object")
+            else:
+                try:
+                    measured_from = _parse_date(measurement_window.get("start"), f"source {source_id} measurement_window.start")
+                    measured_to = _parse_date(measurement_window.get("end"), f"source {source_id} measurement_window.end")
+                    if measured_to < measured_from:
+                        errors.append(f"source {source_id} measurement_window end must not precede start")
+                    if retrieved is not None and measured_to > retrieved:
+                        errors.append(f"source {source_id} measurement_window cannot follow retrieved_at")
+                except SnapshotError as exc:
+                    errors.append(str(exc))
         if not isinstance(source.get("freshness_days"), int) or source.get("freshness_days", 0) <= 0:
             errors.append(f"source {source_id} freshness_days must be a positive integer")
         rights = source.get("rights")
@@ -320,6 +481,14 @@ def validate_plugin(root: Path | str = PLUGIN_ROOT, check_manifest: bool = True)
                 errors.append(f"technology {technology_id} references unknown source {source_id}")
             elif sources[source_id].get("evidence_role") != "first-party":
                 errors.append(f"technology {technology_id} official source {source_id} is not first-party")
+    for source_id, source in sources.items():
+        affiliations = source.get("affiliated_technology_ids", [])
+        if not isinstance(affiliations, list):
+            errors.append(f"source {source_id} affiliated_technology_ids must be an array")
+        else:
+            for technology_id in affiliations:
+                if technology_id not in technologies:
+                    errors.append(f"source {source_id} has unknown technology affiliation {technology_id}")
 
     observations_by_technology: dict[str, list[dict[str, Any]]] = {}
     for observation_id, observation in observations.items():
@@ -337,7 +506,14 @@ def validate_plugin(root: Path | str = PLUGIN_ROOT, check_manifest: bool = True)
         if observation.get("confidence") not in ALLOWED_CONFIDENCE:
             errors.append(f"observation {observation_id} has unsupported confidence")
         try:
-            _parse_date(observation.get("observed_at"), f"observation {observation_id} observed_at")
+            observed = _parse_date(observation.get("observed_at"), f"observation {observation_id} observed_at")
+            source = sources.get(source_id)
+            if source is not None:
+                retrieved = _parse_date(source.get("retrieved_at"), f"source {source_id} retrieved_at")
+                if observed < retrieved:
+                    errors.append(f"observation {observation_id} observed_at precedes source retrieval")
+            if snapshot_cutoff is not None and observed > snapshot_cutoff:
+                errors.append(f"observation {observation_id} observed_at follows snapshot generation")
         except SnapshotError as exc:
             errors.append(str(exc))
     for technology_id in technologies:
@@ -345,12 +521,11 @@ def validate_plugin(root: Path | str = PLUGIN_ROOT, check_manifest: bool = True)
             errors.append(f"technology {technology_id} has no observation")
 
     assessed_technologies: set[str] = set()
+    assessed_profiles: dict[tuple[str, tuple[tuple[str, ...], ...]], str] = {}
     for assessment_id, assessment in assessments.items():
         technology_id = assessment.get("technology_id")
         if technology_id not in technologies:
             errors.append(f"assessment {assessment_id} references unknown technology {technology_id}")
-        elif technology_id in assessed_technologies:
-            errors.append(f"multiple assessments exist for technology {technology_id}")
         else:
             assessed_technologies.add(technology_id)
         disposition = assessment.get("disposition")
@@ -363,6 +538,9 @@ def validate_plugin(root: Path | str = PLUGIN_ROOT, check_manifest: bool = True)
             for field in ("stages", "use_cases", "constraints"):
                 if not isinstance(profile.get(field), list) or not profile.get(field):
                     errors.append(f"assessment {assessment_id} profile {field} must be non-empty")
+                elif any(not isinstance(item, str) or not item.strip() for item in profile[field]):
+                    errors.append(f"assessment {assessment_id} profile {field} values must be non-empty strings")
+            _record_unique_profile(assessment_id, technology_id, profile, assessed_profiles, errors)
         for field in ("rationale", "hard_gates"):
             if not isinstance(assessment.get(field), list) or not assessment.get(field):
                 errors.append(f"assessment {assessment_id} {field} must be non-empty")
@@ -389,15 +567,23 @@ def validate_plugin(root: Path | str = PLUGIN_ROOT, check_manifest: bool = True)
                 else:
                     evidence_records.append(observation)
         if disposition in POSITIVE_DISPOSITIONS:
-            roles = {
-                sources[item["source_id"]].get("evidence_role")
+            official_source_ids = set(technologies.get(technology_id, {}).get("official_source_ids", []))
+            has_candidate_first_party_signal = any(
+                item.get("source_id") in official_source_ids
+                and sources[item["source_id"]].get("evidence_role") == "first-party"
                 for item in evidence_records
                 if item.get("source_id") in sources
-            }
+            )
+            has_candidate_independent_signal = any(
+                sources[item["source_id"]].get("evidence_role") == "independent-signal"
+                and technology_id not in sources[item["source_id"]].get("affiliated_technology_ids", [])
+                for item in evidence_records
+                if item.get("source_id") in sources
+            )
             gap = assessment.get("verification_gap")
-            if "first-party" not in roles:
-                errors.append(f"positive assessment {assessment_id} lacks first-party evidence")
-            if "independent-signal" not in roles and not (isinstance(gap, str) and gap.strip()):
+            if not has_candidate_first_party_signal:
+                errors.append(f"positive assessment {assessment_id} lacks candidate first-party evidence")
+            if not has_candidate_independent_signal and not (isinstance(gap, str) and gap.strip()):
                 errors.append(f"positive assessment {assessment_id} needs an independent signal or explicit gap")
         if assessment.get("confidence") not in ALLOWED_CONFIDENCE:
             errors.append(f"assessment {assessment_id} has unsupported confidence")
@@ -406,11 +592,19 @@ def validate_plugin(root: Path | str = PLUGIN_ROOT, check_manifest: bool = True)
             expires = _parse_date(assessment.get("expires_at"), f"assessment {assessment_id} expires_at")
             if expires <= reviewed:
                 errors.append(f"assessment {assessment_id} expires_at must follow reviewed_at")
+            evidence_dates = [
+                _parse_date(item.get("observed_at"), f"observation {item.get('id')} observed_at")
+                for item in evidence_records
+            ]
+            if evidence_dates and reviewed < max(evidence_dates):
+                errors.append(f"assessment {assessment_id} reviewed_at precedes cited evidence")
+            if snapshot_cutoff is not None and reviewed > snapshot_cutoff:
+                errors.append(f"assessment {assessment_id} reviewed_at follows snapshot generation")
         except SnapshotError as exc:
             errors.append(str(exc))
     if assessed_technologies != set(technologies):
         missing = sorted(set(technologies) - assessed_technologies)
-        errors.append(f"every technology needs exactly one seed assessment; missing {missing}")
+        errors.append(f"every technology needs at least one assessment; missing {missing}")
 
     for document_name in ("sources", "technologies", "observations", "assessments"):
         for key_path, key in _walk_keys(snapshot[document_name]):
@@ -424,6 +618,14 @@ def validate_plugin(root: Path | str = PLUGIN_ROOT, check_manifest: bool = True)
         errors.append("runtime capability schema must declare persistence=never and join_key=technology_id")
     if runtime_schema.get("runtime_schema_version") != "technology_intelligence.runtime_inventory.v1":
         errors.append("runtime capability schema has unexpected runtime_schema_version")
+    if not isinstance(runtime_schema.get("max_capability_age_seconds"), int) or runtime_schema.get("max_capability_age_seconds", 0) <= 0:
+        errors.append("runtime capability schema max_capability_age_seconds must be positive")
+    required_runtime = runtime_schema.get("capability_required", [])
+    optional_runtime = runtime_schema.get("capability_optional", [])
+    if not isinstance(required_runtime, list) or not isinstance(optional_runtime, list):
+        errors.append("runtime capability schema field lists must be arrays")
+    elif set(required_runtime) & set(optional_runtime):
+        errors.append("runtime capability required and optional fields must not overlap")
 
     try:
         trigger_cases_doc = _read_json(plugin_root / "tests" / "fixtures" / "trigger-cases.v1.json")
@@ -450,7 +652,6 @@ def validate_plugin(root: Path | str = PLUGIN_ROOT, check_manifest: bool = True)
     except SnapshotError as exc:
         errors.append(str(exc))
 
-    manifest = snapshot.get("manifest")
     if check_manifest:
         if not isinstance(manifest, dict):
             errors.append("missing snapshot-manifest.v1.json")
@@ -530,6 +731,66 @@ def staleness_report(snapshot: dict[str, Any], as_of: date) -> dict[str, Any]:
     }
 
 
+def evidence_window_report(snapshot: dict[str, Any], since: date, as_of: date) -> dict[str, Any]:
+    """Separate publication currency from retrieval freshness for one bounded window."""
+    if since > as_of:
+        raise SnapshotError("evidence window since date must not follow as-of date")
+    sources = {item["id"]: item for item in snapshot["sources"].get("sources", [])}
+    technologies = {item["id"]: item for item in snapshot["technologies"].get("technologies", [])}
+    published_in_window: list[str] = []
+    older_publications: list[str] = []
+    undated_or_live: list[str] = []
+    future_publications: list[str] = []
+    for source_id, source in sources.items():
+        published_at = source.get("published_at")
+        if published_at is None:
+            undated_or_live.append(source_id)
+            continue
+        published = _parse_date(published_at, f"source {source_id} published_at")
+        if published > as_of:
+            future_publications.append(source_id)
+        elif published >= since:
+            published_in_window.append(source_id)
+        else:
+            older_publications.append(source_id)
+    window_observations: dict[str, list[str]] = {}
+    for observation in snapshot["observations"].get("observations", []):
+        source = sources.get(observation.get("source_id"))
+        if source is None or source.get("published_at") is None:
+            continue
+        observed = _parse_date(observation.get("observed_at"), f"observation {observation.get('id')} observed_at")
+        published = _parse_date(source.get("published_at"), f"source {source.get('id')} published_at")
+        if since <= observed <= as_of and since <= published <= as_of:
+            window_observations.setdefault(observation["technology_id"], []).append(observation["id"])
+    coverage = [
+        {
+            "technology_id": technology_id,
+            "name": technology["name"],
+            "fresh_observation_ids": sorted(window_observations.get(technology_id, [])),
+            "status": "covered" if window_observations.get(technology_id) else "gap",
+        }
+        for technology_id, technology in sorted(technologies.items())
+    ]
+    return {
+        "since": since.isoformat(),
+        "as_of": as_of.isoformat(),
+        "definition": "covered requires both source publication and observation dates inside the window; retrieval date alone does not qualify",
+        "source_counts": {
+            "published_in_window": len(published_in_window),
+            "older_publications": len(older_publications),
+            "undated_or_live": len(undated_or_live),
+            "future_publications": len(future_publications),
+        },
+        "published_in_window": sorted(published_in_window),
+        "older_publications": sorted(older_publications),
+        "undated_or_live": sorted(undated_or_live),
+        "future_publications": sorted(future_publications),
+        "technology_coverage": coverage,
+        "covered_technology_count": sum(item["status"] == "covered" for item in coverage),
+        "technology_gap_count": sum(item["status"] == "gap" for item in coverage),
+    }
+
+
 def query_snapshot(
     snapshot: dict[str, Any],
     *,
@@ -541,6 +802,7 @@ def query_snapshot(
     limit: int | None = None,
     as_of: date | None = None,
     runtime_inventory: dict[str, Any] | None = None,
+    runtime_reference_time: datetime | None = None,
 ) -> list[dict[str, Any]]:
     """Query profile-specific assessments and attach their dated evidence."""
     technologies = {item["id"]: item for item in snapshot["technologies"]["technologies"]}
@@ -548,7 +810,12 @@ def query_snapshot(
     sources = {item["id"]: item for item in snapshot["sources"]["sources"]}
     runtime_by_technology: dict[str, list[dict[str, Any]]] = {}
     if runtime_inventory is not None:
-        runtime_errors = validate_runtime_inventory(runtime_inventory, snapshot["runtime-capability-schema"])
+        runtime_errors = validate_runtime_inventory(
+            runtime_inventory,
+            snapshot["runtime-capability-schema"],
+            known_technology_ids=set(technologies),
+            reference_time=runtime_reference_time,
+        )
         if runtime_errors:
             raise SnapshotError("invalid runtime inventory: " + "; ".join(runtime_errors))
         for capability in runtime_inventory["capabilities"]:
@@ -581,13 +848,22 @@ def query_snapshot(
                     "observation_id": evidence_id,
                     "signal": observation["signal"],
                     "claim": observation["claim"],
+                    "scope": observation["scope"],
+                    "confidence": observation["confidence"],
+                    "limitations": observation["limitations"],
                     "observed_at": observation["observed_at"],
                     "source": {
                         "id": source["id"],
                         "title": source["title"],
                         "publisher": source["publisher"],
                         "role": source["evidence_role"],
+                        "candidate_independent": source["evidence_role"] == "independent-signal"
+                        and candidate["id"] not in source.get("affiliated_technology_ids", []),
                         "url": source["url"],
+                        "edition": source["edition"],
+                        "published_at": source.get("published_at"),
+                        "measurement_window": source.get("measurement_window"),
+                        "retrieved_at": source["retrieved_at"],
                         "limitations": source["limitations"],
                     },
                 }
@@ -599,13 +875,35 @@ def query_snapshot(
         }
         if as_of is not None:
             row["assessment_status"] = "expired" if as_of > _parse_date(assessment["expires_at"], "expires_at") else "current"
+            stale_source_ids: list[str] = []
+            for item in evidence:
+                source = item["source"]
+                source_record = sources[source["id"]]
+                due_on = _parse_date(source["retrieved_at"], "retrieved_at") + timedelta(
+                    days=int(source_record["freshness_days"])
+                )
+                source["retrieval_due_on"] = due_on.isoformat()
+                source["retrieval_status"] = "stale" if as_of > due_on else "current"
+                if as_of > due_on:
+                    stale_source_ids.append(source["id"])
+            row["evidence_status"] = {
+                "stale_source_ids": sorted(set(stale_source_ids)),
+                "retrieval_freshness_note": "Retrieval freshness is separate from publication currency and measurement age.",
+            }
         if runtime_inventory is not None:
             row["runtime_capabilities"] = sorted(
                 runtime_by_technology.get(candidate["id"], []),
                 key=lambda item: (str(item.get("surface")), str(item.get("identifier"))),
             )
         rows.append(row)
-    rows.sort(key=lambda row: (row["technology"]["family"], row["technology"]["name"].casefold(), row["technology"]["id"]))
+    rows.sort(
+        key=lambda row: (
+            row["technology"]["family"],
+            row["technology"]["name"].casefold(),
+            row["technology"]["id"],
+            row["assessment"]["id"],
+        )
+    )
     if limit is not None:
         if limit < 1:
             raise SnapshotError("limit must be a positive integer")
@@ -613,8 +911,161 @@ def query_snapshot(
     return rows
 
 
+def validate_data_directory(data_dir: Path | str) -> list[str]:
+    """Validate the integrity envelope required before comparing a data directory."""
+    directory = Path(data_dir)
+    try:
+        snapshot = load_snapshot(directory)
+    except SnapshotError as exc:
+        return [str(exc)]
+    errors: list[str] = []
+    for name, expected in EXPECTED_SCHEMA_VERSIONS.items():
+        if snapshot[name].get("schema_version") != expected:
+            errors.append(f"{name} schema_version must be {expected}")
+    indexed = {
+        name: _ids(snapshot[name].get(record_key), name, errors)
+        for name, (_, record_key) in DATASET_FILES.items()
+    }
+    sources = indexed["sources"]
+    technologies = indexed["technologies"]
+    observations = indexed["observations"]
+    assessments = indexed["assessments"]
+    for technology_id, technology in technologies.items():
+        official_ids = technology.get("official_source_ids")
+        if not isinstance(official_ids, list):
+            errors.append(f"technology {technology_id} official_source_ids must be an array")
+        else:
+            for source_id in official_ids:
+                if source_id not in sources:
+                    errors.append(f"technology {technology_id} references unknown source {source_id}")
+    for source_id, source in sources.items():
+        affiliations = source.get("affiliated_technology_ids", [])
+        if not isinstance(affiliations, list):
+            errors.append(f"source {source_id} affiliated_technology_ids must be an array")
+        else:
+            for technology_id in affiliations:
+                if technology_id not in technologies:
+                    errors.append(f"source {source_id} has unknown technology affiliation {technology_id}")
+    observed_technologies: set[str] = set()
+    for observation_id, observation in observations.items():
+        technology_id = observation.get("technology_id")
+        source_id = observation.get("source_id")
+        if technology_id not in technologies:
+            errors.append(f"observation {observation_id} references unknown technology {technology_id}")
+        else:
+            observed_technologies.add(technology_id)
+        if source_id not in sources:
+            errors.append(f"observation {observation_id} references unknown source {source_id}")
+    assessed_technologies: set[str] = set()
+    assessed_profiles: dict[tuple[str, tuple[tuple[str, ...], ...]], str] = {}
+    for assessment_id, assessment in assessments.items():
+        technology_id = assessment.get("technology_id")
+        if technology_id not in technologies:
+            errors.append(f"assessment {assessment_id} references unknown technology {technology_id}")
+        else:
+            assessed_technologies.add(technology_id)
+        _record_unique_profile(
+            assessment_id,
+            technology_id,
+            assessment.get("profile"),
+            assessed_profiles,
+            errors,
+        )
+        evidence_ids = assessment.get("evidence_ids")
+        if not isinstance(evidence_ids, list) or not evidence_ids:
+            errors.append(f"assessment {assessment_id} evidence_ids must be non-empty")
+        else:
+            for evidence_id in evidence_ids:
+                observation = observations.get(evidence_id)
+                if observation is None:
+                    errors.append(f"assessment {assessment_id} references unknown observation {evidence_id}")
+                elif observation.get("technology_id") != technology_id:
+                    errors.append(f"assessment {assessment_id} uses evidence for another technology")
+        alternatives = assessment.get("alternatives")
+        if not isinstance(alternatives, list):
+            errors.append(f"assessment {assessment_id} alternatives must be an array")
+        else:
+            for alternative in alternatives:
+                if alternative not in technologies:
+                    errors.append(f"assessment {assessment_id} references unknown alternative {alternative}")
+    for technology_id in sorted(set(technologies) - observed_technologies):
+        errors.append(f"technology {technology_id} has no observation")
+    for technology_id in sorted(set(technologies) - assessed_technologies):
+        errors.append(f"technology {technology_id} has no assessment")
+    snapshot_ids = {
+        snapshot[name].get("snapshot_id")
+        for name in DATASET_FILES
+    }
+    if len(snapshot_ids) != 1 or None in snapshot_ids:
+        errors.append("core dataset snapshot_id values must be identical and non-null")
+    manifest = snapshot.get("manifest")
+    if not isinstance(manifest, dict):
+        return errors + ["missing snapshot-manifest.v1.json"]
+    if manifest.get("schema_version") != "technology_intelligence.snapshot_manifest.v1":
+        errors.append("snapshot manifest schema_version is invalid")
+    if manifest.get("snapshot_id") not in snapshot_ids:
+        errors.append("snapshot manifest snapshot_id does not match core datasets")
+    manifest_generated_at: datetime | None = None
+    try:
+        manifest_generated_at = _parse_datetime(
+            manifest.get("generated_at"), "snapshot manifest generated_at"
+        ).astimezone(timezone.utc)
+    except SnapshotError as exc:
+        errors.append(str(exc))
+    for name in DATASET_FILES:
+        if "generated_at" not in snapshot[name]:
+            continue
+        try:
+            generated_at = _parse_datetime(snapshot[name].get("generated_at"), f"{name} generated_at")
+            if manifest_generated_at is not None and generated_at.astimezone(timezone.utc) != manifest_generated_at:
+                errors.append(f"{name} generated_at does not match snapshot manifest")
+        except SnapshotError as exc:
+            errors.append(str(exc))
+    entries = manifest.get("files")
+    expected_paths = {filename for filename, _ in DATASET_FILES.values()} | set(SINGLETON_FILES.values())
+    if not isinstance(entries, list):
+        return errors + ["snapshot manifest files must be an array"]
+    seen_paths: set[str] = set()
+    for entry in entries:
+        relative = entry.get("path") if isinstance(entry, dict) else None
+        if not isinstance(relative, str) or relative in seen_paths:
+            errors.append(f"snapshot manifest has invalid or duplicate path {relative!r}")
+            continue
+        seen_paths.add(relative)
+        if relative not in expected_paths:
+            errors.append(f"snapshot manifest includes unexpected file {relative}")
+            continue
+        path = directory / relative
+        if not path.is_file():
+            errors.append(f"snapshot manifest file missing: {relative}")
+            continue
+        if entry.get("sha256") != _sha256(path):
+            errors.append(f"snapshot manifest hash mismatch: {relative}")
+        document = _read_json(path)
+        expected_count = 1
+        for _, (candidate_file, record_key) in DATASET_FILES.items():
+            if candidate_file == relative:
+                records = document.get(record_key)
+                if not isinstance(records, list):
+                    errors.append(f"{relative} {record_key} must be an array")
+                    records = []
+                expected_count = len(records)
+        if entry.get("record_count") != expected_count:
+            errors.append(f"snapshot manifest count mismatch: {relative}")
+        if entry.get("schema_version") != document.get("schema_version"):
+            errors.append(f"snapshot manifest schema mismatch: {relative}")
+    if seen_paths != expected_paths:
+        errors.append(f"snapshot manifest paths mismatch; expected {sorted(expected_paths)}")
+    return errors
+
+
 def diff_directories(old_dir: Path | str, new_dir: Path | str) -> dict[str, Any]:
     """Produce a stable, semantic diff between two complete data directories."""
+    old_errors = validate_data_directory(old_dir)
+    new_errors = validate_data_directory(new_dir)
+    if old_errors or new_errors:
+        messages = [*(f"old:{error}" for error in old_errors), *(f"new:{error}" for error in new_errors)]
+        raise SnapshotError("cannot diff invalid data directories: " + "; ".join(messages))
     old_snapshot = load_snapshot(Path(old_dir))
     new_snapshot = load_snapshot(Path(new_dir))
     datasets: dict[str, Any] = {}
@@ -636,6 +1087,25 @@ def diff_directories(old_dir: Path | str, new_dir: Path | str) -> dict[str, Any]
             "removed": [],
             "changed": [name] if old_snapshot[name] != new_snapshot[name] else [],
         }
+    metadata_changed: list[str] = []
+    for name, (_, record_key) in DATASET_FILES.items():
+        old_metadata = {key: value for key, value in old_snapshot[name].items() if key != record_key}
+        new_metadata = {key: value for key, value in new_snapshot[name].items() if key != record_key}
+        if old_metadata != new_metadata:
+            metadata_changed.append(name)
+    old_manifest_metadata = {
+        key: value for key, value in old_snapshot["manifest"].items() if key != "files"
+    }
+    new_manifest_metadata = {
+        key: value for key, value in new_snapshot["manifest"].items() if key != "files"
+    }
+    if old_manifest_metadata != new_manifest_metadata:
+        metadata_changed.append("manifest")
+    datasets["snapshot-metadata"] = {
+        "added": [],
+        "removed": [],
+        "changed": sorted(metadata_changed),
+    }
     change_count = sum(
         len(values[change_kind])
         for values in datasets.values()
@@ -696,11 +1166,30 @@ def capture_source(
     """Capture one allowlisted source outside tracked plugin state and emit a receipt."""
     if not acknowledge_network:
         raise SnapshotError("refresh requires --acknowledge-network")
-    snapshot = load_snapshot(DATA_DIR)
     validation_errors = validate_plugin(PLUGIN_ROOT)
     if validation_errors:
         raise SnapshotError("snapshot validation failed before refresh: " + "; ".join(validation_errors))
-    sources = {item["id"]: item for item in snapshot["sources"]["sources"]}
+    registry_path = DATA_DIR / DATASET_FILES["sources"][0]
+    try:
+        registry_bytes = registry_path.read_bytes()
+        source_document = json.loads(registry_bytes)
+    except (OSError, json.JSONDecodeError) as exc:
+        raise SnapshotError(f"cannot bind source registry before refresh: {exc}") from exc
+    registry_digest = hashlib.sha256(registry_bytes).hexdigest()
+    registry_generated_at = _parse_datetime(
+        source_document.get("generated_at"), "source registry generated_at"
+    ).astimezone(timezone.utc)
+    if now is not None:
+        if now.tzinfo is None:
+            raise SnapshotError("capture time must include a timezone")
+        captured_at = now.astimezone(timezone.utc)
+        if captured_at < registry_generated_at:
+            raise SnapshotError("capture time precedes source registry generation")
+    validation_errors = validate_plugin(PLUGIN_ROOT)
+    if validation_errors or _sha256(registry_path) != registry_digest:
+        details = "; ".join(validation_errors) if validation_errors else "source registry changed during validation"
+        raise SnapshotError("snapshot changed before refresh: " + details)
+    sources = {item["id"]: item for item in source_document["sources"]}
     if source_id not in sources:
         raise SnapshotError(f"unknown source id: {source_id}")
     source = sources[source_id]
@@ -756,10 +1245,11 @@ def capture_source(
         content_type = headers.get("Content-Type") if hasattr(headers, "get") else None
         etag = headers.get("ETag") if hasattr(headers, "get") else None
         last_modified = headers.get("Last-Modified") if hasattr(headers, "get") else None
-    captured_at = now or datetime.now(timezone.utc)
-    if captured_at.tzinfo is None:
-        captured_at = captured_at.replace(tzinfo=timezone.utc)
-    captured_at = captured_at.astimezone(timezone.utc)
+    captured_at = captured_at if now is not None else datetime.now(timezone.utc)
+    if captured_at < registry_generated_at:
+        raise SnapshotError("capture time precedes source registry generation")
+    if _sha256(registry_path) != registry_digest:
+        raise SnapshotError("source registry changed during capture; no artifact was written")
     timestamp = captured_at.strftime("%Y%m%dT%H%M%S.%fZ")
     capture_dir = destination_root / source_id / timestamp
     if capture_dir.exists():
@@ -770,8 +1260,12 @@ def capture_source(
     digest = hashlib.sha256(raw).hexdigest()
     receipt = {
         "schema_version": "technology_intelligence.refresh_receipt.v1",
+        "snapshot_id": source_document["snapshot_id"],
+        "source_registry_sha256": registry_digest,
         "source_id": source_id,
-        "source_url": source["url"],
+        "source_edition": source["edition"],
+        "source_rights": dict(source["rights"]),
+        "requested_url": source["url"],
         "final_url": final_url,
         "retrieved_at": captured_at.isoformat().replace("+00:00", "Z"),
         "http_status": status,
@@ -782,6 +1276,9 @@ def capture_source(
         "bytes": len(raw),
         "redirects": redirect_handler.redirects if redirect_handler else [],
         "raw_artifact": "raw.bin",
+        "adapter": {"name": "generic-http-get", "version": "1"},
+        "cache_status": "not-used",
+        "masked_fields": [],
         "network_explicit": True,
         "normalization_performed": False,
         "recommendations_changed": False,
@@ -803,21 +1300,52 @@ def _render_query_markdown(rows: list[dict[str, Any]]) -> str:
             "",
             technology["summary"],
             "",
-            "Profile: " + "; ".join(assessment["profile"]["use_cases"]),
+            "Profile stages: " + "; ".join(assessment["profile"]["stages"]),
+            "",
+            "Profile use cases: " + "; ".join(assessment["profile"]["use_cases"]),
+            "",
+            "Profile constraints: " + "; ".join(assessment["profile"]["constraints"]),
+            "",
+            f"Assessment confidence: {assessment['confidence']}",
+            "",
+            "Rationale:",
+            "",
+        ]
+        lines.extend(f"- {reason}" for reason in assessment["rationale"])
+        lines.extend([
             "",
             "Hard gates:",
             "",
-        ]
+        ])
         lines.extend(f"- {gate}" for gate in assessment["hard_gates"])
-        lines.extend(["", f"Verification gap: {assessment['verification_gap']}", "", "Evidence:", ""])
+        alternatives = ", ".join(assessment["alternatives"]) if assessment["alternatives"] else "None recorded"
+        lines.extend([
+            "",
+            f"Alternatives: {alternatives}",
+            "",
+            f"Verification gap: {assessment['verification_gap']}",
+            "",
+            "Evidence:",
+            "",
+        ])
         for evidence in row["evidence"]:
             source = evidence["source"]
+            publication = source["published_at"] or "undated/live"
+            measurement = source.get("measurement_window")
+            measurement_text = (
+                f", measured {measurement['start']} through {measurement['end']}" if measurement else ""
+            )
             lines.append(
                 f"- {evidence['claim']} [{source['publisher']}: {source['title']}]({source['url']}) "
-                f"({source['role']}, observed {evidence['observed_at']})."
+                f"({source['role']}, published {publication}{measurement_text}, retrieved {source['retrieved_at']}, "
+                f"observed {evidence['observed_at']}, confidence {evidence['confidence']}). "
+                f"Observation limitation: {evidence['limitations']} Source limitation: {source['limitations']}"
             )
         if "assessment_status" in row:
             lines.extend(["", f"Assessment status: {row['assessment_status']} (expires {assessment['expires_at']})."])
+            stale_ids = row["evidence_status"]["stale_source_ids"]
+            lines.append("Cited-source retrieval status: " + (f"stale: {', '.join(stale_ids)}" if stale_ids else "current"))
+            lines.append(row["evidence_status"]["retrieval_freshness_note"])
         if "runtime_capabilities" in row:
             lines.extend(["", "Caller-supplied runtime facts:", ""])
             if row["runtime_capabilities"]:
@@ -863,6 +1391,14 @@ def _build_parser() -> argparse.ArgumentParser:
     stale_parser = subparsers.add_parser("stale", help="report source and assessment expiry without network access")
     stale_parser.add_argument("--as-of", type=date.fromisoformat, default=date.today())
     stale_parser.add_argument("--json", action="store_true")
+
+    window_parser = subparsers.add_parser(
+        "evidence-window",
+        help="report publication-window coverage separately from retrieval freshness",
+    )
+    window_parser.add_argument("--since", type=date.fromisoformat, required=True)
+    window_parser.add_argument("--as-of", type=date.fromisoformat, required=True)
+    window_parser.add_argument("--json", action="store_true")
 
     diff_parser = subparsers.add_parser("diff", help="compare two complete data directories without network access")
     diff_parser.add_argument("--old-dir", type=Path, required=True)
@@ -929,6 +1465,25 @@ def main(argv: list[str] | None = None) -> int:
                 print(json.dumps(report, indent=2, sort_keys=True))
             else:
                 _print_staleness_text(report)
+            return 0
+        if args.command == "evidence-window":
+            errors = validate_plugin()
+            if errors:
+                raise SnapshotError("snapshot validation failed: " + "; ".join(errors))
+            report = evidence_window_report(load_snapshot(), args.since, args.as_of)
+            if args.json:
+                print(json.dumps(report, indent=2, sort_keys=True))
+            else:
+                counts = report["source_counts"]
+                print(
+                    f"{report['since']}..{report['as_of']}: "
+                    f"{counts['published_in_window']} published sources; "
+                    f"{report['covered_technology_count']} covered technologies; "
+                    f"{report['technology_gap_count']} gaps"
+                )
+                for item in report["technology_coverage"]:
+                    observations = ", ".join(item["fresh_observation_ids"]) or "-"
+                    print(f"{item['status'].upper()} {item['technology_id']}: {observations}")
             return 0
         if args.command == "diff":
             result = diff_directories(args.old_dir, args.new_dir)

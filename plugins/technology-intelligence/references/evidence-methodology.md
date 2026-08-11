@@ -9,6 +9,10 @@ is a contextual judgment that cites observations. Never encode a recommendation
 as an observation or silently turn a survey rank, star count, download count,
 foundation stage, or security score into a recommendation.
 
+Publication date, measurement window, retrieval date, and observation date are
+different facts. A newly retrieved old source is not fresh evidence for a
+bounded research window, and a recent report can contain stale telemetry.
+
 The evidence hierarchy is:
 
 1. candidate first-party documentation, repository, release, support, security,
@@ -58,9 +62,19 @@ Preserve negative evidence and conflicting signals. Do not treat absent known
 vulnerabilities as proof of safety, a foundation listing as endorsement, survey
 interest as production adoption, or registry presence as runtime trust.
 
+Staleness triggers revalidation rather than automatic deletion or downgrade.
+Material version, framework, model, hardware, precision, workload, support, or
+security changes can require remeasurement before the nominal expiry date.
+Treat model-generated rationale as proposed until its load-bearing arguments
+are verified against cited evidence and project context.
+
 ## Output Quality
 
 A useful recommendation includes a dated profile, hard gates, direct evidence,
 confidence, gaps, rejected alternatives, and a reversible next experiment. If
 the evidence does not distinguish candidates, say so and propose the cheapest
 discriminator instead of inventing certainty.
+
+Load `decision-evidence-contract.md` for measurement windows, candidate-relative
+independence, experiment and benchmark receipts, generated-rationale review,
+contradiction handling, and the February-August 2026 research basis.

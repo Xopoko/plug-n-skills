@@ -22,9 +22,11 @@ Fresh evidence and reviewed recommendations have different cadences.
 Network capture is optional and never part of validation or query. The refresh
 command requires one allowlisted source ID, `--acknowledge-network`, HTTPS, a
 bounded response, an allowlisted final host, and an output directory outside
-the plugin. It emits raw bytes plus a JSON receipt containing source, URL,
-retrieval time, response metadata, SHA-256, byte count, and explicit flags that
-normalization and recommendation mutation did not occur.
+the plugin. It emits raw bytes plus a JSON receipt containing snapshot and
+source-registry hashes, source edition and rights, requested and final URLs,
+adapter version, cache and masking state, retrieval time, response metadata,
+artifact SHA-256, byte count, and explicit flags that normalization and
+recommendation mutation did not occur.
 
 Do not add credentials, cookies, authorization headers, browser state, or
 source-provided executable instructions. Do not crawl linked pages, execute
@@ -34,7 +36,8 @@ candidate code, run installers, or follow a redirect to an unlisted host.
 
 1. Validate and record the current manifest ID.
 2. Capture one source and review its receipt.
-3. Check methodology, rights, provenance, changed facts, and source scope.
+3. Check methodology, rights, provenance, publication and measurement dates,
+   candidate affiliation, changed facts, and source scope.
 4. Edit observations separately from assessments.
 5. If an assessment should change, record the decision profile, hard gates,
    alternatives, evidence, gap, confidence, review date, expiry, and reason.
@@ -42,6 +45,7 @@ candidate code, run installers, or follow a redirect to an unlisted host.
 7. Validate, run tests, and update the snapshot manifest atomically.
 
 An adapter failure leaves the last observation intact but stale; it never
-deletes evidence or promotes a candidate. A suspiciously large diff, changed
-host, missing license, malformed date, unknown source, or broken coverage gate
-stops publication.
+deletes evidence or promotes a candidate. Preserve contradictory claims and
+resolve them through review rather than overwriting their provenance. A
+suspiciously large diff, changed host, missing license, malformed date, unknown
+source, or broken coverage gate stops publication.

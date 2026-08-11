@@ -1,6 +1,6 @@
 {
   "name": "technology-intelligence",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "description": "Evidence-backed technology decisions compare frameworks, platforms, infrastructure, and CLI/MCP/API delivery modes with dated primary-source observations, explicit gaps, staleness checks, and review-gated refreshes.",
   "author": {
     "name": "Xopoko"
@@ -23,17 +23,17 @@
   "interface": {
     "displayName": "Technology Intelligence",
     "shortDescription": "Dated evidence for contextual technology choices.",
-    "longDescription": "Compare software frameworks, platforms, data and infrastructure technologies, and agent delivery modes through dated primary-source observations, explicit decision profiles, hard gates, alternatives, confidence, and visible evidence gaps. A separate maintenance workflow validates staleness, reviews source and licensing constraints, captures allowlisted refresh receipts outside tracked source, and proposes reviewable dataset changes without automatically changing recommendations or owning runtime installation and invocation.",
+    "longDescription": "Compare software frameworks, platforms, data and infrastructure technologies, and agent delivery modes through dated primary-source observations with publication and measurement windows, explicit decision profiles, hard gates, alternatives, confidence, and visible evidence gaps. A separate maintenance workflow validates staleness and bounded-window coverage, reviews source and licensing constraints, captures hash-bound allowlisted refresh receipts outside tracked source, and proposes reviewable dataset changes without automatically changing recommendations or owning runtime installation and invocation.",
     "developerName": "Xopoko",
     "category": "Coding",
     "capabilities": [
       "Context-specific technology and framework comparison",
       "Experiment, startup, scale-up, and enterprise-critical decision profiles",
-      "Frontend, backend, data, infrastructure, CLI, MCP, API, SDK, and Agent Skills candidates",
+      "Frontend, backend, data, infrastructure, CLI, MCP, A2A, ACP, API, SDK, and Agent Skills candidates",
       "First-party evidence and independent-signal coverage gates",
       "Explicit unknown, licensing, maturity, maintenance, security, and operational-load gaps",
-      "Deterministic offline validation, query, staleness, diff, and trigger-contract checks",
-      "Explicit allowlisted source capture with immutable receipts and no recommendation mutation",
+      "Deterministic offline validation, query, publication-window coverage, staleness, diff, and trigger-contract checks",
+      "Explicit allowlisted source capture with hash-bound receipts and no recommendation mutation",
       "Read-only joins to caller-supplied runtime capability inventories"
     ],
     "defaultPrompt": [

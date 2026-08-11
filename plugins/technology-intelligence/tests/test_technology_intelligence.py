@@ -8,6 +8,7 @@ import tempfile
 import unittest
 from datetime import date, datetime, timezone
 from pathlib import Path
+from unittest import mock
 
 
 PLUGIN_ROOT = Path(__file__).resolve().parents[1]
@@ -55,9 +56,9 @@ class TechnologyIntelligenceTests(unittest.TestCase):
     def test_snapshot_validates_offline(self) -> None:
         self.assertEqual([], technology_intelligence.validate_plugin())
 
-    def test_seed_has_21_candidates_across_all_families(self) -> None:
+    def test_snapshot_has_23_candidates_across_all_families(self) -> None:
         technologies = self.snapshot["technologies"]["technologies"]
-        self.assertEqual(21, len(technologies))
+        self.assertEqual(23, len(technologies))
         counts: dict[str, int] = {}
         for technology in technologies:
             counts[technology["family"]] = counts.get(technology["family"], 0) + 1
@@ -65,24 +66,34 @@ class TechnologyIntelligenceTests(unittest.TestCase):
             {
                 "frontend-fullstack": 7,
                 "backend-data-infrastructure": 8,
-                "agent-delivery": 6,
+                "agent-delivery": 8,
             },
             counts,
         )
 
     def test_positive_assessments_have_first_party_and_triangulation_or_gap(self) -> None:
         sources = {record["id"]: record for record in self.snapshot["sources"]["sources"]}
+        technologies = {record["id"]: record for record in self.snapshot["technologies"]["technologies"]}
         observations = {record["id"]: record for record in self.snapshot["observations"]["observations"]}
         for assessment in self.snapshot["assessments"]["assessments"]:
             if assessment["disposition"] not in technology_intelligence.POSITIVE_DISPOSITIONS:
                 continue
-            roles = {
-                sources[observations[evidence_id]["source_id"]]["evidence_role"]
+            evidence_sources = [
+                sources[observations[evidence_id]["source_id"]]
                 for evidence_id in assessment["evidence_ids"]
-            }
-            self.assertIn("first-party", roles, assessment["id"])
+            ]
+            official_ids = set(technologies[assessment["technology_id"]]["official_source_ids"])
             self.assertTrue(
-                "independent-signal" in roles or assessment.get("verification_gap"),
+                any(source["id"] in official_ids for source in evidence_sources),
+                assessment["id"],
+            )
+            self.assertTrue(
+                any(
+                    source["evidence_role"] == "independent-signal"
+                    and assessment["technology_id"] not in source.get("affiliated_technology_ids", [])
+                    for source in evidence_sources
+                )
+                or assessment.get("verification_gap"),
                 assessment["id"],
             )
 
@@ -138,13 +149,16 @@ class TechnologyIntelligenceTests(unittest.TestCase):
         self.assertEqual(
             [],
             technology_intelligence.validate_runtime_inventory(
-                inventory, self.snapshot["runtime-capability-schema"]
+                inventory,
+                self.snapshot["runtime-capability-schema"],
+                reference_time=datetime(2026, 8, 10, 12, 30, tzinfo=timezone.utc),
             ),
         )
         rows = technology_intelligence.query_snapshot(
             self.snapshot,
             technology="mcp-stdio",
             runtime_inventory=inventory,
+            runtime_reference_time=datetime(2026, 8, 10, 12, 30, tzinfo=timezone.utc),
         )
         self.assertEqual("fixture.local/server", rows[0]["runtime_capabilities"][0]["identifier"])
         self.assertEqual(before, json.dumps(self.snapshot, default=str, sort_keys=True))
@@ -172,6 +186,90 @@ class TechnologyIntelligenceTests(unittest.TestCase):
         )
         self.assertTrue(any("forbidden" in error for error in errors))
 
+    def test_runtime_inventory_rejects_unknown_stale_blank_and_impossible_facts(self) -> None:
+        inventory = {
+            "schema_version": "technology_intelligence.runtime_inventory.v1",
+            "observed_at": "2026-08-10T12:00:00Z",
+            "access_token": "synthetic-secret",
+            "capabilities": [
+                {
+                    "technology_id": "unknown-technology",
+                    "surface": "api",
+                    "identifier": "",
+                    "installed": False,
+                    "enabled": True,
+                    "auth_state": "verified",
+                    "health": "healthy",
+                    "checked_at": "2020-01-01T00:00:00Z",
+                    "access_token": "synthetic-secret",
+                }
+            ],
+        }
+        known_ids = {item["id"] for item in self.snapshot["technologies"]["technologies"]}
+        errors = technology_intelligence.validate_runtime_inventory(
+            inventory,
+            self.snapshot["runtime-capability-schema"],
+            known_technology_ids=known_ids,
+        )
+        joined = "\n".join(errors)
+        self.assertIn("$.access_token is forbidden", joined)
+        self.assertIn("unsupported field access_token", joined)
+        self.assertIn("unknown technology", joined)
+        self.assertIn("identifier must be a non-empty string", joined)
+        self.assertIn("cannot be enabled when not installed", joined)
+        self.assertIn("cannot be healthy when not installed", joined)
+        self.assertIn("cannot have verified auth unless installed and enabled", joined)
+        self.assertIn("exceeds max age", joined)
+
+    def test_query_rejects_unknown_runtime_technology(self) -> None:
+        inventory = {
+            "schema_version": "technology_intelligence.runtime_inventory.v1",
+            "observed_at": "2026-08-11T12:00:00Z",
+            "capabilities": [
+                {
+                    "technology_id": "unknown-technology",
+                    "surface": "api",
+                    "identifier": "fixture",
+                    "installed": True,
+                    "enabled": True,
+                    "auth_state": "configured",
+                    "health": "degraded",
+                    "checked_at": "2026-08-11T12:00:00Z",
+                }
+            ],
+        }
+        with self.assertRaisesRegex(technology_intelligence.SnapshotError, "unknown technology"):
+            technology_intelligence.query_snapshot(
+                self.snapshot,
+                runtime_inventory=inventory,
+                runtime_reference_time=datetime(2026, 8, 11, 12, 30, tzinfo=timezone.utc),
+            )
+
+    def test_runtime_inventory_rejects_an_old_observation_even_when_checks_match_it(self) -> None:
+        inventory = {
+            "schema_version": "technology_intelligence.runtime_inventory.v1",
+            "observed_at": "2020-01-01T00:00:00Z",
+            "capabilities": [
+                {
+                    "technology_id": "mcp-stdio",
+                    "surface": "mcp",
+                    "identifier": "fixture",
+                    "installed": True,
+                    "enabled": True,
+                    "auth_state": "not-required",
+                    "health": "healthy",
+                    "checked_at": "2020-01-01T00:00:00Z",
+                }
+            ],
+        }
+        errors = technology_intelligence.validate_runtime_inventory(
+            inventory,
+            self.snapshot["runtime-capability-schema"],
+            known_technology_ids={item["id"] for item in self.snapshot["technologies"]["technologies"]},
+            reference_time=datetime(2026, 8, 11, 12, 0, tzinfo=timezone.utc),
+        )
+        self.assertTrue(any("observed_at exceeds max age" in error for error in errors))
+
     def test_staleness_is_explicit_for_seed_and_future_date(self) -> None:
         current = technology_intelligence.staleness_report(self.snapshot, date(2026, 8, 10))
         self.assertEqual([], current["stale_sources"])
@@ -179,6 +277,111 @@ class TechnologyIntelligenceTests(unittest.TestCase):
         future = technology_intelligence.staleness_report(self.snapshot, date(2032, 1, 1))
         self.assertEqual(len(self.snapshot["sources"]["sources"]), len(future["stale_sources"]))
         self.assertEqual(len(self.snapshot["assessments"]["assessments"]), len(future["expired_assessments"]))
+
+    def test_six_month_window_does_not_treat_recent_retrieval_as_recent_publication(self) -> None:
+        report = technology_intelligence.evidence_window_report(
+            self.snapshot,
+            date(2026, 2, 11),
+            date(2026, 8, 11),
+        )
+        self.assertEqual(16, report["source_counts"]["published_in_window"])
+        self.assertEqual(13, report["covered_technology_count"])
+        self.assertEqual(10, report["technology_gap_count"])
+        coverage = {item["technology_id"]: item for item in report["technology_coverage"]}
+        self.assertEqual("covered", coverage["a2a-protocol"]["status"])
+        self.assertEqual("covered", coverage["agent-client-protocol"]["status"])
+        self.assertEqual("gap", coverage["vue"]["status"])
+        self.assertIn("vue-official", report["undated_or_live"])
+
+    def test_record_ids_are_path_safe_lowercase_slugs(self) -> None:
+        errors: list[str] = []
+        technology_intelligence._ids([{"id": "../escape"}], "sources", errors)
+        self.assertTrue(any("lowercase kebab-case" in error for error in errors))
+
+    def test_query_supports_multiple_profile_assessments_per_technology(self) -> None:
+        snapshot = copy.deepcopy(self.snapshot)
+        second = copy.deepcopy(snapshot["assessments"]["assessments"][0])
+        second["id"] = second["id"] + "-enterprise"
+        second["profile"] = {
+            "stages": ["enterprise-critical"],
+            "use_cases": ["synthetic second profile"],
+            "constraints": ["synthetic fixture only"],
+        }
+        snapshot["assessments"]["assessments"].append(second)
+        rows = technology_intelligence.query_snapshot(
+            snapshot,
+            technology=second["technology_id"],
+        )
+        self.assertEqual(2, len(rows))
+        self.assertEqual(
+            sorted(row["assessment"]["id"] for row in rows),
+            [row["assessment"]["id"] for row in rows],
+        )
+
+    def test_validator_allows_multiple_profile_assessments_per_technology(self) -> None:
+        with tempfile.TemporaryDirectory() as temporary:
+            plugin_root = Path(temporary) / "technology-intelligence"
+            shutil.copytree(PLUGIN_ROOT, plugin_root)
+            assessment_path = plugin_root / "data" / "assessments.v1.json"
+            document = json.loads(assessment_path.read_text(encoding="utf-8"))
+            second = copy.deepcopy(document["assessments"][0])
+            second["id"] = second["id"] + "-enterprise"
+            second["profile"] = {
+                "stages": ["enterprise-critical"],
+                "use_cases": ["synthetic second profile"],
+                "constraints": ["synthetic fixture only"],
+            }
+            document["assessments"].append(second)
+            assessment_path.write_text(json.dumps(document, indent=2) + "\n", encoding="utf-8")
+            manifest_path = plugin_root / "data" / "snapshot-manifest.v1.json"
+            manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
+            for entry in manifest["files"]:
+                if entry["path"] == "assessments.v1.json":
+                    entry["record_count"] += 1
+                    entry["sha256"] = technology_intelligence._sha256(assessment_path)
+            manifest_path.write_text(json.dumps(manifest, indent=2) + "\n", encoding="utf-8")
+            self.assertEqual([], technology_intelligence.validate_plugin(plugin_root))
+
+    def test_validator_rejects_duplicate_decision_profiles(self) -> None:
+        with tempfile.TemporaryDirectory() as temporary:
+            plugin_root = Path(temporary) / "technology-intelligence"
+            shutil.copytree(PLUGIN_ROOT, plugin_root)
+            assessment_path = plugin_root / "data" / "assessments.v1.json"
+            document = json.loads(assessment_path.read_text(encoding="utf-8"))
+            duplicate = copy.deepcopy(document["assessments"][0])
+            duplicate["id"] = duplicate["id"] + "-duplicate"
+            for field in ("stages", "use_cases", "constraints"):
+                duplicate["profile"][field] = list(reversed(duplicate["profile"][field]))
+            document["assessments"].append(duplicate)
+            assessment_path.write_text(json.dumps(document, indent=2) + "\n", encoding="utf-8")
+            manifest_path = plugin_root / "data" / "snapshot-manifest.v1.json"
+            manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
+            for entry in manifest["files"]:
+                if entry["path"] == "assessments.v1.json":
+                    entry["record_count"] += 1
+                    entry["sha256"] = technology_intelligence._sha256(assessment_path)
+            manifest_path.write_text(json.dumps(manifest, indent=2) + "\n", encoding="utf-8")
+            errors = technology_intelligence.validate_plugin(plugin_root)
+            self.assertTrue(any("duplicates decision profile" in error for error in errors))
+
+    def test_markdown_query_surfaces_context_confidence_limitations_and_freshness(self) -> None:
+        rows = technology_intelligence.query_snapshot(
+            self.snapshot,
+            technology="nextjs",
+            as_of=date(2026, 8, 11),
+        )
+        markdown = technology_intelligence._render_query_markdown(rows)
+        for expected in (
+            "Profile constraints:",
+            "Assessment confidence:",
+            "Rationale:",
+            "Alternatives:",
+            "Observation limitation:",
+            "published 2026-03-18",
+            "Cited-source retrieval status:",
+            "Retrieval freshness is separate from publication currency",
+        ):
+            self.assertIn(expected, markdown)
 
     def test_diff_reports_changed_observation_without_reclassifying_it(self) -> None:
         with tempfile.TemporaryDirectory() as temporary:
@@ -192,9 +395,76 @@ class TechnologyIntelligenceTests(unittest.TestCase):
             changed_id = document["observations"][0]["id"]
             document["observations"][0]["limitations"] += " Synthetic test change."
             observation_path.write_text(json.dumps(document, indent=2) + "\n", encoding="utf-8")
+            manifest_path = new_dir / "snapshot-manifest.v1.json"
+            manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
+            for entry in manifest["files"]:
+                if entry["path"] == "observations.v1.json":
+                    entry["sha256"] = technology_intelligence._sha256(observation_path)
+            manifest_path.write_text(json.dumps(manifest, indent=2) + "\n", encoding="utf-8")
             result = technology_intelligence.diff_directories(old_dir, new_dir)
             self.assertEqual([changed_id], result["datasets"]["observations"]["changed"])
             self.assertEqual([], result["datasets"]["assessments"]["changed"])
+
+    def test_diff_rejects_a_directory_with_an_unbound_edit(self) -> None:
+        with tempfile.TemporaryDirectory() as temporary:
+            temporary_path = Path(temporary)
+            old_dir = temporary_path / "old"
+            new_dir = temporary_path / "new"
+            shutil.copytree(PLUGIN_ROOT / "data", old_dir)
+            shutil.copytree(PLUGIN_ROOT / "data", new_dir)
+            observation_path = new_dir / "observations.v1.json"
+            document = json.loads(observation_path.read_text(encoding="utf-8"))
+            document["observations"][0]["limitations"] += " Unbound change."
+            observation_path.write_text(json.dumps(document, indent=2) + "\n", encoding="utf-8")
+            with self.assertRaisesRegex(technology_intelligence.SnapshotError, "manifest hash mismatch"):
+                technology_intelligence.diff_directories(old_dir, new_dir)
+
+    def test_diff_rejects_hash_bound_but_semantically_invalid_evidence(self) -> None:
+        with tempfile.TemporaryDirectory() as temporary:
+            temporary_path = Path(temporary)
+            old_dir = temporary_path / "old"
+            new_dir = temporary_path / "new"
+            shutil.copytree(PLUGIN_ROOT / "data", old_dir)
+            shutil.copytree(PLUGIN_ROOT / "data", new_dir)
+            observation_path = new_dir / "observations.v1.json"
+            document = json.loads(observation_path.read_text(encoding="utf-8"))
+            document["observations"][0]["source_id"] = "missing-source"
+            observation_path.write_text(json.dumps(document, indent=2) + "\n", encoding="utf-8")
+            manifest_path = new_dir / "snapshot-manifest.v1.json"
+            manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
+            for entry in manifest["files"]:
+                if entry["path"] == "observations.v1.json":
+                    entry["sha256"] = technology_intelligence._sha256(observation_path)
+            manifest_path.write_text(json.dumps(manifest, indent=2) + "\n", encoding="utf-8")
+            with self.assertRaisesRegex(technology_intelligence.SnapshotError, "unknown source missing-source"):
+                technology_intelligence.diff_directories(old_dir, new_dir)
+
+    def test_diff_rejects_hash_bound_duplicate_decision_profile(self) -> None:
+        with tempfile.TemporaryDirectory() as temporary:
+            temporary_path = Path(temporary)
+            old_dir = temporary_path / "old"
+            new_dir = temporary_path / "new"
+            shutil.copytree(PLUGIN_ROOT / "data", old_dir)
+            shutil.copytree(PLUGIN_ROOT / "data", new_dir)
+            assessment_path = new_dir / "assessments.v1.json"
+            document = json.loads(assessment_path.read_text(encoding="utf-8"))
+            duplicate = copy.deepcopy(document["assessments"][0])
+            duplicate["id"] = duplicate["id"] + "-duplicate"
+            for field in ("stages", "use_cases", "constraints"):
+                duplicate["profile"][field] = [
+                    value.swapcase() for value in reversed(duplicate["profile"][field])
+                ]
+            document["assessments"].append(duplicate)
+            assessment_path.write_text(json.dumps(document, indent=2) + "\n", encoding="utf-8")
+            manifest_path = new_dir / "snapshot-manifest.v1.json"
+            manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
+            for entry in manifest["files"]:
+                if entry["path"] == "assessments.v1.json":
+                    entry["record_count"] += 1
+                    entry["sha256"] = technology_intelligence._sha256(assessment_path)
+            manifest_path.write_text(json.dumps(manifest, indent=2) + "\n", encoding="utf-8")
+            with self.assertRaisesRegex(technology_intelligence.SnapshotError, "duplicates decision profile"):
+                technology_intelligence.diff_directories(old_dir, new_dir)
 
     def test_all_synthetic_trigger_cases_match_contract(self) -> None:
         fixture = json.loads(
@@ -233,7 +503,7 @@ class TechnologyIntelligenceTests(unittest.TestCase):
             )
         self.assertEqual([], opener.requests)
 
-    def test_refresh_mock_writes_immutable_artifact_and_receipt_only(self) -> None:
+    def test_refresh_mock_writes_hash_bound_artifact_and_receipt_only(self) -> None:
         with tempfile.TemporaryDirectory() as temporary:
             payload = b"synthetic source bytes"
             opener = FakeOpener(
@@ -248,7 +518,7 @@ class TechnologyIntelligenceTests(unittest.TestCase):
                 temporary,
                 acknowledge_network=True,
                 opener=opener,
-                now=datetime(2026, 8, 10, 12, 0, tzinfo=timezone.utc),
+                now=datetime(2026, 8, 11, 12, 0, tzinfo=timezone.utc),
             )
             receipt = result["receipt"]
             capture_dir = Path(result["capture_dir"])
@@ -258,7 +528,106 @@ class TechnologyIntelligenceTests(unittest.TestCase):
             self.assertFalse(receipt["normalization_performed"])
             self.assertFalse(receipt["recommendations_changed"])
             self.assertEqual(len(payload), receipt["bytes"])
+            self.assertEqual("research-2026-08-11", receipt["snapshot_id"])
+            self.assertEqual(64, len(receipt["source_registry_sha256"]))
+            self.assertEqual("generic-http-get", receipt["adapter"]["name"])
+            self.assertEqual("not-used", receipt["cache_status"])
+            self.assertEqual([], receipt["masked_fields"])
+            self.assertEqual("citation-only", receipt["source_rights"]["usage_mode"])
             self.assertEqual(1, len(opener.requests))
+
+    def test_refresh_rejects_capture_before_registry_generation(self) -> None:
+        with tempfile.TemporaryDirectory() as temporary:
+            opener = FakeOpener(FakeResponse(b"fixture", "https://www.thoughtworks.com/en-us/radar/faq"))
+            with self.assertRaisesRegex(technology_intelligence.SnapshotError, "precedes source registry"):
+                technology_intelligence.capture_source(
+                    "thoughtworks-radar-faq",
+                    temporary,
+                    acknowledge_network=True,
+                    opener=opener,
+                    now=datetime(2026, 8, 10, 12, 0, tzinfo=timezone.utc),
+                )
+            self.assertEqual([], opener.requests)
+            self.assertEqual([], list(Path(temporary).iterdir()))
+
+    def test_refresh_rejects_naive_capture_time(self) -> None:
+        with tempfile.TemporaryDirectory() as temporary:
+            opener = FakeOpener(FakeResponse(b"fixture", "https://www.thoughtworks.com/en-us/radar/faq"))
+            with self.assertRaisesRegex(technology_intelligence.SnapshotError, "must include a timezone"):
+                technology_intelligence.capture_source(
+                    "thoughtworks-radar-faq",
+                    temporary,
+                    acknowledge_network=True,
+                    opener=opener,
+                    now=datetime(2026, 8, 11, 12, 0),
+                )
+            self.assertEqual([], opener.requests)
+            self.assertEqual([], list(Path(temporary).iterdir()))
+
+    def test_refresh_rejects_a_registry_change_during_capture(self) -> None:
+        with tempfile.TemporaryDirectory() as temporary:
+            temporary_path = Path(temporary)
+            data_dir = temporary_path / "data"
+            shutil.copytree(PLUGIN_ROOT / "data", data_dir)
+            registry_path = data_dir / "source-registry.v1.json"
+
+            class MutatingOpener(FakeOpener):
+                def open(self, request, timeout: float):
+                    document = json.loads(registry_path.read_text(encoding="utf-8"))
+                    document["sources"][0]["edition"] = "concurrent-edit"
+                    registry_path.write_text(json.dumps(document, indent=2) + "\n", encoding="utf-8")
+                    return super().open(request, timeout)
+
+            opener = MutatingOpener(FakeResponse(b"fixture", "https://www.thoughtworks.com/en-us/radar/faq"))
+            with (
+                mock.patch.object(technology_intelligence, "DATA_DIR", data_dir),
+                mock.patch.object(technology_intelligence, "validate_plugin", return_value=[]),
+                self.assertRaisesRegex(technology_intelligence.SnapshotError, "changed during capture"),
+            ):
+                technology_intelligence.capture_source(
+                    "thoughtworks-radar-faq",
+                    temporary_path / "output",
+                    acknowledge_network=True,
+                    opener=opener,
+                    now=datetime(2026, 8, 11, 12, 0, tzinfo=timezone.utc),
+                )
+            self.assertFalse((temporary_path / "output").exists())
+
+    def test_source_edition_is_required_before_refresh(self) -> None:
+        with tempfile.TemporaryDirectory() as temporary:
+            plugin_root = Path(temporary) / "technology-intelligence"
+            shutil.copytree(PLUGIN_ROOT, plugin_root)
+            registry_path = plugin_root / "data" / "source-registry.v1.json"
+            document = json.loads(registry_path.read_text(encoding="utf-8"))
+            document["sources"][0].pop("edition")
+            registry_path.write_text(json.dumps(document, indent=2) + "\n", encoding="utf-8")
+            manifest_path = plugin_root / "data" / "snapshot-manifest.v1.json"
+            manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
+            for entry in manifest["files"]:
+                if entry["path"] == "source-registry.v1.json":
+                    entry["sha256"] = technology_intelligence._sha256(registry_path)
+            manifest_path.write_text(json.dumps(manifest, indent=2) + "\n", encoding="utf-8")
+            errors = technology_intelligence.validate_plugin(plugin_root)
+            self.assertTrue(any("edition must be a non-empty string" in error for error in errors))
+
+    def test_snapshot_dates_are_bound_to_manifest_generation(self) -> None:
+        with tempfile.TemporaryDirectory() as temporary:
+            plugin_root = Path(temporary) / "technology-intelligence"
+            shutil.copytree(PLUGIN_ROOT, plugin_root)
+            registry_path = plugin_root / "data" / "source-registry.v1.json"
+            document = json.loads(registry_path.read_text(encoding="utf-8"))
+            document["generated_at"] = "2026-08-10T00:00:00Z"
+            document["sources"][0]["retrieved_at"] = "2026-08-12"
+            registry_path.write_text(json.dumps(document, indent=2) + "\n", encoding="utf-8")
+            manifest_path = plugin_root / "data" / "snapshot-manifest.v1.json"
+            manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
+            for entry in manifest["files"]:
+                if entry["path"] == "source-registry.v1.json":
+                    entry["sha256"] = technology_intelligence._sha256(registry_path)
+            manifest_path.write_text(json.dumps(manifest, indent=2) + "\n", encoding="utf-8")
+            errors = "\n".join(technology_intelligence.validate_plugin(plugin_root))
+            self.assertIn("sources generated_at does not match snapshot manifest", errors)
+            self.assertIn("retrieved_at follows snapshot generation", errors)
 
     def test_refresh_rejects_unallowlisted_final_host(self) -> None:
         with tempfile.TemporaryDirectory() as temporary:

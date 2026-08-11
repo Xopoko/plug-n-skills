@@ -37,6 +37,14 @@ path of this skill folder's `../..`.
      --family <family> --stage <stage> --use-case <use-case> --format json
    ```
 
+   For a time-bounded decision, inspect publication coverage separately from
+   retrieval freshness:
+
+   ```bash
+   python3 "$PLUGIN_ROOT/scripts/technology_intelligence.py" evidence-window \
+     --since <YYYY-MM-DD> --as-of <YYYY-MM-DD> --json
+   ```
+
 4. Treat retrieved assessments as dated decision cards, not universal truth.
    Apply hard gates first, compare visible dimensions, preserve conflicting
    evidence, and name missing evidence. Popularity alone cannot promote a
@@ -46,7 +54,8 @@ path of this skill folder's `../..`.
    `technology-evidence-maintainer`; do not trigger network refresh implicitly.
 6. Recommend a small shortlist with one preferred fit only when the constraints
    distinguish it. Otherwise return a bounded experiment or the next cheapest
-   discriminator.
+   discriminator with a hypothesis, metrics, threshold, stop condition,
+   environment, versions, artifact hashes, result states, and limitations.
 
 ## Output Contract
 
@@ -61,5 +70,7 @@ Report:
 - runtime availability separately when a caller supplied it.
 
 Load `$PLUGIN_ROOT/references/evidence-methodology.md` for assessment rules and
+`$PLUGIN_ROOT/references/decision-evidence-contract.md` for time-bounded claims,
+experiments, benchmarks, or model-assisted rationale. Load
 `$PLUGIN_ROOT/references/runtime-boundary.md` when CLI, MCP, API, SDK, install,
 authentication, permissions, or invocation is part of the question.

@@ -217,10 +217,10 @@ instructions.
 | --- | ---: | ---: | --- |
 | Plugin packs | 15 | - | Installable packages under `plugins/`. |
 | Skill entrypoints | 176 | - | `SKILL.md` files exposed through plugin metadata. |
-| Reference files | 252 | - | Longer ledgers, contracts, scorecards, and source notes. |
+| Reference files | 253 | - | Longer ledgers, contracts, scorecards, and source notes. |
 | Helper and validator scripts | 90 | - | Deterministic plugin-local helpers. |
 | Startup metadata | 176 skills | 12,751 | Skill name, description, and file pointer for routing. |
-| On-demand skill bodies | 176 skills | 130,054 | Instruction bodies after frontmatter, loaded only when selected. |
+| On-demand skill bodies | 176 skills | 130,214 | Instruction bodies after frontmatter, loaded only when selected. |
 
 Regenerate the report after skill edits:
 
@@ -243,7 +243,7 @@ Token columns are `startup metadata / on-demand body`.
 | `git-workflows` | 5 | 10 | 6 | 416 | 7,339 |
 | `engineering-hygiene` | 4 | 3 | 0 | 319 | 3,239 |
 | `scientific-research` | 1 | 4 | 1 | 84 | 2,024 |
-| `technology-intelligence` | 2 | 4 | 1 | 143 | 897 |
+| `technology-intelligence` | 2 | 5 | 1 | 143 | 1,057 |
 | `design-intelligence` | 7 | 2 | 1 | 455 | 5,399 |
 | `architecture-intelligence` | 9 | 8 | 2 | 579 | 7,585 |
 | `spec-driven-development` | 6 | 0 | 2 | 318 | 3,267 |
@@ -350,8 +350,8 @@ Token cells are shown as `startup/body`.
 
 | Skill | Tokens | Description |
 | --- | ---: | --- |
-| `technology-advisor` | 70/486 | Compare software frameworks, databases, platforms, and CLI/MCP/API delivery modes for an explicit adoption or migration decision using dated evidence and constraints. Excludes routine coding and running or installing already-selected tools. |
-| `technology-evidence-maintainer` | 73/411 | Validate, inspect, diff, or explicitly refresh Technology Intelligence evidence, provenance, staleness, rights, and coverage. Excludes stack selection, runtime discovery, installation, and automatic recommendation changes. |
+| `technology-advisor` | 70/601 | Compare software frameworks, databases, platforms, and CLI/MCP/API delivery modes for an explicit adoption or migration decision using dated evidence and constraints. Excludes routine coding and running or installing already-selected tools. |
+| `technology-evidence-maintainer` | 73/456 | Validate, inspect, diff, or explicitly refresh Technology Intelligence evidence, provenance, staleness, rights, and coverage. Excludes stack selection, runtime discovery, installation, and automatic recommendation changes. |
 
 #### `design-intelligence`
 

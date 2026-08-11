@@ -1,37 +1,37 @@
 {
   "schema_version": "technology_intelligence.snapshot_manifest.v1",
-  "snapshot_id": "seed-2026-08-10",
-  "generated_at": "2026-08-10T00:00:00Z",
+  "snapshot_id": "research-2026-08-11",
+  "generated_at": "2026-08-11T00:00:00Z",
   "files": [
     {
       "path": "source-registry.v1.json",
       "schema_version": "technology_intelligence.sources.v1",
-      "record_count": 33,
-      "sha256": "6b014fb2d1cba54815bb21e7ec3f2642e3b4d716742a85fc18e3ba3ac0675665"
+      "record_count": 47,
+      "sha256": "80fccd54d19118f98c98fa00df6c9a71485486c414caf7c7ff3b7377c7a71bea"
     },
     {
       "path": "technologies.v1.json",
       "schema_version": "technology_intelligence.technologies.v1",
-      "record_count": 21,
-      "sha256": "3593cccd76fcd2780a56f41066e836276a715642e0d0ac89fb6c72861ead7e81"
+      "record_count": 23,
+      "sha256": "0ceaec7be9a59c5356dcd09340718a4ad0e07b94c97b785d5f7610c0502512a4"
     },
     {
       "path": "observations.v1.json",
       "schema_version": "technology_intelligence.observations.v1",
-      "record_count": 42,
-      "sha256": "ff4ef798dc0696bd9ad76ed212c398dc8de76f1f2f0bdd3aa482bc58b3bda89a"
+      "record_count": 59,
+      "sha256": "daa68e691f24877623cc37ebfadd25b48b7a9dfd0d8016a7115e7281d533c6d4"
     },
     {
       "path": "assessments.v1.json",
       "schema_version": "technology_intelligence.assessments.v1",
-      "record_count": 21,
-      "sha256": "c19ff6e57416b94da901a69aeb2540f60e5704250a4de8be1ffb098b0c283555"
+      "record_count": 23,
+      "sha256": "fcb00f584dc43a8bd1f1daa438516304612060cbb1ce5ac5028940765de8207a"
     },
     {
       "path": "runtime-capability.schema.v1.json",
       "schema_version": "technology_intelligence.runtime_capability_schema.v1",
       "record_count": 1,
-      "sha256": "a4fcdf327ab48025fc52b96860890d338c7c5947c7069407596e37100a678ba5"
+      "sha256": "1517a34763239a75b12940f01f9a8cd40eea9732ba2928c8e753de7b867b9d03"
     },
     {
       "path": "trigger-contract.v1.json",

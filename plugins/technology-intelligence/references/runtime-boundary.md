@@ -27,6 +27,11 @@ inventory. The query tool validates and attaches matching runtime facts to its
 result without persisting them. Never put secrets, tokens, complete environment
 variables, private tenant names, or raw credentials in this inventory.
 
+The validator rejects unknown technologies and fields, blank identifiers,
+duplicate capability identities, stale or future checks, secret-like keys at
+any depth, and impossible enabled or healthy states for an uninstalled or
+disabled capability. Runtime facts expire after the schema's short maximum age.
+
 Registry presence is not runtime availability. A CLI on `PATH` is not proof of
 working authentication. An MCP `tools/list` response is not approval to call a
 tool. An installed SDK is not proof that the configured endpoint, model, or
