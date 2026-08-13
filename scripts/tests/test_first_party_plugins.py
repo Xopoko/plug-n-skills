@@ -2,12 +2,13 @@ import hashlib
 import importlib.util
 import json
 import os
+import struct
 import subprocess
 import sys
 import tempfile
 import unittest
+import zlib
 from pathlib import Path
-from PIL import Image
 
 
 ROOT = Path(__file__).resolve().parents[2]
@@ -16,6 +17,32 @@ SPEC = importlib.util.spec_from_file_location("plugin_catalog", SCRIPT)
 assert SPEC and SPEC.loader
 catalog = importlib.util.module_from_spec(SPEC)
 SPEC.loader.exec_module(catalog)
+
+
+def rgb_png(width, height, background, foreground):
+    """Build a deterministic RGB PNG fixture without optional image libraries."""
+
+    def chunk(kind, payload):
+        body = kind + payload
+        return struct.pack(">I", len(payload)) + body + struct.pack(">I", zlib.crc32(body))
+
+    left, right = width // 4, width * 3 // 4
+    top, bottom = height // 4, height * 3 // 4
+    background_row = b"\x00" + bytes(background) * width
+    foreground_row = (
+        b"\x00"
+        + bytes(background) * left
+        + bytes(foreground) * (right - left)
+        + bytes(background) * (width - right)
+    )
+    rows = [foreground_row if top <= y < bottom else background_row for y in range(height)]
+    header = struct.pack(">IIBBBBB", width, height, 8, 2, 0, 0, 0)
+    return (
+        b"\x89PNG\r\n\x1a\n"
+        + chunk(b"IHDR", header)
+        + chunk(b"IDAT", zlib.compress(b"".join(rows), level=9))
+        + chunk(b"IEND", b"")
+    )
 
 
 def git(cwd, *args):
@@ -71,11 +98,9 @@ class FirstPartyPluginsTest(unittest.TestCase):
         (self.source / "references").mkdir(); (self.source / "references" / "one.md").write_text("one\n", encoding="utf-8")
         (self.source / "scripts").mkdir(); (self.source / "scripts" / "one.py").write_text("pass\n", encoding="utf-8")
         (self.source / "assets").mkdir()
-        icon = Image.new("RGB", (1024, 1024), (17, 34, 51))
-        for x in range(256, 768):
-            for y in range(256, 768):
-                icon.putpixel((x, y), (220, 120, 40))
-        icon.save(self.source / "assets" / "icon.png")
+        (self.source / "assets" / "icon.png").write_bytes(
+            rgb_png(1024, 1024, (17, 34, 51), (220, 120, 40))
+        )
 
     def _lock(self):
         def digest(relative):
