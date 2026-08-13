@@ -1,6 +1,6 @@
 {
   "name": "architecture-intelligence",
-  "version": "0.1.11",
+  "version": "0.1.12",
   "description": "Software architecture audits and decisions grounded in source evidence: boundaries, AI-assisted code architecture, ownership/runtime topology, async state consistency, conformance, ADRs, fitness functions, and staged refactoring.",
   "author": {
     "name": "Xopoko"
