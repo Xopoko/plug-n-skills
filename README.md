@@ -185,11 +185,12 @@ replaced to match the repository source, and repeated runs converge.
 | `agent-harness` | Agent harness runtime-reconfiguration design and evaluation; Codex and Claude Code operations, secret-safe operator/1Password credential handoff, automation, diagnostics, MCP, hooks, sessions, deferred completion, and local scheduler proof. |
 | `capability-workbench` | Agent capability engineering: frame behavior gaps, author skills/plugins/guidance, validate them against evidence and behavioral baselines, evolve portfolios, and activate vetted artifacts explicitly. |
 | `context-density` | Context design, long-context placement, typed state and companion-drift validation, research-backed acceptance gates, prompt contracts, skill compression, structural handoff, and validation reporting. |
+| `i-have-adhd` | Explicit focus mode for short numbered steps, visible progress, concrete time estimates, calm recovery, and one next action. |
 | `git-workflows` | Capability-bound read-only GitHub/GitLab code review, race-safe GitLab review response, stacked change delivery, worktree recovery, and SSH commit-signing recovery across eligible MCP, connector, CLI, and API adapters. |
 | `engineering-hygiene` | Touched-surface code maintenance, business-logic untangling, rendered UI inspection, and evidence-first missing-tool provisioning. |
 | `scientific-research` | Scholarly discovery, deduplication, source routing, claim ledgers, provenance, and evidence quality gates. |
 | `technology-intelligence` | Capability-first, source-backed technology decisions across candidate products, documented interfaces, runtime boundaries, alternatives, confidence, and evidence freshness. |
-| `design-intelligence` | Product framing, interface architecture, interaction design, visual hierarchy, accessibility, and design-system governance. |
+| `design-intelligence` | Product framing, interface architecture, interaction design, visual hierarchy, accessibility, compact technical visual explanations, and design-system governance. |
 | `architecture-intelligence` | Source-backed architecture audits, AI-assisted code architecture, async state consistency, ownership and runtime topology, module boundaries, ADRs, fitness functions, conformance checks, and refactoring strategy. |
 | `spec-driven-development` | Spec-driven workflows with lane selection, Spec Kit integration, requirements quality, traceability, implementation, and proof gates. |
 | `build-swift-apps` | Building, debugging, profiling, testing, packaging, and releasing Swift apps across iOS and macOS. |
@@ -259,12 +260,12 @@ instructions.
 
 | Metric | Count | Tokens | Notes |
 | --- | ---: | ---: | --- |
-| Plugin packs | 16 | - | Local packages plus immutable standalone first-party catalog entries. |
-| Skill entrypoints | 198 | - | `SKILL.md` files exposed through plugin metadata. |
-| Reference files | 277 | - | Longer ledgers, contracts, scorecards, and source notes. |
+| Plugin packs | 17 | - | Local packages plus immutable standalone first-party catalog entries. |
+| Skill entrypoints | 200 | - | `SKILL.md` files exposed through plugin metadata. |
+| Reference files | 278 | - | Longer ledgers, contracts, scorecards, and source notes. |
 | Helper and validator scripts | 96 | - | Deterministic plugin-local helpers. |
-| Startup metadata | 198 skills | 16,867 | Skill name, description, and file pointer for routing. |
-| On-demand skill bodies | 198 skills | 144,880 | Instruction bodies after frontmatter, loaded only when selected. |
+| Startup metadata | 200 skills | 17,029 | Skill name, description, and file pointer for routing. |
+| On-demand skill bodies | 200 skills | 146,532 | Instruction bodies after frontmatter, loaded only when selected. |
 
 Regenerate the report after skill edits:
 
@@ -284,11 +285,12 @@ Token columns are `startup metadata / on-demand body`.
 | `agent-harness` | 19 | 19 | 7 | 1,447 | 20,753 |
 | `capability-workbench` | 11 | 17 | 25 | 807 | 14,939 |
 | `context-density` | 1 | 9 | 8 | 70 | 2,806 |
+| `i-have-adhd` | 1 | 1 | 0 | 80 | 583 |
 | `git-workflows` | 5 | 10 | 6 | 416 | 7,339 |
 | `engineering-hygiene` | 4 | 3 | 0 | 319 | 3,239 |
 | `scientific-research` | 1 | 4 | 1 | 84 | 2,024 |
 | `technology-intelligence` | 2 | 5 | 1 | 142 | 1,212 |
-| `design-intelligence` | 7 | 2 | 1 | 455 | 5,399 |
+| `design-intelligence` | 8 | 2 | 1 | 537 | 6,468 |
 | `architecture-intelligence` | 9 | 9 | 2 | 598 | 8,548 |
 | `spec-driven-development` | 6 | 0 | 2 | 328 | 3,401 |
 | `build-swift-apps` | 61 | 90 | 36 | 6,436 | 36,239 |
@@ -305,11 +307,12 @@ Token columns are `startup metadata / on-demand body`.
 | `agent-harness` | Agent harness runtime-reconfiguration design and evaluation plus Codex and Claude runtime operations, secret-safe human credential handoff, 1Password, sessions, deferred completion, and scheduler proof. |
 | `capability-workbench` | Artifact-first agent capability engineering for skills, plugins, guidance, and trigger contracts: frame behavior gaps, evaluate baselines and candidates, author validated changes, govern portfolios, and activate explicitly. Use Agent Harness for runtime and harness-level evaluation. |
 | `context-density` | Agent context audits measure token cost, validate prompt/output contracts and typed state, test compression, and route structural skill or plugin overlap to Capability Workbench. |
+| `i-have-adhd` | Explicit opt-in focus mode turns work into short numbered steps, visible progress, concrete time boxes, calm recovery, and one next action. |
 | `git-workflows` | Git code review, GitLab discussion response, stacked-change delivery, worktree recovery, and SSH commit-signing recovery use exact-state, capability-selected, fail-closed workflows. |
 | `engineering-hygiene` | Engineering hygiene audits changed code, untangles business logic, inspects rendered UI, and provisions missing tools with evidence-first, touched-surface discipline. |
 | `scientific-research` | Scholarly research discovers papers, deduplicates DOIs, extracts source-backed claims, and validates evidence across arXiv, OpenAlex, Crossref, Europe PMC, Semantic Scholar, PubMed, and OpenCitations. |
 | `technology-intelligence` | Capability-first technology decisions map needs to frameworks, platforms, document tools, and CLI/SDK/WASM/MCP/API/skill interfaces using dated evidence, explicit gaps, and runtime boundaries. |
-| `design-intelligence` | Product and UX design judgment grounded in evidence: framing, information architecture, interaction, usability/accessibility review, visual communication, and design-system governance; excludes Figma, CSS, and framework recipes. |
+| `design-intelligence` | Product, UX, and technical visual explanations grounded in evidence: framing, information architecture, interaction, usability/accessibility review, compact diagrams, and design-system governance; excludes Figma, CSS, and framework recipes. |
 | `architecture-intelligence` | Software architecture audits and decisions grounded in source evidence: boundaries, AI-assisted code architecture, ownership/runtime topology, async state consistency, conformance, ADRs, fitness functions, and staged refactoring. |
 | `spec-driven-development` | Spec-Driven Development routes intent through specs, plans, traceable tasks, implementation, and proof. |
 | `build-swift-apps` | Build, debug, profile, test, refactor, and release Swift apps across iOS, macOS, Xcode, SwiftUI, SwiftPM, Tuist, and App Store Connect. |
@@ -369,6 +372,12 @@ Token cells are shown as `startup/body`.
 | --- | ---: | --- |
 | `context-density` | 70/2,806 | Agent context audits measure token cost, provenance, compression, typed-state drift, trigger overlap, and prompt/output contracts across AGENTS.md, prompts, skills, plugins, MCP/tool schemas, current-state artifacts, and agent handoffs. |
 
+#### `i-have-adhd`
+
+| Skill | Tokens | Description |
+| --- | ---: | --- |
+| `i-have-adhd` | 80/583 | Explicit opt-in focus mode for short numbered steps, visible progress, concrete time estimates, calm error recovery, and one next action. Activate only for $i-have-adhd or a direct request for I Have ADHD mode. |
+
 #### `git-workflows`
 
 | Skill | Tokens | Description |
@@ -405,13 +414,14 @@ Token cells are shown as `startup/body`.
 
 | Skill | Tokens | Description |
 | --- | ---: | --- |
-| `design-intelligence` | 64/852 | Product and UX design routing covers framing, information architecture, interaction, usability, accessibility, visual communication, and design-system governance; excludes Figma, CSS, automation, and assets. |
+| `design-intelligence` | 69/944 | Product, UX, and technical visual-explanation routing covers framing, information architecture, interaction, usability, accessibility, compact diagrams, and design-system governance; excludes Figma, CSS, automation, and assets. |
 | `design-system-governance` | 67/764 | Design-system governance defines reusable patterns, contribution rules, accessibility evidence, ownership, maturity, adoption, and drift; excludes CSS, Figma libraries, and token tooling unless requested. |
 | `interaction-design` | 60/768 | Interaction design shapes task flows, affordances, feedback, state coverage, error prevention, recovery, undo, progressive disclosure, input burden, and keyboard/touch behavior. |
 | `interface-architecture` | 54/748 | Interface architecture structures navigation, taxonomy, labels, content models, screen priority, findability, search/browse, and information hierarchy. |
 | `product-framing` | 63/505 | Product framing clarifies user needs, Jobs-to-be-Done, outcomes, strategy, assumptions, opportunity-solution trees, HEART/GSM metrics, and discovery before interface design. |
 | `usability-accessibility-review` | 73/742 | Usability and accessibility review audits screens, flows, or specs for heuristics, cognitive-walkthrough risks, WCAG/APG/COGA concerns, inclusive design, ethical UX, and dark patterns. |
 | `visual-communication` | 74/1,020 | Visual communication audits UI screenshots, golden images, and visual diffs for hierarchy, readability, contrast, capture state, and test-harness artifacts. Do not use for screenshot generation/export, CSS, Figma, or styling. |
+| `visual-explanation` | 77/977 | Visual explanations for coding and technical work: choose the smallest useful table, tree, pseudocode, call flow, state view, structural diff, or wireframe. Not for UI screenshot audits, data charts, image assets, or architecture recovery. |
 
 #### `architecture-intelligence`
 
@@ -653,7 +663,8 @@ entry is pinned to a full commit and Git tree, validated offline, and restricted
 to `reference-only` use. A lock entry is provenance and review metadata, not
 permission to install, execute, vendor, or add the source to an agent catalog.
 
-The registry is currently empty.
+The registry contains reviewed, inert source snapshots. They are not
+part of any agent catalog and cannot authorize installation or execution.
 
 Inspect and validate the registry without network access:
 

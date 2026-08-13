@@ -24,6 +24,11 @@
       "description": "Agent context audits measure token cost, validate prompt/output contracts and typed state, test compression, and route structural skill or plugin overlap to Capability Workbench."
     },
     {
+      "name": "i-have-adhd",
+      "source": "./plugins/i-have-adhd",
+      "description": "Explicit opt-in focus mode turns work into short numbered steps, visible progress, concrete time boxes, calm recovery, and one next action."
+    },
+    {
       "name": "git-workflows",
       "source": "./plugins/git-workflows",
       "description": "Git code review, GitLab discussion response, stacked-change delivery, worktree recovery, and SSH commit-signing recovery use exact-state, capability-selected, fail-closed workflows."
@@ -46,7 +51,7 @@
     {
       "name": "design-intelligence",
       "source": "./plugins/design-intelligence",
-      "description": "Product and UX design judgment grounded in evidence: framing, information architecture, interaction, usability/accessibility review, visual communication, and design-system governance; excludes Figma, CSS, and framework recipes."
+      "description": "Product, UX, and technical visual explanations grounded in evidence: framing, information architecture, interaction, usability/accessibility review, compact diagrams, and design-system governance; excludes Figma, CSS, and framework recipes."
     },
     {
       "name": "architecture-intelligence",

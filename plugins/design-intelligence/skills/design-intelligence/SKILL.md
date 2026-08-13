@@ -1,11 +1,11 @@
 ---
 name: design-intelligence
-description: "Product and UX design routing covers framing, information architecture, interaction, usability, accessibility, visual communication, and design-system governance; excludes Figma, CSS, automation, and assets."
+description: "Product, UX, and technical visual-explanation routing covers framing, information architecture, interaction, usability, accessibility, compact diagrams, and design-system governance; excludes Figma, CSS, automation, and assets."
 ---
 
 # Design Intelligence
 
-Router for product and UX judgment. Use when the work is to improve, critique, frame, audit, or architect an experience, not to operate Figma, generate assets, or write CSS.
+Router for product and UX judgment plus compact technical visual explanations. Use when the work is to improve, critique, frame, audit, or architect an experience, or to clarify a relationship-heavy coding topic, not to operate Figma, generate assets, or write CSS.
 
 ## Operating Stance
 
@@ -45,9 +45,12 @@ Use the smallest skill set:
 - `interaction-design`: task flow, affordances, feedback, state coverage, errors, undo, empty/loading states, progressive disclosure, efficiency.
 - `usability-accessibility-review`: heuristics, cognitive walkthrough, WCAG/APG/COGA risk, inclusive design, dark patterns.
 - `visual-communication`: hierarchy, scannability, attention, grouping, readability, density, emphasis, and screenshot or golden-image evidence boundaries.
+- `visual-explanation`: the smallest useful table, tree, pseudocode, call flow, state view, structural diff, or wireframe for a technical or coding explanation; keep simple facts in prose and route architecture recovery elsewhere.
 - `design-system-governance`: reusable decisions, patterns, contribution, accessibility proof, maturity, drift.
 
 Dependency order: product framing -> interface architecture -> interaction design -> visual communication -> usability/accessibility review -> design-system governance.
+
+`visual-explanation` is a presentation route, not another stage in that UI/UX dependency chain. Apply it after the underlying facts or proposal are bounded.
 
 For common UI surfaces, route by the unresolved design question rather than the component name. A form may need product framing, IA, interaction, content, accessibility, or governance; a table may be an IA, visual communication, or decision-quality problem.
 

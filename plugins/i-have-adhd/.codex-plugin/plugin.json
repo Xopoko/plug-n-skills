@@ -1,0 +1,34 @@
+{
+  "name": "i-have-adhd",
+  "version": "0.1.0",
+  "description": "Explicit opt-in focus mode turns work into short numbered steps, visible progress, concrete time boxes, calm recovery, and one next action.",
+  "author": {
+    "name": "Xopoko"
+  },
+  "repository": "https://github.com/Xopoko/plug-n-skills/tree/main/plugins/i-have-adhd",
+  "license": "MIT",
+  "keywords": [
+    "accessibility",
+    "adhd",
+    "focus",
+    "instructions",
+    "productivity"
+  ],
+  "skills": "./skills/",
+  "interface": {
+    "displayName": "I Have ADHD",
+    "shortDescription": "Explicit focus mode with one clear next action.",
+    "longDescription": "An explicit, conversation-scoped focus mode that leads with action, keeps plans short, shows progress, uses concrete time estimates, handles errors calmly, and ends with one next action.",
+    "developerName": "Xopoko",
+    "category": "Productivity",
+    "capabilities": [
+      "Instructions"
+    ],
+    "defaultPrompt": [
+      "Use $i-have-adhd to turn this task into short, timed steps and guide me through one next action."
+    ],
+    "brandColor": "#080830",
+    "composerIcon": "./assets/icon.png",
+    "logo": "./assets/icon.png"
+  }
+}

@@ -14,6 +14,7 @@ LOCAL_PLUGINS = [
     "agent-harness",
     "capability-workbench",
     "context-density",
+    "i-have-adhd",
     "git-workflows",
     "engineering-hygiene",
     "scientific-research",
@@ -32,6 +33,7 @@ PLUGINS = [
     "agent-harness",
     "capability-workbench",
     "context-density",
+    "i-have-adhd",
     "git-workflows",
     "engineering-hygiene",
     "scientific-research",
@@ -85,7 +87,7 @@ class RepoStructureTest(unittest.TestCase):
                 path = ROOT / Path(src.lstrip("./")) if isinstance(src, str) else None
                 self.assertTrue(path and path.is_dir(), f"bad source for {entry['name']}")
 
-    def test_external_dependency_lock_is_valid_and_currently_empty(self):
+    def test_external_dependency_lock_tracks_reviewed_sources(self):
         lock_path = ROOT / "external-dependencies.lock.json"
         lock = json.loads(lock_path.read_text(encoding="utf-8"))
         self.assertEqual(lock.get("schemaVersion"), 1)
@@ -94,7 +96,25 @@ class RepoStructureTest(unittest.TestCase):
         self.assertIsInstance(
             dependencies, list, "external dependency lock must contain a list"
         )
-        self.assertEqual(dependencies, [])
+        by_id = {item["id"]: item for item in dependencies}
+        self.assertIn("i-have-adhd", by_id)
+        dependency = by_id["i-have-adhd"]
+        self.assertEqual(dependency["source"]["repository"], "ayghri/i-have-adhd")
+        self.assertEqual(
+            dependency["source"]["commit"],
+            "2ed064090711586e0c97a2fbbf15465fe8f1808b",
+        )
+        self.assertEqual(dependency["policy"]["mode"], "reference-only")
+        self.assertFalse(dependency["policy"]["allowInstall"])
+        self.assertIn("humanlayer-show-me", by_id)
+        show_me = by_id["humanlayer-show-me"]
+        self.assertEqual(show_me["source"]["repository"], "humanlayer/skills")
+        self.assertEqual(
+            show_me["source"]["commit"],
+            "3c2629142c5d437428269b1b722b08c0b87f574d",
+        )
+        self.assertEqual(show_me["policy"]["mode"], "reference-only")
+        self.assertFalse(show_me["policy"]["allowInstall"])
         self.assertTrue(
             (ROOT / "scripts" / "external-dependencies.py").is_file(),
             "missing external dependency validator",
@@ -405,7 +425,7 @@ class RepoStructureTest(unittest.TestCase):
         rows = assignments["PLUGIN_LAYOUT_ROWS"]
         summaries = assignments["PLUGIN_SUMMARIES"]
         flattened = [name for row in rows for name in row]
-        self.assertEqual([5, 5, 6], [len(row) for row in rows])
+        self.assertEqual([6, 5, 6], [len(row) for row in rows])
         self.assertEqual(PLUGINS, flattened)
         self.assertEqual(set(PLUGINS), set(summaries))
 

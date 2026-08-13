@@ -1,0 +1,58 @@
+{
+  "schema": "capability_workbench.plugin_icon_prompt.v2",
+  "plugin_name": "i-have-adhd",
+  "catalog": {
+    "source": "user-override",
+    "key": "i-have-adhd-custom"
+  },
+  "semantic_hero": {
+    "object": "a dimensional warm-white ribbon knot that resolves into one luminous cyan forward arrow",
+    "meaning": "cognitive complexity becoming one actionable direction",
+    "silhouette": "one compact looped knot connected to a single rightward arrow"
+  },
+  "support_cue": {
+    "object": "one small luminous cyan bead at the transition",
+    "meaning": "the moment attention locks onto the next action"
+  },
+  "avoid": [
+    "generic abstract geometry",
+    "initials derived from the plugin name",
+    "object collage",
+    "flat shuffle or merge symbol",
+    "two-line crossing diagram",
+    "brain or head imagery",
+    "medical symbols, pills, or puzzle pieces",
+    "staircase or check mark"
+  ],
+  "collision_avoid": [
+    "stock app icon",
+    "another portfolio icon using a looped ribbon",
+    "shuffle or Git merge icon",
+    "infinity symbol",
+    "generic navigation arrow"
+  ],
+  "brand_source": {
+    "type": "original-domain-metaphor",
+    "source": "none",
+    "trademark_status": "no proprietary mark requested",
+    "license": "original-generated-artwork",
+    "authorization": "not-required-no-brand-mark"
+  },
+  "brandColor": "#080830",
+  "recommended_asset_path": "assets/icon.png",
+  "imagegen_mode": "built-in",
+  "size_gates": [
+    16,
+    24,
+    32,
+    64
+  ],
+  "prompt": "Use case: logo-brand\nAsset type: 1024x1024 marketplace plugin icon\nPurpose: ADHD-friendly response shaping that turns cognitive complexity into one clear next action.\nLiteral semantic hero: a dimensional warm-white ribbon knot that resolves into one luminous cyan forward arrow. It communicates cognitive complexity becoming one actionable direction.\nSilhouette: one compact looped knot connected to a single rightward arrow. Use exactly one subordinate support cue: one small luminous cyan bead at the transition, meaning the moment attention locks onto the next action.\nComposition: one centered dominant silhouette, full-bleed opaque background, meaningful content inside the central 72 percent, no more than one support cue.\nSmall-size requirement: the same hero must remain recognizable at 64, 32, 24, and 16 pixels; keep critical negative space open at 24 pixels.\nStyle: polished modern bitmap icon, bold filled shapes, crisp edges, restrained dimensional polish, consistent portfolio weight.\nBackground: a full-bleed field anchored on #080830.\nForeground palette: high-contrast warm white with at most two restrained accents; meaningful adjacent colors meet at least 3:1 contrast.\nBrand-source rule: original-domain-metaphor referencing none; no proprietary mark requested. Do not introduce an unlicensed mark or distinctive trade dress.\nAvoid: generic abstract geometry; initials derived from the plugin name; object collage; flat shuffle or merge symbol; two-line crossing diagram; brain or head imagery; medical symbols, pills, or puzzle pieces; staircase or check mark.\nCollision avoid: stock app icon; another portfolio icon using a looped ribbon; shuffle or Git merge icon; infinity symbol; generic navigation arrow.\nText: none. No letters, words, numbers, watermark, screenshot, photo, UI replica, tiny badge, thin-line detail, mascot, or private identifier.\nDo not replace the literal hero with a generic abstract symbol derived only from the plugin name.\n",
+  "checks": [
+    "save the selected image as a 1024x1024 opaque RGB PNG at assets/icon.png",
+    "inspect semantic recognition and the monochrome silhouette at 16, 24, 32, and 64 px",
+    "reject a competing second cue, closed critical gap, portfolio collision, text, screenshot, photo, watermark, or low contrast",
+    "verify brand-source, trademark, license, and authorization provenance manually",
+    "wire identical interface.composerIcon and interface.logo paths plus interface.brandColor"
+  ]
+}

@@ -18,6 +18,7 @@ LOCAL_PLUGIN_NAMES = [
     "agent-harness",
     "capability-workbench",
     "context-density",
+    "i-have-adhd",
     "git-workflows",
     "engineering-hygiene",
     "scientific-research",

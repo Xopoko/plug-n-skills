@@ -1,4 +1,63 @@
 {
   "schemaVersion": 1,
-  "dependencies": []
+  "dependencies": [
+    {
+      "id": "i-have-adhd",
+      "kind": "agent-skill-source",
+      "reviewedBy": [
+        "capability-workbench"
+      ],
+      "source": {
+        "provider": "github",
+        "repository": "ayghri/i-have-adhd",
+        "commit": "2ed064090711586e0c97a2fbbf15465fe8f1808b",
+        "tree": "f3bcaa2cc34836bcba1d55bb7e3f3db76cfdae2d"
+      },
+      "policy": {
+        "mode": "reference-only",
+        "allowInstall": false,
+        "allowExecute": false,
+        "allowVendor": false
+      },
+      "license": {
+        "root": "MIT",
+        "exceptions": []
+      },
+      "audit": {
+        "reviewedAt": "2026-08-13",
+        "verdict": "isolate",
+        "report": "docs/external-dependencies/i-have-adhd.md",
+        "receipt": "docs/external-dependencies/i-have-adhd.receipt.json"
+      }
+    },
+    {
+      "id": "humanlayer-show-me",
+      "kind": "agent-skill-source",
+      "reviewedBy": [
+        "capability-workbench"
+      ],
+      "source": {
+        "provider": "github",
+        "repository": "humanlayer/skills",
+        "commit": "3c2629142c5d437428269b1b722b08c0b87f574d",
+        "tree": "2f7121eedbf48e98cf1b42dffae97be6815e1fe9"
+      },
+      "policy": {
+        "mode": "reference-only",
+        "allowInstall": false,
+        "allowExecute": false,
+        "allowVendor": false
+      },
+      "license": {
+        "root": "MIT",
+        "exceptions": []
+      },
+      "audit": {
+        "reviewedAt": "2026-08-13",
+        "verdict": "isolate",
+        "report": "docs/external-dependencies/humanlayer-show-me.md",
+        "receipt": "docs/external-dependencies/humanlayer-show-me.receipt.json"
+      }
+    }
+  ]
 }

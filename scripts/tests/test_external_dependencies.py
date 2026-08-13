@@ -127,6 +127,44 @@ class ExternalDependenciesTest(unittest.TestCase):
         self.assertEqual(payload, self.lock)
         self.assertEqual(payload["dependencies"][0]["id"], "sample-source")
 
+    def test_repository_lock_tracks_reviewed_i_have_adhd_snapshot(self):
+        payload = validate_lockfile(ROOT)
+        dependency = next(
+            item for item in payload["dependencies"] if item["id"] == "i-have-adhd"
+        )
+        self.assertEqual(dependency["source"]["repository"], "ayghri/i-have-adhd")
+        self.assertEqual(
+            dependency["source"]["commit"],
+            "2ed064090711586e0c97a2fbbf15465fe8f1808b",
+        )
+        self.assertEqual(
+            dependency["source"]["tree"],
+            "f3bcaa2cc34836bcba1d55bb7e3f3db76cfdae2d",
+        )
+        self.assertEqual(dependency["audit"]["verdict"], "isolate")
+
+    def test_repository_lock_tracks_reviewed_humanlayer_show_me_snapshot(self):
+        payload = validate_lockfile(ROOT)
+        dependency = next(
+            item
+            for item in payload["dependencies"]
+            if item["id"] == "humanlayer-show-me"
+        )
+        self.assertEqual(dependency["source"]["repository"], "humanlayer/skills")
+        self.assertEqual(
+            dependency["source"]["commit"],
+            "3c2629142c5d437428269b1b722b08c0b87f574d",
+        )
+        self.assertEqual(
+            dependency["source"]["tree"],
+            "2f7121eedbf48e98cf1b42dffae97be6815e1fe9",
+        )
+        self.assertEqual(dependency["policy"]["mode"], "reference-only")
+        self.assertFalse(dependency["policy"]["allowInstall"])
+        self.assertFalse(dependency["policy"]["allowExecute"])
+        self.assertFalse(dependency["policy"]["allowVendor"])
+        self.assertEqual(dependency["audit"]["verdict"], "isolate")
+
     def test_rejects_mutable_short_or_non_lowercase_sha(self):
         for field, value in (
             ("commit", "main"),

@@ -1,0 +1,21 @@
+{
+  "schemaVersion": 1,
+  "dependency": "humanlayer-show-me",
+  "reviewedBy": [
+    "capability-workbench"
+  ],
+  "source": {
+    "provider": "github",
+    "repository": "humanlayer/skills",
+    "commit": "3c2629142c5d437428269b1b722b08c0b87f574d",
+    "tree": "2f7121eedbf48e98cf1b42dffae97be6815e1fe9"
+  },
+  "reviewedAt": "2026-08-13",
+  "verdict": "isolate",
+  "license": {
+    "root": "MIT",
+    "exceptions": []
+  },
+  "report": "docs/external-dependencies/humanlayer-show-me.md",
+  "reportSha256": "197c995ba692ddf578f4b737308ced4fd56a13c80f0cd3941a187733574f8a2d"
+}

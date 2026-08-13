@@ -1,7 +1,7 @@
 {
   "name": "design-intelligence",
-  "version": "0.1.2",
-  "description": "Product and UX design judgment grounded in evidence: framing, information architecture, interaction, usability/accessibility review, visual communication, and design-system governance; excludes Figma, CSS, and framework recipes.",
+  "version": "0.1.3",
+  "description": "Product, UX, and technical visual explanations grounded in evidence: framing, information architecture, interaction, usability/accessibility review, compact diagrams, and design-system governance; excludes Figma, CSS, and framework recipes.",
   "author": {
     "name": "Xopoko"
   },
@@ -14,15 +14,17 @@
     "interaction-design",
     "interface-architecture",
     "product",
+    "technical-communication",
     "ui",
     "usability",
-    "ux"
+    "ux",
+    "visual-explanation"
   ],
   "skills": "./skills/",
   "interface": {
     "displayName": "Design Intelligence",
-    "shortDescription": "Product and UX decisions for accessible, usable flows.",
-    "longDescription": "Product and UX design decisions use technology-agnostic, source-backed judgment across framing, interface architecture, interaction design, usability/accessibility review, visual communication, and design-system governance. The plugin recognizes forms, data views, search/browse, onboarding, permissions, empty/error states, settings, notifications, and transactions while deliberately avoiding Figma automation, CSS recipes, framework recipes, and design-tool workflows.",
+    "shortDescription": "Product, UX, and compact technical visual explanations.",
+    "longDescription": "Product and UX design decisions use technology-agnostic, source-backed judgment across framing, interface architecture, interaction design, usability/accessibility review, visual communication, and design-system governance. Technical explanations can select the smallest useful table, tree, pseudocode, call flow, state view, structural diff, or wireframe while separating observed evidence from proposed structure. The plugin deliberately avoids Figma automation, CSS recipes, framework recipes, general data charting, and image generation.",
     "developerName": "Xopoko",
     "category": "Productivity",
     "capabilities": [
@@ -34,13 +36,15 @@
       "Usability heuristic and cognitive walkthrough review",
       "Accessibility and inclusive-design review",
       "Visual communication and attention design",
+      "Source-grounded compact technical visual explanations",
       "Design-system decision governance"
     ],
     "defaultPrompt": [
       "Use Design Intelligence to frame this product decision before designing screens.",
       "Use Design Intelligence to audit this flow for usability, accessibility, hierarchy, interaction, and product risks.",
       "Use Design Intelligence to improve the interface architecture and information hierarchy without focusing on Figma or CSS.",
-      "Use Design Intelligence to review this UI surface as task, content, state, feedback, recovery, accessibility, and trust design."
+      "Use Design Intelligence to review this UI surface as task, content, state, feedback, recovery, accessibility, and trust design.",
+      "Use Design Intelligence to show this technical relationship with the smallest useful visual form."
     ],
     "brandColor": "#14532D",
     "composerIcon": "./assets/icon.png",
