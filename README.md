@@ -264,7 +264,7 @@ instructions.
 | Reference files | 277 | - | Longer ledgers, contracts, scorecards, and source notes. |
 | Helper and validator scripts | 96 | - | Deterministic plugin-local helpers. |
 | Startup metadata | 198 skills | 16,867 | Skill name, description, and file pointer for routing. |
-| On-demand skill bodies | 198 skills | 144,793 | Instruction bodies after frontmatter, loaded only when selected. |
+| On-demand skill bodies | 198 skills | 144,880 | Instruction bodies after frontmatter, loaded only when selected. |
 
 Regenerate the report after skill edits:
 
