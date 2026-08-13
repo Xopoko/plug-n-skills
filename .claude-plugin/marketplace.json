@@ -68,10 +68,10 @@
       "source": {
         "source": "github",
         "repo": "Xopoko/build-swift-apps",
-        "sha": "b269c774c2decc8169d9b4bcbc6d97dbf60edb2e"
+        "sha": "1b3f2ecec1448ee081f718e0ddc3c4e730cf0d7f"
       },
       "description": "Build, debug, profile, test, refactor, and release Swift apps across iOS, macOS, Xcode, SwiftUI, SwiftPM, Tuist, and App Store Connect.",
-      "version": "0.3.10"
+      "version": "0.3.11"
     },
     {
       "name": "kotlin-multiplatform",
@@ -98,10 +98,10 @@
       "source": {
         "source": "github",
         "repo": "Xopoko/career-skills",
-        "sha": "42e77fbe5592f1953e6407784bba024e6956f2e7"
+        "sha": "b4e496706081a60abb0e48298731ec2bbabbe65c"
       },
       "description": "Evidence-first career support for direction, research, job discovery, materials, applications and campaigns, inbox and recruiter coordination, interviews, offers, operations, development, and data governance.",
-      "version": "0.1.2"
+      "version": "0.1.3"
     }
   ]
 }

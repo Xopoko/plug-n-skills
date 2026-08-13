@@ -4,13 +4,13 @@
   "source": {
     "provider": "github",
     "repository": "Xopoko/build-swift-apps",
-    "commit": "b269c774c2decc8169d9b4bcbc6d97dbf60edb2e",
-    "tree": "df8f190c513a979181892ba52e79c6e6653f964b"
+    "commit": "1b3f2ecec1448ee081f718e0ddc3c4e730cf0d7f",
+    "tree": "37f5416efe8e69e52fa2351461a0c9091444e9bb"
   },
-  "version": "0.3.10",
+  "version": "0.3.11",
   "manifest": {
-    "codexSha256": "a1575817bb2f0954fb82d1e39bfb8e14d21577fb2c06d612b8298e1fc578c582",
-    "claudeSha256": "af5e8bb9723172195f6f5ec5c06c98734f58f4cac4e08961141575b231a625f7"
+    "codexSha256": "989d485038585f31fef95e9a42aa4c7623ea4d66129330369ee7be392ddb2d24",
+    "claudeSha256": "15922520cb222dfa410db2a65543e1668e093807ff3927ad4c3752413b1e686b"
   },
   "license": "MIT",
   "verifiedAt": "2026-08-13",
@@ -21,427 +21,427 @@
         "name": "app-icon-studio",
         "path": "skills/app-icon-studio/SKILL.md",
         "description": "Apple app icons: create, generate, evaluate, export, install, or debug iOS AppIcon.appiconset and macOS .icns assets for small-size clarity.",
-        "startupTokens": 102,
+        "startupTokens": 104,
         "bodyTokens": 984
       },
       {
         "name": "apple-dev-research",
         "path": "skills/apple-dev-research/SKILL.md",
         "description": "Apple developer articles: search Swift, SwiftUI, Xcode, iOS, and macOS community blogs, tutorials, and write-ups, not official docs.",
-        "startupTokens": 99,
+        "startupTokens": 101,
         "bodyTokens": 503
       },
       {
         "name": "apple-firmware-inspector",
         "path": "skills/apple-firmware-inspector/SKILL.md",
         "description": "Apple firmware: inspect and reverse-engineer IPSWs, kernelcaches, dyld shared caches, private headers, entitlements, Mach-O binaries, KEXTs, and security internals with `ipsw`.",
-        "startupTokens": 112,
+        "startupTokens": 114,
         "bodyTokens": 676
       },
       {
         "name": "appstore-ads-operator",
         "path": "skills/appstore-ads-operator/SKILL.md",
         "description": "Apple Ads campaigns: inspect and manage separate auth, orgs, ad groups, creatives, keywords, reports, and API calls; approve live mutations first.",
-        "startupTokens": 102,
+        "startupTokens": 104,
         "bodyTokens": 843
       },
       {
         "name": "appstore-archive-uploader",
         "path": "skills/appstore-archive-uploader/SKILL.md",
         "description": "App Store IPA/PKG archives: set version/build numbers, archive, export, upload, or publish with `asc xcode` before TestFlight/App Store submission.",
-        "startupTokens": 105,
+        "startupTokens": 107,
         "bodyTokens": 800
       },
       {
         "name": "appstore-aso-auditor",
         "path": "skills/appstore-aso-auditor/SKILL.md",
         "description": "App Store ASO audit: analyze canonical `./metadata` offline after `asc metadata pull`; add Astro MCP keyword gaps and Apple app-tag context when available.",
-        "startupTokens": 105,
+        "startupTokens": 107,
         "bodyTokens": 687
       },
       {
         "name": "appstore-build-monitor",
         "path": "skills/appstore-build-monitor/SKILL.md",
         "description": "App Store builds: track processing, find latest builds and next numbers, wait on uploads, or safely expire old builds with `asc`.",
-        "startupTokens": 94,
+        "startupTokens": 96,
         "bodyTokens": 334
       },
       {
         "name": "appstore-connect-cli",
         "path": "skills/appstore-connect-cli/SKILL.md",
         "description": "App Store Connect commands: discover and run `asc` CLI auth, schemas, canonical verbs, pagination, output, Apple Ads, and timeouts.",
-        "startupTokens": 97,
+        "startupTokens": 99,
         "bodyTokens": 521
       },
       {
         "name": "appstore-crash-insights",
         "path": "skills/appstore-crash-insights/SKILL.md",
         "description": "TestFlight crash reports: triage crashes, beta feedback, hangs, disk writes, launches, and performance diagnostics with `asc`.",
-        "startupTokens": 97,
+        "startupTokens": 99,
         "bodyTokens": 525
       },
       {
         "name": "appstore-id-resolver",
         "path": "skills/appstore-id-resolver/SKILL.md",
         "description": "App Store Connect IDs: resolve apps, builds, versions, groups, testers, and review submissions from names with deterministic `asc` lookups.",
-        "startupTokens": 98,
+        "startupTokens": 100,
         "bodyTokens": 356
       },
       {
         "name": "appstore-metadata-localizer",
         "path": "skills/appstore-metadata-localizer/SKILL.md",
         "description": "App Store listing text: translate and market-adapt descriptions, keywords, What's New, names, subtitles, and privacy text across locales. Excludes non-translation edits, standalone release notes, and IAP/subscription names.",
-        "startupTokens": 116,
+        "startupTokens": 118,
         "bodyTokens": 425
       },
       {
         "name": "appstore-metadata-sync",
         "path": "skills/appstore-metadata-sync/SKILL.md",
         "description": "App Store metadata JSON: edit, validate, push, or sync canonical `./metadata`, plus legacy fastlane migration via `asc migrate`. Excludes translation-first work, standalone release notes, and IAP/subscription names.",
-        "startupTokens": 114,
+        "startupTokens": 116,
         "bodyTokens": 436
       },
       {
         "name": "appstore-notary-runner",
         "path": "skills/appstore-notary-runner/SKILL.md",
         "description": "macOS Developer ID notarization commands for xcodebuild export, `asc notarization` submit/status/log, and stapling. Excludes packaging-readiness reviews and signing-only diagnosis.",
-        "startupTokens": 108,
+        "startupTokens": 110,
         "bodyTokens": 485
       },
       {
         "name": "appstore-pricing-planner",
         "path": "skills/appstore-pricing-planner/SKILL.md",
         "description": "App Store subscription and IAP pricing by territory with `asc`, including price points, PPP/localized CSV imports, availability, summaries, and schedules; mutating actions require confirmation.",
-        "startupTokens": 107,
+        "startupTokens": 109,
         "bodyTokens": 402
       },
       {
         "name": "appstore-record-creator",
         "path": "skills/appstore-record-creator/SKILL.md",
         "description": "App Store Connect New App creation via visible browser automation after bundle-ID registration for the API-less web form; never store cookies or auto-retry Create.",
-        "startupTokens": 99,
+        "startupTokens": 101,
         "bodyTokens": 570
       },
       {
         "name": "appstore-release-director",
         "path": "skills/appstore-release-director/SKILL.md",
         "description": "iOS App Store release orchestration from a local repo through signing, metadata, privacy, screenshots, upload, TestFlight, review submission/resubmission, blocker triage, and release evidence.",
-        "startupTokens": 108,
+        "startupTokens": 110,
         "bodyTokens": 726
       },
       {
         "name": "appstore-release-notes-writer",
         "path": "skills/appstore-release-notes-writer/SKILL.md",
         "description": "App Store What's New notes and promotional text from git history, bullets, or prose, with optional localization. Excludes full-listing translation, metadata sync, and subscription/IAP names.",
-        "startupTokens": 110,
+        "startupTokens": 112,
         "bodyTokens": 688
       },
       {
         "name": "appstore-release-planner",
         "path": "skills/appstore-release-planner/SKILL.md",
         "description": "App Store release go/no-go planning for readiness, first-submission blockers, sequencing, and stage-versus-submit decisions. Routes execution to focused skills; review commands belong to appstore-review-readiness.",
-        "startupTokens": 109,
+        "startupTokens": 111,
         "bodyTokens": 722
       },
       {
         "name": "appstore-revenuecat-sync",
         "path": "skills/appstore-revenuecat-sync/SKILL.md",
         "description": "App Store Connect and RevenueCat subscription/IAP reconciliation with `asc` and RevenueCat MCP for catalog bootstrap, drift audits, deterministic product/entitlement/offering/package mapping, and no deletions.",
-        "startupTokens": 111,
+        "startupTokens": 113,
         "bodyTokens": 784
       },
       {
         "name": "appstore-review-readiness",
         "path": "skills/appstore-review-readiness/SKILL.md",
         "description": "App Store review-readiness execution with current `asc` commands to validate, stage, submit, monitor, cancel, or repair blockers after go/no-go planning. Excludes release strategy; appstore-release-planner owns it.",
-        "startupTokens": 114,
+        "startupTokens": 116,
         "bodyTokens": 440
       },
       {
         "name": "appstore-screenshot-pipeline",
         "path": "skills/appstore-screenshot-pipeline/SKILL.md",
         "description": "iOS App Store screenshot automation with xcodebuild/simctl capture, AXe plans, Koubou framing, review artifacts, and `asc` upload.",
-        "startupTokens": 104,
+        "startupTokens": 106,
         "bodyTokens": 1013
       },
       {
         "name": "appstore-screenshot-studio",
         "path": "skills/appstore-screenshot-studio/SKILL.md",
         "description": "App Store marketing screenshot creation and revision to translate, scrape, crop, and validate `.appstore-screenshots` workspaces. Excludes general image generation.",
-        "startupTokens": 103,
+        "startupTokens": 105,
         "bodyTokens": 653
       },
       {
         "name": "appstore-screenshot-validator",
         "path": "skills/appstore-screenshot-validator/SKILL.md",
         "description": "App Store screenshot validation and upload with live `asc` size data and macOS `sips` to resize, strip alpha, and color-convert copies.",
-        "startupTokens": 101,
+        "startupTokens": 103,
         "bodyTokens": 475
       },
       {
         "name": "appstore-signing-setup",
         "path": "skills/appstore-signing-setup/SKILL.md",
         "description": "App Store signing asset setup with `asc` for bundle IDs, capabilities, certificates, profiles, local install, rotation, and encrypted team sync.",
-        "startupTokens": 100,
+        "startupTokens": 102,
         "bodyTokens": 646
       },
       {
         "name": "appstore-subscription-localizer",
         "path": "skills/appstore-subscription-localizer/SKILL.md",
         "description": "App Store subscription localization: create or update localized display names and descriptions for groups, subscriptions, and IAPs with `asc`; exclude app listing metadata, release notes, keywords, screenshots, and pricing.",
-        "startupTokens": 112,
+        "startupTokens": 114,
         "bodyTokens": 402
       },
       {
         "name": "appstore-testflight-coordinator",
         "path": "skills/appstore-testflight-coordinator/SKILL.md",
         "description": "Coordinate TestFlight beta distribution, groups, testers, and What to Test notes with `asc` for beta rollouts.",
-        "startupTokens": 95,
+        "startupTokens": 97,
         "bodyTokens": 346
       },
       {
         "name": "appstore-wall-publisher",
         "path": "skills/appstore-wall-publisher/SKILL.md",
         "description": "Submit or update Wall of Apps entries in the App-Store-Connect-CLI repository with `asc apps wall submit`; match wall submission, addition, or update requests.",
-        "startupTokens": 103,
+        "startupTokens": 105,
         "bodyTokens": 373
       },
       {
         "name": "appstore-workflow-runner",
         "path": "skills/appstore-workflow-runner/SKILL.md",
         "description": "Manage `.asc/workflow.json` automations; define, validate, run, resume, and audit trusted repo-local release/TestFlight flows and step outputs with `asc workflow`.",
-        "startupTokens": 106,
+        "startupTokens": 108,
         "bodyTokens": 793
       },
       {
         "name": "build-swift-apps",
         "path": "skills/build-swift-apps/SKILL.md",
         "description": "Route broad or ambiguous Swift and Apple-platform work to a focused skill; this router does not implement domain work. Covers iOS, macOS, SwiftUI, Xcode, Simulator, App Store Connect, Tuist, SwiftPM, signing, profiling, and Apple research.",
-        "startupTokens": 124,
+        "startupTokens": 126,
         "bodyTokens": 758
       },
       {
         "name": "ios-ettrace-profiler",
         "path": "skills/ios-ettrace-profiler/SKILL.md",
         "description": "iOS ETTrace Simulator profiles: capture and interpret symbolicated startup, scrolling, navigation, rendering, CPU hotspots, and before/after evidence.",
-        "startupTokens": 99,
+        "startupTokens": 101,
         "bodyTokens": 1037
       },
       {
         "name": "ios-intents-architect",
         "path": "skills/ios-intents-architect/SKILL.md",
         "description": "Design and implement iOS App Intents, AppEntity, EntityQuery, and App Shortcuts for Siri, Spotlight, widgets, controls, Shortcuts, and app handoff routes.",
-        "startupTokens": 107,
+        "startupTokens": 109,
         "bodyTokens": 542
       },
       {
         "name": "ios-liquid-glass-designer",
         "path": "skills/ios-liquid-glass-designer/SKILL.md",
         "description": "Implement, refactor, or review iOS 26+ SwiftUI Liquid Glass with native `glassEffect`, `GlassEffectContainer`, button styles, availability gates, and non-glass fallbacks.",
-        "startupTokens": 112,
+        "startupTokens": 114,
         "bodyTokens": 452
       },
       {
         "name": "ios-memgraph-inspector",
         "path": "skills/ios-memgraph-inspector/SKILL.md",
         "description": "iOS memgraph leak analysis: capture, inspect, compare, and prove memory leaks with Apple's `leaks` tool, retain-cycle evidence, and before/after checks.",
-        "startupTokens": 107,
+        "startupTokens": 109,
         "bodyTokens": 581
       },
       {
         "name": "ios-rocketsim-operator",
         "path": "skills/ios-rocketsim-operator/SKILL.md",
         "description": "RocketSim iOS Simulator UI: inspect and control accessibility state, gestures, typing, hardware buttons, and CLI automation.",
-        "startupTokens": 96,
+        "startupTokens": 98,
         "bodyTokens": 486
       },
       {
         "name": "ios-simulator-browser",
         "path": "skills/ios-simulator-browser/SKILL.md",
         "description": "Mirror iOS Simulator runs in the Codex browser for interaction, visible proof, and hot-reloaded SwiftUI previews from importable Swift packages; exclude headless or log-only debugging.",
-        "startupTokens": 105,
+        "startupTokens": 107,
         "bodyTokens": 805
       },
       {
         "name": "ios-simulator-debugger",
         "path": "skills/ios-simulator-debugger/SKILL.md",
         "description": "Debug iOS Simulator apps with XcodeBuildMCP for build, run, launch, UI inspection, interaction, screenshots, and logs; route user-visible mirrors and SwiftUI previews to `ios-simulator-browser`.",
-        "startupTokens": 113,
+        "startupTokens": 115,
         "bodyTokens": 545
       },
       {
         "name": "ios-swiftui-architect",
         "path": "skills/ios-swiftui-architect/SKILL.md",
         "description": "iOS SwiftUI views and components: build or refactor navigation, state ownership, async UI, sheets, previews, and responsive layouts; exclude UIKit-only and macOS work.",
-        "startupTokens": 108,
+        "startupTokens": 110,
         "bodyTokens": 708
       },
       {
         "name": "macos-appkit-bridge",
         "path": "skills/macos-appkit-bridge/SKILL.md",
         "description": "macOS SwiftUI-AppKit bridges: implement NSViewRepresentable, NSViewControllerRepresentable, NSWindow, panels, responder chains, or menus only where pure SwiftUI cannot model the behavior.",
-        "startupTokens": 111,
+        "startupTokens": 113,
         "bodyTokens": 566
       },
       {
         "name": "macos-liquid-glass-designer",
         "path": "skills/macos-liquid-glass-designer/SKILL.md",
         "description": "macOS SwiftUI Liquid Glass UI: modernize or review system materials, toolbars, search, controls, and custom glass; prefer native structure over hand-built chrome.",
-        "startupTokens": 107,
+        "startupTokens": 109,
         "bodyTokens": 593
       },
       {
         "name": "macos-notarization-packager",
         "path": "skills/macos-notarization-packager/SKILL.md",
         "description": "macOS distribution artifacts: inspect Developer ID archives, app bundles, hardened runtime, nested signing, and notarization readiness; exclude local signing-only diagnosis and direct `asc notarization` execution.",
-        "startupTokens": 111,
+        "startupTokens": 113,
         "bodyTokens": 341
       },
       {
         "name": "macos-runtime-debugger",
         "path": "skills/macos-runtime-debugger/SKILL.md",
         "description": "macOS app runtimes: build, launch, and debug Xcode or SwiftPM GUI/CLI targets with shell-first workflows; diagnose compiler, linker, startup, log, and telemetry failures; exclude iOS Simulator work.",
-        "startupTokens": 114,
+        "startupTokens": 116,
         "bodyTokens": 770
       },
       {
         "name": "macos-signing-inspector",
         "path": "skills/macos-signing-inspector/SKILL.md",
         "description": "macOS app signing artifacts: inspect code signatures, entitlements, hardened runtime, sandbox, Gatekeeper, and trust failures; exclude distribution packaging and notarization submission.",
-        "startupTokens": 104,
+        "startupTokens": 106,
         "bodyTokens": 485
       },
       {
         "name": "macos-swiftpm-runner",
         "path": "skills/macos-swiftpm-runner/SKILL.md",
         "description": "macOS SwiftPM packages: build, run, and test package-first repositories and executables when `Package.swift` is primary or no Xcode project exists; not for Xcode-only app bundles.",
-        "startupTokens": 113,
+        "startupTokens": 115,
         "bodyTokens": 280
       },
       {
         "name": "macos-swiftui-architect",
         "path": "skills/macos-swiftui-architect/SKILL.md",
         "description": "macOS SwiftUI scenes: build or refactor windows, commands, toolbars, settings, split views, inspectors, menu bar extras, keyboard flows, and desktop layouts; not AppKit-only behavior.",
-        "startupTokens": 114,
+        "startupTokens": 116,
         "bodyTokens": 821
       },
       {
         "name": "macos-telemetry-probe",
         "path": "skills/macos-telemetry-probe/SKILL.md",
         "description": "macOS runtime telemetry: add and verify privacy-safe Logger/OSLog events, log stream filters, and signposts; not crash diagnosis.",
-        "startupTokens": 101,
+        "startupTokens": 103,
         "bodyTokens": 412
       },
       {
         "name": "macos-test-diagnoser",
         "path": "skills/macos-test-diagnoser/SKILL.md",
         "description": "macOS Xcode and SwiftPM tests: run focused scopes and diagnose build, assertion, crash, async-flake, fixture, entitlement, and host-app failures; separate regressions from setup issues.",
-        "startupTokens": 111,
+        "startupTokens": 113,
         "bodyTokens": 574
       },
       {
         "name": "macos-view-architect",
         "path": "skills/macos-view-architect/SKILL.md",
         "description": "macOS SwiftUI view structure: refactor oversized scenes into subviews, explicit roots, scoped state, command/toolbar ownership, and narrow AppKit bridges.",
-        "startupTokens": 101,
+        "startupTokens": 103,
         "bodyTokens": 500
       },
       {
         "name": "macos-window-architect",
         "path": "skills/macos-window-architect/SKILL.md",
         "description": "macOS 15+ SwiftUI windows: customize toolbar/title chrome, drag regions, materials, minimize/restoration, placement, launch behavior, and borderless styles; prefer SwiftUI before NSWindow.",
-        "startupTokens": 109,
+        "startupTokens": 111,
         "bodyTokens": 799
       },
       {
         "name": "swiftpm-build-inspector",
         "path": "skills/swiftpm-build-inspector/SKILL.md",
         "description": "Diagnose SwiftPM graph overhead across dependencies, plugins, module variants, branch pins, macros, binary targets, and slow CI or local Xcode builds.",
-        "startupTokens": 100,
+        "startupTokens": 102,
         "bodyTokens": 536
       },
       {
         "name": "swiftui-performance-inspector",
         "path": "skills/swiftui-performance-inspector/SKILL.md",
         "description": "Diagnose SwiftUI rendering and update costs from code or profiles when scrolling janks, CPU or memory spikes, views update excessively, layouts thrash, or apps hang.",
-        "startupTokens": 103,
+        "startupTokens": 105,
         "bodyTokens": 543
       },
       {
         "name": "swiftui-view-architect",
         "path": "skills/swiftui-view-architect/SKILL.md",
         "description": "Refactor oversized SwiftUI view files into stable, dedicated subviews with MV-first data flow, explicit dependencies, extracted actions, and correct Observation usage.",
-        "startupTokens": 100,
+        "startupTokens": 102,
         "bodyTokens": 481
       },
       {
         "name": "tuist-flaky-test-stabilizer",
         "path": "skills/tuist-flaky-test-stabilizer/SKILL.md",
         "description": "Stabilize flaky Tuist tests identified by test-insights URLs, test case IDs, or inconsistent local runs; covers test and product-code causes.",
-        "startupTokens": 105,
+        "startupTokens": 107,
         "bodyTokens": 554
       },
       {
         "name": "tuist-generation-doctor",
         "path": "skills/tuist-generation-doctor/SKILL.md",
         "description": "Diagnose Tuist generation, build, and launch failures when `tuist generate`, generated Xcode workspaces, or apps fail or diverge from the source project.",
-        "startupTokens": 103,
+        "startupTokens": 105,
         "bodyTokens": 629
       },
       {
         "name": "tuist-migration-planner",
         "path": "skills/tuist-migration-planner/SKILL.md",
         "description": "Plan Xcode-to-Tuist migrations for hand-maintained projects, including target, setting, and dependency mapping plus generated build, test, signing, and launch parity.",
-        "startupTokens": 106,
+        "startupTokens": 108,
         "bodyTokens": 577
       },
       {
         "name": "tuist-workspace-navigator",
         "path": "skills/tuist-workspace-navigator/SKILL.md",
         "description": "Operate Tuist-generated Xcode workspaces with `tuist generate`, focused generation, tags, buildable folders, and post-generation build or test commands.",
-        "startupTokens": 104,
+        "startupTokens": 106,
         "bodyTokens": 500
       },
       {
         "name": "xcode-build-baseline",
         "path": "skills/xcode-build-baseline/SKILL.md",
         "description": "Benchmark Xcode clean, cached-clean, zero-change, and incremental builds with fixed inputs, timing summaries, and `.build-benchmark/` artifacts.",
-        "startupTokens": 98,
+        "startupTokens": 100,
         "bodyTokens": 623
       },
       {
         "name": "xcode-build-strategist",
         "path": "skills/xcode-build-strategist/SKILL.md",
         "description": "Coordinate end-to-end Xcode build optimization audits with recommend-first, approval-gated fixes, specialist analysis, wall-clock priorities, and re-benchmark proof.",
-        "startupTokens": 101,
+        "startupTokens": 103,
         "bodyTokens": 959
       },
       {
         "name": "xcode-build-tuner",
         "path": "skills/xcode-build-tuner/SKILL.md",
         "description": "Implement approved Xcode build-speed fixes after strategist approval or explicit requests covering build settings, script phases, Swift compilation, or SwiftPM graphs; re-benchmark results.",
-        "startupTokens": 101,
+        "startupTokens": 103,
         "bodyTokens": 749
       },
       {
         "name": "xcode-compile-profiler",
         "path": "skills/xcode-compile-profiler/SKILL.md",
         "description": "Profile Swift and mixed-language compile bottlenecks from timing summaries, frontend diagnostics, type-check warnings, CompileSwiftSources, and SwiftEmitModule; recommend changes only.",
-        "startupTokens": 103,
+        "startupTokens": 105,
         "bodyTokens": 494
       },
       {
         "name": "xcode-project-auditor",
         "path": "skills/xcode-project-auditor/SKILL.md",
         "description": "Audit Xcode project and target overhead across schemes, settings, dependencies, run scripts, module maps, and explicit modules; require approval before changes.",
-        "startupTokens": 99,
+        "startupTokens": 101,
         "bodyTokens": 480
       },
       {
         "name": "xcode-ui-test-stabilizer",
         "path": "skills/xcode-ui-test-stabilizer/SKILL.md",
         "description": "Build and stabilize Xcode UI end-to-end tests with XCUIApplication/xcodebuild for new or unreliable automation, covering environment setup, focus/input reliability, waits, logs, attachments, and flakiness triage.",
-        "startupTokens": 115,
+        "startupTokens": 117,
         "bodyTokens": 451
       }
     ]
@@ -452,7 +452,7 @@
   },
   "tokens": {
     "encoding": "o200k_base",
-    "startup": 6436,
+    "startup": 6558,
     "body": 36239
   },
   "icons": {

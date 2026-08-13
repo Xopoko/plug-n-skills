@@ -263,8 +263,8 @@ instructions.
 | Plugin packs | 17 | - | Local packages plus immutable standalone first-party catalog entries. |
 | Skill entrypoints | 200 | - | `SKILL.md` files exposed through plugin metadata. |
 | Reference files | 278 | - | Longer ledgers, contracts, scorecards, and source notes. |
-| Helper and validator scripts | 96 | - | Deterministic plugin-local helpers. |
-| Startup metadata | 200 skills | 17,029 | Skill name, description, and file pointer for routing. |
+| Helper and validator scripts | 97 | - | Deterministic plugin-local helpers. |
+| Startup metadata | 200 skills | 17,071 | Skill name, description, and file pointer for routing. |
 | On-demand skill bodies | 200 skills | 146,537 | Instruction bodies after frontmatter, loaded only when selected. |
 
 Regenerate the report after skill edits:
@@ -293,12 +293,12 @@ Token columns are `startup metadata / on-demand body`.
 | `design-intelligence` | 8 | 2 | 1 | 537 | 6,468 |
 | `architecture-intelligence` | 9 | 9 | 2 | 598 | 8,548 |
 | `spec-driven-development` | 6 | 0 | 2 | 328 | 3,401 |
-| `build-swift-apps` | 61 | 90 | 36 | 6,436 | 36,239 |
+| `build-swift-apps` | 61 | 90 | 36 | 6,558 | 36,239 |
 | `kotlin-multiplatform` | 14 | 22 | 2 | 1,105 | 14,769 |
 | `tauri` | 6 | 0 | 1 | 438 | 3,472 |
 | `pixijs` | 26 | 64 | 0 | 1,837 | 7,967 |
 | `game-design-intelligence` | 6 | 2 | 1 | 452 | 2,916 |
-| `career` | 20 | 21 | 3 | 1,933 | 9,857 |
+| `career` | 20 | 21 | 4 | 1,853 | 9,857 |
 
 ### Plugin Focus
 
@@ -452,67 +452,67 @@ Token cells are shown as `startup/body`.
 
 | Skill | Tokens | Description |
 | --- | ---: | --- |
-| `app-icon-studio` | 102/984 | Apple app icons: create, generate, evaluate, export, install, or debug iOS AppIcon.appiconset and macOS .icns assets for small-size clarity. |
-| `apple-dev-research` | 99/503 | Apple developer articles: search Swift, SwiftUI, Xcode, iOS, and macOS community blogs, tutorials, and write-ups, not official docs. |
-| `apple-firmware-inspector` | 112/676 | Apple firmware: inspect and reverse-engineer IPSWs, kernelcaches, dyld shared caches, private headers, entitlements, Mach-O binaries, KEXTs, and security internals with `ipsw`. |
-| `appstore-ads-operator` | 102/843 | Apple Ads campaigns: inspect and manage separate auth, orgs, ad groups, creatives, keywords, reports, and API calls; approve live mutations first. |
-| `appstore-archive-uploader` | 105/800 | App Store IPA/PKG archives: set version/build numbers, archive, export, upload, or publish with `asc xcode` before TestFlight/App Store submission. |
-| `appstore-aso-auditor` | 105/687 | App Store ASO audit: analyze canonical `./metadata` offline after `asc metadata pull`; add Astro MCP keyword gaps and Apple app-tag context when available. |
-| `appstore-build-monitor` | 94/334 | App Store builds: track processing, find latest builds and next numbers, wait on uploads, or safely expire old builds with `asc`. |
-| `appstore-connect-cli` | 97/521 | App Store Connect commands: discover and run `asc` CLI auth, schemas, canonical verbs, pagination, output, Apple Ads, and timeouts. |
-| `appstore-crash-insights` | 97/525 | TestFlight crash reports: triage crashes, beta feedback, hangs, disk writes, launches, and performance diagnostics with `asc`. |
-| `appstore-id-resolver` | 98/356 | App Store Connect IDs: resolve apps, builds, versions, groups, testers, and review submissions from names with deterministic `asc` lookups. |
-| `appstore-metadata-localizer` | 116/425 | App Store listing text: translate and market-adapt descriptions, keywords, What's New, names, subtitles, and privacy text across locales. Excludes non-translation edits, standalone release notes, and IAP/subscription names. |
-| `appstore-metadata-sync` | 114/436 | App Store metadata JSON: edit, validate, push, or sync canonical `./metadata`, plus legacy fastlane migration via `asc migrate`. Excludes translation-first work, standalone release notes, and IAP/subscription names. |
-| `appstore-notary-runner` | 108/485 | macOS Developer ID notarization commands for xcodebuild export, `asc notarization` submit/status/log, and stapling. Excludes packaging-readiness reviews and signing-only diagnosis. |
-| `appstore-pricing-planner` | 107/402 | App Store subscription and IAP pricing by territory with `asc`, including price points, PPP/localized CSV imports, availability, summaries, and schedules; mutating actions require confirmation. |
-| `appstore-record-creator` | 99/570 | App Store Connect New App creation via visible browser automation after bundle-ID registration for the API-less web form; never store cookies or auto-retry Create. |
-| `appstore-release-director` | 108/726 | iOS App Store release orchestration from a local repo through signing, metadata, privacy, screenshots, upload, TestFlight, review submission/resubmission, blocker triage, and release evidence. |
-| `appstore-release-notes-writer` | 110/688 | App Store What's New notes and promotional text from git history, bullets, or prose, with optional localization. Excludes full-listing translation, metadata sync, and subscription/IAP names. |
-| `appstore-release-planner` | 109/722 | App Store release go/no-go planning for readiness, first-submission blockers, sequencing, and stage-versus-submit decisions. Routes execution to focused skills; review commands belong to appstore-review-readiness. |
-| `appstore-revenuecat-sync` | 111/784 | App Store Connect and RevenueCat subscription/IAP reconciliation with `asc` and RevenueCat MCP for catalog bootstrap, drift audits, deterministic product/entitlement/offering/package mapping, and no deletions. |
-| `appstore-review-readiness` | 114/440 | App Store review-readiness execution with current `asc` commands to validate, stage, submit, monitor, cancel, or repair blockers after go/no-go planning. Excludes release strategy; appstore-release-planner owns it. |
-| `appstore-screenshot-pipeline` | 104/1,013 | iOS App Store screenshot automation with xcodebuild/simctl capture, AXe plans, Koubou framing, review artifacts, and `asc` upload. |
-| `appstore-screenshot-studio` | 103/653 | App Store marketing screenshot creation and revision to translate, scrape, crop, and validate `.appstore-screenshots` workspaces. Excludes general image generation. |
-| `appstore-screenshot-validator` | 101/475 | App Store screenshot validation and upload with live `asc` size data and macOS `sips` to resize, strip alpha, and color-convert copies. |
-| `appstore-signing-setup` | 100/646 | App Store signing asset setup with `asc` for bundle IDs, capabilities, certificates, profiles, local install, rotation, and encrypted team sync. |
-| `appstore-subscription-localizer` | 112/402 | App Store subscription localization: create or update localized display names and descriptions for groups, subscriptions, and IAPs with `asc`; exclude app listing metadata, release notes, keywords, screenshots, and pricing. |
-| `appstore-testflight-coordinator` | 95/346 | Coordinate TestFlight beta distribution, groups, testers, and What to Test notes with `asc` for beta rollouts. |
-| `appstore-wall-publisher` | 103/373 | Submit or update Wall of Apps entries in the App-Store-Connect-CLI repository with `asc apps wall submit`; match wall submission, addition, or update requests. |
-| `appstore-workflow-runner` | 106/793 | Manage `.asc/workflow.json` automations; define, validate, run, resume, and audit trusted repo-local release/TestFlight flows and step outputs with `asc workflow`. |
-| `build-swift-apps` | 124/758 | Route broad or ambiguous Swift and Apple-platform work to a focused skill; this router does not implement domain work. Covers iOS, macOS, SwiftUI, Xcode, Simulator, App Store Connect, Tuist, SwiftPM, signing, profiling, and Apple research. |
-| `ios-ettrace-profiler` | 99/1,037 | iOS ETTrace Simulator profiles: capture and interpret symbolicated startup, scrolling, navigation, rendering, CPU hotspots, and before/after evidence. |
-| `ios-intents-architect` | 107/542 | Design and implement iOS App Intents, AppEntity, EntityQuery, and App Shortcuts for Siri, Spotlight, widgets, controls, Shortcuts, and app handoff routes. |
-| `ios-liquid-glass-designer` | 112/452 | Implement, refactor, or review iOS 26+ SwiftUI Liquid Glass with native `glassEffect`, `GlassEffectContainer`, button styles, availability gates, and non-glass fallbacks. |
-| `ios-memgraph-inspector` | 107/581 | iOS memgraph leak analysis: capture, inspect, compare, and prove memory leaks with Apple's `leaks` tool, retain-cycle evidence, and before/after checks. |
-| `ios-rocketsim-operator` | 96/486 | RocketSim iOS Simulator UI: inspect and control accessibility state, gestures, typing, hardware buttons, and CLI automation. |
-| `ios-simulator-browser` | 105/805 | Mirror iOS Simulator runs in the Codex browser for interaction, visible proof, and hot-reloaded SwiftUI previews from importable Swift packages; exclude headless or log-only debugging. |
-| `ios-simulator-debugger` | 113/545 | Debug iOS Simulator apps with XcodeBuildMCP for build, run, launch, UI inspection, interaction, screenshots, and logs; route user-visible mirrors and SwiftUI previews to `ios-simulator-browser`. |
-| `ios-swiftui-architect` | 108/708 | iOS SwiftUI views and components: build or refactor navigation, state ownership, async UI, sheets, previews, and responsive layouts; exclude UIKit-only and macOS work. |
-| `macos-appkit-bridge` | 111/566 | macOS SwiftUI-AppKit bridges: implement NSViewRepresentable, NSViewControllerRepresentable, NSWindow, panels, responder chains, or menus only where pure SwiftUI cannot model the behavior. |
-| `macos-liquid-glass-designer` | 107/593 | macOS SwiftUI Liquid Glass UI: modernize or review system materials, toolbars, search, controls, and custom glass; prefer native structure over hand-built chrome. |
-| `macos-notarization-packager` | 111/341 | macOS distribution artifacts: inspect Developer ID archives, app bundles, hardened runtime, nested signing, and notarization readiness; exclude local signing-only diagnosis and direct `asc notarization` execution. |
-| `macos-runtime-debugger` | 114/770 | macOS app runtimes: build, launch, and debug Xcode or SwiftPM GUI/CLI targets with shell-first workflows; diagnose compiler, linker, startup, log, and telemetry failures; exclude iOS Simulator work. |
-| `macos-signing-inspector` | 104/485 | macOS app signing artifacts: inspect code signatures, entitlements, hardened runtime, sandbox, Gatekeeper, and trust failures; exclude distribution packaging and notarization submission. |
-| `macos-swiftpm-runner` | 113/280 | macOS SwiftPM packages: build, run, and test package-first repositories and executables when `Package.swift` is primary or no Xcode project exists; not for Xcode-only app bundles. |
-| `macos-swiftui-architect` | 114/821 | macOS SwiftUI scenes: build or refactor windows, commands, toolbars, settings, split views, inspectors, menu bar extras, keyboard flows, and desktop layouts; not AppKit-only behavior. |
-| `macos-telemetry-probe` | 101/412 | macOS runtime telemetry: add and verify privacy-safe Logger/OSLog events, log stream filters, and signposts; not crash diagnosis. |
-| `macos-test-diagnoser` | 111/574 | macOS Xcode and SwiftPM tests: run focused scopes and diagnose build, assertion, crash, async-flake, fixture, entitlement, and host-app failures; separate regressions from setup issues. |
-| `macos-view-architect` | 101/500 | macOS SwiftUI view structure: refactor oversized scenes into subviews, explicit roots, scoped state, command/toolbar ownership, and narrow AppKit bridges. |
-| `macos-window-architect` | 109/799 | macOS 15+ SwiftUI windows: customize toolbar/title chrome, drag regions, materials, minimize/restoration, placement, launch behavior, and borderless styles; prefer SwiftUI before NSWindow. |
-| `swiftpm-build-inspector` | 100/536 | Diagnose SwiftPM graph overhead across dependencies, plugins, module variants, branch pins, macros, binary targets, and slow CI or local Xcode builds. |
-| `swiftui-performance-inspector` | 103/543 | Diagnose SwiftUI rendering and update costs from code or profiles when scrolling janks, CPU or memory spikes, views update excessively, layouts thrash, or apps hang. |
-| `swiftui-view-architect` | 100/481 | Refactor oversized SwiftUI view files into stable, dedicated subviews with MV-first data flow, explicit dependencies, extracted actions, and correct Observation usage. |
-| `tuist-flaky-test-stabilizer` | 105/554 | Stabilize flaky Tuist tests identified by test-insights URLs, test case IDs, or inconsistent local runs; covers test and product-code causes. |
-| `tuist-generation-doctor` | 103/629 | Diagnose Tuist generation, build, and launch failures when `tuist generate`, generated Xcode workspaces, or apps fail or diverge from the source project. |
-| `tuist-migration-planner` | 106/577 | Plan Xcode-to-Tuist migrations for hand-maintained projects, including target, setting, and dependency mapping plus generated build, test, signing, and launch parity. |
-| `tuist-workspace-navigator` | 104/500 | Operate Tuist-generated Xcode workspaces with `tuist generate`, focused generation, tags, buildable folders, and post-generation build or test commands. |
-| `xcode-build-baseline` | 98/623 | Benchmark Xcode clean, cached-clean, zero-change, and incremental builds with fixed inputs, timing summaries, and `.build-benchmark/` artifacts. |
-| `xcode-build-strategist` | 101/959 | Coordinate end-to-end Xcode build optimization audits with recommend-first, approval-gated fixes, specialist analysis, wall-clock priorities, and re-benchmark proof. |
-| `xcode-build-tuner` | 101/749 | Implement approved Xcode build-speed fixes after strategist approval or explicit requests covering build settings, script phases, Swift compilation, or SwiftPM graphs; re-benchmark results. |
-| `xcode-compile-profiler` | 103/494 | Profile Swift and mixed-language compile bottlenecks from timing summaries, frontend diagnostics, type-check warnings, CompileSwiftSources, and SwiftEmitModule; recommend changes only. |
-| `xcode-project-auditor` | 99/480 | Audit Xcode project and target overhead across schemes, settings, dependencies, run scripts, module maps, and explicit modules; require approval before changes. |
-| `xcode-ui-test-stabilizer` | 115/451 | Build and stabilize Xcode UI end-to-end tests with XCUIApplication/xcodebuild for new or unreliable automation, covering environment setup, focus/input reliability, waits, logs, attachments, and flakiness triage. |
+| `app-icon-studio` | 104/984 | Apple app icons: create, generate, evaluate, export, install, or debug iOS AppIcon.appiconset and macOS .icns assets for small-size clarity. |
+| `apple-dev-research` | 101/503 | Apple developer articles: search Swift, SwiftUI, Xcode, iOS, and macOS community blogs, tutorials, and write-ups, not official docs. |
+| `apple-firmware-inspector` | 114/676 | Apple firmware: inspect and reverse-engineer IPSWs, kernelcaches, dyld shared caches, private headers, entitlements, Mach-O binaries, KEXTs, and security internals with `ipsw`. |
+| `appstore-ads-operator` | 104/843 | Apple Ads campaigns: inspect and manage separate auth, orgs, ad groups, creatives, keywords, reports, and API calls; approve live mutations first. |
+| `appstore-archive-uploader` | 107/800 | App Store IPA/PKG archives: set version/build numbers, archive, export, upload, or publish with `asc xcode` before TestFlight/App Store submission. |
+| `appstore-aso-auditor` | 107/687 | App Store ASO audit: analyze canonical `./metadata` offline after `asc metadata pull`; add Astro MCP keyword gaps and Apple app-tag context when available. |
+| `appstore-build-monitor` | 96/334 | App Store builds: track processing, find latest builds and next numbers, wait on uploads, or safely expire old builds with `asc`. |
+| `appstore-connect-cli` | 99/521 | App Store Connect commands: discover and run `asc` CLI auth, schemas, canonical verbs, pagination, output, Apple Ads, and timeouts. |
+| `appstore-crash-insights` | 99/525 | TestFlight crash reports: triage crashes, beta feedback, hangs, disk writes, launches, and performance diagnostics with `asc`. |
+| `appstore-id-resolver` | 100/356 | App Store Connect IDs: resolve apps, builds, versions, groups, testers, and review submissions from names with deterministic `asc` lookups. |
+| `appstore-metadata-localizer` | 118/425 | App Store listing text: translate and market-adapt descriptions, keywords, What's New, names, subtitles, and privacy text across locales. Excludes non-translation edits, standalone release notes, and IAP/subscription names. |
+| `appstore-metadata-sync` | 116/436 | App Store metadata JSON: edit, validate, push, or sync canonical `./metadata`, plus legacy fastlane migration via `asc migrate`. Excludes translation-first work, standalone release notes, and IAP/subscription names. |
+| `appstore-notary-runner` | 110/485 | macOS Developer ID notarization commands for xcodebuild export, `asc notarization` submit/status/log, and stapling. Excludes packaging-readiness reviews and signing-only diagnosis. |
+| `appstore-pricing-planner` | 109/402 | App Store subscription and IAP pricing by territory with `asc`, including price points, PPP/localized CSV imports, availability, summaries, and schedules; mutating actions require confirmation. |
+| `appstore-record-creator` | 101/570 | App Store Connect New App creation via visible browser automation after bundle-ID registration for the API-less web form; never store cookies or auto-retry Create. |
+| `appstore-release-director` | 110/726 | iOS App Store release orchestration from a local repo through signing, metadata, privacy, screenshots, upload, TestFlight, review submission/resubmission, blocker triage, and release evidence. |
+| `appstore-release-notes-writer` | 112/688 | App Store What's New notes and promotional text from git history, bullets, or prose, with optional localization. Excludes full-listing translation, metadata sync, and subscription/IAP names. |
+| `appstore-release-planner` | 111/722 | App Store release go/no-go planning for readiness, first-submission blockers, sequencing, and stage-versus-submit decisions. Routes execution to focused skills; review commands belong to appstore-review-readiness. |
+| `appstore-revenuecat-sync` | 113/784 | App Store Connect and RevenueCat subscription/IAP reconciliation with `asc` and RevenueCat MCP for catalog bootstrap, drift audits, deterministic product/entitlement/offering/package mapping, and no deletions. |
+| `appstore-review-readiness` | 116/440 | App Store review-readiness execution with current `asc` commands to validate, stage, submit, monitor, cancel, or repair blockers after go/no-go planning. Excludes release strategy; appstore-release-planner owns it. |
+| `appstore-screenshot-pipeline` | 106/1,013 | iOS App Store screenshot automation with xcodebuild/simctl capture, AXe plans, Koubou framing, review artifacts, and `asc` upload. |
+| `appstore-screenshot-studio` | 105/653 | App Store marketing screenshot creation and revision to translate, scrape, crop, and validate `.appstore-screenshots` workspaces. Excludes general image generation. |
+| `appstore-screenshot-validator` | 103/475 | App Store screenshot validation and upload with live `asc` size data and macOS `sips` to resize, strip alpha, and color-convert copies. |
+| `appstore-signing-setup` | 102/646 | App Store signing asset setup with `asc` for bundle IDs, capabilities, certificates, profiles, local install, rotation, and encrypted team sync. |
+| `appstore-subscription-localizer` | 114/402 | App Store subscription localization: create or update localized display names and descriptions for groups, subscriptions, and IAPs with `asc`; exclude app listing metadata, release notes, keywords, screenshots, and pricing. |
+| `appstore-testflight-coordinator` | 97/346 | Coordinate TestFlight beta distribution, groups, testers, and What to Test notes with `asc` for beta rollouts. |
+| `appstore-wall-publisher` | 105/373 | Submit or update Wall of Apps entries in the App-Store-Connect-CLI repository with `asc apps wall submit`; match wall submission, addition, or update requests. |
+| `appstore-workflow-runner` | 108/793 | Manage `.asc/workflow.json` automations; define, validate, run, resume, and audit trusted repo-local release/TestFlight flows and step outputs with `asc workflow`. |
+| `build-swift-apps` | 126/758 | Route broad or ambiguous Swift and Apple-platform work to a focused skill; this router does not implement domain work. Covers iOS, macOS, SwiftUI, Xcode, Simulator, App Store Connect, Tuist, SwiftPM, signing, profiling, and Apple research. |
+| `ios-ettrace-profiler` | 101/1,037 | iOS ETTrace Simulator profiles: capture and interpret symbolicated startup, scrolling, navigation, rendering, CPU hotspots, and before/after evidence. |
+| `ios-intents-architect` | 109/542 | Design and implement iOS App Intents, AppEntity, EntityQuery, and App Shortcuts for Siri, Spotlight, widgets, controls, Shortcuts, and app handoff routes. |
+| `ios-liquid-glass-designer` | 114/452 | Implement, refactor, or review iOS 26+ SwiftUI Liquid Glass with native `glassEffect`, `GlassEffectContainer`, button styles, availability gates, and non-glass fallbacks. |
+| `ios-memgraph-inspector` | 109/581 | iOS memgraph leak analysis: capture, inspect, compare, and prove memory leaks with Apple's `leaks` tool, retain-cycle evidence, and before/after checks. |
+| `ios-rocketsim-operator` | 98/486 | RocketSim iOS Simulator UI: inspect and control accessibility state, gestures, typing, hardware buttons, and CLI automation. |
+| `ios-simulator-browser` | 107/805 | Mirror iOS Simulator runs in the Codex browser for interaction, visible proof, and hot-reloaded SwiftUI previews from importable Swift packages; exclude headless or log-only debugging. |
+| `ios-simulator-debugger` | 115/545 | Debug iOS Simulator apps with XcodeBuildMCP for build, run, launch, UI inspection, interaction, screenshots, and logs; route user-visible mirrors and SwiftUI previews to `ios-simulator-browser`. |
+| `ios-swiftui-architect` | 110/708 | iOS SwiftUI views and components: build or refactor navigation, state ownership, async UI, sheets, previews, and responsive layouts; exclude UIKit-only and macOS work. |
+| `macos-appkit-bridge` | 113/566 | macOS SwiftUI-AppKit bridges: implement NSViewRepresentable, NSViewControllerRepresentable, NSWindow, panels, responder chains, or menus only where pure SwiftUI cannot model the behavior. |
+| `macos-liquid-glass-designer` | 109/593 | macOS SwiftUI Liquid Glass UI: modernize or review system materials, toolbars, search, controls, and custom glass; prefer native structure over hand-built chrome. |
+| `macos-notarization-packager` | 113/341 | macOS distribution artifacts: inspect Developer ID archives, app bundles, hardened runtime, nested signing, and notarization readiness; exclude local signing-only diagnosis and direct `asc notarization` execution. |
+| `macos-runtime-debugger` | 116/770 | macOS app runtimes: build, launch, and debug Xcode or SwiftPM GUI/CLI targets with shell-first workflows; diagnose compiler, linker, startup, log, and telemetry failures; exclude iOS Simulator work. |
+| `macos-signing-inspector` | 106/485 | macOS app signing artifacts: inspect code signatures, entitlements, hardened runtime, sandbox, Gatekeeper, and trust failures; exclude distribution packaging and notarization submission. |
+| `macos-swiftpm-runner` | 115/280 | macOS SwiftPM packages: build, run, and test package-first repositories and executables when `Package.swift` is primary or no Xcode project exists; not for Xcode-only app bundles. |
+| `macos-swiftui-architect` | 116/821 | macOS SwiftUI scenes: build or refactor windows, commands, toolbars, settings, split views, inspectors, menu bar extras, keyboard flows, and desktop layouts; not AppKit-only behavior. |
+| `macos-telemetry-probe` | 103/412 | macOS runtime telemetry: add and verify privacy-safe Logger/OSLog events, log stream filters, and signposts; not crash diagnosis. |
+| `macos-test-diagnoser` | 113/574 | macOS Xcode and SwiftPM tests: run focused scopes and diagnose build, assertion, crash, async-flake, fixture, entitlement, and host-app failures; separate regressions from setup issues. |
+| `macos-view-architect` | 103/500 | macOS SwiftUI view structure: refactor oversized scenes into subviews, explicit roots, scoped state, command/toolbar ownership, and narrow AppKit bridges. |
+| `macos-window-architect` | 111/799 | macOS 15+ SwiftUI windows: customize toolbar/title chrome, drag regions, materials, minimize/restoration, placement, launch behavior, and borderless styles; prefer SwiftUI before NSWindow. |
+| `swiftpm-build-inspector` | 102/536 | Diagnose SwiftPM graph overhead across dependencies, plugins, module variants, branch pins, macros, binary targets, and slow CI or local Xcode builds. |
+| `swiftui-performance-inspector` | 105/543 | Diagnose SwiftUI rendering and update costs from code or profiles when scrolling janks, CPU or memory spikes, views update excessively, layouts thrash, or apps hang. |
+| `swiftui-view-architect` | 102/481 | Refactor oversized SwiftUI view files into stable, dedicated subviews with MV-first data flow, explicit dependencies, extracted actions, and correct Observation usage. |
+| `tuist-flaky-test-stabilizer` | 107/554 | Stabilize flaky Tuist tests identified by test-insights URLs, test case IDs, or inconsistent local runs; covers test and product-code causes. |
+| `tuist-generation-doctor` | 105/629 | Diagnose Tuist generation, build, and launch failures when `tuist generate`, generated Xcode workspaces, or apps fail or diverge from the source project. |
+| `tuist-migration-planner` | 108/577 | Plan Xcode-to-Tuist migrations for hand-maintained projects, including target, setting, and dependency mapping plus generated build, test, signing, and launch parity. |
+| `tuist-workspace-navigator` | 106/500 | Operate Tuist-generated Xcode workspaces with `tuist generate`, focused generation, tags, buildable folders, and post-generation build or test commands. |
+| `xcode-build-baseline` | 100/623 | Benchmark Xcode clean, cached-clean, zero-change, and incremental builds with fixed inputs, timing summaries, and `.build-benchmark/` artifacts. |
+| `xcode-build-strategist` | 103/959 | Coordinate end-to-end Xcode build optimization audits with recommend-first, approval-gated fixes, specialist analysis, wall-clock priorities, and re-benchmark proof. |
+| `xcode-build-tuner` | 103/749 | Implement approved Xcode build-speed fixes after strategist approval or explicit requests covering build settings, script phases, Swift compilation, or SwiftPM graphs; re-benchmark results. |
+| `xcode-compile-profiler` | 105/494 | Profile Swift and mixed-language compile bottlenecks from timing summaries, frontend diagnostics, type-check warnings, CompileSwiftSources, and SwiftEmitModule; recommend changes only. |
+| `xcode-project-auditor` | 101/480 | Audit Xcode project and target overhead across schemes, settings, dependencies, run scripts, module maps, and explicit modules; require approval before changes. |
+| `xcode-ui-test-stabilizer` | 117/451 | Build and stabilize Xcode UI end-to-end tests with XCUIApplication/xcodebuild for new or unreliable automation, covering environment setup, focus/input reliability, waits, logs, attachments, and flakiness triage. |
 
 #### `kotlin-multiplatform`
 
@@ -590,26 +590,26 @@ Token cells are shown as `startup/body`.
 
 | Skill | Tokens | Description |
 | --- | ---: | --- |
-| `application-assistance` | 89/496 | Application assistance maps reviewed candidate data into a specific form, isolates sensitive or legal questions, previews every external effect, and stops before submission until explicitly authorized. |
-| `application-campaign` | 94/481 | Application campaigns plan and execute bounded multi-role rosters with exact per-role artifacts, approval hashes, outcome accounting, and reconciliation. Excludes blind bulk apply and single-form drafting. |
-| `application-tailoring` | 93/471 | Role-specific tailoring produces truthful resumes, cover letters, short answers, and narrative plans from verified evidence, with claim traceability and artifact review. Excludes browser form mutation. |
-| `career` | 100/1,106 | Career routing handles broad or multi-stage requests across context, direction, market, jobs, materials, applications, communication, interviews, offers, operations, development, governance, and sources. Focused tasks use the owning skill. |
-| `career-context` | 93/567 | Career context capture turns source material and user corrections into provenance-linked facts, evidence, preferences, constraints, accomplishments, and reusable story candidates. Excludes drafting a role-specific application. |
-| `career-data-governance` | 100/389 | Career data governance inventories private workspace data and plans disclosure, export, retention, legal hold, scoped deletion, and deletion proof. Excludes automatic evidence cleanup and provider writes without approval. |
-| `career-development` | 95/412 | Career development turns verified targets or repeated evidence gaps into bounded learning, portfolio, visibility, mentoring, and internal-mobility experiments with checkpoints. Excludes role-family selection and application work. |
-| `career-direction` | 96/435 | Career direction compares role families, pivots, and transferable evidence, then defines reversible experiments when the user needs target options. Excludes live-opening search and growth plans for an already chosen target. |
-| `career-inbox` | 96/437 | Career inbox reconciliation reads bounded accounts and queries, classifies job-search messages, maps them to opportunities, and gates exact mail mutations. Excludes general mailbox cleanup and recruiter reply drafting. |
-| `career-market-research` | 96/438 | Career market research investigates occupations, employers, compensation, demand, geography, work authorization language, and hiring practices using dated sources and explicit uncertainty. Excludes personalized fit scoring. |
-| `career-materials` | 91/574 | Career asset creation builds evidence-backed baseline resumes, profiles, portfolios, case studies, accomplishment inventories, and reference briefs. Excludes tailoring to one open role. |
-| `career-networking` | 98/392 | Career networking finds authorized warm paths and drafts outbound referral, recruiter-outreach, informational-interview, and follow-up messages with minimal contact data. Excludes inbound recruiter threads and unapproved sending. |
-| `career-operations` | 102/381 | Career operations reconstructs durable workspace state and produces a daily action queue, campaign and inbox reconciliation, metrics, follow-ups, and drift checks. Excludes using dashboards, tabs, or README notes as canonical state. |
-| `career-pipeline` | 101/522 | Career pipeline records event-sourced opportunity stages, outcomes, artifact lineage, follow-ups, interviews, and offers, and analyzes bounded conversion history. Excludes cross-surface daily operations and unverified status changes. |
-| `career-source-adapter` | 100/529 | Career source adapters specify and vet new job, mail, calendar, taxonomy, document, or browser providers through capability, normalization, privacy, licensing, and effect contracts. Excludes automatic activation. |
-| `interview-preparation` | 98/436 | Interview preparation handles stage-specific competency maps, evidence-backed stories, mock practice, interviewer questions, reference planning, logistics, and post-interview debriefs across behavioral and role-specific interviews. |
-| `offer-negotiation` | 94/400 | Offer decision support normalizes cash, equity, benefits, constraints, uncertainty, and current market evidence; compares options and drafts a negotiation plan without accepting or sending. |
-| `opportunity-analysis` | 102/457 | Opportunity analysis maps a posting to verified evidence, hard constraints, gaps, employer signals, scam risks, and a transparent apply, clarify, defer, or decline recommendation. Triggers on pasted text or a job URL. |
-| `opportunity-search` | 99/508 | Opportunity search finds, normalizes, filters, deduplicates, and ranks fresh job leads under an explicit or discoverable policy and authorized sources. Excludes fit decisions on one posting and application submission. |
-| `recruiter-coordination` | 96/426 | Recruiter coordination reconciles messages and calendars, distinguishes chat, proposed slot, and confirmed interview, drafts responses, and records follow-ups without sending or booking until approved. |
+| `application-assistance` | 85/496 | Application assistance maps reviewed candidate data into a specific form, isolates sensitive or legal questions, previews every external effect, and stops before submission until explicitly authorized. |
+| `application-campaign` | 90/481 | Application campaigns plan and execute bounded multi-role rosters with exact per-role artifacts, approval hashes, outcome accounting, and reconciliation. Excludes blind bulk apply and single-form drafting. |
+| `application-tailoring` | 89/471 | Role-specific tailoring produces truthful resumes, cover letters, short answers, and narrative plans from verified evidence, with claim traceability and artifact review. Excludes browser form mutation. |
+| `career` | 96/1,106 | Career routing handles broad or multi-stage requests across context, direction, market, jobs, materials, applications, communication, interviews, offers, operations, development, governance, and sources. Focused tasks use the owning skill. |
+| `career-context` | 89/567 | Career context capture turns source material and user corrections into provenance-linked facts, evidence, preferences, constraints, accomplishments, and reusable story candidates. Excludes drafting a role-specific application. |
+| `career-data-governance` | 96/389 | Career data governance inventories private workspace data and plans disclosure, export, retention, legal hold, scoped deletion, and deletion proof. Excludes automatic evidence cleanup and provider writes without approval. |
+| `career-development` | 91/412 | Career development turns verified targets or repeated evidence gaps into bounded learning, portfolio, visibility, mentoring, and internal-mobility experiments with checkpoints. Excludes role-family selection and application work. |
+| `career-direction` | 92/435 | Career direction compares role families, pivots, and transferable evidence, then defines reversible experiments when the user needs target options. Excludes live-opening search and growth plans for an already chosen target. |
+| `career-inbox` | 92/437 | Career inbox reconciliation reads bounded accounts and queries, classifies job-search messages, maps them to opportunities, and gates exact mail mutations. Excludes general mailbox cleanup and recruiter reply drafting. |
+| `career-market-research` | 92/438 | Career market research investigates occupations, employers, compensation, demand, geography, work authorization language, and hiring practices using dated sources and explicit uncertainty. Excludes personalized fit scoring. |
+| `career-materials` | 87/574 | Career asset creation builds evidence-backed baseline resumes, profiles, portfolios, case studies, accomplishment inventories, and reference briefs. Excludes tailoring to one open role. |
+| `career-networking` | 94/392 | Career networking finds authorized warm paths and drafts outbound referral, recruiter-outreach, informational-interview, and follow-up messages with minimal contact data. Excludes inbound recruiter threads and unapproved sending. |
+| `career-operations` | 98/381 | Career operations reconstructs durable workspace state and produces a daily action queue, campaign and inbox reconciliation, metrics, follow-ups, and drift checks. Excludes using dashboards, tabs, or README notes as canonical state. |
+| `career-pipeline` | 97/522 | Career pipeline records event-sourced opportunity stages, outcomes, artifact lineage, follow-ups, interviews, and offers, and analyzes bounded conversion history. Excludes cross-surface daily operations and unverified status changes. |
+| `career-source-adapter` | 96/529 | Career source adapters specify and vet new job, mail, calendar, taxonomy, document, or browser providers through capability, normalization, privacy, licensing, and effect contracts. Excludes automatic activation. |
+| `interview-preparation` | 94/436 | Interview preparation handles stage-specific competency maps, evidence-backed stories, mock practice, interviewer questions, reference planning, logistics, and post-interview debriefs across behavioral and role-specific interviews. |
+| `offer-negotiation` | 90/400 | Offer decision support normalizes cash, equity, benefits, constraints, uncertainty, and current market evidence; compares options and drafts a negotiation plan without accepting or sending. |
+| `opportunity-analysis` | 98/457 | Opportunity analysis maps a posting to verified evidence, hard constraints, gaps, employer signals, scam risks, and a transparent apply, clarify, defer, or decline recommendation. Triggers on pasted text or a job URL. |
+| `opportunity-search` | 95/508 | Opportunity search finds, normalizes, filters, deduplicates, and ranks fresh job leads under an explicit or discoverable policy and authorized sources. Excludes fit decisions on one posting and application submission. |
+| `recruiter-coordination` | 92/426 | Recruiter coordination reconciles messages and calendars, distinguishes chat, proposed slot, and confirmed interview, drafts responses, and records follow-ups without sending or booking until approved. |
 
 ## Repository Design
 
