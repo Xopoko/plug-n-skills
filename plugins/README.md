@@ -11,7 +11,7 @@ surfaces and must be refreshed from this tree rather than edited directly.
 
 | Directory | Codex id | Claude marketplace id | Focus |
 | --- | --- | --- | --- |
-| `agent-harness` | `agent-harness@local` | `agent-harness@xopoko-plug-n-skills` | Design and evaluate agent harnesses; operate Codex and Claude runtimes, hand credentials from an operator or 1Password directly to target processes, and manage automation, diagnostics, MCP, sessions, and local schedulers. |
+| `agent-harness` | `agent-harness@local` | `agent-harness@xopoko-plug-n-skills` | Design runtime-reconfiguration safety contracts and evaluate agent harnesses; operate Codex and Claude runtimes, hand credentials from an operator or 1Password directly to target processes, and manage automation, diagnostics, MCP, sessions, and local schedulers. |
 | `capability-workbench` | `capability-workbench@local` | `capability-workbench@xopoko-plug-n-skills` | Engineer reliable agent skills, plugins, guidance, trigger contracts, evaluations, and capability portfolios. |
 | `context-density` | `context-density@local` | `context-density@xopoko-plug-n-skills` | Audit agent context cost, prompt contracts, typed state, compression, and structural overlap. |
 | `git-workflows` | `git-workflows@local` | `git-workflows@xopoko-plug-n-skills` | Bind eligible GitHub/GitLab access, review code and feedback, deliver stacked changes, and recover worktrees or signed commits with fail-closed proof. |

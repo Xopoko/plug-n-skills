@@ -67,6 +67,71 @@ This separation supports dry-run registries, remote executors, domain-specific
 approval, and honest capability reporting without granting execution through
 prompt text.
 
+## Runtime Generations And Reconfiguration
+
+Treat a live configuration change as a versioned admission and lifecycle
+protocol, not as file replacement or an unload callback. A coherent runtime
+generation contains the configuration digest, provider adapters, tool registry
+and executor bindings, policy, context builder, loop revision, state store, and
+every interface or dependency version needed by an admitted run.
+
+```text
+candidate = build immutable generation outside the active path
+validate schemas, dependencies, capabilities, isolation, and migrations
+if active_generation != candidate.expected_active: reject stale candidate
+stage candidate, bound readiness, and retain the last-known-good generation
+atomically publish candidate for new admissions and close old admission
+bind each new run and callback to that generation
+monitor a bounded post-activation health window
+on failure CAS only failed generation + activation attempt to retained target
+if a newer generation is active, reject the rollback as stale
+pin or explicitly migrate bindings; independently drain/cancel retirement
+await teardown and release the old generation only after its leases reach zero
+```
+
+- Negotiate capabilities per generation. Capability loss is a new compatibility
+  decision, never a silent degradation for already admitted runs. Validate that
+  the candidate provider adapters still supply every required provider-boundary
+  capability before activation.
+- Prefer pinning an in-flight run to the generation it captured. A migration is
+  a typed state transition with compatibility checks, a durable receipt, and
+  its own failure and rollback behavior; pointer reassignment is not migration.
+- Separate binding from retirement. Pinning says which generation an admitted
+  run uses; drain, cancel, or drain-then-cancel says how the old generation
+  reaches quiescence after admission closes. Bound the retirement, require
+  cancellation acknowledgement or fencing at timeout, and await teardown.
+- Fence every late provider, tool, child-run, watcher, and health callback by
+  both run ID and generation ID. A current callback cannot complete an old
+  intent, and an old callback cannot mutate the current generation.
+- Serialize refresh requests or coalesce them behind one runner. This prevents
+  competing rebuilds but does not by itself make a multi-component activation
+  atomic.
+- Await asynchronous startup, health, quiescence, and teardown. Starting cleanup
+  in reverse order does not prove that cleanup completed in that order.
+- Keep the prior generation reachable until the health window is closed,
+  rollback is terminal, leases are zero, and teardown is complete. A candidate
+  that fails before commit leaves the expected active generation unchanged. A
+  candidate that fails after commit rolls back only through CAS bound to its
+  failed generation and activation attempt; a stale rollback cannot overwrite
+  a later activation. A failed rollback is a distinct terminal lifecycle result.
+- Separate lifecycle ownership from security isolation. Dependency scopes,
+  namespaces, and reversible callbacks do not contain untrusted code; enforce
+  process, runtime, container, filesystem, network, and credential boundaries
+  outside the module system where the threat model requires them.
+- Runtime rollback changes host routing and components. Durable or external
+  effects produced before it remain subject to intent, idempotency,
+  reconciliation, and compensation contracts.
+- Make run evidence executable, not decorative: a reconfiguration scenario
+  resolves to fault-injection and oracle IDs, while its v2 result resolves to
+  the design, evaluation plan, activation receipt, generation-bound trace, and
+  effect evidence. Pin keeps one generation ID through terminal; migration
+  requires different IDs and a durable receipt.
+
+This protocol supports a narrow route-level hot swap without claiming that
+arbitrary module code, local mutable state, or external effects can be replaced
+transactionally. Prefer a controlled restart when the candidate cannot satisfy
+the compatibility, state-transfer, isolation, or quiescence contract.
+
 ## Canonical Append-Only Log, Projections, And Checkpoints
 
 Treat the append-only typed event log as the canonical run history.
@@ -207,5 +272,8 @@ Treat each pair below as explicitly non-equivalent:
   sequence;
 - context summary != durable memory != run evidence;
 - child process != isolated trust domain;
+- effect disposer registered != disposer completed != external effect reversed;
+- candidate imported != candidate healthy != generation atomically activated;
+- runtime rollback != state migration != external-effect compensation;
 - trace completeness != telemetry representativeness != evaluation validity;
 - passing one benchmark != production reliability != universal capability.

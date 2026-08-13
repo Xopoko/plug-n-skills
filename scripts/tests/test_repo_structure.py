@@ -155,6 +155,16 @@ class RepoStructureTest(unittest.TestCase):
         self.assertIn("agent_harness.design.v1", engineering)
         self.assertIn("agent_harness.evaluation_plan.v1", evaluation)
         self.assertIn("agent_harness.run_result.v1", evaluation)
+        self.assertIn("agent_harness.run_result.v2", evaluation)
+        self.assertIn("hot swap", router)
+        self.assertIn("runtime reconfiguration", engineering)
+        self.assertIn("concurrent generations", evaluation)
+        contracts = (plugin / "references" / "agent-harness-contracts.md").read_text()
+        validator_text = validator.read_text()
+        for marker in ("candidate_generation", "rollback_via_compare_and_swap"):
+            self.assertIn(marker, contracts)
+        for marker in ("RECONFIGURATION_SCENARIO_CLASSES", "isolation_leak_count"):
+            self.assertIn(marker, validator_text)
         for name in references:
             self.assertTrue(
                 (plugin / "references" / name).is_file(),

@@ -473,6 +473,7 @@ def validate_agent_harness_surface(root: Path) -> list[str]:
         "agent_harness.design.v1",
         "agent_harness.evaluation_plan.v1",
         "agent_harness.run_result.v1",
+        "agent_harness.run_result.v2",
     )
     credential_skill = plugin / "skills" / "credential-handoff" / "SKILL.md"
     credential_reference = plugin / "references" / "credential-handoff-contract.md"
@@ -536,6 +537,7 @@ def validate_agent_harness_surface(root: Path) -> list[str]:
         "agent-harness-evaluation": (
             "agent_harness.evaluation_plan.v1",
             "agent_harness.run_result.v1",
+            "agent_harness.run_result.v2",
         ),
     }
     for skill_name, required_schemas in skill_schema_contracts.items():
@@ -545,6 +547,44 @@ def validate_agent_harness_surface(root: Path) -> list[str]:
             if schema not in text:
                 errors.append(
                     f"plugins/agent-harness/skills/{skill_name}/SKILL.md: missing {schema}"
+                )
+
+    engineering_skill = plugin / "skills" / "agent-harness-engineering" / "SKILL.md"
+    evaluation_skill = plugin / "skills" / "agent-harness-evaluation" / "SKILL.md"
+    engineering_text = (
+        engineering_skill.read_text(encoding="utf-8") if engineering_skill.is_file() else ""
+    )
+    evaluation_text = (
+        evaluation_skill.read_text(encoding="utf-8") if evaluation_skill.is_file() else ""
+    )
+    reconfiguration_markers = (
+        (router, router_text, ("hot swap", "concurrent runtime generations")),
+        (
+            engineering_skill,
+            engineering_text,
+            ("runtime reconfiguration", "runtime_reconfiguration"),
+        ),
+        (
+            evaluation_skill,
+            evaluation_text,
+            ("concurrent generations", "runtime_reconfiguration"),
+        ),
+        (
+            contracts,
+            contracts_text,
+            ("candidate_generation", "rollback_via_compare_and_swap"),
+        ),
+        (
+            validator,
+            validator_text,
+            ("RECONFIGURATION_SCENARIO_CLASSES", "isolation_leak_count"),
+        ),
+    )
+    for path, text, markers in reconfiguration_markers:
+        for marker in markers:
+            if marker not in text:
+                errors.append(
+                    f"{path.relative_to(root)}: missing runtime reconfiguration marker {marker!r}"
                 )
 
     return errors

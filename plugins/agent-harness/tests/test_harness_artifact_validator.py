@@ -153,6 +153,130 @@ def test_harness_artifact_validator() -> None:
         "risks": ["External reconciliation can be temporarily unavailable."],
     }
 
+    reconfiguration_block = {
+        "supported": True,
+        "rationale": "The service changes provider and executor bindings without stopping admission.",
+        "candidate_generation": {
+            "id_schema": "agent_harness.runtime_generation.v1",
+            "config_revision": "fixture-config@2",
+            "config_digest": "sha256:fixture-config-v2",
+            "compatibility_policy": "Require matching declared interface major versions.",
+            "state_migration": "Validate a versioned projection migration before admission.",
+            "provenance": ["fixture-source@2", "fixture-lock@2"],
+            "components": [
+                {
+                    "id": "provider:fixture",
+                    "kind": "provider_adapter",
+                    "revision": "2.0.0",
+                    "interface_version": "provider.v1",
+                    "capabilities": ["typed_tool_calls", "cancellation"],
+                },
+                {
+                    "id": "executor:record.update",
+                    "kind": "executor",
+                    "revision": "2.0.0",
+                    "interface_version": "record.update.v1",
+                    "capabilities": ["idempotency_key", "effect_reconciliation"],
+                },
+                {
+                    "id": "tools:fixture",
+                    "kind": "tool_registry",
+                    "revision": "2.0.0",
+                    "interface_version": "tools.v1",
+                    "capabilities": [],
+                },
+                {
+                    "id": "policy:fixture",
+                    "kind": "policy",
+                    "revision": "2.0.0",
+                    "interface_version": "policy.v1",
+                    "capabilities": [],
+                },
+                {
+                    "id": "context:fixture",
+                    "kind": "context_builder",
+                    "revision": "2.0.0",
+                    "interface_version": "context.v1",
+                    "capabilities": [],
+                },
+                {
+                    "id": "loop:fixture",
+                    "kind": "control_loop",
+                    "revision": "2.0.0",
+                    "interface_version": "control-loop.v1",
+                    "capabilities": [],
+                },
+                {
+                    "id": "state:fixture",
+                    "kind": "state_store",
+                    "revision": "2.0.0",
+                    "interface_version": "state.v1",
+                    "capabilities": [],
+                },
+            ],
+        },
+        "activation": {
+            "candidate_validation": "Validate schemas, dependencies, and capabilities before staging.",
+            "attempt_id_schema": "agent_harness.activation_attempt.v1",
+            "expected_active_generation": "Bind to the generation observed when candidate build started.",
+            "compare_and_swap": True,
+            "readiness_gate": "Await candidate startup and synthetic readiness probes before publication.",
+            "readiness_timeout_seconds": 15,
+            "commit_point": "Publish one active-generation pointer for new admissions.",
+            "health_gate": "Exercise provider and executor probes before releasing the prior generation.",
+            "health_window_seconds": 60,
+            "pre_commit_failure_behavior": "preserve_expected_active_generation",
+            "post_commit_failure_behavior": "rollback_via_compare_and_swap",
+        },
+        "run_binding": {
+            "admission": "Bind a new run to the generation read at admission.",
+            "binding_policy": "pin",
+            "late_result_fencing": "Require matching run and generation IDs on every callback.",
+            "lease_release": "Release the generation after its final terminal callback is durable.",
+            "retirement": {
+                "admission_closed_at_commit": True,
+                "mode": "drain_then_cancel",
+                "quiescence_condition": "No live leases or pending generation-bound callbacks remain.",
+                "timeout_seconds": 30,
+                "timeout_behavior": "cancel_and_fence",
+                "cancel_acknowledgement": "Record acknowledgement or timeout for every cancelled run.",
+                "teardown_completion": "Await every owned disposer and resource release.",
+            },
+        },
+        "isolation": {
+            "boundary_type": "process",
+            "trust_model": "reviewed_trusted",
+            "authority_surfaces": ["filesystem", "network", "credentials"],
+            "failure_containment": "A candidate failure cannot mutate the active registry.",
+            "quarantine": "Stop admission and retain diagnostics for a failed candidate.",
+            "enforcement_evidence": "Record process policy and brokered authority probe results.",
+        },
+        "rollback": {
+            "retain_prior_generation": True,
+            "expected_failed_generation": "Use the generation published by this activation attempt.",
+            "target_generation": "Use the retained predecessor of the failed generation.",
+            "activation_attempt_binding": "Bind the rollback to one activation attempt ID.",
+            "compare_and_swap": True,
+            "timeout_seconds": 30,
+            "trigger": "Candidate health gate fails during the rollback window.",
+            "receipt": "Append the expected, failed, and restored generation IDs.",
+            "failed_generation_runs": "Pin admitted runs or cancel and fence them under the recorded retirement policy.",
+            "external_effects": "Reconcile effects by their original intent and effect IDs.",
+            "release_condition": {
+                "health_window_closed": True,
+                "rollback_terminal": True,
+                "leases_zero": True,
+                "teardown_complete": True,
+            },
+        },
+        "evidence": {
+            "event_schema": "agent_harness.runtime_lifecycle_event.v1",
+            "generation_binding": "Record the generation ID on every run event and result.",
+            "activation_receipt": "Record candidate validation and the admission commit point.",
+            "rollback_receipt": "Record trigger, outcome, timeout, and retained generation.",
+        },
+    }
+
     evaluation = {
         "schema": "agent_harness.evaluation_plan.v1",
         "system_tuple": system_tuple(),
@@ -226,6 +350,73 @@ def test_harness_artifact_validator() -> None:
         "provenance": ["fixture-suite@1.0.0", "evaluator@1.0.0"],
     }
 
+    reconfiguration_classes = [
+        "reconfiguration_invalid_candidate",
+        "reconfiguration_capability_loss",
+        "reconfiguration_partial_initialization",
+        "reconfiguration_concurrent_generations",
+        "reconfiguration_late_result",
+        "reconfiguration_post_activation_failure",
+        "reconfiguration_stale_rollback",
+        "reconfiguration_rollback",
+        "reconfiguration_external_effect_after_commit",
+        "reconfiguration_isolation_leak",
+    ]
+    reconfiguration_metrics = [
+        "generation_misbinding_count",
+        "generation_evidence_gap_count",
+        "partial_activation_count",
+        "unauthorized_capability_change_count",
+        "stale_rollback_overwrite_count",
+        "false_rollback_success_count",
+        "external_effect_misreport_count",
+        "isolation_leak_count",
+    ]
+
+    reconfiguration_evaluation = json.loads(json.dumps(evaluation))
+    reconfiguration_evaluation["runtime_reconfiguration"] = {
+        "claimed": True,
+        "rationale": "The candidate design claims live generation replacement.",
+        "design_ref": "sha256:fixture-design-with-reconfiguration",
+        "result_schema": "agent_harness.run_result.v2",
+    }
+    for scenario_class in reconfiguration_classes:
+        scenario_id = f"fixture-{scenario_class.replace('_', '-')}"
+        injection_id = f"inject-{scenario_class.replace('_', '-')}"
+        reconfiguration_evaluation["task_suite"]["scenario_ids"].append(scenario_id)
+        reconfiguration_evaluation["fault_injection"].append(
+            {
+                "id": injection_id,
+                "target": "runtime generation lifecycle",
+                "method": f"Inject the declared {scenario_class} boundary condition.",
+                "classes": [scenario_class],
+            }
+        )
+        reconfiguration_evaluation["scenarios"].append(
+            {
+                "id": scenario_id,
+                "classes": [scenario_class],
+                "fault_injection_ids": [injection_id],
+                "oracle_ids": ["post-state"],
+            }
+        )
+    for metric_name in reconfiguration_metrics:
+        reconfiguration_evaluation["metrics"].append(
+            {
+                "name": metric_name,
+                "definition": f"Observed count for {metric_name}.",
+                "denominator": "scheduled runtime-reconfiguration trials",
+            }
+        )
+        reconfiguration_evaluation["release_gates"].append(
+            {
+                "metric": metric_name,
+                "operator": "zero",
+                "threshold": 0,
+                "blocking": True,
+            }
+        )
+
     run_result = {
         "schema": "agent_harness.run_result.v1",
         "run_id": "run-fixture-001",
@@ -272,6 +463,20 @@ def test_harness_artifact_validator() -> None:
             "scenario": "1.0.0",
         },
     }
+    reconfiguration_run_result = json.loads(json.dumps(run_result))
+    reconfiguration_run_result["schema"] = "agent_harness.run_result.v2"
+    reconfiguration_run_result["scenario_id"] = "fixture-reconfiguration-stale-rollback"
+    reconfiguration_run_result["runtime_generation"] = {
+        "design_ref": "sha256:fixture-design-with-reconfiguration",
+        "evaluation_plan_ref": "sha256:fixture-reconfiguration-evaluation",
+        "binding_policy": "pin",
+        "admitted_generation_id": "generation-fixture-002",
+        "terminal_generation_id": "generation-fixture-002",
+        "activation_attempt_id": "activation-fixture-002",
+        "activation_receipt_ref": "sha256:fixture-activation-receipt",
+        "trace_generation_binding_ref": "sha256:fixture-generation-trace",
+        "effect_generation_binding_ref": "sha256:fixture-generation-effects",
+    }
 
     with tempfile.TemporaryDirectory() as tmp:
         root = Path(tmp)
@@ -290,6 +495,371 @@ def test_harness_artifact_validator() -> None:
                 result.returncode == 0 and payload.get("valid") is True,
                 result.stdout + result.stderr,
             )
+
+        reconfigured = json.loads(json.dumps(design))
+        reconfigured["runtime_reconfiguration"] = reconfiguration_block
+        path = root / "reconfigured-design.json"
+        path.write_text(json.dumps(reconfigured), encoding="utf-8")
+        result = run([script, str(path), "--json"])
+        payload = json.loads(result.stdout)
+        check(
+            "harness validator: complete runtime reconfiguration design passes",
+            result.returncode == 0 and payload.get("valid") is True,
+            result.stdout,
+        )
+
+        restart_only = json.loads(json.dumps(design))
+        restart_only["runtime_reconfiguration"] = {
+            "supported": False,
+            "rationale": "This deployment replaces the process through a controlled restart.",
+        }
+        path = root / "restart-only-design.json"
+        path.write_text(json.dumps(restart_only), encoding="utf-8")
+        result = run([script, str(path), "--json"])
+        payload = json.loads(result.stdout)
+        check(
+            "harness validator: explicit restart-only design passes",
+            result.returncode == 0 and payload.get("valid") is True,
+            result.stdout,
+        )
+
+        path = root / "reconfiguration-evaluation.json"
+        path.write_text(json.dumps(reconfiguration_evaluation), encoding="utf-8")
+        result = run([script, str(path), "--json"])
+        payload = json.loads(result.stdout)
+        check(
+            "harness validator: complete runtime reconfiguration evaluation passes",
+            result.returncode == 0 and payload.get("valid") is True,
+            result.stdout,
+        )
+
+        path = root / "reconfiguration-run-result.json"
+        path.write_text(json.dumps(reconfiguration_run_result), encoding="utf-8")
+        result = run([script, str(path), "--json"])
+        payload = json.loads(result.stdout)
+        check(
+            "harness validator: generation-bound v2 run result passes",
+            result.returncode == 0 and payload.get("valid") is True,
+            result.stdout,
+        )
+
+        migrated_run_result = json.loads(json.dumps(reconfiguration_run_result))
+        migrated_run_result["runtime_generation"]["binding_policy"] = "explicit_migrate"
+        migrated_run_result["runtime_generation"][
+            "terminal_generation_id"
+        ] = "generation-fixture-003"
+        migrated_run_result["runtime_generation"][
+            "migration_receipt_ref"
+        ] = "sha256:fixture-migration-receipt"
+        path = root / "migrated-reconfiguration-run-result.json"
+        path.write_text(json.dumps(migrated_run_result), encoding="utf-8")
+        result = run([script, str(path), "--json"])
+        payload = json.loads(result.stdout)
+        check(
+            "harness validator: explicit migration result carries a receipt",
+            result.returncode == 0 and payload.get("valid") is True,
+            result.stdout,
+        )
+
+        partial_reconfiguration = json.loads(json.dumps(reconfigured))
+        del partial_reconfiguration["runtime_reconfiguration"]["activation"]["health_gate"]
+        path = root / "partial-reconfiguration.json"
+        path.write_text(json.dumps(partial_reconfiguration), encoding="utf-8")
+        result = run([script, str(path), "--json"])
+        check(
+            "harness validator: partial reconfiguration contract fails",
+            result.returncode != 0 and "health_gate" in result.stdout,
+            result.stdout,
+        )
+
+        incomplete_generation = json.loads(json.dumps(reconfigured))
+        incomplete_generation["runtime_reconfiguration"]["candidate_generation"][
+            "components"
+        ] = [
+            component
+            for component in incomplete_generation["runtime_reconfiguration"][
+                "candidate_generation"
+            ]["components"]
+            if component["kind"] != "state_store"
+        ]
+        path = root / "incomplete-generation.json"
+        path.write_text(json.dumps(incomplete_generation), encoding="utf-8")
+        result = run([script, str(path), "--json"])
+        check(
+            "harness validator: candidate generation covers required runtime seams",
+            result.returncode != 0
+            and "missing required runtime component kinds" in result.stdout
+            and "state_store" in result.stdout,
+            result.stdout,
+        )
+
+        capability_loss = json.loads(json.dumps(reconfigured))
+        provider_component = next(
+            component
+            for component in capability_loss["runtime_reconfiguration"][
+                "candidate_generation"
+            ]["components"]
+            if component["kind"] == "provider_adapter"
+        )
+        provider_component["capabilities"].remove("cancellation")
+        path = root / "candidate-capability-loss.json"
+        path.write_text(json.dumps(capability_loss), encoding="utf-8")
+        result = run([script, str(path), "--json"])
+        check(
+            "harness validator: provider capability negotiation is generation-bound",
+            result.returncode != 0
+            and "provider adapters omit required capabilities" in result.stdout
+            and "cancellation" in result.stdout,
+            result.stdout,
+        )
+
+        unsupported_reconfiguration = json.loads(json.dumps(design))
+        unsupported_reconfiguration["runtime_reconfiguration"] = {
+            "supported": False,
+            "rationale": "This host requires a controlled restart.",
+            "activation": {"claim": "hot swap"},
+        }
+        path = root / "unsupported-reconfiguration.json"
+        path.write_text(json.dumps(unsupported_reconfiguration), encoding="utf-8")
+        result = run([script, str(path), "--json"])
+        check(
+            "harness validator: unsupported reconfiguration cannot claim activation",
+            result.returncode != 0 and "cannot declare activation fields" in result.stdout,
+            result.stdout,
+        )
+
+        unsafe_reconfiguration = json.loads(json.dumps(reconfigured))
+        unsafe_reconfiguration["runtime_reconfiguration"]["activation"][
+            "post_commit_failure_behavior"
+        ] = "best_effort_cleanup"
+        unsafe_reconfiguration["runtime_reconfiguration"]["rollback"][
+            "retain_prior_generation"
+        ] = False
+        path = root / "unsafe-reconfiguration.json"
+        path.write_text(json.dumps(unsafe_reconfiguration), encoding="utf-8")
+        result = run([script, str(path), "--json"])
+        check(
+            "harness validator: unsafe activation and rollback fail",
+            result.returncode != 0
+            and "rollback_via_compare_and_swap" in result.stdout
+            and "retain_prior_generation" in result.stdout,
+            result.stdout,
+        )
+
+        implicit_migration = json.loads(json.dumps(reconfigured))
+        implicit_migration["runtime_reconfiguration"]["run_binding"][
+            "binding_policy"
+        ] = "explicit_migrate"
+        implicit_migration["runtime_reconfiguration"]["run_binding"]["retirement"][
+            "mode"
+        ] = "migrate"
+        path = root / "implicit-migration.json"
+        path.write_text(json.dumps(implicit_migration), encoding="utf-8")
+        result = run([script, str(path), "--json"])
+        check(
+            "harness validator: migration needs an explicit contract",
+            result.returncode != 0 and "migration_contract" in result.stdout,
+            result.stdout,
+        )
+
+        stale_rollback_contract = json.loads(json.dumps(reconfigured))
+        del stale_rollback_contract["runtime_reconfiguration"]["rollback"][
+            "expected_failed_generation"
+        ]
+        path = root / "stale-rollback-contract.json"
+        path.write_text(json.dumps(stale_rollback_contract), encoding="utf-8")
+        result = run([script, str(path), "--json"])
+        check(
+            "harness validator: rollback is CAS-bound to the failed generation",
+            result.returncode != 0 and "expected_failed_generation" in result.stdout,
+            result.stdout,
+        )
+
+        open_old_admission = json.loads(json.dumps(reconfigured))
+        open_old_admission["runtime_reconfiguration"]["run_binding"]["retirement"][
+            "admission_closed_at_commit"
+        ] = False
+        path = root / "open-old-admission.json"
+        path.write_text(json.dumps(open_old_admission), encoding="utf-8")
+        result = run([script, str(path), "--json"])
+        check(
+            "harness validator: activation closes old admission atomically",
+            result.returncode != 0 and "admission_closed_at_commit" in result.stdout,
+            result.stdout,
+        )
+
+        untrusted_same_process = json.loads(json.dumps(reconfigured))
+        untrusted_same_process["runtime_reconfiguration"]["isolation"][
+            "trust_model"
+        ] = "untrusted"
+        untrusted_same_process["runtime_reconfiguration"]["isolation"][
+            "boundary_type"
+        ] = "same_process"
+        path = root / "untrusted-same-process.json"
+        path.write_text(json.dumps(untrusted_same_process), encoding="utf-8")
+        result = run([script, str(path), "--json"])
+        check(
+            "harness validator: untrusted modules need an external boundary",
+            result.returncode != 0
+            and "untrusted modules cannot use same_process" in result.stdout,
+            result.stdout,
+        )
+
+        result_without_generation = json.loads(json.dumps(reconfiguration_run_result))
+        del result_without_generation["runtime_generation"]
+        path = root / "result-without-generation.json"
+        path.write_text(json.dumps(result_without_generation), encoding="utf-8")
+        result = run([script, str(path), "--json"])
+        check(
+            "harness validator: run results carry generation evidence",
+            result.returncode != 0 and "runtime_generation" in result.stdout,
+            result.stdout,
+        )
+
+        misbound_pin_result = json.loads(json.dumps(reconfiguration_run_result))
+        misbound_pin_result["runtime_generation"][
+            "terminal_generation_id"
+        ] = "generation-fixture-003"
+        path = root / "misbound-pin-result.json"
+        path.write_text(json.dumps(misbound_pin_result), encoding="utf-8")
+        result = run([script, str(path), "--json"])
+        check(
+            "harness validator: pin binding preserves one generation through terminal",
+            result.returncode != 0
+            and "pin binding requires" in result.stdout,
+            result.stdout,
+        )
+
+        unreceipted_migration_result = json.loads(json.dumps(migrated_run_result))
+        del unreceipted_migration_result["runtime_generation"][
+            "migration_receipt_ref"
+        ]
+        path = root / "unreceipted-migration-result.json"
+        path.write_text(json.dumps(unreceipted_migration_result), encoding="utf-8")
+        result = run([script, str(path), "--json"])
+        check(
+            "harness validator: migrated run result requires a migration receipt",
+            result.returncode != 0 and "migration_receipt_ref" in result.stdout,
+            result.stdout,
+        )
+
+        unknown_reconfiguration_field = json.loads(json.dumps(reconfigured))
+        unknown_reconfiguration_field["runtime_reconfiguration"]["activation"][
+            "silent_override"
+        ] = True
+        path = root / "unknown-reconfiguration-field.json"
+        path.write_text(json.dumps(unknown_reconfiguration_field), encoding="utf-8")
+        result = run([script, str(path), "--json"])
+        check(
+            "harness validator: runtime reconfiguration rejects unknown fields",
+            result.returncode != 0
+            and "unknown fields" in result.stdout
+            and "silent_override" in result.stdout,
+            result.stdout,
+        )
+
+        incomplete_reconfiguration_suite = json.loads(
+            json.dumps(reconfiguration_evaluation)
+        )
+        missing_scenario = next(
+            scenario_id
+            for scenario_id in incomplete_reconfiguration_suite["task_suite"][
+                "scenario_ids"
+            ]
+            if "invalid-candidate" in scenario_id
+        )
+        incomplete_reconfiguration_suite["task_suite"]["scenario_ids"].remove(
+            missing_scenario
+        )
+        path = root / "incomplete-reconfiguration-suite.json"
+        path.write_text(json.dumps(incomplete_reconfiguration_suite), encoding="utf-8")
+        result = run([script, str(path), "--json"])
+        check(
+            "harness validator: claimed reconfiguration requires scheduled fault classes",
+            result.returncode != 0
+            and "runtime reconfiguration claim missing required classes" in result.stdout
+            and "reconfiguration_invalid_candidate" in result.stdout,
+            result.stdout,
+        )
+
+        unbound_fault_scenario = json.loads(json.dumps(reconfiguration_evaluation))
+        target_scenario = next(
+            scenario
+            for scenario in unbound_fault_scenario["scenarios"]
+            if "reconfiguration_late_result" in scenario["classes"]
+        )
+        del target_scenario["fault_injection_ids"]
+        path = root / "unbound-fault-scenario.json"
+        path.write_text(json.dumps(unbound_fault_scenario), encoding="utf-8")
+        result = run([script, str(path), "--json"])
+        check(
+            "harness validator: each reconfiguration class binds fault and oracle evidence",
+            result.returncode != 0
+            and "fault_injection_ids" in result.stdout
+            and "reconfiguration_late_result" in result.stdout,
+            result.stdout,
+        )
+
+        llm_only_reconfiguration_scenarios = json.loads(
+            json.dumps(reconfiguration_evaluation)
+        )
+        llm_only_reconfiguration_scenarios["oracles"].append(
+            {
+                "id": "llm-reconfiguration",
+                "type": "llm",
+                "target": "runtime_generation_trace",
+                "version": "1.0.0",
+            }
+        )
+        for scenario in llm_only_reconfiguration_scenarios["scenarios"]:
+            if set(scenario["classes"]) & set(reconfiguration_classes):
+                scenario["oracle_ids"] = ["llm-reconfiguration"]
+        path = root / "llm-only-reconfiguration-scenarios.json"
+        path.write_text(
+            json.dumps(llm_only_reconfiguration_scenarios), encoding="utf-8"
+        )
+        result = run([script, str(path), "--json"])
+        check(
+            "harness validator: each reconfiguration scenario has a non-LLM oracle",
+            result.returncode != 0
+            and "requires a linked deterministic or human oracle" in result.stdout,
+            result.stdout,
+        )
+
+        incomplete_reconfiguration_gates = json.loads(
+            json.dumps(reconfiguration_evaluation)
+        )
+        incomplete_reconfiguration_gates["release_gates"] = [
+            gate
+            for gate in incomplete_reconfiguration_gates["release_gates"]
+            if gate["metric"] != "false_rollback_success_count"
+        ]
+        path = root / "incomplete-reconfiguration-gates.json"
+        path.write_text(json.dumps(incomplete_reconfiguration_gates), encoding="utf-8")
+        result = run([script, str(path), "--json"])
+        check(
+            "harness validator: claimed reconfiguration requires blocking zero gates",
+            result.returncode != 0
+            and "runtime reconfiguration metrics need blocking zero gates" in result.stdout
+            and "false_rollback_success_count" in result.stdout,
+            result.stdout,
+        )
+
+        nonzero_zero_gate = json.loads(json.dumps(reconfiguration_evaluation))
+        target_gate = next(
+            gate
+            for gate in nonzero_zero_gate["release_gates"]
+            if gate["operator"] == "zero"
+        )
+        target_gate["threshold"] = 1
+        path = root / "nonzero-zero-gate.json"
+        path.write_text(json.dumps(nonzero_zero_gate), encoding="utf-8")
+        result = run([script, str(path), "--json"])
+        check(
+            "harness validator: zero operator requires a numeric zero threshold",
+            result.returncode != 0 and "zero operator requires numeric 0" in result.stdout,
+            result.stdout,
+        )
 
         unbounded = json.loads(json.dumps(design))
         unbounded["control_loop"]["bounds"]["max_steps"] = 0

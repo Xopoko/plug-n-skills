@@ -14,10 +14,12 @@ first; then load only the selected leaf skill.
 
 ## Routing
 
-- Design, refactor, or recover the model/tool/state control plane: use
+- Design, refactor, recover, or reconfigure the model/tool/state control plane,
+  including provider, tool, module, or loop hot swap: use
   `agent-harness-engineering`.
 - Benchmark, replay, diagnose, compare, or release-gate complete harness
-  behavior: use `agent-harness-evaluation`.
+  behavior, including concurrent runtime generations and rollback: use
+  `agent-harness-evaluation`.
 - Operate or diagnose Codex CLI: start with `codex-cli`, which routes exec and
   review automation, deferred completion, task supervision, plugin/MCP
   management, doctor/debug, rollout forensics, and app environments.

@@ -1,8 +1,10 @@
 # Agent Harness Plugin
 
-Agent Harness combines vendor-neutral harness engineering and evaluation with
+Agent Harness combines vendor-neutral harness engineering and evaluation,
+including safety contracts and evidence gates for runtime reconfiguration, with
 the operational surfaces for Codex CLI, Claude Code, producer-native deferred
-completion, and local operating-system scheduler proof.
+completion, and local operating-system scheduler proof. It does not provide a
+runtime loader or prove safety from a design artifact alone.
 
 It does not own skill/plugin authoring or portfolio maintenance; those remain
 in Capability Workbench. Generic application architecture remains in
@@ -15,9 +17,11 @@ The plugin exposes 19 skills: one portfolio router and 18 narrow leaves.
 ### Portfolio and harness
 
 - `agent-harness`: routes harness and Codex/Claude runtime requests.
-- `agent-harness-engineering`: designs typed, bounded agent control harnesses.
+- `agent-harness-engineering`: designs typed, bounded control harnesses and
+  versioned provider, tool, module, or loop reconfiguration.
 - `agent-harness-evaluation`: evaluates replay, reliability, recovery,
-  cancellation, context pressure, and release gates.
+  cancellation, concurrent runtime generations, rollback, context pressure,
+  and release gates.
 
 ### Codex CLI
 

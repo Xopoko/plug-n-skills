@@ -182,7 +182,7 @@ replaced to match the repository source, and repeated runs converge.
 
 | Plugin | Use it for |
 | --- | --- |
-| `agent-harness` | Agent harness design and evaluation; Codex and Claude Code operations, secret-safe operator/1Password credential handoff, automation, diagnostics, MCP, hooks, sessions, deferred completion, and local scheduler proof. |
+| `agent-harness` | Agent harness runtime-reconfiguration design and evaluation; Codex and Claude Code operations, secret-safe operator/1Password credential handoff, automation, diagnostics, MCP, hooks, sessions, deferred completion, and local scheduler proof. |
 | `capability-workbench` | Agent capability engineering: frame behavior gaps, author skills/plugins/guidance, validate them against evidence and behavioral baselines, evolve portfolios, and activate vetted artifacts explicitly. |
 | `context-density` | Context design, long-context placement, typed state and companion-drift validation, research-backed acceptance gates, prompt contracts, skill compression, structural handoff, and validation reporting. |
 | `git-workflows` | Capability-bound read-only GitHub/GitLab code review, race-safe GitLab review response, stacked change delivery, worktree recovery, and SSH commit-signing recovery across eligible MCP, connector, CLI, and API adapters. |
@@ -263,8 +263,8 @@ instructions.
 | Skill entrypoints | 198 | - | `SKILL.md` files exposed through plugin metadata. |
 | Reference files | 277 | - | Longer ledgers, contracts, scorecards, and source notes. |
 | Helper and validator scripts | 96 | - | Deterministic plugin-local helpers. |
-| Startup metadata | 198 skills | 16,871 | Skill name, description, and file pointer for routing. |
-| On-demand skill bodies | 198 skills | 144,456 | Instruction bodies after frontmatter, loaded only when selected. |
+| Startup metadata | 198 skills | 16,867 | Skill name, description, and file pointer for routing. |
+| On-demand skill bodies | 198 skills | 144,793 | Instruction bodies after frontmatter, loaded only when selected. |
 
 Regenerate the report after skill edits:
 
@@ -281,7 +281,7 @@ Token columns are `startup metadata / on-demand body`.
 
 | Plugin | Skills | Refs | Scripts | Startup | Body |
 | --- | ---: | ---: | ---: | ---: | ---: |
-| `agent-harness` | 19 | 19 | 7 | 1,451 | 20,329 |
+| `agent-harness` | 19 | 19 | 7 | 1,447 | 20,753 |
 | `capability-workbench` | 11 | 17 | 25 | 807 | 14,939 |
 | `context-density` | 1 | 9 | 8 | 70 | 2,806 |
 | `git-workflows` | 5 | 10 | 6 | 416 | 7,339 |
@@ -302,7 +302,7 @@ Token columns are `startup metadata / on-demand body`.
 
 | Plugin | Description |
 | --- | --- |
-| `agent-harness` | Agent harness design and evaluation plus Codex and Claude runtime operations, secret-safe human credential handoff, 1Password, sessions, deferred completion, and scheduler proof. |
+| `agent-harness` | Agent harness runtime-reconfiguration design and evaluation plus Codex and Claude runtime operations, secret-safe human credential handoff, 1Password, sessions, deferred completion, and scheduler proof. |
 | `capability-workbench` | Artifact-first agent capability engineering for skills, plugins, guidance, and trigger contracts: frame behavior gaps, evaluate baselines and candidates, author validated changes, govern portfolios, and activate explicitly. Use Agent Harness for runtime and harness-level evaluation. |
 | `context-density` | Agent context audits measure token cost, validate prompt/output contracts and typed state, test compression, and route structural skill or plugin overlap to Capability Workbench. |
 | `git-workflows` | Git code review, GitLab discussion response, stacked-change delivery, worktree recovery, and SSH commit-signing recovery use exact-state, capability-selected, fail-closed workflows. |
@@ -327,9 +327,9 @@ Token cells are shown as `startup/body`.
 
 | Skill | Tokens | Description |
 | --- | ---: | --- |
-| `agent-harness` | 75/507 | Agent runtimes and human credential handoff: route harnesses, Codex/Claude operations, 1Password or native prompts, sessions, deferred completion, and scheduler proof. Excludes capability authoring and generic app architecture. |
-| `agent-harness-engineering` | 82/1,176 | Design LLM agent harnesses with typed control loops, tools/state, context/memory, policy, cancellation, recovery, and delegation. Excludes prompt-only, generic app architecture, vendor CLI/config, evaluation-only work, and skill creation. |
-| `agent-harness-evaluation` | 76/1,194 | Evaluate LLM agent harness reliability through replay, regression, failure/restart, cancellation, context pressure, and release gates. Excludes generic tests, surveys, prompt/model-only benchmarks, and design without empirical evidence. |
+| `agent-harness` | 75/532 | Agent runtimes and human credential handoff: route harnesses, Codex/Claude operations, 1Password or native prompts, sessions, deferred completion, and scheduler proof. Excludes capability authoring and generic app architecture. |
+| `agent-harness-engineering` | 80/1,358 | Design agent harnesses for typed loops, runtime reconfiguration, provider/tool/module hot swap, state, policy, cancellation, recovery, and delegation. Excludes prompt-only, generic architecture, vendor CLI/config, and evaluation-only work. |
+| `agent-harness-evaluation` | 74/1,411 | Evaluate agent harness reliability through replay, restart, cancellation, runtime reconfiguration, concurrent generations, rollback, context pressure, and release gates. Excludes generic tests, surveys, and prompt/model-only benchmarks. |
 | `claude-agent-worktrees` | 84/756 | Claude Code sessions coordinate background agents, `claude agents --json`, dispatched-session defaults, worktrees, tmux/iTerm panes, resume/continue/from-pr/fork-session, names and IDs, remote control, and cloud ultrareview runs. |
 | `claude-code` | 69/791 | Claude Code CLI routes local inspection, interactive or print-mode automation, plugin and MCP lifecycle, diagnostics, hooks/settings, background agents, worktrees, sessions, remote control, and ultrareview. |
 | `claude-doctor-debugger` | 83/740 | Claude Code diagnostics isolate install, update, auth, configuration health, broken customizations, safe/bare modes, debug logs, auto-mode, keychain/API-key boundaries, IDE/Chrome integration, doctor warnings, and setup-token failures. |

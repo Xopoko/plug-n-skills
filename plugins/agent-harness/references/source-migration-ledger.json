@@ -1272,6 +1272,104 @@
           "expected_replacements": 1
         }
       ]
+    },
+    {
+      "source_path": "plugins/capability-workbench/references/agent-harness-contracts.md",
+      "destination_path": "references/agent-harness-contracts.md",
+      "treatment": "post_migration_runtime_reconfiguration",
+      "allowed_changes": [
+        {
+          "contract": "Evolve the canonical Agent Harness destination with validated runtime-reconfiguration contracts while retaining the pinned source snapshot as provenance."
+        }
+      ],
+      "receipt": {
+        "base_source_sha256": "07ba1477a988c3d179500ffc5ce7d42834059f4b313d54b4c8d752034daa7480",
+        "reviewed_destination_sha256": "c59e2e2d4ffe39ff7b11518afd04fc54aa7e0077a7dfee8428417668fe59ee0f"
+      }
+    },
+    {
+      "source_path": "plugins/capability-workbench/references/agent-harness-evaluation.md",
+      "destination_path": "references/agent-harness-evaluation.md",
+      "treatment": "post_migration_runtime_reconfiguration",
+      "allowed_changes": [
+        {
+          "contract": "Add conditional runtime-reconfiguration scenarios and zero-tolerance gates without altering the historical source receipt."
+        }
+      ],
+      "receipt": {
+        "base_source_sha256": "51f89b92a5ec252f3cf1f775f02d812f754d74b3c96e21e6e1368ce5d0d94f56",
+        "reviewed_destination_sha256": "1a610de8c49c0b59c25eb55c65ebff270cc3ea031020854f260d09f274326b2a"
+      }
+    },
+    {
+      "source_path": "plugins/capability-workbench/references/agent-harness-landscape.md",
+      "destination_path": "references/agent-harness-landscape.md",
+      "treatment": "post_migration_runtime_reconfiguration",
+      "allowed_changes": [
+        {
+          "contract": "Record source-pinned runtime-reconfiguration evidence and limitations after the original migration."
+        }
+      ],
+      "receipt": {
+        "base_source_sha256": "2eb94c8c27cb983fc8af79cebc4b99dceee871a9982efa70de371a6978dd85b4",
+        "reviewed_destination_sha256": "84ea9abf8c6bffa8c334daa02688da64693dd6bde66627bfdbfce99c003b06b6"
+      }
+    },
+    {
+      "source_path": "plugins/capability-workbench/references/agent-harness-patterns.md",
+      "destination_path": "references/agent-harness-patterns.md",
+      "treatment": "post_migration_runtime_reconfiguration",
+      "allowed_changes": [
+        {
+          "contract": "Distill safe runtime-generation patterns after the original migration while preserving source provenance."
+        }
+      ],
+      "receipt": {
+        "base_source_sha256": "ec158826253971040f10267e079161a903bc6325103c2c0d3976e5f89d824716",
+        "reviewed_destination_sha256": "66baea1423a92f5f54ac720a4456836c45fcdbde38305f2cb2d42887616c1f46"
+      }
+    },
+    {
+      "source_path": "plugins/capability-workbench/scripts/harness/validate_harness_artifact.py",
+      "destination_path": "scripts/harness/validate_harness_artifact.py",
+      "treatment": "post_migration_runtime_reconfiguration",
+      "allowed_changes": [
+        {
+          "contract": "Validate the optional runtime-reconfiguration contract and its conditional evaluation evidence."
+        }
+      ],
+      "receipt": {
+        "base_source_sha256": "af36c1b20f22801d9e0d0b6a77fff80dbd39371223465710b492d026f9d38ab2",
+        "reviewed_destination_sha256": "2526bade9c6f31d15befa58be3c4e049726e8d10044dbbde9f67969f45a6e283"
+      }
+    },
+    {
+      "source_path": "plugins/capability-workbench/skills/agent-harness-engineering/SKILL.md",
+      "destination_path": "skills/agent-harness-engineering/SKILL.md",
+      "treatment": "post_migration_runtime_reconfiguration",
+      "allowed_changes": [
+        {
+          "contract": "Route safe provider, tool, module, and control-loop reconfiguration through the evolved canonical skill."
+        }
+      ],
+      "receipt": {
+        "base_source_sha256": "ed78401dbd6329ae9ceec8aa601fd5ba819bab7de3073ef08dbe1edde1b0a379",
+        "reviewed_destination_sha256": "6f378849d48b5d81604bc9fc29f93a854345bf32a9e98602db58a62fce199607"
+      }
+    },
+    {
+      "source_path": "plugins/capability-workbench/skills/agent-harness-evaluation/SKILL.md",
+      "destination_path": "skills/agent-harness-evaluation/SKILL.md",
+      "treatment": "post_migration_runtime_reconfiguration",
+      "allowed_changes": [
+        {
+          "contract": "Require generation-aware adversarial evaluation when runtime reconfiguration is claimed."
+        }
+      ],
+      "receipt": {
+        "base_source_sha256": "4cca09e1ffc97a9a48f7214279392b49bc488bb41e41d549f2248196f45a7188",
+        "reviewed_destination_sha256": "6085db87b12fd7113fb7b0c7b7805aeea08ebec7bd24a1661b8c92f19e3b6dd3"
+      }
     }
   ],
   "file_mappings": [
@@ -1326,9 +1424,9 @@
       "source_sha256": "07ba1477a988c3d179500ffc5ce7d42834059f4b313d54b4c8d752034daa7480",
       "source_bytes": 14625,
       "destination_path": "references/agent-harness-contracts.md",
-      "treatment": "verbatim",
-      "destination_sha256": "07ba1477a988c3d179500ffc5ce7d42834059f4b313d54b4c8d752034daa7480",
-      "destination_bytes": 14625
+      "treatment": "post_migration_runtime_reconfiguration",
+      "destination_sha256": "c59e2e2d4ffe39ff7b11518afd04fc54aa7e0077a7dfee8428417668fe59ee0f",
+      "destination_bytes": 22638
     },
     {
       "source_plugin": "capability-workbench",
@@ -1337,9 +1435,9 @@
       "source_sha256": "51f89b92a5ec252f3cf1f775f02d812f754d74b3c96e21e6e1368ce5d0d94f56",
       "source_bytes": 11011,
       "destination_path": "references/agent-harness-evaluation.md",
-      "treatment": "verbatim",
-      "destination_sha256": "51f89b92a5ec252f3cf1f775f02d812f754d74b3c96e21e6e1368ce5d0d94f56",
-      "destination_bytes": 11011
+      "treatment": "post_migration_runtime_reconfiguration",
+      "destination_sha256": "1a610de8c49c0b59c25eb55c65ebff270cc3ea031020854f260d09f274326b2a",
+      "destination_bytes": 13392
     },
     {
       "source_plugin": "capability-workbench",
@@ -1348,9 +1446,9 @@
       "source_sha256": "2eb94c8c27cb983fc8af79cebc4b99dceee871a9982efa70de371a6978dd85b4",
       "source_bytes": 11438,
       "destination_path": "references/agent-harness-landscape.md",
-      "treatment": "verbatim",
-      "destination_sha256": "2eb94c8c27cb983fc8af79cebc4b99dceee871a9982efa70de371a6978dd85b4",
-      "destination_bytes": 11438
+      "treatment": "post_migration_runtime_reconfiguration",
+      "destination_sha256": "84ea9abf8c6bffa8c334daa02688da64693dd6bde66627bfdbfce99c003b06b6",
+      "destination_bytes": 13084
     },
     {
       "source_plugin": "capability-workbench",
@@ -1359,9 +1457,9 @@
       "source_sha256": "ec158826253971040f10267e079161a903bc6325103c2c0d3976e5f89d824716",
       "source_bytes": 10177,
       "destination_path": "references/agent-harness-patterns.md",
-      "treatment": "verbatim",
-      "destination_sha256": "ec158826253971040f10267e079161a903bc6325103c2c0d3976e5f89d824716",
-      "destination_bytes": 10177
+      "treatment": "post_migration_runtime_reconfiguration",
+      "destination_sha256": "66baea1423a92f5f54ac720a4456836c45fcdbde38305f2cb2d42887616c1f46",
+      "destination_bytes": 14552
     },
     {
       "source_plugin": "claude-code",
@@ -1557,9 +1655,9 @@
       "source_sha256": "af36c1b20f22801d9e0d0b6a77fff80dbd39371223465710b492d026f9d38ab2",
       "source_bytes": 31439,
       "destination_path": "scripts/harness/validate_harness_artifact.py",
-      "treatment": "verbatim",
-      "destination_sha256": "af36c1b20f22801d9e0d0b6a77fff80dbd39371223465710b492d026f9d38ab2",
-      "destination_bytes": 31439
+      "treatment": "post_migration_runtime_reconfiguration",
+      "destination_sha256": "2526bade9c6f31d15befa58be3c4e049726e8d10044dbbde9f67969f45a6e283",
+      "destination_bytes": 56504
     },
     {
       "source_plugin": "codex-cli",
@@ -1590,9 +1688,9 @@
       "source_sha256": "ed78401dbd6329ae9ceec8aa601fd5ba819bab7de3073ef08dbe1edde1b0a379",
       "source_bytes": 6263,
       "destination_path": "skills/agent-harness-engineering/SKILL.md",
-      "treatment": "verbatim",
-      "destination_sha256": "ed78401dbd6329ae9ceec8aa601fd5ba819bab7de3073ef08dbe1edde1b0a379",
-      "destination_bytes": 6263
+      "treatment": "post_migration_runtime_reconfiguration",
+      "destination_sha256": "6f378849d48b5d81604bc9fc29f93a854345bf32a9e98602db58a62fce199607",
+      "destination_bytes": 7230
     },
     {
       "source_plugin": "capability-workbench",
@@ -1612,9 +1710,9 @@
       "source_sha256": "4cca09e1ffc97a9a48f7214279392b49bc488bb41e41d549f2248196f45a7188",
       "source_bytes": 6279,
       "destination_path": "skills/agent-harness-evaluation/SKILL.md",
-      "treatment": "verbatim",
-      "destination_sha256": "4cca09e1ffc97a9a48f7214279392b49bc488bb41e41d549f2248196f45a7188",
-      "destination_bytes": 6279
+      "treatment": "post_migration_runtime_reconfiguration",
+      "destination_sha256": "6085db87b12fd7113fb7b0c7b7805aeea08ebec7bd24a1661b8c92f19e3b6dd3",
+      "destination_bytes": 7511
     },
     {
       "source_plugin": "claude-code",

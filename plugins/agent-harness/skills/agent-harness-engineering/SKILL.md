@@ -1,6 +1,6 @@
 ---
 name: agent-harness-engineering
-description: Design LLM agent harnesses with typed control loops, tools/state, context/memory, policy, cancellation, recovery, and delegation. Excludes prompt-only, generic app architecture, vendor CLI/config, evaluation-only work, and skill creation.
+description: Design agent harnesses for typed loops, runtime reconfiguration, provider/tool/module hot swap, state, policy, cancellation, recovery, and delegation. Excludes prompt-only, generic architecture, vendor CLI/config, and evaluation-only work.
 ---
 
 # Agent Harness Engineering
@@ -19,6 +19,7 @@ Read `$PLUGIN_ROOT/references/agent-harness-contracts.md` for the artifact and r
 - A scanner is one signal, not a safety guarantee.
 - Do not promise exactly-once execution across process or network failures. Specify at-least-once risks, idempotency keys, deduplication, and reconciliation.
 - Expose provider capabilities and limitations explicitly; do not fake parity behind a lowest-common-denominator interface.
+- Runtime rollback restores a host generation; it does not reverse external effects. Reconcile or compensate those effects under their own contracts.
 - Add multi-agent delegation only when parallelism, isolation, specialization, or independent review justifies its coordination and authority cost.
 
 ## Engineering Workflow
@@ -27,11 +28,12 @@ Read `$PLUGIN_ROOT/references/agent-harness-contracts.md` for the artifact and r
 2. **Define typed contracts.** Specify state, event envelope, commands, effects, tool results, errors, approval records, checkpoints, and terminal outcomes. Give every durable event an identity and schema version.
 3. **Make the loop explicit.** Design a deterministic spine such as `observe -> normalize -> decide -> authorize -> execute -> record -> transition -> stop or recover`. Keep nondeterminism inside recorded provider and tool results; make transition logic replayable.
 4. **Separate provider capabilities.** Model tool calling, structured output, streaming, usage accounting, cancellation, parallel calls, and provider-specific limits as negotiated capabilities. Define unsupported and degraded paths rather than silently changing semantics.
-5. **Constrain tools and authority.** Validate typed arguments; attach provenance, permission scope, approval state, timeout, retry class, idempotency behavior, and result limits. Keep policy enforcement and side-effect execution outside model text.
-6. **Design context and persistence.** Separate working context, durable state, episodic memory, retrieved untrusted content, and human decisions. Define compaction summaries with provenance and invalidation. Checkpoints must support restart without treating the transcript as executable state.
-7. **Own lifecycle behavior.** Set turn, token, cost, time, tool, and delegation budgets. Propagate cancellation. Define retry eligibility, backoff, partial-effect reconciliation, crash recovery, leases or ownership, and terminal cleanup.
-8. **Justify delegation.** If subagents exist, define their task contracts, authority ceilings, budgets, result schemas, cancellation propagation, merge policy, and parent accountability. Otherwise record why a single loop is sufficient.
-9. **Plan observability and verification.** Emit typed, correlatable events for decisions, policy outcomes, effects, checkpoints, budgets, cancellation, and recovery. Redact secrets while preserving causal evidence. Hand empirical claims and release gates to `agent-harness-evaluation`.
+5. **Bind runtime generations.** When configuration, providers, tools, modules, or the loop may change while the host stays live, build and validate a complete candidate before activation, including provider, tool, executor, policy, context, loop, state, interfaces, and required capabilities. Publish by expected-generation CAS, atomically close old admission, bind each run and late result, separate binding from bounded retirement, and bind post-health rollback by CAS to the failed generation and activation attempt. Retain the prior generation until health, rollback, leases, and teardown are terminal. Otherwise do not claim hot swap.
+6. **Constrain tools and authority.** Validate typed arguments; attach provenance, permission scope, approval state, timeout, retry class, idempotency behavior, and result limits. Keep policy enforcement and side-effect execution outside model text.
+7. **Design context and persistence.** Separate working context, durable state, episodic memory, retrieved untrusted content, and human decisions. Define compaction summaries with provenance and invalidation. Checkpoints must support restart without treating the transcript as executable state.
+8. **Own lifecycle behavior.** Set turn, token, cost, time, tool, and delegation budgets. Propagate cancellation. Define retry eligibility, backoff, partial-effect reconciliation, crash recovery, leases or ownership, and terminal cleanup.
+9. **Justify delegation.** If subagents exist, define their task contracts, authority ceilings, budgets, result schemas, cancellation propagation, merge policy, and parent accountability. Otherwise record why a single loop is sufficient.
+10. **Plan observability and verification.** Emit typed, correlatable events for decisions, policy outcomes, effects, checkpoints, budgets, cancellation, recovery, and generation changes. Redact secrets while preserving causal evidence. Hand empirical claims and release gates to `agent-harness-evaluation`.
 
 ## Adjacent Routes
 
@@ -49,6 +51,8 @@ Produce one artifact with `schema: agent_harness.design.v1` as defined in `$PLUG
 - workload and outcome contract, non-goals, trust boundaries, and side effects;
 - typed states, events, control loop, invariants, and terminal conditions;
 - provider capability matrix and unsupported/degraded behavior;
+- optional `runtime_reconfiguration` decision and, when claimed, snapshot,
+  activation, run-binding, drain, isolation, rollback, and evidence contracts;
 - tool, permission, approval, sandbox, and effect boundaries;
 - context, memory, checkpoint, replay, restart, and reconciliation semantics;
 - budgets, cancellation, retry/recovery, observability, and redaction;

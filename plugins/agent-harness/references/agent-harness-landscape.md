@@ -1,6 +1,6 @@
 # Agent Harness Landscape
 
-Snapshot date: **2026-08-06**.
+Snapshot date: **2026-08-13**.
 
 This ledger provides primary-source comparison anchors for agent-harness
 engineering and evaluation. It is not a ranking and does not imply a universal
@@ -27,6 +27,7 @@ for another.
 | System | Primary snapshot | Observed public surface | Workbench inference to test |
 | --- | --- | --- | --- |
 | OpenAI Codex | [`57f42a81131ccf5933e7ec5dc659c381eeb5d72b`](https://github.com/openai/codex/tree/57f42a81131ccf5933e7ec5dc659c381eeb5d72b) | Public workspace exposes host/core, protocol, execution, approval, and sandbox-related boundaries. | Typed host events and separated execution policy are useful comparison points for recoverable local harnesses. |
+| DeepSeek Harness | [`47f943859bef60e4160492346772ded9b24f765a`](https://github.com/deepseek-ai/deepseek-harness/tree/47f943859bef60e4160492346772ded9b24f765a), including its [vendored-source ledger](https://github.com/deepseek-ai/deepseek-harness/blob/47f943859bef60e4160492346772ded9b24f765a/vendor/README.md) | MIT developer preview exposes plugin-defined model, tool, session, and loop seams. Its narrow LLM route update validates a complete candidate before one map replacement, and prepared in-flight calls retain the adapter they captured. Generic module HMR imports candidates before a swap, but does not await every asynchronous teardown and startup path. | Distill immutable generations, one admission commit, per-run binding, expected-revision checks, drain or cancel, and retained rollback. Do not generalize the narrow route swap into transactional arbitrary-module HMR or security isolation. |
 | Hermes Agent | [`9d4ef04ed00055414c13fcf33925d85790221a3f`](https://github.com/NousResearch/hermes-agent/tree/9d4ef04ed00055414c13fcf33925d85790221a3f) | Public repository exposes an agent runtime, tool integrations, configuration, and user-facing execution surfaces. | Compare how extensible tool ecosystems affect registry truth, dependency checks, and portable run evidence. |
 | OpenClaw | [`9c2dbf6500f16cafc6c68edbc3144b9acf06fe56`](https://github.com/openclaw/openclaw/tree/9c2dbf6500f16cafc6c68edbc3144b9acf06fe56) | Public source exposes a multi-surface assistant host with integrations, routing, and persistent runtime concerns. | Use it to study adapter boundaries, channel identity, long-lived state, and authority across noncoding actions. |
 | goose | [`dafdbb7364cb8f145a71e2fd4e080136e225ad14`](https://github.com/aaif-goose/goose/tree/dafdbb7364cb8f145a71e2fd4e080136e225ad14) | Public source exposes one session-centered runtime across CLI, desktop, ACP, and server surfaces; a narrow capability-aware provider boundary; normalized extension tools; typed recipes; SQLite/WAL sessions; bounded child sessions; and a Harbor evaluation adapter. | Reuse one durable runtime across surfaces and make agent-visible context explicit. Treat its approval/configuration controls as product policy, not OS containment, and test the crash gap around external effects. |
@@ -49,6 +50,7 @@ controlled-run evidence.
 
 | Work | Primary source | Observed contribution | Boundary for harness use |
 | --- | --- | --- | --- |
+| Cordis composability preprint | [draft `948a07b369c62adb3b12e102458be5c18dfb69b9`](https://github.com/cordiverse/paper/tree/948a07b369c62adb3b12e102458be5c18dfb69b9) | Defines temporal and spatial composability, fiber lifecycle withdrawal, dependency-sensitive quiescence, and a proposed HMR procedure; it also names external emissions, untrusted-code sandboxing, state migration, interface versioning, and empirical validation as boundaries or open work. | Treat the formal model as a design hypothesis. The repository labels it an actively revised preprint, has no declared license, and presents self-evolving agent harnesses as future validation; do not copy its text or treat its generic atomic-reload claim as runtime evidence. |
 | ReAct | [arXiv:2210.03629](https://arxiv.org/abs/2210.03629) | Presents interleaved reasoning and acting with external observations. | A prompting/interaction pattern is not a durable host loop, policy system, or side-effect contract. |
 | SWE-agent | [arXiv:2405.15793](https://arxiv.org/abs/2405.15793) | Studies agent-computer interfaces for software-engineering agents. | Interface design results are domain- and benchmark-scoped; revalidate them for other tools and outcomes. |
 | SWE-bench | [arXiv:2310.06770](https://arxiv.org/abs/2310.06770) | Introduces repository issue-resolution tasks with test-based evaluation. | Tests and patches are valuable coding oracles but do not cover authority, procedure safety, or noncoding effects. |

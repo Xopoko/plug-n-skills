@@ -7,8 +7,18 @@
       "expected_leaf": "agent-harness-engineering"
     },
     {
+      "id": "harness-runtime-reconfiguration",
+      "prompt": "Design a safe provider, tool, and agent-loop hot swap with in-flight generation pinning, drain, health checks, and rollback.",
+      "expected_leaf": "agent-harness-engineering"
+    },
+    {
       "id": "harness-release-gate",
       "prompt": "Replay this agent harness under tool failures and build a reliability release gate.",
+      "expected_leaf": "agent-harness-evaluation"
+    },
+    {
+      "id": "harness-reconfiguration-release-gate",
+      "prompt": "Fault-inject concurrent old and new runtime generations and release-gate partial activation, late callbacks, and rollback.",
       "expected_leaf": "agent-harness-evaluation"
     },
     {

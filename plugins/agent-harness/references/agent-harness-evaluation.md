@@ -13,6 +13,7 @@ Persist an immutable manifest or digest for:
 ```text
 S = (
   harness source and configuration,
+  active runtime generation and candidate-generation manifest,
   model identity and model parameters,
   provider endpoint, API revision, and capability adapter,
   system prompts, context builder, retrieval, and memory state,
@@ -103,6 +104,7 @@ Cover behavior by risk and mechanism, not only by an average benchmark score.
 | state | clean, stale, conflicting, partially complete, duplicate, already satisfied |
 | dependency | healthy, slow, rate-limited, unavailable, malformed, partially successful |
 | concurrency | isolated, competing run, callback race, shared quota, shared external target |
+| runtime generation | fixed, invalid candidate, old/new concurrent, draining, rolled back, rollback failed |
 | termination | success, partial, denial, block, cancel, timeout, budget exhaustion, invalid input |
 
 Tag each scenario with expected applicable mechanisms and worst plausible
@@ -132,6 +134,36 @@ targets:
 - wall-clock jump, exhausted budget, output explosion, and concurrent target
   mutation.
 
+When runtime reconfiguration is claimed, add all of these fault classes to the
+scheduled suite rather than merely declaring them in prose:
+
+- candidate schema, dependency, interface, or capability validation failure;
+- provider capability loss and partial tool or module initialization;
+- old and new runs executing concurrently while admission changes;
+- late provider, executor, child-run, watcher, or health callback from the old
+  generation;
+- post-activation health failure, a stale G2 rollback racing after G3 activates,
+  rollback timeout, and rollback failure;
+- an external effect emitted by the candidate before its health gate fails;
+- namespace, resource, filesystem, network, or credential leakage across the
+  declared isolation boundary.
+
+For every such scenario, bind its exact class to one or more declared fault
+injection IDs and bind the outcome to declared oracle IDs, including at least
+one deterministic or human oracle for that scenario. A class label without an
+executable injection and resolving non-LLM oracle is coverage metadata, not
+evidence.
+
+The oracles must reconstruct which generation admitted each run, intent,
+callback, effect, and terminal event. Test that a rejected candidate never
+changes admission, an active run never changes generation implicitly, no mixed
+component set is published, the old generation is retained until leases drain,
+stale rollback cannot overwrite a newer generation, and rollback evidence does
+not claim that external effects were reversed. In v2 results, verify the design
+and evaluation references as well as binding semantics: pin keeps admitted and
+terminal generation IDs equal; explicit migration changes them only with a
+migration receipt.
+
 Verify both the terminal outcome and the invariant: no unauthorized effect,
 bounded retries, reconciled or explicitly unknown effects, reconstructable
 history, and no false success.
@@ -155,6 +187,7 @@ terminal outcome, user-visible symptom, and retry decision.
 | `effect_partial_or_unknown` | External state may have changed but completion or compensation is unresolved. |
 | `state_or_concurrency` | Preconditions are stale, conflicting, duplicated, or raced. |
 | `recovery_or_idempotency` | Resume, replay, reconciliation, or duplicate control violates the contract. |
+| `runtime_reconfiguration` | Candidate validation, activation, generation binding, quiescence, health, isolation, or rollback violates its lifecycle contract. |
 | `cancellation_or_bounds` | Stop propagation or a declared resource/deadline limit fails. |
 | `oracle_or_evaluator` | Judgement is invalid, nondeterministic, contaminated, or unavailable. |
 | `infrastructure` | Host, storage, network, or service failure sits outside the mechanism under test. |
@@ -194,6 +227,11 @@ At minimum gate:
   intent/result chain, and redaction result;
 - compatibility: supported provider, executor, schema, projection, and stored
   event migrations pass;
+- runtime reconfiguration, when claimed: zero generation misbindings, partial
+  activations, missing generation evidence, unauthorized capability changes,
+  stale rollback overwrites, false rollback successes, external-effect
+  misreports, and isolation leaks; bounded drain, health, teardown, and rollback
+  complete with receipts;
 - regression: paired results do not cross declared quality, safety, latency, or
   cost limits;
 - provenance: source revisions, fixtures, evaluator, exclusions, and evidence

@@ -77,7 +77,7 @@ class AgentHarnessPluginContractTests(unittest.TestCase):
         for field in ("name", "version", "description", "author", "license", "keywords"):
             self.assertEqual(codex[field], claude[field], field)
         self.assertEqual("agent-harness", codex["name"])
-        self.assertEqual("0.1.4", codex["version"])
+        self.assertEqual("0.1.5", codex["version"])
         self.assertEqual("Agent Harness", codex["interface"]["displayName"])
         self.assertIsInstance(codex["interface"]["defaultPrompt"], list)
         self.assertTrue(codex["interface"]["defaultPrompt"])
@@ -184,7 +184,9 @@ class AgentHarnessPluginContractTests(unittest.TestCase):
         self.assertTrue(
             {
                 "harness-control-loop",
+                "harness-runtime-reconfiguration",
                 "harness-release-gate",
+                "harness-reconfiguration-release-gate",
                 "codex-exec",
                 "codex-rollout",
                 "deferred-completion",
@@ -302,12 +304,47 @@ class AgentHarnessPluginContractTests(unittest.TestCase):
         rewrite_allowlist = {
             entry["source_path"]: entry for entry in ledger["rewrite_allowlist"]
         }
+        mappings_by_source = {entry["source_path"]: entry for entry in mappings}
         declared_rewrites = {
             entry["source_path"]
             for entry in mappings
             if entry["treatment"] not in {"verbatim", "rename_for_collision"}
         }
         self.assertEqual(declared_rewrites, set(rewrite_allowlist))
+
+        for allow in rewrite_allowlist.values():
+            if allow["treatment"] != "post_migration_runtime_reconfiguration":
+                continue
+            self.assertEqual(
+                {
+                    "source_path",
+                    "destination_path",
+                    "treatment",
+                    "allowed_changes",
+                    "receipt",
+                },
+                set(allow),
+            )
+            self.assertEqual(1, len(allow["allowed_changes"]))
+            change = allow["allowed_changes"][0]
+            self.assertEqual({"contract"}, set(change))
+            self.assertIsInstance(change["contract"], str)
+            self.assertGreaterEqual(len(change["contract"].strip()), 40)
+            receipt = allow["receipt"]
+            self.assertEqual(
+                {"base_source_sha256", "reviewed_destination_sha256"},
+                set(receipt),
+            )
+            self.assertRegex(receipt["base_source_sha256"], SHA256_RE)
+            self.assertRegex(receipt["reviewed_destination_sha256"], SHA256_RE)
+            self.assertEqual(
+                snapshot_by_path[allow["source_path"]]["source_sha256"],
+                receipt["base_source_sha256"],
+            )
+            self.assertEqual(
+                mappings_by_source[allow["source_path"]]["destination_sha256"],
+                receipt["reviewed_destination_sha256"],
+            )
 
         for entry in mappings:
             with self.subTest(path=entry["destination_path"]):

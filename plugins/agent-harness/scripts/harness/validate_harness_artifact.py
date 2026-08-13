@@ -13,6 +13,7 @@ from typing import Any
 DESIGN_SCHEMA = "agent_harness.design.v1"
 EVALUATION_SCHEMA = "agent_harness.evaluation_plan.v1"
 RUN_RESULT_SCHEMA = "agent_harness.run_result.v1"
+RUN_RESULT_RECONFIGURATION_SCHEMA = "agent_harness.run_result.v2"
 
 TERMINAL_OUTCOMES = {
     "succeeded",
@@ -65,6 +66,60 @@ RECOMMENDED_SCENARIO_CLASSES = {
     "timeout",
     "untrusted_input",
     "noncoding",
+}
+RECONFIGURATION_SCENARIO_CLASSES = {
+    "reconfiguration_invalid_candidate",
+    "reconfiguration_capability_loss",
+    "reconfiguration_partial_initialization",
+    "reconfiguration_concurrent_generations",
+    "reconfiguration_late_result",
+    "reconfiguration_post_activation_failure",
+    "reconfiguration_stale_rollback",
+    "reconfiguration_rollback",
+    "reconfiguration_external_effect_after_commit",
+    "reconfiguration_isolation_leak",
+}
+RECONFIGURATION_ZERO_METRICS = {
+    "generation_misbinding_count",
+    "generation_evidence_gap_count",
+    "partial_activation_count",
+    "unauthorized_capability_change_count",
+    "stale_rollback_overwrite_count",
+    "false_rollback_success_count",
+    "external_effect_misreport_count",
+    "isolation_leak_count",
+}
+BINDING_POLICIES = {"pin", "explicit_migrate"}
+RETIREMENT_MODES = {"drain", "cancel", "drain_then_cancel", "migrate"}
+RETIREMENT_TIMEOUT_BEHAVIORS = {
+    "cancel_and_fence",
+    "fence_and_quarantine",
+    "rollback_via_compare_and_swap",
+}
+ISOLATION_BOUNDARY_TYPES = {"same_process", "process", "vm", "container", "wasm"}
+ISOLATION_TRUST_MODELS = {"reviewed_trusted", "untrusted"}
+RUNTIME_COMPONENT_KINDS = {
+    "provider_adapter",
+    "tool_registry",
+    "executor",
+    "policy",
+    "context_builder",
+    "control_loop",
+    "state_store",
+    "memory_store",
+    "sandbox",
+    "module",
+    "scheduler",
+    "session",
+}
+REQUIRED_RUNTIME_COMPONENT_KINDS = {
+    "provider_adapter",
+    "tool_registry",
+    "executor",
+    "policy",
+    "context_builder",
+    "control_loop",
+    "state_store",
 }
 SYSTEM_COMPONENTS = (
     "harness",
@@ -128,6 +183,14 @@ def require_string(
     return value.strip()
 
 
+def reject_unknown_keys(
+    value: dict[str, Any], allowed: set[str], path: str, errors: list[str]
+) -> None:
+    unknown = sorted(set(value) - allowed)
+    if unknown:
+        errors.append(f"{path}: unknown fields: " + ", ".join(unknown))
+
+
 def require_positive_number(
     parent: dict[str, Any], key: str, path: str, errors: list[str]
 ) -> float | int | None:
@@ -181,6 +244,420 @@ def validate_system_tuple(
         )
 
 
+def validate_runtime_reconfiguration(
+    data: dict[str, Any], errors: list[str]
+) -> bool:
+    """Validate the optional, backward-compatible live reconfiguration claim."""
+    if "runtime_reconfiguration" not in data:
+        return False
+
+    value = data.get("runtime_reconfiguration")
+    path = "$.runtime_reconfiguration"
+    if not isinstance(value, dict):
+        errors.append(f"{path}: must be an object")
+        return False
+    reject_unknown_keys(
+        value,
+        {
+            "supported",
+            "rationale",
+            "candidate_generation",
+            "activation",
+            "run_binding",
+            "isolation",
+            "rollback",
+            "evidence",
+        },
+        path,
+        errors,
+    )
+
+    supported = value.get("supported")
+    if not isinstance(supported, bool):
+        errors.append(f"{path}.supported: must be a boolean")
+    require_string(value, "rationale", path, errors)
+    if supported is not True:
+        if supported is False:
+            unexpected = sorted(set(value) - {"supported", "rationale"})
+            if unexpected:
+                errors.append(
+                    f"{path}: unsupported reconfiguration cannot declare activation fields: "
+                    + ", ".join(unexpected)
+                )
+        return False
+
+    candidate = require_object(value, "candidate_generation", path, errors)
+    candidate_path = f"{path}.candidate_generation"
+    reject_unknown_keys(
+        candidate,
+        {
+            "id_schema",
+            "config_revision",
+            "config_digest",
+            "compatibility_policy",
+            "state_migration",
+            "provenance",
+            "components",
+        },
+        candidate_path,
+        errors,
+    )
+    for key in (
+        "id_schema",
+        "config_revision",
+        "config_digest",
+        "compatibility_policy",
+        "state_migration",
+    ):
+        require_string(candidate, key, candidate_path, errors)
+    provenance = require_list(candidate, "provenance", candidate_path, errors)
+    validate_string_list(provenance, f"{candidate_path}.provenance", errors)
+    components = require_list(candidate, "components", candidate_path, errors)
+    component_ids: set[str] = set()
+    component_kinds: set[str] = set()
+    provider_capabilities: set[str] = set()
+    for index, component in enumerate(components):
+        component_path = f"{candidate_path}.components[{index}]"
+        if not isinstance(component, dict):
+            errors.append(f"{component_path}: must be an object")
+            continue
+        reject_unknown_keys(
+            component,
+            {"id", "kind", "revision", "interface_version", "capabilities"},
+            component_path,
+            errors,
+        )
+        component_id = require_string(component, "id", component_path, errors)
+        if component_id in component_ids:
+            errors.append(f"{component_path}.id: duplicate component id {component_id}")
+        component_ids.add(component_id)
+        kind = require_string(component, "kind", component_path, errors)
+        if kind and kind not in RUNTIME_COMPONENT_KINDS:
+            errors.append(
+                f"{component_path}.kind: unknown runtime component kind {kind}"
+            )
+        component_kinds.add(kind)
+        for key in ("revision", "interface_version"):
+            require_string(component, key, component_path, errors)
+        capabilities = require_list(
+            component, "capabilities", component_path, errors, nonempty=False
+        )
+        validate_string_list(
+            capabilities,
+            f"{component_path}.capabilities",
+            errors,
+            allow_empty=True,
+        )
+        if kind == "provider_adapter":
+            provider_capabilities.update(
+                capability
+                for capability in capabilities
+                if isinstance(capability, str) and capability.strip()
+            )
+
+    missing_component_kinds = REQUIRED_RUNTIME_COMPONENT_KINDS - component_kinds
+    if missing_component_kinds:
+        errors.append(
+            f"{candidate_path}.components: missing required runtime component kinds "
+            + ", ".join(sorted(missing_component_kinds))
+        )
+    provider_boundary = data.get("provider_boundary")
+    required_provider_capabilities = (
+        provider_boundary.get("required_capabilities", [])
+        if isinstance(provider_boundary, dict)
+        else []
+    )
+    missing_provider_capabilities = {
+        capability
+        for capability in required_provider_capabilities
+        if isinstance(capability, str) and capability.strip()
+    } - provider_capabilities
+    if missing_provider_capabilities:
+        errors.append(
+            f"{candidate_path}.components: provider adapters omit required capabilities "
+            + ", ".join(sorted(missing_provider_capabilities))
+        )
+
+    activation = require_object(value, "activation", path, errors)
+    activation_path = f"{path}.activation"
+    reject_unknown_keys(
+        activation,
+        {
+            "candidate_validation",
+            "attempt_id_schema",
+            "expected_active_generation",
+            "compare_and_swap",
+            "readiness_gate",
+            "readiness_timeout_seconds",
+            "commit_point",
+            "health_gate",
+            "health_window_seconds",
+            "pre_commit_failure_behavior",
+            "post_commit_failure_behavior",
+        },
+        activation_path,
+        errors,
+    )
+    for key in (
+        "candidate_validation",
+        "attempt_id_schema",
+        "expected_active_generation",
+        "readiness_gate",
+        "commit_point",
+        "health_gate",
+    ):
+        require_string(activation, key, activation_path, errors)
+    require_positive_number(
+        activation, "readiness_timeout_seconds", activation_path, errors
+    )
+    require_positive_number(
+        activation, "health_window_seconds", activation_path, errors
+    )
+    if activation.get("compare_and_swap") is not True:
+        errors.append(f"{activation_path}.compare_and_swap: must be true")
+    pre_commit_failure = require_string(
+        activation, "pre_commit_failure_behavior", activation_path, errors
+    )
+    if (
+        pre_commit_failure
+        and pre_commit_failure != "preserve_expected_active_generation"
+    ):
+        errors.append(
+            f"{activation_path}.pre_commit_failure_behavior: "
+            "must be preserve_expected_active_generation"
+        )
+    post_commit_failure = require_string(
+        activation, "post_commit_failure_behavior", activation_path, errors
+    )
+    if post_commit_failure and post_commit_failure != "rollback_via_compare_and_swap":
+        errors.append(
+            f"{activation_path}.post_commit_failure_behavior: "
+            "must be rollback_via_compare_and_swap"
+        )
+
+    run_binding = require_object(value, "run_binding", path, errors)
+    run_binding_path = f"{path}.run_binding"
+    reject_unknown_keys(
+        run_binding,
+        {
+            "admission",
+            "binding_policy",
+            "late_result_fencing",
+            "lease_release",
+            "retirement",
+            "migration_contract",
+        },
+        run_binding_path,
+        errors,
+    )
+    for key in ("admission", "late_result_fencing", "lease_release"):
+        require_string(run_binding, key, run_binding_path, errors)
+    binding_policy = require_string(
+        run_binding, "binding_policy", run_binding_path, errors
+    )
+    if binding_policy and binding_policy not in BINDING_POLICIES:
+        errors.append(
+            f"{run_binding_path}.binding_policy: must be pin or explicit_migrate"
+        )
+    retirement = require_object(run_binding, "retirement", run_binding_path, errors)
+    retirement_path = f"{run_binding_path}.retirement"
+    reject_unknown_keys(
+        retirement,
+        {
+            "admission_closed_at_commit",
+            "mode",
+            "quiescence_condition",
+            "timeout_seconds",
+            "timeout_behavior",
+            "cancel_acknowledgement",
+            "teardown_completion",
+        },
+        retirement_path,
+        errors,
+    )
+    if retirement.get("admission_closed_at_commit") is not True:
+        errors.append(f"{retirement_path}.admission_closed_at_commit: must be true")
+    retirement_mode = require_string(retirement, "mode", retirement_path, errors)
+    if retirement_mode and retirement_mode not in RETIREMENT_MODES:
+        errors.append(
+            f"{retirement_path}.mode: must be drain, cancel, drain_then_cancel, or migrate"
+        )
+    require_string(retirement, "quiescence_condition", retirement_path, errors)
+    require_positive_number(retirement, "timeout_seconds", retirement_path, errors)
+    timeout_behavior = require_string(
+        retirement, "timeout_behavior", retirement_path, errors
+    )
+    if timeout_behavior and timeout_behavior not in RETIREMENT_TIMEOUT_BEHAVIORS:
+        errors.append(
+            f"{retirement_path}.timeout_behavior: must be cancel_and_fence, "
+            "fence_and_quarantine, or rollback_via_compare_and_swap"
+        )
+    require_string(retirement, "cancel_acknowledgement", retirement_path, errors)
+    require_string(retirement, "teardown_completion", retirement_path, errors)
+    if binding_policy == "explicit_migrate":
+        require_string(run_binding, "migration_contract", run_binding_path, errors)
+        if retirement_mode != "migrate":
+            errors.append(
+                f"{retirement_path}.mode: explicit_migrate binding requires migrate"
+            )
+    elif retirement_mode == "migrate":
+        errors.append(
+            f"{run_binding_path}.binding_policy: migrate retirement requires explicit_migrate"
+        )
+
+    isolation = require_object(value, "isolation", path, errors)
+    isolation_path = f"{path}.isolation"
+    reject_unknown_keys(
+        isolation,
+        {
+            "boundary_type",
+            "trust_model",
+            "authority_surfaces",
+            "failure_containment",
+            "quarantine",
+            "enforcement_evidence",
+        },
+        isolation_path,
+        errors,
+    )
+    boundary_type = require_string(
+        isolation, "boundary_type", isolation_path, errors
+    )
+    if boundary_type and boundary_type not in ISOLATION_BOUNDARY_TYPES:
+        errors.append(
+            f"{isolation_path}.boundary_type: must be same_process, process, vm, container, or wasm"
+        )
+    trust_model = require_string(isolation, "trust_model", isolation_path, errors)
+    if trust_model and trust_model not in ISOLATION_TRUST_MODELS:
+        errors.append(
+            f"{isolation_path}.trust_model: must be reviewed_trusted or untrusted"
+        )
+    if trust_model == "untrusted" and boundary_type == "same_process":
+        errors.append(
+            f"{isolation_path}.boundary_type: untrusted modules cannot use same_process"
+        )
+    authority_surfaces = require_list(
+        isolation, "authority_surfaces", isolation_path, errors
+    )
+    validate_string_list(
+        authority_surfaces, f"{isolation_path}.authority_surfaces", errors
+    )
+    for key in ("failure_containment", "quarantine", "enforcement_evidence"):
+        require_string(isolation, key, isolation_path, errors)
+
+    rollback = require_object(value, "rollback", path, errors)
+    rollback_path = f"{path}.rollback"
+    reject_unknown_keys(
+        rollback,
+        {
+            "retain_prior_generation",
+            "expected_failed_generation",
+            "target_generation",
+            "activation_attempt_binding",
+            "compare_and_swap",
+            "timeout_seconds",
+            "trigger",
+            "receipt",
+            "failed_generation_runs",
+            "external_effects",
+            "release_condition",
+        },
+        rollback_path,
+        errors,
+    )
+    if rollback.get("retain_prior_generation") is not True:
+        errors.append(f"{rollback_path}.retain_prior_generation: must be true")
+    for key in (
+        "expected_failed_generation",
+        "target_generation",
+        "activation_attempt_binding",
+    ):
+        require_string(rollback, key, rollback_path, errors)
+    if rollback.get("compare_and_swap") is not True:
+        errors.append(f"{rollback_path}.compare_and_swap: must be true")
+    require_positive_number(rollback, "timeout_seconds", rollback_path, errors)
+    for key in (
+        "trigger",
+        "receipt",
+        "failed_generation_runs",
+        "external_effects",
+    ):
+        require_string(rollback, key, rollback_path, errors)
+    release_condition = require_object(
+        rollback, "release_condition", rollback_path, errors
+    )
+    release_path = f"{rollback_path}.release_condition"
+    release_keys = {
+        "health_window_closed",
+        "rollback_terminal",
+        "leases_zero",
+        "teardown_complete",
+    }
+    reject_unknown_keys(release_condition, release_keys, release_path, errors)
+    for key in release_keys:
+        if release_condition.get(key) is not True:
+            errors.append(f"{release_path}.{key}: must be true")
+
+    evidence = require_object(value, "evidence", path, errors)
+    evidence_path = f"{path}.evidence"
+    reject_unknown_keys(
+        evidence,
+        {
+            "event_schema",
+            "generation_binding",
+            "activation_receipt",
+            "rollback_receipt",
+        },
+        evidence_path,
+        errors,
+    )
+    for key in (
+        "event_schema",
+        "generation_binding",
+        "activation_receipt",
+        "rollback_receipt",
+    ):
+        require_string(evidence, key, evidence_path, errors)
+
+    return True
+
+
+def validate_evaluation_reconfiguration_claim(
+    data: dict[str, Any], errors: list[str]
+) -> bool:
+    if "runtime_reconfiguration" not in data:
+        return False
+
+    value = data.get("runtime_reconfiguration")
+    path = "$.runtime_reconfiguration"
+    if not isinstance(value, dict):
+        errors.append(f"{path}: must be an object")
+        return False
+    reject_unknown_keys(
+        value, {"claimed", "rationale", "design_ref", "result_schema"}, path, errors
+    )
+    claimed = value.get("claimed")
+    if not isinstance(claimed, bool):
+        errors.append(f"{path}.claimed: must be a boolean")
+    require_string(value, "rationale", path, errors)
+    if claimed is True:
+        require_string(value, "design_ref", path, errors)
+        result_schema = require_string(value, "result_schema", path, errors)
+        if result_schema and result_schema != RUN_RESULT_RECONFIGURATION_SCHEMA:
+            errors.append(
+                f"{path}.result_schema: must be {RUN_RESULT_RECONFIGURATION_SCHEMA}"
+            )
+        return True
+    if claimed is False:
+        unexpected = sorted(set(value) - {"claimed", "rationale"})
+        if unexpected:
+            errors.append(
+                f"{path}: an unclaimed evaluation cannot declare result bindings: "
+                + ", ".join(unexpected)
+            )
+    return False
+
+
 def validate_design(
     data: dict[str, Any], errors: list[str], warnings: list[str]
 ) -> None:
@@ -217,6 +694,8 @@ def validate_design(
     )
     require_string(provider, "unsupported_behavior", "$.provider_boundary", errors)
     require_string(provider, "degraded_behavior", "$.provider_boundary", errors)
+
+    validate_runtime_reconfiguration(data, errors)
 
     loop = require_object(data, "control_loop", root, errors)
     states = require_list(loop, "states", "$.control_loop", errors)
@@ -401,6 +880,7 @@ def validate_evaluation_plan(
     data: dict[str, Any], errors: list[str], warnings: list[str]
 ) -> None:
     validate_system_tuple(data, "$", errors)
+    reconfiguration_claimed = validate_evaluation_reconfiguration_claim(data, errors)
 
     suite = require_object(data, "task_suite", "$", errors)
     require_string(suite, "id", "$.task_suite", errors)
@@ -426,16 +906,23 @@ def validate_evaluation_plan(
 
     oracles = require_list(data, "oracles", "$", errors)
     oracle_types: set[str] = set()
+    oracle_ids: set[str] = set()
+    oracle_type_by_id: dict[str, str] = {}
     for index, oracle in enumerate(oracles):
         path = f"$.oracles[{index}]"
         if not isinstance(oracle, dict):
             errors.append(f"{path}: must be an object")
             continue
-        require_string(oracle, "id", path, errors)
+        oracle_id = require_string(oracle, "id", path, errors)
+        if oracle_id in oracle_ids:
+            errors.append(f"{path}.id: duplicate oracle {oracle_id}")
+        oracle_ids.add(oracle_id)
         oracle_type = require_string(oracle, "type", path, errors)
         if oracle_type and oracle_type not in ORACLE_TYPES:
             errors.append(f"{path}.type: must be deterministic, human, or llm")
         oracle_types.add(oracle_type)
+        if oracle_id and oracle_id not in oracle_type_by_id:
+            oracle_type_by_id[oracle_id] = oracle_type
         require_string(oracle, "target", path, errors)
         require_string(oracle, "version", path, errors)
     if oracles and not ({"deterministic", "human"} & oracle_types):
@@ -448,14 +935,27 @@ def validate_evaluation_plan(
         warnings.append("$.repeated_trials: one trial cannot measure repeated reliability")
 
     injections = require_list(data, "fault_injection", "$", errors)
+    injection_classes_by_id: dict[str, set[str]] = {}
+    declared_injection_ids: set[str] = set()
     for index, injection in enumerate(injections):
         path = f"$.fault_injection[{index}]"
         if not isinstance(injection, dict):
             errors.append(f"{path}: must be an object")
             continue
-        require_string(injection, "id", path, errors)
+        injection_id = require_string(injection, "id", path, errors)
+        if injection_id in declared_injection_ids:
+            errors.append(f"{path}.id: duplicate fault injection {injection_id}")
+        declared_injection_ids.add(injection_id)
         require_string(injection, "target", path, errors)
         require_string(injection, "method", path, errors)
+        classes: list[Any] = []
+        if "classes" in injection:
+            classes = require_list(injection, "classes", path, errors)
+            validate_string_list(classes, f"{path}.classes", errors)
+        if injection_id and injection_id not in injection_classes_by_id:
+            injection_classes_by_id[injection_id] = {
+                value for value in classes if isinstance(value, str)
+            }
 
     analysis = require_object(data, "analysis", "$", errors)
     require_string(analysis, "uncertainty_method", "$.analysis", errors)
@@ -498,6 +998,54 @@ def validate_evaluation_plan(
             )
         if scenario_id and scenario_id not in scenario_classes_by_id:
             scenario_classes_by_id[scenario_id] = class_set
+        reconfiguration_classes = class_set & RECONFIGURATION_SCENARIO_CLASSES
+        if reconfiguration_claimed and reconfiguration_classes:
+            fault_injection_ids = require_list(
+                scenario, "fault_injection_ids", path, errors
+            )
+            validate_string_list(
+                fault_injection_ids, f"{path}.fault_injection_ids", errors
+            )
+            scenario_oracle_ids = require_list(scenario, "oracle_ids", path, errors)
+            validate_string_list(
+                scenario_oracle_ids, f"{path}.oracle_ids", errors
+            )
+            linked_injection_ids = {
+                value for value in fault_injection_ids if isinstance(value, str)
+            }
+            unknown_injection_ids = linked_injection_ids - declared_injection_ids
+            if unknown_injection_ids:
+                errors.append(
+                    f"{path}.fault_injection_ids: unknown fault injections "
+                    + ", ".join(sorted(unknown_injection_ids))
+                )
+            linked_classes: set[str] = set()
+            for injection_id in linked_injection_ids:
+                linked_classes.update(injection_classes_by_id.get(injection_id, set()))
+            missing_injected_classes = reconfiguration_classes - linked_classes
+            if missing_injected_classes:
+                errors.append(
+                    f"{path}.fault_injection_ids: linked injections do not exercise "
+                    + ", ".join(sorted(missing_injected_classes))
+                )
+            linked_oracle_ids = {
+                value for value in scenario_oracle_ids if isinstance(value, str)
+            }
+            unknown_oracle_ids = linked_oracle_ids - oracle_ids
+            if unknown_oracle_ids:
+                errors.append(
+                    f"{path}.oracle_ids: unknown oracles "
+                    + ", ".join(sorted(unknown_oracle_ids))
+                )
+            linked_oracle_types = {
+                oracle_type_by_id.get(oracle_id, "")
+                for oracle_id in linked_oracle_ids
+            }
+            if not ({"deterministic", "human"} & linked_oracle_types):
+                errors.append(
+                    f"{path}.oracle_ids: a runtime-reconfiguration scenario "
+                    "requires a linked deterministic or human oracle"
+                )
     scheduled_scenario_classes: set[str] = set()
     for scenario_id in scenario_ids:
         if isinstance(scenario_id, str):
@@ -526,8 +1074,18 @@ def validate_evaluation_plan(
             "$.task_suite.scenario_ids: missing scenario definitions for "
             + ", ".join(sorted(missing_suite_scenarios))
         )
+    if reconfiguration_claimed:
+        missing_reconfiguration = (
+            RECONFIGURATION_SCENARIO_CLASSES - scheduled_scenario_classes
+        )
+        if missing_reconfiguration:
+            errors.append(
+                "$.task_suite.scenario_ids: runtime reconfiguration claim missing required classes "
+                + ", ".join(sorted(missing_reconfiguration))
+            )
 
     gates = require_list(data, "release_gates", "$", errors)
+    zero_blocking_gates: set[str] = set()
     for index, gate in enumerate(gates):
         path = f"$.release_gates[{index}]"
         if not isinstance(gate, dict):
@@ -545,21 +1103,119 @@ def validate_evaluation_plan(
                 errors.append(f"{path}.threshold: boolean thresholds require ==")
         elif not is_number(threshold):
             errors.append(f"{path}.threshold: must be a finite number or boolean")
+        if operator == "zero" and (
+            isinstance(threshold, bool) or not is_number(threshold) or threshold != 0
+        ):
+            errors.append(f"{path}.threshold: zero operator requires numeric 0")
         if not isinstance(gate.get("blocking"), bool):
             errors.append(f"{path}.blocking: must be a boolean")
+        if (
+            gate_metric in RECONFIGURATION_ZERO_METRICS
+            and gate.get("blocking") is True
+            and operator in {"zero", "=="}
+            and not isinstance(threshold, bool)
+            and threshold == 0
+        ):
+            zero_blocking_gates.add(gate_metric)
+
+    if reconfiguration_claimed:
+        missing_metrics = RECONFIGURATION_ZERO_METRICS - metric_names
+        if missing_metrics:
+            errors.append(
+                "$.metrics: runtime reconfiguration claim missing zero-tolerance metrics "
+                + ", ".join(sorted(missing_metrics))
+            )
+        missing_zero_gates = RECONFIGURATION_ZERO_METRICS - zero_blocking_gates
+        if missing_zero_gates:
+            errors.append(
+                "$.release_gates: runtime reconfiguration metrics need blocking zero gates "
+                + ", ".join(sorted(missing_zero_gates))
+            )
 
     provenance = require_list(data, "provenance", "$", errors)
     validate_string_list(provenance, "$.provenance", errors)
 
 
 def validate_run_result(
-    data: dict[str, Any], errors: list[str], warnings: list[str]
+    data: dict[str, Any], errors: list[str], warnings: list[str], *, require_generation: bool
 ) -> None:
-    del warnings
     require_string(data, "run_id", "$", errors)
     require_string(data, "scenario_id", "$", errors)
     validate_system_tuple(data, "$", errors)
 
+    if not require_generation and "runtime_generation" not in data:
+        generation = None
+    else:
+        generation = require_object(data, "runtime_generation", "$", errors)
+    if generation is not None:
+        validate_run_result_generation(generation, errors)
+    validate_run_result_body(data, errors, warnings)
+
+
+def validate_run_result_generation(
+    generation: dict[str, Any], errors: list[str]
+) -> None:
+    generation_path = "$.runtime_generation"
+    reject_unknown_keys(
+        generation,
+        {
+            "design_ref",
+            "evaluation_plan_ref",
+            "binding_policy",
+            "admitted_generation_id",
+            "terminal_generation_id",
+            "activation_attempt_id",
+            "activation_receipt_ref",
+            "trace_generation_binding_ref",
+            "effect_generation_binding_ref",
+            "migration_receipt_ref",
+        },
+        generation_path,
+        errors,
+    )
+    for key in (
+        "design_ref",
+        "evaluation_plan_ref",
+        "admitted_generation_id",
+        "terminal_generation_id",
+        "activation_attempt_id",
+        "activation_receipt_ref",
+        "trace_generation_binding_ref",
+        "effect_generation_binding_ref",
+    ):
+        require_string(generation, key, generation_path, errors)
+    binding_policy = require_string(
+        generation, "binding_policy", generation_path, errors
+    )
+    if binding_policy and binding_policy not in BINDING_POLICIES:
+        errors.append(
+            f"{generation_path}.binding_policy: must be pin or explicit_migrate"
+        )
+    admitted_generation_id = generation.get("admitted_generation_id")
+    terminal_generation_id = generation.get("terminal_generation_id")
+    if binding_policy == "pin":
+        if admitted_generation_id != terminal_generation_id:
+            errors.append(
+                f"{generation_path}.terminal_generation_id: pin binding requires "
+                "the admitted and terminal generation IDs to match"
+            )
+        if "migration_receipt_ref" in generation:
+            errors.append(
+                f"{generation_path}.migration_receipt_ref: pin binding cannot claim migration"
+            )
+    elif binding_policy == "explicit_migrate":
+        if admitted_generation_id == terminal_generation_id:
+            errors.append(
+                f"{generation_path}.terminal_generation_id: explicit_migrate requires "
+                "a distinct terminal generation ID"
+            )
+        require_string(generation, "migration_receipt_ref", generation_path, errors)
+
+
+def validate_run_result_body(
+    data: dict[str, Any], errors: list[str], warnings: list[str]
+) -> None:
+    del warnings
     status = require_string(data, "status", "$", errors)
     if status and status not in TERMINAL_OUTCOMES:
         errors.append(f"$.status: unknown terminal status {status}")
@@ -687,11 +1343,20 @@ def validate(data: dict[str, Any]) -> tuple[list[str], list[str]]:
     elif schema == EVALUATION_SCHEMA:
         validate_evaluation_plan(data, errors, warnings)
     elif schema == RUN_RESULT_SCHEMA:
-        validate_run_result(data, errors, warnings)
+        validate_run_result(data, errors, warnings, require_generation=False)
+    elif schema == RUN_RESULT_RECONFIGURATION_SCHEMA:
+        validate_run_result(data, errors, warnings, require_generation=True)
     else:
         errors.append(
             "$.schema: must be one of "
-            + ", ".join((DESIGN_SCHEMA, EVALUATION_SCHEMA, RUN_RESULT_SCHEMA))
+            + ", ".join(
+                (
+                    DESIGN_SCHEMA,
+                    EVALUATION_SCHEMA,
+                    RUN_RESULT_SCHEMA,
+                    RUN_RESULT_RECONFIGURATION_SCHEMA,
+                )
+            )
         )
     return errors, warnings
 
