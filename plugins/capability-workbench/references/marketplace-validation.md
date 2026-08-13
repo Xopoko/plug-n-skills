@@ -99,9 +99,12 @@ without following a swapped final-component symlink and the opened descriptor
 is revalidated. Prefer the idempotent
 `codex plugin add <plugin>@<marketplace>` command whenever it can target the
 active profile; the native host CLI owns its cache lifecycle. Current Codex CLI
-installs use the manifest version as the final cache locator, so the helper's
-manual compatibility path replaces only that selected target-version
-directory and retains sibling versions. The OpenAI packaging page separately
+installs use the manifest version as the final cache locator. The helper's
+manual compatibility path stages and verifies the new tree, snapshots the
+selected target version for rollback, preserves that version directory's root,
+syncs its entries in place, and verifies source parity before success. A failed
+refresh restores the prior verified tree when the affected entries remain
+replaceable. Sibling versions are retained. The OpenAI packaging page separately
 documents a literal `local` locator for ChatGPT desktop local installs; do not
 substitute that desktop-specific locator for a Codex CLI receipt. Capability
 inventory scans every immediate source in the active Codex profile's cache
@@ -116,7 +119,7 @@ Histories without a valid SemVer or with multiple highest-precedence locators
 are omitted, and inaccessible cache sources are skipped without weakening
 other results. Historical locator directories remain untouched and are not
 reported as current plugin candidates. An expected upstream source must also
-be outside the selected target-version replacement scope.
+be outside the selected target-version refresh scope.
 Enabled config and marketplace selection are captured before and revalidated
 after the anchored tree proof. Concurrent adversarial directory replacement or
 change after the receipt returns is outside this helper's guarantee.

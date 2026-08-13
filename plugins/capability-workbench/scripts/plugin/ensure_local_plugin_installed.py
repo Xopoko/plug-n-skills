@@ -20,6 +20,7 @@ import shutil
 import stat
 import subprocess
 import sys
+import tempfile
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Any
@@ -837,26 +838,307 @@ def ensure_cache_materialized(
     dry_run: bool,
 ) -> bool:
     ensure_disjoint_install_paths(plugin_root=plugin_root, cache_path=cache_path)
-    build_installable_tree_manifest(plugin_root)
+    source_entries = build_installable_tree_manifest(plugin_root)
     if dry_run:
         return True
     if cache_path.is_symlink():
         raise ValueError("plugin cache root must not be a symlink")
-    if cache_path.exists():
-        shutil.rmtree(cache_path)
     cache_path.parent.mkdir(parents=True, exist_ok=True)
-    shutil.copytree(
-        plugin_root,
-        cache_path,
-        ignore=ignored_cache_entry_names,
-        symlinks=True,
+    cache_exists = cache_path.exists()
+    if cache_exists and not cache_path.is_dir():
+        raise ValueError("plugin cache root must be a directory")
+
+    transaction_root = Path(
+        tempfile.mkdtemp(
+            prefix=f".{cache_path.name}.refresh-",
+            dir=cache_path.parent,
+        )
     )
+    staged_path = transaction_root / "staged"
+    backup_path = transaction_root / "backup"
+    retain_transaction = False
     try:
-        build_installable_tree_manifest(cache_path)
-    except Exception:
-        shutil.rmtree(cache_path)
-        raise
-    return True
+        shutil.copytree(
+            plugin_root,
+            staged_path,
+            ignore=ignored_cache_entry_names,
+            symlinks=True,
+        )
+        current_source_entries, staged_entries = read_stable_tree_snapshots(
+            [plugin_root, staged_path]
+        )
+        ensure_snapshot_unchanged(
+            source_entries,
+            current_source_entries,
+            "plugin source changed while staging the cache refresh",
+        )
+        compare_installable_tree_manifests(
+            expected_entries=source_entries,
+            actual_entries=staged_entries,
+            mismatch_subject="staged cache content does not match plugin source",
+            remediation="Do not publish an incomplete plugin cache.",
+        )
+
+        if not cache_exists:
+            cache_created = False
+            try:
+                os.replace(staged_path, cache_path)
+                cache_created = True
+                verify_materialized_cache(
+                    plugin_root=plugin_root,
+                    cache_path=cache_path,
+                    expected_source_entries=source_entries,
+                )
+            except Exception as refresh_error:
+                if cache_created:
+                    failed_cache_path = transaction_root / "failed-cache"
+                    try:
+                        os.replace(cache_path, failed_cache_path)
+                    except Exception as cleanup_error:
+                        retain_transaction = True
+                        raise RuntimeError(
+                            "new plugin cache failed verification and could not be "
+                            f"withdrawn; failed tree retained at {cache_path}: "
+                            f"{cleanup_error}"
+                        ) from refresh_error
+                raise
+            return True
+
+        cache_before_entries = build_installable_tree_manifest(cache_path)
+        shutil.copytree(
+            cache_path,
+            backup_path,
+            ignore=ignored_cache_entry_names,
+            symlinks=True,
+        )
+        current_cache_entries, backup_entries = read_stable_tree_snapshots(
+            [cache_path, backup_path]
+        )
+        ensure_snapshot_unchanged(
+            cache_before_entries,
+            current_cache_entries,
+            "plugin cache changed while preparing the refresh rollback",
+        )
+        compare_installable_tree_manifests(
+            expected_entries=cache_before_entries,
+            actual_entries=backup_entries,
+            mismatch_subject="plugin cache rollback snapshot is incomplete",
+            remediation="Do not refresh a cache without a verified rollback tree.",
+        )
+
+        try:
+            sync_installable_tree_in_place(
+                source_root=staged_path,
+                expected_entries=source_entries,
+                destination_root=cache_path,
+                current_entries=cache_before_entries,
+                quarantine_root=transaction_root / "quarantine",
+            )
+            verify_materialized_cache(
+                plugin_root=plugin_root,
+                cache_path=cache_path,
+                expected_source_entries=source_entries,
+            )
+        except Exception as refresh_error:
+            try:
+                restore_materialized_cache(
+                    backup_path=backup_path,
+                    expected_backup_entries=cache_before_entries,
+                    cache_path=cache_path,
+                    transaction_root=transaction_root,
+                )
+            except Exception as rollback_error:
+                retain_transaction = True
+                raise RuntimeError(
+                    "plugin cache refresh failed and rollback could not restore "
+                    f"the prior tree; backup retained at {backup_path}; "
+                    f"refresh error: {refresh_error}; rollback error: {rollback_error}"
+                ) from refresh_error
+            raise
+        return True
+    finally:
+        if not retain_transaction and transaction_root.exists():
+            shutil.rmtree(transaction_root)
+
+
+def verify_materialized_cache(
+    *,
+    plugin_root: Path,
+    cache_path: Path,
+    expected_source_entries: dict[str, TreeEntry],
+) -> None:
+    current_source_entries, cache_entries = read_stable_tree_snapshots(
+        [plugin_root, cache_path]
+    )
+    ensure_snapshot_unchanged(
+        expected_source_entries,
+        current_source_entries,
+        "plugin source changed during cache refresh",
+    )
+    compare_installable_tree_manifests(
+        expected_entries=expected_source_entries,
+        actual_entries=cache_entries,
+        mismatch_subject="refreshed cache content does not match plugin source",
+        remediation="Restore the prior verified cache before returning failure.",
+    )
+
+
+def restore_materialized_cache(
+    *,
+    backup_path: Path,
+    expected_backup_entries: dict[str, TreeEntry],
+    cache_path: Path,
+    transaction_root: Path,
+) -> None:
+    rollback_staged_path = transaction_root / "rollback-staged"
+    shutil.copytree(backup_path, rollback_staged_path, symlinks=True)
+    rollback_entries = build_installable_tree_manifest(rollback_staged_path)
+    ensure_snapshot_unchanged(
+        expected_backup_entries,
+        rollback_entries,
+        "plugin cache rollback snapshot changed before restoration",
+    )
+    current_entries = build_installable_tree_manifest(cache_path)
+    sync_installable_tree_in_place(
+        source_root=rollback_staged_path,
+        expected_entries=expected_backup_entries,
+        destination_root=cache_path,
+        current_entries=current_entries,
+        quarantine_root=transaction_root / "rollback-quarantine",
+    )
+    restored_entries = read_stable_tree_snapshots([cache_path])[0]
+    ensure_snapshot_unchanged(
+        expected_backup_entries,
+        restored_entries,
+        "plugin cache rollback did not restore the prior verified tree",
+    )
+
+
+def sync_installable_tree_in_place(
+    *,
+    source_root: Path,
+    expected_entries: dict[str, TreeEntry],
+    destination_root: Path,
+    current_entries: dict[str, TreeEntry],
+    quarantine_root: Path,
+) -> None:
+    """Synchronize a cache tree without replacing its potentially open root."""
+    if destination_root.is_symlink() or not destination_root.is_dir():
+        raise ValueError("plugin cache root must remain a real directory")
+
+    # Temporarily make existing directories owner-writable so a prior source
+    # mode cannot prevent an update. Final source modes are restored below.
+    current_directories = [
+        relative_path
+        for relative_path, entry in current_entries.items()
+        if entry.kind == "directory"
+    ]
+    for relative_path in sorted(
+        current_directories,
+        key=lambda value: (len(tree_path_parts(value)), canonical_utf8(value)),
+    ):
+        directory_path = installable_tree_path(destination_root, relative_path)
+        os.chmod(
+            directory_path,
+            current_entries[relative_path].mode | stat.S_IWUSR | stat.S_IXUSR,
+        )
+
+    removal_roots = minimal_refresh_removal_roots(
+        current_entries=current_entries,
+        expected_entries=expected_entries,
+    )
+    for relative_path in removal_roots:
+        current_path = installable_tree_path(destination_root, relative_path)
+        quarantine_path = installable_tree_path(quarantine_root, relative_path)
+        quarantine_path.parent.mkdir(parents=True, exist_ok=True)
+        os.replace(current_path, quarantine_path)
+
+    expected_directories = [
+        relative_path
+        for relative_path, entry in expected_entries.items()
+        if relative_path != "." and entry.kind == "directory"
+    ]
+    for relative_path in sorted(
+        expected_directories,
+        key=lambda value: (len(tree_path_parts(value)), canonical_utf8(value)),
+    ):
+        destination_path = installable_tree_path(destination_root, relative_path)
+        destination_path.mkdir(exist_ok=True)
+        if destination_path.is_symlink() or not destination_path.is_dir():
+            raise ValueError("plugin cache changed to an unsafe directory during refresh")
+
+    expected_files = [
+        relative_path
+        for relative_path, entry in expected_entries.items()
+        if entry.kind == "file"
+    ]
+    for relative_path in sorted(expected_files, key=canonical_utf8):
+        expected_entry = expected_entries[relative_path]
+        current_entry = current_entries.get(relative_path)
+        source_path = installable_tree_path(source_root, relative_path)
+        destination_path = installable_tree_path(destination_root, relative_path)
+        if current_entry == expected_entry:
+            continue
+        if (
+            current_entry is not None
+            and current_entry.kind == "file"
+            and current_entry.size == expected_entry.size
+            and current_entry.content_digest == expected_entry.content_digest
+        ):
+            shutil.copymode(source_path, destination_path, follow_symlinks=False)
+            continue
+        os.replace(source_path, destination_path)
+
+    # Apply directory modes after mutations so a read-only source directory
+    # does not block its own materialization. The root is deliberately kept in
+    # place even when Codex holds an open directory handle on Windows.
+    for relative_path in sorted(
+        expected_directories,
+        key=lambda value: (-len(tree_path_parts(value)), canonical_utf8(value)),
+    ):
+        shutil.copymode(
+            installable_tree_path(source_root, relative_path),
+            installable_tree_path(destination_root, relative_path),
+            follow_symlinks=False,
+        )
+    shutil.copymode(source_root, destination_root, follow_symlinks=False)
+
+
+def minimal_refresh_removal_roots(
+    *,
+    current_entries: dict[str, TreeEntry],
+    expected_entries: dict[str, TreeEntry],
+) -> list[str]:
+    candidates = [
+        relative_path
+        for relative_path, current_entry in current_entries.items()
+        if relative_path != "."
+        and (
+            relative_path not in expected_entries
+            or expected_entries[relative_path].kind != current_entry.kind
+        )
+    ]
+    selected: list[str] = []
+    selected_parts: list[tuple[str, ...]] = []
+    for relative_path in sorted(
+        candidates,
+        key=lambda value: (len(tree_path_parts(value)), canonical_utf8(value)),
+    ):
+        parts = tree_path_parts(relative_path)
+        if any(parts[: len(parent)] == parent for parent in selected_parts):
+            continue
+        selected.append(relative_path)
+        selected_parts.append(parts)
+    return selected
+
+
+def tree_path_parts(relative_path: str) -> tuple[str, ...]:
+    return () if relative_path == "." else tuple(relative_path.split("/"))
+
+
+def installable_tree_path(root: Path, relative_path: str) -> Path:
+    parts = tree_path_parts(relative_path)
+    return root.joinpath(*parts) if parts else root
 
 
 def ensure_installation_receipt(

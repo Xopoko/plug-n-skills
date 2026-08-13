@@ -9,15 +9,18 @@ known-bad fixtures. Stdlib-only; safe to run from any cwd:
 
 from __future__ import annotations
 
+import binascii
+import importlib.util
 import json
 import os
-import binascii
+import shutil
 import struct
 import subprocess
 import sys
 import tempfile
 import zlib
 from pathlib import Path
+from unittest import mock
 
 PLUGIN_ROOT = Path(__file__).resolve().parent.parent
 SCRIPTS = PLUGIN_ROOT / "scripts"
@@ -59,6 +62,25 @@ def write_skill(root: Path, name: str, frontmatter: str) -> Path:
 
 def path_ends_with(path: str, *parts: str) -> bool:
     return tuple(Path(path).parts[-len(parts) :]) == parts
+
+
+def load_installer_module():
+    plugin_dir = SCRIPTS / "plugin"
+    module_name = "capability_workbench_installer_smoke"
+    spec = importlib.util.spec_from_file_location(
+        module_name,
+        plugin_dir / "ensure_local_plugin_installed.py",
+    )
+    if spec is None or spec.loader is None:
+        raise RuntimeError("could not load ensure_local_plugin_installed.py")
+    module = importlib.util.module_from_spec(spec)
+    sys.modules[module_name] = module
+    sys.path.insert(0, str(plugin_dir))
+    try:
+        spec.loader.exec_module(module)
+    finally:
+        sys.path.pop(0)
+    return module
 
 
 def write_test_png(path: Path, *, size: int = 1024, rgba: bool = False) -> None:
@@ -1812,6 +1834,163 @@ def test_codex_cli_plugin_cache_locator() -> None:
     )
 
 
+def test_cache_refresh_transaction() -> None:
+    installer = load_installer_module()
+
+    with tempfile.TemporaryDirectory() as tmp:
+        root = Path(tmp)
+        plugin_root = root / "source"
+        cache_path = root / "cache"
+        plugin_root.mkdir()
+        (plugin_root / "payload.txt").write_text("payload", encoding="utf-8")
+        installer.ensure_cache_materialized(
+            plugin_root=plugin_root,
+            cache_path=cache_path,
+            dry_run=False,
+        )
+        check(
+            "ensure_local_plugin_installed: first cache publish is source-equivalent",
+            installer.build_installable_tree_manifest(plugin_root)
+            == installer.build_installable_tree_manifest(cache_path),
+        )
+
+    with tempfile.TemporaryDirectory() as tmp:
+        root = Path(tmp)
+        plugin_root = root / "source"
+        cache_path = root / "cache"
+        (plugin_root / "nested").mkdir(parents=True)
+        (plugin_root / "a.txt").write_text("old-a", encoding="utf-8")
+        (plugin_root / "nested" / "kept.txt").write_text(
+            "old-kept",
+            encoding="utf-8",
+        )
+        shutil.copytree(plugin_root, cache_path)
+        (plugin_root / "a.txt").write_text("new-a", encoding="utf-8")
+        (plugin_root / "nested" / "kept.txt").write_text(
+            "new-kept",
+            encoding="utf-8",
+        )
+        (plugin_root / "nested" / "added.txt").write_text(
+            "added",
+            encoding="utf-8",
+        )
+        (cache_path / "obsolete").mkdir()
+        (cache_path / "obsolete" / "stale.txt").write_text(
+            "stale",
+            encoding="utf-8",
+        )
+        cache_identity = (cache_path.stat().st_dev, cache_path.stat().st_ino)
+
+        original_rmtree = shutil.rmtree
+        cache_rmtree_attempted = False
+
+        def fail_if_cache_root_is_removed(path, *args, **kwargs):
+            nonlocal cache_rmtree_attempted
+            if Path(path).resolve() == cache_path.resolve():
+                cache_rmtree_attempted = True
+                (cache_path / "a.txt").unlink(missing_ok=True)
+                raise PermissionError(32, "simulated open Windows cache directory")
+            return original_rmtree(path, *args, **kwargs)
+
+        refresh_error = None
+        with mock.patch.object(
+            installer.shutil,
+            "rmtree",
+            side_effect=fail_if_cache_root_is_removed,
+        ):
+            try:
+                installer.ensure_cache_materialized(
+                    plugin_root=plugin_root,
+                    cache_path=cache_path,
+                    dry_run=False,
+                )
+            except Exception as err:  # noqa: BLE001 - assertion captures failure.
+                refresh_error = err
+
+        trees_match = False
+        if refresh_error is None:
+            trees_match = (
+                installer.build_installable_tree_manifest(plugin_root)
+                == installer.build_installable_tree_manifest(cache_path)
+            )
+        check(
+            "ensure_local_plugin_installed: refresh keeps open cache root in place",
+            refresh_error is None
+            and not cache_rmtree_attempted
+            and (cache_path.stat().st_dev, cache_path.stat().st_ino)
+            == cache_identity,
+            repr(refresh_error),
+        )
+        check(
+            "ensure_local_plugin_installed: in-place refresh is source-equivalent",
+            trees_match
+            and not (cache_path / "obsolete").exists()
+            and (cache_path / "nested" / "added.txt").read_text(encoding="utf-8")
+            == "added",
+            repr(refresh_error),
+        )
+
+    with tempfile.TemporaryDirectory() as tmp:
+        root = Path(tmp)
+        plugin_root = root / "source"
+        cache_path = root / "cache"
+        plugin_root.mkdir()
+        (plugin_root / "a.txt").write_text("old-a", encoding="utf-8")
+        (plugin_root / "b.txt").write_text("old-b", encoding="utf-8")
+        shutil.copytree(plugin_root, cache_path)
+        (cache_path / "stale.txt").write_text("old-stale", encoding="utf-8")
+        cache_before = installer.build_installable_tree_manifest(cache_path)
+        (plugin_root / "a.txt").write_text("new-a", encoding="utf-8")
+        (plugin_root / "b.txt").write_text("new-b", encoding="utf-8")
+
+        original_replace = os.replace
+        simulated_lock_reached = False
+
+        def fail_second_file_replace(source, destination):
+            nonlocal simulated_lock_reached
+            source_path = Path(source)
+            destination_path = Path(destination)
+            if (
+                not simulated_lock_reached
+                and "staged" in source_path.parts
+                and destination_path.resolve(strict=False)
+                == (cache_path / "b.txt").resolve(strict=False)
+            ):
+                simulated_lock_reached = True
+                raise PermissionError(32, "simulated locked cache file")
+            return original_replace(source, destination)
+
+        refresh_error = None
+        with mock.patch.object(
+            installer.os,
+            "replace",
+            side_effect=fail_second_file_replace,
+        ):
+            try:
+                installer.ensure_cache_materialized(
+                    plugin_root=plugin_root,
+                    cache_path=cache_path,
+                    dry_run=False,
+                )
+            except Exception as err:  # noqa: BLE001 - assertion captures failure.
+                refresh_error = err
+
+        restored_entries = installer.build_installable_tree_manifest(cache_path)
+        refresh_residue = list(root.glob(f".{cache_path.name}.refresh-*"))
+        check(
+            "ensure_local_plugin_installed: failed in-place refresh rolls back",
+            simulated_lock_reached
+            and isinstance(refresh_error, PermissionError)
+            and restored_entries == cache_before
+            and (cache_path / "a.txt").read_text(encoding="utf-8") == "old-a"
+            and (cache_path / "b.txt").read_text(encoding="utf-8") == "old-b"
+            and (cache_path / "stale.txt").read_text(encoding="utf-8")
+            == "old-stale"
+            and not refresh_residue,
+            repr(refresh_error),
+        )
+
+
 def _audit(skill_dir: Path) -> dict:
     script = str(SCRIPTS / "synthesis" / "audit_skill_candidate.py")
     result = run([script, str(skill_dir)])
@@ -2143,6 +2322,7 @@ def main() -> int:
         test_agent_target,
         test_install_skill_default_dest,
         test_codex_cli_plugin_cache_locator,
+        test_cache_refresh_transaction,
         test_audit_skill_candidate,
         test_audit_skill_candidate_tier2,
         test_capability_evaluation,

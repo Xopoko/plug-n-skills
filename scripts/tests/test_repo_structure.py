@@ -247,7 +247,7 @@ class RepoStructureTest(unittest.TestCase):
         )
         for field in ("name", "version", "description", "author", "license", "keywords"):
             self.assertEqual(codex[field], claude[field], f"manifest {field} mismatch")
-        self.assertEqual(codex["version"], "0.6.1")
+        self.assertEqual(codex["version"], "0.6.2")
         self.assertIn("Artifact-first agent capability engineering", codex["description"])
         self.assertIn("harness-level evaluation", codex["description"])
         self.assertIn("agent-capability-engineering", codex["keywords"])
