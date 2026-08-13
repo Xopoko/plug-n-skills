@@ -336,14 +336,14 @@ Cursor:
 
 ## Source Links
 
-- OpenAI Codex AGENTS.md guide:
-  https://developers.openai.com/codex/guides/agents-md
-- OpenAI Codex customization guide:
-  https://developers.openai.com/codex/concepts/customization
+- OpenAI AGENTS.md guide:
+  https://learn.chatgpt.com/docs/agent-configuration/agents-md
+- OpenAI customization overview:
+  https://learn.chatgpt.com/docs/customization/overview
 - OpenAI Codex best practices:
-  https://developers.openai.com/codex/learn/best-practices
+  https://learn.chatgpt.com/guides/best-practices
 - Claude Code docs:
-  https://docs.anthropic.com/en/docs/claude-code
+  https://code.claude.com/docs/en/overview
 - Cursor rules guide:
   https://cursor.com/docs/rules
 - AGENTS.md open format:

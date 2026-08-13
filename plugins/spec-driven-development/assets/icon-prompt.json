@@ -1,0 +1,53 @@
+{
+  "schema": "capability_workbench.plugin_icon_prompt.v2",
+  "plugin_name": "spec-driven-development",
+  "catalog": {
+    "source": "first-party-catalog",
+    "key": "spec-driven-development"
+  },
+  "semantic_hero": {
+    "object": "a specification document transforming into a code window",
+    "meaning": "implementation governed by an explicit specification",
+    "silhouette": "two large panels connected by one broad forward chevron"
+  },
+  "support_cue": {
+    "object": "one code-bracket pair in the destination panel",
+    "meaning": "the specification becomes implementation"
+  },
+  "avoid": [
+    "chart",
+    "graph",
+    "rising line",
+    "magic wand",
+    "approval shield",
+    "document-only checkmark"
+  ],
+  "collision_avoid": [
+    "generic task approval",
+    "file conversion"
+  ],
+  "brand_source": {
+    "type": "original-domain-metaphor",
+    "source": "none",
+    "trademark_status": "no proprietary mark requested",
+    "license": "original-generated-artwork",
+    "authorization": "not-required-no-brand-mark"
+  },
+  "brandColor": "#2563EB",
+  "recommended_asset_path": "assets/icon.png",
+  "imagegen_mode": "built-in",
+  "size_gates": [
+    16,
+    24,
+    32,
+    64
+  ],
+  "prompt": "Use case: logo-brand\nAsset type: 1024x1024 marketplace plugin icon\nPurpose: Spec-Driven Development from intent through specs, plans, traceable tasks, implementation, and proof.\nLiteral semantic hero: a specification document transforming into a code window. It communicates implementation governed by an explicit specification.\nSilhouette: two large panels connected by one broad forward chevron. Use exactly one subordinate support cue: one code-bracket pair in the destination panel, meaning the specification becomes implementation.\nComposition: one centered dominant silhouette, full-bleed opaque background, meaningful content inside the central 72 percent, no more than one support cue.\nSmall-size requirement: the same hero must remain recognizable at 64, 32, 24, and 16 pixels; keep critical negative space open at 24 pixels.\nStyle: polished modern bitmap icon, bold filled shapes, crisp edges, restrained dimensional polish, consistent portfolio weight.\nBackground: a full-bleed field anchored on #2563EB.\nForeground palette: high-contrast warm white with at most two restrained accents; meaningful adjacent colors meet at least 3:1 contrast.\nBrand-source rule: original-domain-metaphor referencing none; no proprietary mark requested. Do not introduce an unlicensed mark or distinctive trade dress.\nAvoid: chart; graph; rising line; magic wand; approval shield; document-only checkmark.\nCollision avoid: generic task approval; file conversion.\nText: none. No letters, words, numbers, watermark, screenshot, photo, UI replica, tiny badge, thin-line detail, mascot, or private identifier.\nDo not replace the literal hero with a generic abstract symbol derived only from the plugin name.\n",
+  "checks": [
+    "save the selected image as a 1024x1024 opaque RGB PNG at assets/icon.png",
+    "inspect semantic recognition and the monochrome silhouette at 16, 24, 32, and 64 px",
+    "reject a competing second cue, closed critical gap, portfolio collision, text, screenshot, photo, watermark, or low contrast",
+    "verify brand-source, trademark, license, and authorization provenance manually",
+    "wire identical interface.composerIcon and interface.logo paths plus interface.brandColor"
+  ]
+}

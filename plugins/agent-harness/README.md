@@ -10,8 +10,7 @@ architecture-intelligence.
 
 ## Skills
 
-The plugin exposes 18 skills: one portfolio router and 17 preserved narrow
-leaves.
+The plugin exposes 19 skills: one portfolio router and 18 narrow leaves.
 
 ### Portfolio and harness
 
@@ -45,11 +44,17 @@ leaves.
 - `scheduled-automation-runtime`: proves launchd, systemd timer, cron, and
   Windows Task Scheduler runs without promoting manual-shell evidence.
 
+### Human credential handoff
+
+- `credential-handoff`: lets an operator satisfy native password, passphrase,
+  OTP, device approval, or 1Password prompts while the agent receives only a
+  bounded status receipt, never the credential value.
+
 ## Bundled helpers
 
 The plugin retains the Codex and Claude CLI inspectors, Codex rollout and skill
-catalog analysis, thread-handoff validation, the harness artifact validator,
-and the Codex deferred-completion MCP server.
+catalog analysis, thread-handoff validation, the credential-handoff launcher,
+the harness artifact validator, and the Codex deferred-completion MCP server.
 
 ```bash
 python3 scripts/codex_cli_inspector.py --json
@@ -57,6 +62,7 @@ python3 scripts/claude_code_inspector.py --json
 python3 scripts/codex_log_reader.py --help
 python3 scripts/codex_skill_catalog_audit.py --help
 python3 scripts/validate_thread_skill_handoff.py --help
+python3 scripts/credential_handoff.py --help
 python3 scripts/harness/validate_harness_artifact.py --help
 ```
 

@@ -1,0 +1,79 @@
+{
+  "schema_version": "technology_intelligence.interfaces.v1",
+  "snapshot_id": "research-2026-08-11-capability-model-v1",
+  "generated_at": "2026-08-11T18:47:00Z",
+  "interfaces": [
+    {
+      "id": "anydoc-cli",
+      "name": "AnyDoc CLI",
+      "technology_id": "anydoc",
+      "capability_ids": ["document-to-markdown"],
+      "surface": "cli",
+      "identifier": "@firecrawl/anydoc",
+      "delivery_technology_id": "cli-process-interface",
+      "provisioning_modes": ["on-demand", "preinstalled"],
+      "evidence_ids": ["anydoc-interfaces-v0-1-8", "anydoc-cli-provisioning-v0-1-8", "anydoc-node-compatibility-v0-1-8"],
+      "summary": "Command-line document conversion distributed through npm as a prebuilt native binary."
+    },
+    {
+      "id": "anydoc-node-sdk",
+      "name": "AnyDoc Node.js SDK",
+      "technology_id": "anydoc",
+      "capability_ids": ["document-to-markdown"],
+      "surface": "sdk",
+      "identifier": "@firecrawl/anydoc",
+      "delivery_technology_id": "native-sdk-integration",
+      "provisioning_modes": ["bundled"],
+      "evidence_ids": ["anydoc-interfaces-v0-1-8", "anydoc-node-compatibility-v0-1-8"],
+      "summary": "In-process Node.js library for converting paths or document bytes."
+    },
+    {
+      "id": "anydoc-python-sdk",
+      "name": "AnyDoc Python SDK",
+      "technology_id": "anydoc",
+      "capability_ids": ["document-to-markdown"],
+      "surface": "sdk",
+      "identifier": "firecrawl-anydoc",
+      "delivery_technology_id": "native-sdk-integration",
+      "provisioning_modes": ["bundled"],
+      "evidence_ids": ["anydoc-interfaces-v0-1-8", "anydoc-python-compatibility-v0-1-8"],
+      "summary": "In-process Python library for converting paths or document bytes."
+    },
+    {
+      "id": "anydoc-rust-sdk",
+      "name": "AnyDoc Rust Crate",
+      "technology_id": "anydoc",
+      "capability_ids": ["document-to-markdown"],
+      "surface": "sdk",
+      "identifier": "anydoc",
+      "delivery_technology_id": "native-sdk-integration",
+      "provisioning_modes": ["bundled"],
+      "evidence_ids": ["anydoc-interfaces-v0-1-8", "anydoc-rust-compatibility-v0-1-8"],
+      "summary": "Native Rust library exposing the core document model and Markdown conversion APIs."
+    },
+    {
+      "id": "anydoc-wasm",
+      "name": "AnyDoc WebAssembly Library",
+      "technology_id": "anydoc",
+      "capability_ids": ["document-to-markdown"],
+      "surface": "wasm",
+      "identifier": "@firecrawl/anydoc-wasm",
+      "delivery_technology_id": "native-sdk-integration",
+      "provisioning_modes": ["bundled"],
+      "evidence_ids": ["anydoc-interfaces-v0-1-8", "anydoc-rust-compatibility-v0-1-8"],
+      "summary": "Browser WebAssembly library that converts document bytes locally in the client."
+    },
+    {
+      "id": "anydoc-agent-skill",
+      "name": "AnyDoc Agent Skill",
+      "technology_id": "anydoc",
+      "capability_ids": ["document-to-markdown"],
+      "surface": "skill",
+      "identifier": "firecrawl/anydoc/skills/convert-documents-to-markdown",
+      "delivery_technology_id": "agent-skill-package",
+      "provisioning_modes": ["bundled", "on-demand"],
+      "evidence_ids": ["anydoc-interfaces-v0-1-8", "anydoc-cli-provisioning-v0-1-8", "anydoc-node-compatibility-v0-1-8"],
+      "summary": "Agent Skill instructions that route supported document conversion through the AnyDoc CLI."
+    }
+  ]
+}

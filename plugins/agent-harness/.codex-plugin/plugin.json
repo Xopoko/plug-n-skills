@@ -1,19 +1,21 @@
 {
   "name": "agent-harness",
-  "version": "0.1.0",
-  "description": "Agent harness design and evaluation plus Codex CLI, Claude Code, MCP, hooks, sessions, deferred completion, and local scheduler proof.",
+  "version": "0.1.3",
+  "description": "Agent harness design and evaluation plus Codex and Claude runtime operations, secret-safe human credential handoff, 1Password, sessions, deferred completion, and scheduler proof.",
   "author": {
     "name": "Xopoko"
   },
   "repository": "https://github.com/Xopoko/plug-n-skills/tree/main/plugins/agent-harness",
   "license": "MIT",
   "keywords": [
+    "1password",
     "agent-harness",
     "agents",
     "automation",
     "claude-code",
     "cli",
     "codex",
+    "credentials",
     "evaluation",
     "hooks",
     "mcp",
@@ -25,7 +27,7 @@
   "interface": {
     "displayName": "Agent Harness",
     "shortDescription": "Build, evaluate, operate, and prove agent runtimes.",
-    "longDescription": "Design and evaluate reliable LLM agent harnesses, operate Codex CLI and Claude Code, manage plugins, MCP servers, hooks, settings, sessions, worktrees, and environments, inspect rollout evidence, use producer-native deferred completion, and prove local operating-system scheduler runs.",
+    "longDescription": "Design and evaluate reliable LLM agent harnesses, operate Codex CLI and Claude Code, hand task-scoped credentials from a human or 1Password directly to target processes without returning secret values to the model, manage plugins, MCP servers, hooks, settings, sessions, worktrees, and environments, inspect rollout evidence, use producer-native deferred completion, and prove local operating-system scheduler runs.",
     "developerName": "Xopoko",
     "category": "Coding",
     "capabilities": [
@@ -33,10 +35,13 @@
       "Harness evaluation, replay, failure attribution, reliability analysis, and release gates",
       "Codex CLI inspection, exec and review automation, diagnostics, environments, plugins, MCP, task supervision, and rollout forensics",
       "Claude Code inspection, print automation, diagnostics, hooks, settings, agents, worktrees, sessions, plugins, and MCP",
+      "Secret-safe operator and 1Password credential handoff through native prompts and bounded receipts",
       "Producer-native deferred completion receipts through a bundled MCP server",
       "Local launchd, systemd timer, cron, and Windows Task Scheduler runtime proof"
     ],
-    "defaultPrompt": "Route this agent harness or Codex/Claude runtime task to the narrowest safe workflow and verify the result.",
+    "defaultPrompt": [
+      "Route this agent harness or Codex/Claude runtime task to the narrowest safe workflow and verify the result."
+    ],
     "brandColor": "#2563EB",
     "composerIcon": "./assets/icon.png",
     "logo": "./assets/icon.png"

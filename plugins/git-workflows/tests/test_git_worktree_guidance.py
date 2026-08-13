@@ -114,7 +114,7 @@ class GitWorktreeGuidanceTests(unittest.TestCase):
         for field in ("name", "version", "description", "author", "license", "keywords"):
             self.assertEqual(codex[field], claude[field])
         self.assertEqual(codex["name"], "git-workflows")
-        self.assertEqual(codex["version"], "0.1.0")
+        self.assertEqual(codex["version"], "0.1.1")
         interface = codex["interface"]
         self.assertEqual(interface["brandColor"], "#173F5F")
         self.assertEqual(interface["composerIcon"], "./assets/icon.png")

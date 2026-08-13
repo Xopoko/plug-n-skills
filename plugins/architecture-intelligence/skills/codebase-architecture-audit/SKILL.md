@@ -21,6 +21,20 @@ python3 "$PLUGIN_ROOT/scripts/architecture_probe.py" <repo-path> --json --git-hi
 python3 "$PLUGIN_ROOT/scripts/architecture_probe.py" <repo-path> --json --policy <policy.json>
 ```
 
+## AI-Assisted Recovery
+
+When Codex, Claude Code, or another coding agent helps recover architecture,
+treat its map as a hypothesis. Bind important components, responsibilities,
+edges, and runtime paths to source or command evidence. Explore outward from
+the focal code through callers, callees, interfaces, subclasses, sibling
+implementations, importers, shared state, and downstream consumers. Record
+excluded or inaccessible surfaces and lower confidence instead of claiming
+whole-repository coverage.
+
+Keep explicit architecture intent separate from conventions recovered from
+source. See `$PLUGIN_ROOT/references/ai-assisted-code-architecture.md` for the
+dated evidence, source-grounded rubric, and cross-module ripple workflow.
+
 ## Lenses
 
 - System shape: monolith, modular monolith, service system, plugin, app/backend, library, CLI, data pipeline, mixed.

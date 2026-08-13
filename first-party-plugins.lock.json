@@ -1,0 +1,57 @@
+{
+  "schemaVersion": 1,
+  "publishers": [
+    {
+      "id": "xopoko",
+      "displayName": "Xopoko",
+      "githubOwner": "Xopoko",
+      "homepage": "https://github.com/Xopoko"
+    }
+  ],
+  "plugins": [
+    {
+      "name": "build-swift-apps",
+      "displayName": "Build Swift Apps",
+      "publisher": "xopoko",
+      "description": "Build, debug, profile, test, refactor, and release Swift apps across iOS, macOS, Xcode, SwiftUI, SwiftPM, Tuist, and App Store Connect.",
+      "source": {
+        "provider": "github",
+        "repository": "Xopoko/build-swift-apps",
+        "commit": "b269c774c2decc8169d9b4bcbc6d97dbf60edb2e",
+        "tree": "df8f190c513a979181892ba52e79c6e6653f964b"
+      },
+      "manifest": {
+        "version": "0.3.10",
+        "codexSha256": "a1575817bb2f0954fb82d1e39bfb8e14d21577fb2c06d612b8298e1fc578c582",
+        "claudeSha256": "af5e8bb9723172195f6f5ec5c06c98734f58f4cac4e08961141575b231a625f7"
+      },
+      "license": "MIT",
+      "selection": {
+        "default": true
+      },
+      "receipt": "docs/first-party-plugins/build-swift-apps.json"
+    },
+    {
+      "name": "career",
+      "displayName": "Career Skills",
+      "publisher": "xopoko",
+      "description": "Evidence-first career support for direction, research, job discovery, materials, applications and campaigns, inbox and recruiter coordination, interviews, offers, operations, development, and data governance.",
+      "source": {
+        "provider": "github",
+        "repository": "Xopoko/career-skills",
+        "commit": "d387a7e2c982da24eaa73790310ce37ad2337f44",
+        "tree": "a86472db6bb19cd640e3e6f947f3654a9924be17"
+      },
+      "manifest": {
+        "version": "0.1.1",
+        "codexSha256": "9dd5d9e60f042cb5723e8f5b4afe60942ee301bfbf49174af590c0011ea98181",
+        "claudeSha256": "a51d0754a40e217c8180653925977d0b8227b63738f3a360a9159ff8599de72c"
+      },
+      "license": "MIT",
+      "selection": {
+        "default": true
+      },
+      "receipt": "docs/first-party-plugins/career.json"
+    }
+  ]
+}

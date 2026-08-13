@@ -1,6 +1,6 @@
 ---
 name: kotlin-multiplatform
-description: Kotlin Multiplatform routing and execution across architecture, Gradle/private dependencies, Compose UI, Android-KMP migration, iOS interop, CocoaPods/SwiftPM moves, testing, performance, security, CI, publishing, and production readiness.
+description: Kotlin Multiplatform routing and execution across architecture, Gradle/private dependencies, Compose UI, Android-KMP migration, iOS interop, CocoaPods/SwiftPM dependency-import moves, testing, performance, security, CI, publishing, and production readiness.
 ---
 
 # Kotlin Multiplatform Router
@@ -39,7 +39,7 @@ For an existing repository, read the local project before answering:
 - Performance, observability, Compose jank, Kotlin/Native memory, GC logs, binary size, Gradle build time, Compose compiler metrics, baseline profiles, or release-mode measurement: use `kmp-performance-observability`.
 - Secrets, tokens, secure storage, privacy, logging redaction, Ktor auth, TLS/certificate pinning, runtime app protection, or platform security boundaries: use `kmp-security-privacy`.
 - Maven publishing, Gradle metadata, XCFramework, SwiftPM export, KMMBridge, CI matrices, artifact signing boundaries, app-store build gates, or release automation: use `kmp-publishing-ci`.
-- AGP 9+, `com.android.kotlin.multiplatform.library`, monolithic `composeApp`, CocoaPods to SwiftPM, cinterop, iOS framework integration, CI, release, publishing, or store builds: use `kmp-migration-release`.
+- AGP 9+, `com.android.kotlin.multiplatform.library`, monolithic `composeApp`, CocoaPods to SwiftPM dependency import, cinterop, iOS framework integration, CI, release, publishing, or store builds: use `kmp-migration-release`.
 
 For stale async completion, replay, invalidation, coalescing, memoization, or
 direct caller races, combine `kmp-data-layer` and `kmp-testing-quality` with

@@ -45,7 +45,7 @@ class KmpInspectorTest(unittest.TestCase):
             "project_repositories_not_blocked",
             "module_local_repositories",
             "published_library_without_abi_validation",
-            "swiftpm_manifest_validation_needed",
+            "swiftpm_import_alpha_gate",
             "cinterop_definition_not_detected",
             "native_transitive_export_enabled",
             "possible_secret_literal_in_common",
@@ -58,6 +58,19 @@ class KmpInspectorTest(unittest.TestCase):
             missing_codes,
             f"missing expected diagnostics: {missing_codes}",
         )
+
+        shared_module = next(
+            module for module in report["modules"] if module["path"] == "shared"
+        )
+        self.assertIn("swiftpm-import", shared_module["classification"])
+        swiftpm_gate = next(
+            item
+            for item in shared_module["diagnostics"]
+            if item["code"] == "swiftpm_import_alpha_gate"
+        )
+        self.assertIn("Alpha", swiftpm_gate["message"])
+        self.assertIn("Package.resolved", swiftpm_gate["message"])
+        self.assertIn("do not assume Swift package export", swiftpm_gate["message"])
 
         readiness_names = {area["name"] for area in report["readiness"]}
         required_areas = {
@@ -102,7 +115,7 @@ class KmpInspectorTest(unittest.TestCase):
             self.assertNotIn(prefix_like_key, result.stdout)
             self.assertNotIn(str(private_fixture), result.stdout)
             self.assertNotIn(temp_dir, result.stdout)
-            self.assertEqual(2, report["schema_version"])
+            self.assertEqual(3, report["schema_version"])
             self.assertEqual(".", report["root"])
             self.assertEqual(
                 "gradle/libs.versions.toml",

@@ -372,6 +372,20 @@ Allowed dirty tree states: `clean`, `dirty`, `unknown`.
 
 Allowed severities: `P0`, `P1`, `P2`, `P3`.
 
+### Optional `architecture_assessment` appendix
+
+For an AI-assisted or otherwise architecture-sensitive patch, a refactor
+report may add an `architecture_assessment` object without changing the
+`architecture_intelligence.refactor_report.v1` schema. Record change type,
+explicit intent sources, recovered source conventions, affected components,
+before/after boundary edges, public API changes, dependency direction,
+cross-module blast radius, source-grounded rubric axes, plausible wrong paths,
+structural gaps, functional proof, architecture fitness proof, and ADR
+disposition. The current validator permits additional fields but does not
+validate this appendix independently. See
+`references/ai-assisted-code-architecture.md` for the complete example and
+evidence rules.
+
 ## `architecture_intelligence.runtime_topology.v1`
 
 Runtime architecture evidence from source, config, deployment, and operational signals.

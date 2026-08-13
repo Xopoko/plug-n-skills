@@ -157,4 +157,5 @@ Before finalizing:
 9. Confirm the final artifact is delivered to the validated surface and installed only when `install_required=true`.
 10. Run `python3 "$PLUGIN_ROOT/scripts/synthesis/install_scope_gate.py" <output-dir>/install-scope.json --final`.
 11. Run skill validators and resource tests.
-12. For plugin-pack mode, run plugin manifest validation and install/cache checks with `plugin-factory`; keep runtime discovery separate.
+12. If adoption depends on changed agent behavior rather than artifact structure, hand the frozen candidate, baseline, cases, and decision rule to `capability-evaluation`; do not promote static validation into behavioral proof.
+13. For plugin-pack mode, run plugin manifest validation and install/cache checks with `plugin-factory`; keep runtime discovery separate.

@@ -1,109 +1,90 @@
 # Plugin Icon System
 
-Use this reference when Capability Workbench creates or updates a
-marketplace-backed plugin that needs a Codex manifest icon. The default path uses
-the system `$imagegen` skill to produce a polished bitmap asset, then deterministic
-Workbench helpers prepare the prompt and wire the final file into the manifest.
-The goal is a coherent portfolio of minimal, stylish, long-range readable icons
-while still allowing each plugin to own a distinct background color.
+Use this contract for marketplace plugin icons authored through Capability
+Workbench. The portfolio should look related, but each icon must first say what
+the plugin does. A shared visual style is not a substitute for a semantic mark.
 
-## Host Fallback
+## Semantic Skeleton
 
-The `$imagegen` system skill is a Codex capability. When the host agent has no
-imagegen skill (for example Claude Code), use a user-supplied asset or
-host-native image generation when available; otherwise skip generation, record
-the missing-icon gap in the report, and keep delivering the plugin. Never block
-plugin delivery on icon generation.
+Start from a concrete skeleton before writing an image prompt:
 
-## Research Baseline
+1. **One literal hero:** one recognizable object or domain artifact that carries
+   the meaning (for example a workbench, compass, drafting compass, controller,
+   blueprint, microscope, or scrub brush).
+2. **Zero or one support cue:** one subordinate object, notch, path, sheet, or
+   badge that clarifies the action. It must not compete with the hero.
+3. **One silhouette:** hero and support cue must merge into one thumbnail-scale
+   read. Do not compose a scene or a collection of tools.
 
-- Apple Human Interface Guidelines, App icons: app icons should express one
-  memorable idea, stay simple, avoid nonessential text, prefer vector source,
-  keep primary content centered, and use a 1024 square source for square app
-  icon contexts.
-- Apple Human Interface Guidelines, Icons: effective icons express one concept
-  and should remain recognizable when small.
-- Material Design 3, Designing icons: icon sets need consistent style, live
-  area discipline, bold geometric shapes, consistent stroke/visual weight, and
-  small-size optical checks.
-- Material Design 3, Applying icons: optical size and weight matter because an
-  icon should read similarly at dense and larger display sizes.
-- WCAG 2.2, Non-text Contrast: meaningful graphical objects need at least 3:1
-  contrast against adjacent colors; very thin lines can underperform even when
-  nominal colors pass.
-- Local plugin icon corpus review: the most readable marketplace icons use one
-  large central mark, a distinct but simple background, high foreground
-  contrast, and few foreground parts. Text-heavy logos, tiny letters, and
-  detailed scenes do not scale well in plugin lists or pickers.
+For first-party plugins, begin with the concrete portfolio catalog in
+`prepare_plugin_icon_prompt.py`. Do not derive a generic abstract motif from the
+plugin name alone. Unknown plugins receive a deterministic literal-object
+fallback, which is a starting hypothesis to review against the description.
 
-## Portfolio Contract
+## Canonical Artifact
 
-Canonical output:
+- Generate `assets/icon.png` as a 1024x1024, 8-bit, opaque RGB PNG.
+- Use a full-bleed background. Keep meaningful content inside the central 72%
+  with at most 8% optical overshoot.
+- Use one dominant foreground color and no more than two accents. Meaningful
+  adjacent colors need at least 3:1 non-text contrast.
+- Keep `interface.composerIcon` and `interface.logo` identical and point both to
+  the same `./assets/...` PNG. Declare `interface.brandColor` as `#RRGGBB`.
+- Store `assets/icon-prompt.json` when the icon is generated or materially
+  redesigned. New prompt contracts use
+  `capability_workbench.plugin_icon_prompt.v2`.
+- Do not default to SVG, text, initials, screenshots, photos, UI replicas,
+  mascots, thin-line illustrations, decorative texture, or object collages.
 
-- `assets/icon.png` at 1024x1024 is the default marketplace icon artifact.
-- `assets/icon-prompt.json` is optional provenance for the imagegen prompt
-  contract.
-- SVG/vector generation is not the default. Use it only when the user explicitly
-  asks for vector output or the target plugin already has a vector logo system.
-- `.codex-plugin/plugin.json` should wire `interface.composerIcon` and
-  `interface.logo` to the generated icon path.
-- `interface.brandColor` should match the icon background base color from the
-  prompt contract or final visual.
+## Size Gates
 
-Canvas and safe area:
+Review the exact final bitmap at all four sizes, not only on the 1024 source:
 
-- Use a 1024x1024 square canvas.
-- Keep the background full bleed and opaque; rounded-corner backgrounds are
-  acceptable inside the image, but do not rely on external masking.
-- Keep the primary mark centered.
-- Keep most meaningful foreground content inside the central 72 percent of the
-  canvas. Optical overshoot may enter the next 8 percent when it improves
-  balance.
+| Size | Gate |
+| --- | --- |
+| 64x64 | Hero, action, and support relationship are immediately readable. |
+| 32x32 | The hero remains recognizable and the support cue stays subordinate. |
+| 24x24 | The silhouette does not split into unrelated blobs or close critical gaps. |
+| 16x16 | One stable mass remains; fine accents may disappear without changing meaning. |
 
-Foreground anatomy:
+Reject the icon if recognition depends on reading text, counting tiny parts,
+seeing a gradient, or knowing the plugin name. The bundled validator reports
+quantized color and luminance-span statistics for 16/24/32/64 simulations; those
+are mechanical anti-flatness checks, not proof of semantic readability.
 
-- Use one primary silhouette or concept.
-- Use at most three meaningful foreground groups.
-- Use filled geometric forms by default. Thick strokes are acceptable when they
-  are part of a bold silhouette.
-- Use a consistent visual weight across all generated icons.
-- Prefer front-facing, flat symbols. Avoid isometric scenes, screenshots,
-  photos, product UI replicas, and decorative texture.
-- Avoid visible text, initials, words, tiny badges, and tiny decorative dots as
-  the default path. A brand mark with letters is an exception only when the user
-  explicitly asks for brand fidelity.
+## Silhouette And Collision Review
 
-Color:
+Use a monochrome silhouette pass at 64, 32, 24, and 16 pixels:
 
-- Background color may vary per plugin.
-- Foreground and meaningful accents must keep at least 3:1 contrast against the
-  background and adjacent background gradient stop.
-- Use one dominant foreground color plus up to two accent colors.
-- Do not rely on hue alone to separate meaningful parts.
-- Avoid low-contrast pastel-on-pastel combinations and very thin strokes.
+- the hero must remain one connected visual idea;
+- the support cue must not become a second equal-weight icon;
+- negative spaces needed for recognition must remain open at 24 pixels;
+- the outer contour must differ from adjacent portfolio icons;
+- compare the icon with every catalog peer that uses the same object class;
+- record likely collisions in `collision_avoid` (for example controller vs.
+  media play, blueprint vs. generic document, scrub brush vs. paint tool).
 
-Style boundaries:
+Collision review is semantic and manual. Pixel hashes and color histograms can
+detect duplicates or flat output, but cannot establish distinct meaning.
 
-- Do not copy proprietary brand marks unless the plugin is for that brand and
-  the user or source material authorizes brand use.
-- Do not include private project names, local paths, private names, credentials,
-  or screenshots in generated icons.
-- Do not require network, paid APIs, image-generation services, telemetry, or
-  credentials for the default generation path.
+## Brand, Trademark, And License Provenance
 
-## Imagegen Workflow
+Every v2 prompt declares `brand_source` even when no third-party brand is used:
 
-For new plugin scaffolds, prefer this sequence:
+- `type`: `original-domain-metaphor`, `brand-adjacent`, or `authorized-brand`;
+- `source`: the referenced product/vendor or `none`;
+- `trademark_status`: why the direction avoids, permits, or reproduces marks;
+- `license`: the asset/license basis or `original-generated-artwork`;
+- `authorization`: evidence or `not-required-no-brand-mark`.
 
-```bash
-python3 "$PLUGIN_ROOT/scripts/plugin/create_basic_plugin.py" <plugin-name> \
-  --with-skills \
-  --with-scripts \
-  --with-assets \
-  --with-marketplace
-```
+Brand-adjacent plugins may use a domain object and compatible mood, but must not
+reconstruct a proprietary logo, mascot, distinctive trade dress, or lettermark.
+Use an actual brand mark only with a recorded source, license, and authorization.
+Generation output does not grant trademark or copyright permission.
 
-Prepare the imagegen prompt contract:
+## Prompt Workflow
+
+Prepare a catalog-first schema-v2 contract:
 
 ```bash
 python3 "$PLUGIN_ROOT/scripts/plugin/prepare_plugin_icon_prompt.py" <plugin-name> \
@@ -112,15 +93,19 @@ python3 "$PLUGIN_ROOT/scripts/plugin/prepare_plugin_icon_prompt.py" <plugin-name
   --out plugins/<plugin-name>/assets/icon-prompt.json
 ```
 
-Then use the built-in `$imagegen` skill with the `prompt` from
-`assets/icon-prompt.json`. Save the selected generated image into the plugin
-workspace as:
+Override catalog semantics only when the plugin contract requires it:
 
-```text
-plugins/<plugin-name>/assets/icon.png
+```bash
+python3 "$PLUGIN_ROOT/scripts/plugin/prepare_plugin_icon_prompt.py" <plugin-name> \
+  --hero "a literal drafting compass" \
+  --hero-meaning "architecture inspection" \
+  --support-cue "one load-bearing arch" \
+  --collision-avoid "generic navigation compass" \
+  --json
 ```
 
-Finally wire the existing asset into the Codex manifest:
+Use the built-in `$imagegen` skill with the emitted `prompt`, save the selected
+bitmap as `assets/icon.png`, then wire it:
 
 ```bash
 python3 "$PLUGIN_ROOT/scripts/plugin/wire_plugin_icon.py" plugins/<plugin-name> \
@@ -128,24 +113,26 @@ python3 "$PLUGIN_ROOT/scripts/plugin/wire_plugin_icon.py" plugins/<plugin-name> 
   --brand-color <brandColor from icon-prompt.json>
 ```
 
-Use the imagegen built-in tool by default. Do not use API-key, CLI, or native
-transparent-background fallback paths unless the user explicitly asks for them
-or confirms the fallback required by the system imagegen skill.
+Validate the icon contract independently or through plugin validation:
 
-## Review Checklist
+```bash
+python3 "$PLUGIN_ROOT/scripts/plugin/validate_plugin_icons.py" plugins/<plugin-name> --require-prompt
+python3 "$PLUGIN_ROOT/scripts/plugin/validate_plugin.py" plugins/<plugin-name>
+```
 
-Before handing off a generated icon:
+When image generation is unavailable, accept a user-supplied licensed asset or
+record the missing-icon gap and continue plugin delivery. Do not introduce an
+API key, paid service, network dependency, or machine-local generator into the
+default path.
 
-- Confirm the manifest icon paths point to existing files.
-- Confirm the foreground mark is readable at 64x64 and still recognizable at
-  32x32.
-- Confirm the icon has no visible text unless explicitly required.
-- Confirm meaningful foreground colors meet 3:1 contrast against the
-  background.
-- Confirm the icon does not contain local/private names, screenshots, photos, or
-  copied brand assets.
-- Run plugin validation from the repository root:
+## Final Human Gate
 
-  ```bash
-  python3 scripts/validate-repository.py  # from the repository checkout root
-  ```
+Before handoff, confirm:
+
+- one literal hero and no more than one support cue;
+- manual 16/24/32/64 semantic and silhouette gates passed;
+- no confusing collision with another portfolio icon;
+- no text, watermark, private identifier, screenshot, or copied brand asset;
+- `brand_source` is accurate and any authorization evidence exists;
+- manifest path parity and brand color match the final prompt contract;
+- deterministic icon and plugin validators pass.

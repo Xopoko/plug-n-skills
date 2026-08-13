@@ -1,0 +1,25 @@
+{
+  "schema_version": "technology_intelligence.sources.v1",
+  "snapshot_id": "fixture-technology-intelligence-v0-2",
+  "generated_at": "2026-08-10T12:00:00Z",
+  "sources": [
+    {
+      "id": "legacy-react-source",
+      "publisher": "Fixture Project",
+      "title": "Legacy React Fixture",
+      "source_type": "project-documentation",
+      "evidence_role": "first-party",
+      "affiliated_technology_ids": ["legacy-react"],
+      "url": "https://example.invalid/legacy-react",
+      "edition": "fixture-v0.2",
+      "published_at": "2026-08-10",
+      "retrieved_at": "2026-08-10",
+      "expected_cadence": "fixture-only",
+      "freshness_days": 30,
+      "scope": "Public-safe frozen compatibility fixture.",
+      "limitations": "Synthetic and not decision evidence.",
+      "rights": {"usage_mode": "fixture-only", "license": "CC0-1.0", "attribution_required": false},
+      "refresh": {"enabled": false, "allowed_hosts": [], "max_bytes": 0}
+    }
+  ]
+}

@@ -1,6 +1,10 @@
 # Contributing
 
-This repository is maintained as the publication-ready source tree for Plug'n Skills. Contributions should keep the plugin packs installable, readable, and portable across machines.
+This repository is maintained as the publication-ready canonical source tree
+for Plug'n Skills across machines. Contributions should keep the plugin packs
+installable, readable, and portable: edit and validate a synchronized clone,
+propagate source through Git, then refresh host-local installs instead of
+editing generated marketplaces or runtime caches.
 
 ## Standards
 

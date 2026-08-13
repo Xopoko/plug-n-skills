@@ -57,7 +57,7 @@ def _build(agent: str, home: Path, env: Mapping[str, str]) -> AgentTarget:
         return AgentTarget(
             agent="codex",
             home_dir=agent_home,
-            skills_dir=agent_home / "skills",
+            skills_dir=home / ".agents" / "skills",
             marketplace_path=home / ".agents" / "plugins" / "marketplace.json",
         )
     if agent == "claude":

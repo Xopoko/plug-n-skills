@@ -1,4 +1,4 @@
 interface:
   display_name: "Capability Workbench"
-  short_description: "Route the agent skill and plugin lifecycle"
-  default_prompt: "Use Capability Workbench to route skill and plugin discovery, synthesis, creation, installation, packaging, audit, portfolio design, trigger metadata, guidance authoring, and repair. Use Agent Harness for runtime operation or harness engineering and evaluation."
+  short_description: "Engineer reliable agent skills, plugins, and guidance"
+  default_prompt: "Use Capability Workbench to turn an observed agent behavior gap into the right validated skill, plugin, guidance, trigger, evaluation, or portfolio change. Use Agent Harness for runtime and harness-level evaluation."

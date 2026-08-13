@@ -48,10 +48,11 @@ For plugin visibility questions:
    codex plugin add <plugin>@<marketplace> --json
    ```
 
-For marketplace source changes, require a clear marketplace name and source:
+For marketplace source changes, inspect the marketplace manifest for its name,
+then pass the source root or marketplace manifest path to the add command:
 
 ```bash
-codex plugin marketplace add <name> <source>
+codex plugin marketplace add <source>
 codex plugin marketplace upgrade <name>
 codex plugin marketplace remove <name>
 ```

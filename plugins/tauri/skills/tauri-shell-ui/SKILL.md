@@ -19,7 +19,8 @@ Run the probe, then inspect window labels and app config:
 python3 "$PLUGIN_ROOT/scripts/tauri_project_probe.py" .
 ```
 
-Relevant files usually include `src-tauri/tauri.conf.*`,
+Relevant files usually include `src-tauri/tauri.conf.json` (or the
+feature-enabled `tauri.conf.json5` / `Tauri.toml` alternatives),
 `src-tauri/capabilities/*`, `src-tauri/src/lib.rs`, frontend window/menu/tray
 code, and bundled resource paths.
 

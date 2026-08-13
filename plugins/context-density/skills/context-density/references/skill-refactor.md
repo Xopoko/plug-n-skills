@@ -9,7 +9,7 @@ This reference optimizes context placement inside an existing skill shape. For c
 
 ## Workflow
 
-1. Locate the authoritative skill path: repo-local, the agent's skills home (`~/.codex/skills`, `~/.claude/skills`), system skill, or plugin cache.
+1. Locate the authoritative skill path: repo-local, the agent's skills home (Codex `$HOME/.agents/skills`, Claude Code `~/.claude/skills`), a legacy Codex `${CODEX_HOME}/skills` root, system skill, or plugin cache.
 2. Measure `SKILL.md` before editing.
 3. Read `SKILL.md`, `agents/openai.yaml` if present, and the top resource map.
 4. Preserve triggers, defaults, commands, safety, output contract, validation, and non-obvious local invariants.
@@ -49,9 +49,10 @@ python3 "$PLUGIN_ROOT/skills/context-density/scripts/context_density_audit.py" <
 rg -n --fixed-strings '<critical preserved phrase>' <skill-dir>/SKILL.md
 ```
 
-When the host agent ships a skill validator, run it too (for example
-`${CODEX_HOME:-$HOME/.codex}/skills/.system/skill-creator/scripts/quick_validate.py <skill-dir>`
-on Codex). For plugin skills, also run plugin validation from the plugin root.
+When the host agent ships a skill validator, locate it through the surfaced
+system skill and run `<skill-creator-root>/scripts/quick_validate.py <skill-dir>`;
+do not infer a bundled skill's filesystem location from `CODEX_HOME`. For plugin
+skills, also run plugin validation from the plugin root.
 
 ## Audit
 

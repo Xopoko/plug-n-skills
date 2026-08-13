@@ -1,37 +1,49 @@
 {
   "schema_version": "technology_intelligence.snapshot_manifest.v1",
-  "snapshot_id": "research-2026-08-11",
-  "generated_at": "2026-08-11T00:00:00Z",
+  "snapshot_id": "research-2026-08-11-capability-model-v1",
+  "generated_at": "2026-08-11T18:47:00Z",
   "files": [
     {
       "path": "source-registry.v1.json",
       "schema_version": "technology_intelligence.sources.v1",
-      "record_count": 47,
-      "sha256": "80fccd54d19118f98c98fa00df6c9a71485486c414caf7c7ff3b7377c7a71bea"
+      "record_count": 53,
+      "sha256": "1e7e528207fd204ed3b0e4f442fe0b77c576880fe477eff518c470a3ad57d208"
     },
     {
       "path": "technologies.v1.json",
       "schema_version": "technology_intelligence.technologies.v1",
-      "record_count": 23,
-      "sha256": "0ceaec7be9a59c5356dcd09340718a4ad0e07b94c97b785d5f7610c0502512a4"
+      "record_count": 24,
+      "sha256": "4838bb7d4dae7f3459836a27b740bb9102086ade962a0043df0b6b4755e8c453"
     },
     {
       "path": "observations.v1.json",
       "schema_version": "technology_intelligence.observations.v1",
-      "record_count": 59,
-      "sha256": "daa68e691f24877623cc37ebfadd25b48b7a9dfd0d8016a7115e7281d533c6d4"
+      "record_count": 67,
+      "sha256": "1e1e27514d3723ef95948e90fe6ec3d0867f8066156aadc3d7ee67430b2e8f38"
     },
     {
       "path": "assessments.v1.json",
       "schema_version": "technology_intelligence.assessments.v1",
-      "record_count": 23,
-      "sha256": "fcb00f584dc43a8bd1f1daa438516304612060cbb1ce5ac5028940765de8207a"
+      "record_count": 24,
+      "sha256": "20223c602adab5e49377fdf690c9baf9d5257792b3bbccf8b0244d53b0927e61"
+    },
+    {
+      "path": "capabilities.v1.json",
+      "schema_version": "technology_intelligence.capabilities.v1",
+      "record_count": 1,
+      "sha256": "9fb0a621a3c1d284d2e7d08bfd8115f9f7ca63f0e2cb0d18eb8164a8fb083116"
+    },
+    {
+      "path": "interfaces.v1.json",
+      "schema_version": "technology_intelligence.interfaces.v1",
+      "record_count": 6,
+      "sha256": "2622d2010ac9ae10f72ce940ab55255636fe6b7f9e7124274e10d9d92a06e007"
     },
     {
       "path": "runtime-capability.schema.v1.json",
       "schema_version": "technology_intelligence.runtime_capability_schema.v1",
       "record_count": 1,
-      "sha256": "1517a34763239a75b12940f01f9a8cd40eea9732ba2928c8e753de7b867b9d03"
+      "sha256": "fc0e42eb660446faf46cb6d438636ecb9592b54e73b603dafbd187ea63036552"
     },
     {
       "path": "trigger-contract.v1.json",

@@ -17,7 +17,7 @@ DEFAULT_CATEGORY = "Productivity"
 DEFAULT_MARKETPLACE_NAME = "personal"
 VALID_INSTALL_POLICIES = {"NOT_AVAILABLE", "AVAILABLE", "INSTALLED_BY_DEFAULT"}
 VALID_AUTH_POLICIES = {"ON_INSTALL", "ON_USE"}
-DEFAULT_PLUGIN_PARENT = Path.home() / "plugins"
+DEFAULT_PLUGIN_PARENT = Path.home() / ".codex" / "plugins"
 DEFAULT_MARKETPLACE_PATH = Path.home() / ".agents" / "plugins" / "marketplace.json"
 
 
@@ -88,7 +88,7 @@ def build_plugin_json(
         "developerName": "Plugin Author",
         "category": DEFAULT_CATEGORY,
         "capabilities": [],
-        "defaultPrompt": f"Help me use {display_name}.",
+        "defaultPrompt": [f"Help me use {display_name}."],
     }
     if brand_color is not None:
         interface["brandColor"] = brand_color
@@ -123,7 +123,7 @@ def build_marketplace_entry(
         "name": plugin_name,
         "source": {
             "source": "local",
-            "path": f"./plugins/{plugin_name}",
+            "path": f"./.codex/plugins/{plugin_name}",
         },
         "policy": {
             "installation": install_policy,
@@ -232,7 +232,7 @@ def parse_args() -> argparse.Namespace:
         "--path",
         default=str(DEFAULT_PLUGIN_PARENT),
         help=(
-            "Parent directory for plugin creation (defaults to <home>/plugins). "
+            "Parent directory for plugin creation (defaults to <home>/.codex/plugins). "
             "Pass an explicit repo path only when a repo/team plugin is intended."
         ),
     )
@@ -252,7 +252,7 @@ def parse_args() -> argparse.Namespace:
         action="store_true",
         help=(
             "Create or update <home>/.agents/plugins/marketplace.json by default. "
-            "Marketplace entries always point to ./plugins/<plugin-name> relative to the "
+            "Marketplace entries always point to ./.codex/plugins/<plugin-name> relative to the "
             "marketplace root."
         ),
     )

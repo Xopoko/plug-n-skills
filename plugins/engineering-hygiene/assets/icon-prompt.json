@@ -1,14 +1,53 @@
 {
-  "schema": "capability_workbench.plugin_icon_prompt.v1",
+  "schema": "capability_workbench.plugin_icon_prompt.v2",
   "plugin_name": "engineering-hygiene",
+  "catalog": {
+    "source": "first-party-catalog",
+    "key": "engineering-hygiene"
+  },
+  "semantic_hero": {
+    "object": "a broad cleaning brush",
+    "meaning": "removing code and workflow residue",
+    "silhouette": "one angled brush with a single clean bristle block"
+  },
+  "support_cue": {
+    "object": "one code tile being swept clean",
+    "meaning": "literal codebase cleanup"
+  },
+  "avoid": [
+    "shield",
+    "check mark",
+    "crescent",
+    "lock",
+    "spray bottle",
+    "bucket"
+  ],
+  "collision_avoid": [
+    "paint brush",
+    "capability workbench tools"
+  ],
+  "brand_source": {
+    "type": "original-domain-metaphor",
+    "source": "none",
+    "trademark_status": "no proprietary mark requested",
+    "license": "original-generated-artwork",
+    "authorization": "not-required-no-brand-mark"
+  },
   "brandColor": "#B45309",
   "recommended_asset_path": "assets/icon.png",
   "imagegen_mode": "built-in",
-  "prompt": "Use case: logo-brand\nAsset type: 1024x1024 marketplace plugin icon\nPrimary request: Create a premium minimal bitmap icon for the engineering hygiene audits for code, business logic, rendered UI, and missing development tools.\nSubject: one bold interlocking sweep arc and verification shield, expressing cleanup, evidence, and guarded improvement without literal code or tools.\nStyle/medium: polished modern app icon, vector-friendly but rendered as a high-quality bitmap, flat geometric foreground with subtle dimensional polish.\nComposition/framing: centered, one dominant readable silhouette, generous safe area, no small details, readable at 32x32.\nScene/backdrop: full-bleed rounded-square app-icon background, a tasteful background built around #B45309.\nColor palette: foreground uses high-contrast foreground colors that meet WCAG non-text contrast; background may use a smooth restrained gradient.\nMaterials/textures: clean solid shapes, crisp edges, no busy texture, no photo material, no UI screenshot.\nText (verbatim): none.\nConstraints: no visible letters, no words, no numbers, no tiny badges, no tiny decorative dots, no thin-line illustration, no product UI, no watermark, no private names.\nAvoid: generic stock logo, overly literal object collage, mascot, complex scene, skeuomorphic clutter, low contrast, text inside the icon.\n",
+  "size_gates": [
+    16,
+    24,
+    32,
+    64
+  ],
+  "prompt": "Use case: logo-brand\nAsset type: 1024x1024 marketplace plugin icon\nPurpose: Engineering hygiene audits changed code, business logic, rendered UI, and missing development tools.\nLiteral semantic hero: a broad cleaning brush. It communicates removing code and workflow residue.\nSilhouette: one angled brush with a single clean bristle block. Use exactly one subordinate support cue: one code tile being swept clean, meaning literal codebase cleanup.\nComposition: one centered dominant silhouette, full-bleed opaque background, meaningful content inside the central 72 percent, no more than one support cue.\nSmall-size requirement: the same hero must remain recognizable at 64, 32, 24, and 16 pixels; keep critical negative space open at 24 pixels.\nStyle: polished modern bitmap icon, bold filled shapes, crisp edges, restrained dimensional polish, consistent portfolio weight.\nBackground: a full-bleed field anchored on #B45309.\nForeground palette: high-contrast warm white with at most two restrained accents; meaningful adjacent colors meet at least 3:1 contrast.\nBrand-source rule: original-domain-metaphor referencing none; no proprietary mark requested. Do not introduce an unlicensed mark or distinctive trade dress.\nAvoid: shield; check mark; crescent; lock; spray bottle; bucket.\nCollision avoid: paint brush; capability workbench tools.\nText: none. No letters, words, numbers, watermark, screenshot, photo, UI replica, tiny badge, thin-line detail, mascot, or private identifier.\nDo not replace the literal hero with a generic abstract symbol derived only from the plugin name.\n",
   "checks": [
-    "save the selected image into the plugin workspace as assets/icon.png",
-    "inspect the image at 1024, 64, and 32 px",
-    "reject visible text, letters, tiny details, screenshots, photos, watermarks, or low contrast",
-    "wire interface.composerIcon, interface.logo, and interface.brandColor after the file exists"
+    "save the selected image as a 1024x1024 opaque RGB PNG at assets/icon.png",
+    "inspect semantic recognition and the monochrome silhouette at 16, 24, 32, and 64 px",
+    "reject a competing second cue, closed critical gap, portfolio collision, text, screenshot, photo, watermark, or low contrast",
+    "verify brand-source, trademark, license, and authorization provenance manually",
+    "wire identical interface.composerIcon and interface.logo paths plus interface.brandColor"
   ]
 }

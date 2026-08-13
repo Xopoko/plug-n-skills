@@ -1,11 +1,17 @@
 ---
 name: architecture-refactoring-strategy
-description: "Architecture refactoring strategy stages boundary extraction, modularization, dependency inversion, migrations, anti-corruption layers, validation, and rollback instead of rewrites."
+description: "Architecture refactoring strategy plans and executes incremental code-boundary changes with characterization tests, per-slice proof, fitness functions, rollback, and before/after evidence; excludes routine cleanup and agent-runtime design."
 ---
 
 # Architecture Refactoring Strategy
 
-Use when improving architecture needs staged code change rather than a one-shot rewrite.
+Bundled commands use `$PLUGIN_ROOT` (`$env:PLUGIN_ROOT` in PowerShell; same path suffix) for the plugin root. Set it once: use the host's plugin-root variable when defined (Claude Code: `PLUGIN_ROOT="$CLAUDE_PLUGIN_ROOT"`), otherwise the absolute path of this plugin's root directory.
+
+Use when improving the architecture of the application or library code needs
+staged implementation rather than a one-shot rewrite. Module boundaries,
+layers, dependency direction, APIs, domain/data ownership, extension points,
+and runtime coupling are the subject. Coding agents are tools, not the
+architecture being designed.
 
 ## Inputs
 
@@ -45,6 +51,30 @@ Do not recommend a pattern without the measurable quality attribute it improves.
 Prefer one validated slice at a time: user flow, bounded-context seam, data ownership edge, dependency cycle, package boundary, ownership boundary, cross-owned dependency edge, runtime dependency, deployment boundary.
 
 Avoid platform rewrites that do not reduce a named risk in the next increment.
+
+## AI-Assisted Code Architecture
+
+Use `$PLUGIN_ROOT/references/ai-assisted-code-architecture.md` when Codex,
+Claude Code, or another coding agent helps recover, design, implement, or
+review the code architecture.
+
+1. Classify the change and recover explicit intent separately from observed
+   source conventions.
+2. Map components, public seams, dependency edges, callers, implementations,
+   importers, and downstream consumers affected by the proposed change.
+3. Compare design options against source-grounded axes and name
+   plausible-but-wrong paths before choosing a slice.
+4. Implement one smallest behavior-preserving architecture slice.
+5. Separate requested behavior from incidental refactoring; defer unrelated
+   cleanup.
+6. Run functional proof and architecture proof, then inspect the actual diff
+   and before/after boundary evidence.
+7. Produce independent review findings before mutation, apply accepted fixes
+   in a separate pass, and rerun the affected proof.
+
+Human- and agent-authored patches face the same architecture method. Stop on
+an unexplained failure, unexpected file, new dependency direction, public API
+drift, or unplanned scope expansion.
 
 ## Plan Format
 

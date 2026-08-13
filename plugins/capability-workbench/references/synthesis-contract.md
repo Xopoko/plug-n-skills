@@ -55,8 +55,8 @@ For `repo-local`, include `local_request_evidence` from the latest user message,
 
 Global agent destinations:
 
-- skill: agent's global skills dir — Codex: `${CODEX_HOME:-$HOME/.codex}/skills/<skill-name>`, Claude: `${CLAUDE_HOME:-$HOME/.claude}/skills/<skill-name>`, Cursor: `${CURSOR_HOME:-$HOME/.cursor}/skills/<skill-name>`. Detect the active agent with `$PLUGIN_ROOT/scripts/agent_target.py` and use its dir; other agents follow the same `<agent-home>/skills` convention.
-- plugin: `$HOME/plugins/<plugin-name>` plus `$HOME/.agents/plugins/marketplace.json`; cache-backed as `<plugin-name>@local` only when installation is required. The marketplace/cache flow is Codex-specific; Claude installs plugins through its own marketplace tooling, and Cursor consumes skills directly without a plugin marketplace;
+- skill: agent's global skills dir — Codex: `$HOME/.agents/skills/<skill-name>`, Claude: `${CLAUDE_HOME:-$HOME/.claude}/skills/<skill-name>`, Cursor: `${CURSOR_HOME:-$HOME/.cursor}/skills/<skill-name>`. Detect the active agent with `$PLUGIN_ROOT/scripts/agent_target.py` and use its dir; other agents follow the same `<agent-home>/skills` convention.
+- plugin: `$HOME/.codex/plugins/<plugin-name>` plus `$HOME/.agents/plugins/marketplace.json`; install as `<plugin-name>@<marketplace-name>` only when installation is required and let the native host own the cache locator. The marketplace/cache flow is Codex-specific; Claude installs plugins through its own marketplace tooling, and Cursor consumes skills directly without a plugin marketplace;
 - MCP capability: global agent plugin/configuration, not repo-local `.mcp.json` unless explicitly requested.
 
 The output directory may hold reports, ledgers, candidate audits, and temporary snapshots. It is not the final destination unless the install-scope contract selects it.

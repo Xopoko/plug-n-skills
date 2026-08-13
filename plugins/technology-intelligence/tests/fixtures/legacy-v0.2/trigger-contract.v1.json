@@ -1,0 +1,9 @@
+{
+  "schema_version": "technology_intelligence.trigger_contract.v1",
+  "advisor_markers": ["compare"],
+  "maintainer_markers": ["audit evidence"],
+  "runtime_markers": ["install"],
+  "routine_markers": ["debug"],
+  "precedence": ["maintainer", "advisor", "runtime-or-routine-none"],
+  "note": "Synthetic legacy compatibility fixture."
+}

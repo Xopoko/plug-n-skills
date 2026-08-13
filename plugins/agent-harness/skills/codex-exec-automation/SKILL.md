@@ -24,7 +24,8 @@ If the user supplied a binary path, pass `--codex "$CODEX_CLI_PATH"`.
 
 ## Command Assembly
 
-Build commands from these decisions, in this order:
+Build commands from these decisions, in this order. Put global options before
+the subcommand and `exec`-specific options after `exec`:
 
 1. Working root: use `-C <repo>` or run from the intended repository.
 2. Autonomy: choose `--sandbox` and `--ask-for-approval`.
@@ -36,10 +37,10 @@ Build commands from these decisions, in this order:
 Common safe patterns:
 
 ```bash
-codex exec -C "$PROJECT" --sandbox workspace-write --ask-for-approval on-request "Implement the requested fix and run targeted tests."
-codex exec -C "$PROJECT" --sandbox read-only --ask-for-approval never --json "Inspect this repo and report risks only."
-codex review -C "$PROJECT" --uncommitted
-codex review -C "$PROJECT" --base main
+codex --ask-for-approval on-request exec -C "$PROJECT" --sandbox workspace-write "Implement the requested fix and run targeted tests."
+codex --ask-for-approval never exec -C "$PROJECT" --sandbox read-only --json "Inspect this repo and report risks only."
+codex -C "$PROJECT" review --uncommitted
+codex -C "$PROJECT" review --base main
 codex exec resume --last "Continue from the last non-interactive session and verify the fix."
 ```
 
@@ -47,7 +48,7 @@ For prompts that contain shell metacharacters, quotes, YAML, JSON, or long
 instructions, prefer stdin:
 
 ```bash
-codex exec -C "$PROJECT" --sandbox workspace-write --ask-for-approval on-request - < prompt.md
+codex --ask-for-approval on-request exec -C "$PROJECT" --sandbox workspace-write - < prompt.md
 ```
 
 ## Review Runs

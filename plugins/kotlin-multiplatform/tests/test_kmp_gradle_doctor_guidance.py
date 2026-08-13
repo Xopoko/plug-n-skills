@@ -69,7 +69,7 @@ class KmpGradleDoctorGuidanceTest(unittest.TestCase):
         for safe_field in (
             "`gradle_properties_present`",
             "`gradle_property_keys`",
-            "from schema-v2 inspector output",
+            "from schema-v3 inspector output",
         ):
             self.assertIn(safe_field, skill)
         self.assertNotIn(

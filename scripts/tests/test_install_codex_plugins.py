@@ -85,6 +85,169 @@ class CodexInstallerTest(unittest.TestCase):
             self.assertIn(str(config_path.resolve()), helper_command)
             self.assertIn(str(cache_root), helper_command)
 
+    def test_default_install_delegates_to_native_plugin_add_path(self):
+        argv = [
+            str(INSTALLER_PATH),
+            "--plugin",
+            "capability-workbench",
+        ]
+
+        with (
+            mock.patch.object(sys, "argv", argv),
+            mock.patch.object(install_codex_plugins, "run") as run,
+            mock.patch.object(
+                install_codex_plugins,
+                "ensure_marketplace_file",
+                return_value=[],
+            ),
+            mock.patch.object(
+                install_codex_plugins,
+                "ensure_codex_marketplace_config",
+            ),
+        ):
+            install_codex_plugins.main()
+
+        helper_command = run.call_args_list[-1].args[0]
+        self.assertNotIn("--force-manual", helper_command)
+        self.assertNotIn("--config-path", helper_command)
+        self.assertNotIn("--cache-root", helper_command)
+
+    def test_explicit_marketplace_path_uses_deterministic_manual_install(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            active_home = root / "active-codex"
+            active_home.mkdir()
+            marketplace_path = root / "custom" / "marketplace.json"
+            argv = [
+                str(INSTALLER_PATH),
+                "--plugin",
+                "capability-workbench",
+                "--marketplace-path",
+                str(marketplace_path),
+            ]
+
+            with (
+                mock.patch.object(sys, "argv", argv),
+                mock.patch.dict(
+                    os.environ,
+                    {"CODEX_HOME": str(active_home)},
+                    clear=False,
+                ),
+                mock.patch.object(install_codex_plugins, "run") as run,
+                mock.patch.object(
+                    install_codex_plugins,
+                    "ensure_marketplace_file",
+                    return_value=[],
+                ),
+                mock.patch.object(
+                    install_codex_plugins,
+                    "ensure_codex_marketplace_config",
+                ),
+            ):
+                install_codex_plugins.main()
+
+            helper_command = run.call_args_list[-1].args[0]
+            self.assertIn("--force-manual", helper_command)
+            self.assertIn(str(marketplace_path.resolve()), helper_command)
+            self.assertIn(str(active_home.resolve() / "config.toml"), helper_command)
+            self.assertIn(
+                str(active_home.resolve() / "plugins" / "cache"),
+                helper_command,
+            )
+
+    def test_offline_first_party_install_forces_manual_path(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            active_home = root / "active-codex"
+            active_home.mkdir()
+            source = ROOT / "plugins" / "capability-workbench"
+            argv = [
+                str(INSTALLER_PATH),
+                "--plugin",
+                "career",
+                "--offline",
+            ]
+
+            with (
+                mock.patch.object(sys, "argv", argv),
+                mock.patch.dict(os.environ, {"CODEX_HOME": str(active_home)}, clear=False),
+                mock.patch.object(install_codex_plugins, "run") as run,
+                mock.patch.object(
+                    install_codex_plugins.plugin_catalog,
+                    "materialize",
+                    return_value=source,
+                ) as materialize,
+                mock.patch.object(
+                    install_codex_plugins,
+                    "ensure_marketplace_file",
+                    return_value=[],
+                ),
+                mock.patch.object(install_codex_plugins, "ensure_codex_marketplace_config"),
+            ):
+                install_codex_plugins.main()
+
+            self.assertTrue(materialize.call_args.kwargs["offline"])
+            helper_command = run.call_args_list[-1].args[0]
+            self.assertIn("--force-manual", helper_command)
+            self.assertIn("--config-path", helper_command)
+            self.assertIn("--cache-root", helper_command)
+
+    def test_default_refresh_retires_stale_first_party_entries_without_fetching(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            marketplace_path = root / "marketplace.json"
+            marketplace_path.write_text(
+                json.dumps(
+                    {
+                        "name": "local",
+                        "plugins": [
+                            {
+                                "name": name,
+                                "source": {
+                                    "source": "local",
+                                    "path": f"./plugins/{name}",
+                                },
+                            }
+                            for name in ("build-swift-apps", "career")
+                        ],
+                    }
+                ),
+                encoding="utf-8",
+            )
+            argv = [
+                str(INSTALLER_PATH),
+                "--marketplace-path",
+                str(marketplace_path),
+                "--config-path",
+                str(root / "config.toml"),
+                "--cache-root",
+                str(root / "cache"),
+            ]
+
+            with (
+                mock.patch.object(sys, "argv", argv),
+                mock.patch.object(install_codex_plugins, "run"),
+                mock.patch.object(
+                    install_codex_plugins.plugin_catalog,
+                    "materialize",
+                ) as materialize,
+                mock.patch.object(
+                    install_codex_plugins,
+                    "report_plugin_residuals",
+                ) as report_residuals,
+            ):
+                install_codex_plugins.main()
+
+            materialize.assert_not_called()
+            self.assertEqual(
+                ["build-swift-apps", "career"],
+                report_residuals.call_args_list[-1].kwargs["plugin_names"],
+            )
+            marketplace = json.loads(marketplace_path.read_text(encoding="utf-8"))
+            names = {entry["name"] for entry in marketplace["plugins"]}
+            self.assertNotIn("build-swift-apps", names)
+            self.assertNotIn("career", names)
+
     def test_invalid_codex_home_fails_before_any_installer_command(self):
         with tempfile.TemporaryDirectory() as tmp:
             root = Path(tmp)
@@ -253,8 +416,63 @@ class CodexInstallerTest(unittest.TestCase):
         )
         marketplace_names = {entry["name"] for entry in marketplace["plugins"]}
 
-        self.assertEqual(set(install_codex_plugins.PLUGIN_NAMES), repository_names)
+        self.assertEqual(set(install_codex_plugins.LOCAL_PLUGIN_NAMES), repository_names)
         self.assertEqual(set(install_codex_plugins.PLUGIN_NAMES), marketplace_names)
+
+    def test_default_selection_is_local_only_but_explicit_first_party_is_allowed(self):
+        available = [*install_codex_plugins.LOCAL_PLUGIN_NAMES, "standalone"]
+        defaults = list(install_codex_plugins.LOCAL_PLUGIN_NAMES)
+        selected = install_codex_plugins.select_plugins(
+            None, [], available=available, default_names=defaults
+        )
+        self.assertNotIn("standalone", selected)
+        self.assertEqual(
+            ["standalone"],
+            install_codex_plugins.select_plugins(
+                ["standalone"], [], available=available, default_names=defaults
+            ),
+        )
+
+    def test_selected_first_party_entry_migrates_to_verified_materialized_path(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            marketplace_path = root / ".agents" / "plugins" / "marketplace.json"
+            marketplace_path.parent.mkdir(parents=True)
+            marketplace_path.write_text(
+                json.dumps(
+                    {
+                        "name": "local",
+                        "plugins": [
+                            {
+                                "name": "career",
+                                "source": {
+                                    "source": "local",
+                                    "path": "./plugins/career",
+                                },
+                            }
+                        ],
+                    }
+                ),
+                encoding="utf-8",
+            )
+            source = root / ".agents" / "first-party-sources" / "career" / ("a" * 40)
+            retired = install_codex_plugins.ensure_marketplace_file(
+                marketplace_path=marketplace_path,
+                canonical_source_root=root / "plugins",
+                manifests={"career": {"interface": {"category": "Productivity"}}},
+                source_paths={"career": source},
+                marketplace_root=root,
+                dry_run=False,
+            )
+            payload = json.loads(marketplace_path.read_text(encoding="utf-8"))
+            self.assertEqual([], retired)
+            self.assertEqual(
+                {
+                    "source": "local",
+                    "path": f"./.agents/first-party-sources/career/{'a' * 40}",
+                },
+                payload["plugins"][0]["source"],
+            )
 
     def test_marketplace_source_path_is_valid_toml_with_windows_backslashes(self):
         with tempfile.TemporaryDirectory() as tmp:

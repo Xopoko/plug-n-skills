@@ -1,7 +1,7 @@
 {
   "name": "capability-workbench",
-  "version": "0.5.0",
-  "description": "Design, audit, synthesize, package, install, repair, and reshape agent skills and plugins with trigger metadata, catalog analysis, guidance authoring, vetting, and validation.",
+  "version": "0.6.1",
+  "description": "Artifact-first agent capability engineering for skills, plugins, guidance, and trigger contracts: frame behavior gaps, evaluate baselines and candidates, author validated changes, govern portfolios, and activate explicitly. Use Agent Harness for runtime and harness-level evaluation.",
   "author": {
     "name": "Xopoko"
   },
@@ -20,6 +20,8 @@
     "validation",
     "repair",
     "portfolio",
-    "guidance"
+    "guidance",
+    "agent-capability-engineering",
+    "behavioral-evaluation"
   ]
 }

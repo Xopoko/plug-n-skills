@@ -1,11 +1,11 @@
 ---
 name: kmp-migration-release
-description: Kotlin Multiplatform migration and release execution for AGP 9 Android-KMP adoption, monolithic composeApp splits, CocoaPods-to-SwiftPM moves, cinterop, iOS frameworks, CI, publishing, and app-store readiness.
+description: Kotlin Multiplatform migration and release execution for AGP 9 Android-KMP adoption, monolithic composeApp splits, CocoaPods-to-SwiftPM dependency-import moves, cinterop, iOS frameworks, CI, publishing, and app-store readiness.
 ---
 
 # KMP Migration And Release
 
-Use for AGP 9+ migration, Android-KMP plugin adoption, monolithic KMP module splits, CocoaPods to SwiftPM, cinterop and iOS framework integration, CI, publishing, signing boundaries, and release readiness.
+Use for AGP 9+ migration, Android-KMP plugin adoption, monolithic KMP module splits, CocoaPods to SwiftPM dependency import, cinterop and iOS framework integration, CI, publishing, signing boundaries, and release readiness.
 
 ## Migration Discipline
 
@@ -36,18 +36,36 @@ Classify every module:
 
 ## CocoaPods To SwiftPM
 
+Treat `swiftPMDependencies {}` as dependency import, not KMP framework export.
+The official integration is Alpha and may require a prerelease KGP, so confirm
+that the project accepts that stability boundary and verify the project-pinned
+KGP against the current official import guide before editing. Exporting a KMP
+module that uses SwiftPM import as a Swift package is not currently supported;
+keep any XCFramework/Swift-package delivery path separate and prove it.
+
 Use phase gates:
 
 1. Confirm current Kotlin/iOS build state when possible.
-2. Inventory `cocoapods {}` blocks, `Podfile`, `import cocoapods.*`, framework names, deployment target, and Xcode build phases.
-3. Add SwiftPM configuration alongside CocoaPods first.
-4. Preserve dependency versions unless the user requested upgrades.
-5. Transform imports only after confirming generated namespace and bundled third-party klibs.
-6. Reconfigure Xcode and embed/sign integration.
-7. Remove CocoaPods only after Gradle and Xcode builds pass.
-8. Produce a migration report.
+2. Confirm the current official `swiftPMDependencies` KGP requirement and Alpha constraints.
+3. Inventory `cocoapods {}` blocks, `Podfile`, `import cocoapods.*`, framework names, deployment target, and Xcode build phases.
+4. Add SwiftPM dependency-import configuration alongside CocoaPods first.
+5. Preserve dependency versions unless the user requested upgrades.
+6. Set an explicit Gradle `group`, verify the generated `swiftPMImport.<group>.<project>` namespace, and commit the generated `.swiftpm-locks`/`Package.resolved` state.
+7. Move `cocoapods.framework {}` settings to `binaries.framework {}` and reconfigure Xcode direct integration with the generated integration task.
+8. Transform imports only after confirming the generated namespace and bundled third-party klibs.
+9. Build Kotlin and Xcode on the affected targets.
+10. Remove CocoaPods only after Gradle and Xcode builds pass.
+11. Produce a migration report with the accepted Alpha and export limitations.
 
-Do not mix the same library suite across CocoaPods and SwiftPM during migration; duplicate symbols and runtime linkage failures are common.
+The official transition temporarily declares the same dependency through both
+CocoaPods and SwiftPM while imports move. Keep that overlap bounded to the
+migration phase; do not treat a dual-linked release as complete, and remove the
+old CocoaPods path only after the SwiftPM-backed Kotlin and Xcode builds pass.
+
+Current primary references:
+
+- [SwiftPM dependency import](https://kotlinlang.org/docs/multiplatform/multiplatform-spm-import.html)
+- [CocoaPods-to-SwiftPM migration](https://kotlinlang.org/docs/multiplatform/multiplatform-cocoapods-spm-migration.html)
 
 ## iOS Framework And Interop
 

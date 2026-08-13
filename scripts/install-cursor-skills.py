@@ -12,13 +12,13 @@ from __future__ import annotations
 
 import argparse
 import hashlib
-import json
 import shutil
 import sys
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 from agent_target import resolve_agent  # noqa: E402
+import plugin_catalog  # noqa: E402
 
 
 LEGACY_PLUGIN_RENAMES = {
@@ -35,11 +35,16 @@ def repo_root() -> Path:
     return Path(__file__).resolve().parents[1]
 
 
-def plugin_names(root: Path) -> list[str]:
-    marketplace = json.loads(
-        (root / ".claude-plugin" / "marketplace.json").read_text(encoding="utf-8")
+def local_plugin_names(root: Path) -> list[str]:
+    return sorted(
+        path.name
+        for path in (root / "plugins").iterdir()
+        if path.is_dir() and (path / ".codex-plugin" / "plugin.json").is_file()
     )
-    return [entry["name"] for entry in marketplace["plugins"]]
+
+
+def first_party_plugins(root: Path) -> list[dict]:
+    return plugin_catalog.validate_catalog(root)["plugins"]
 
 
 def skill_dirs(plugin_dir: Path) -> list[Path]:
@@ -69,7 +74,10 @@ def parse_args() -> argparse.Namespace:
         "--plugin",
         action="append",
         default=[],
-        help="Limit to one or more plugin names (repeatable; default: all).",
+        help=(
+            "Limit to one or more local or pinned first-party plugin names "
+            "(repeatable; default: every local plugin)."
+        ),
     )
     parser.add_argument(
         "--exclude-plugin",
@@ -92,14 +100,43 @@ def parse_args() -> argparse.Namespace:
         action="store_true",
         help="Verify installed skills match the repository; exit 1 on drift.",
     )
+    parser.add_argument(
+        "--include-first-party",
+        action="store_true",
+        help="Also include catalog entries whose selection.default is true.",
+    )
+    parser.add_argument(
+        "--offline",
+        action="store_true",
+        help="Never fetch; require selected standalone plugins in the verified cache.",
+    )
+    parser.add_argument(
+        "--first-party-cache-root",
+        help="Override the pinned standalone source cache root.",
+    )
     return parser.parse_args()
 
 
 def main() -> int:
     args = parse_args()
+    if args.dry_run and args.check_only:
+        print("--dry-run and --check-only cannot be combined", file=sys.stderr)
+        return 2
     root = repo_root()
-    names = plugin_names(root)
-    selected, unknown = select_plugins(names, args.plugin, args.exclude_plugin)
+    names = local_plugin_names(root)
+    catalog_plugins = first_party_plugins(root)
+    first_party_names = [item["name"] for item in catalog_plugins]
+    by_first_party = {item["name"]: item for item in catalog_plugins}
+    available = names + first_party_names
+    default_selection = list(names)
+    if args.include_first_party:
+        default_selection.extend(plugin_catalog.default_plugin_names({"plugins": catalog_plugins}))
+    selected, unknown = select_plugins(
+        available,
+        args.plugin,
+        args.exclude_plugin,
+        default_available=default_selection,
+    )
     if unknown:
         print(f"unknown plugin(s): {', '.join(unknown)}", file=sys.stderr)
         return 2
@@ -109,20 +146,63 @@ def main() -> int:
     ).skills_dir
 
     # Cursor's skills namespace is flat: refuse colliding skill names upfront.
-    sources: dict[str, Path] = {}
+    plugin_sources: dict[str, Path] = {}
+    planned_skills: dict[str, str] = {}
     collisions: list[str] = []
     for name in selected:
-        for skill_dir in skill_dirs(root / "plugins" / name):
-            if skill_dir.name in sources:
+        if name not in by_first_party:
+            plugin_sources[name] = root / "plugins" / name
+            continue
+        if args.dry_run:
+            receipt = plugin_catalog.receipt_for(root, by_first_party[name])
+            for item in receipt["skills"]["items"]:
+                skill_name = item["name"]
+                label = f"{name}@{by_first_party[name]['source']['commit']}:{item['path']}"
+                if skill_name in planned_skills:
+                    collisions.append(f"{skill_name}: {planned_skills[skill_name]} vs {label}")
+                planned_skills[skill_name] = label
+            continue
+        try:
+            plugin_sources[name] = plugin_catalog.materialize(
+                root,
+                name,
+                offline=args.offline or args.check_only,
+                cache_root=args.first_party_cache_root,
+            )
+        except plugin_catalog.CatalogError as exc:
+            print(f"{name}: verified first-party cache unavailable: {exc}", file=sys.stderr)
+            return 1
+    sources: dict[str, Path] = {}
+    for name, plugin_dir in plugin_sources.items():
+        for skill_dir in skill_dirs(plugin_dir):
+            if skill_dir.name in sources or skill_dir.name in planned_skills:
                 collisions.append(
-                    f"{skill_dir.name}: {sources[skill_dir.name]} vs {skill_dir}"
+                    f"{skill_dir.name}: {sources.get(skill_dir.name, planned_skills.get(skill_dir.name))} vs {skill_dir}"
                 )
             sources[skill_dir.name] = skill_dir
+            planned_skills[skill_dir.name] = str(skill_dir)
     if collisions:
         print("skill name collisions; nothing installed:", file=sys.stderr)
         for line in collisions:
             print(f"- {line}", file=sys.stderr)
         return 2
+
+    if args.dry_run:
+        for name in selected:
+            if name in by_first_party:
+                item = by_first_party[name]
+                print(
+                    f"would materialize verified pin: {name}@{item['source']['commit']} "
+                    f"from {item['source']['repository']}"
+                )
+        for skill_name in sorted(planned_skills):
+            dest = dest_root / skill_name
+            action = "update" if dest.is_dir() else "install"
+            print(f"would {action}: {skill_name} -> {dest}")
+        print(
+            f"dry-run: installed=0 updated=0 unchanged=0 dest={dest_root}"
+        )
+        return 0
 
     installed = updated = unchanged = drifted = 0
     for skill_name, source in sorted(sources.items()):
@@ -166,6 +246,8 @@ def select_plugins(
     available: list[str],
     included: list[str],
     excluded: list[str],
+    *,
+    default_available: list[str] | None = None,
 ) -> tuple[list[str], list[str]]:
     known = set(available)
     unknown = sorted(
@@ -188,7 +270,7 @@ def select_plugins(
             file=sys.stderr,
         )
         raise SystemExit(2)
-    base = canonical_included or available
+    base = canonical_included or (default_available if default_available is not None else available)
     selected = [name for name in base if name not in set(canonical_excluded)]
     if not selected:
         print("no plugins selected after applying --exclude-plugin", file=sys.stderr)

@@ -1,6 +1,6 @@
 ---
 name: architecture-intelligence
-description: "Software architecture routing covers module boundaries, dependencies, runtime topology, async state, ownership, ADRs, fitness functions, and staged refactoring; excludes UI/UX and routine cleanup."
+description: "Software architecture routing covers code boundaries, dependencies, AI-assisted refactoring, runtime topology, async state, ownership, ADRs, fitness functions, and conformance; excludes agent-runtime design, UI/UX, and routine cleanup."
 ---
 
 # Architecture Intelligence
@@ -54,7 +54,7 @@ Use the smallest focused skill set:
 - `async-state-consistency`: lifecycle state, invalidation, replay/cache/one-shot authority, async publication ordering, linearization, deterministic race proof.
 - `architecture-decisions`: ADR creation/review, tradeoffs, owner, revisit trigger.
 - `architecture-fitness-functions`: executable guardrails, CI checks, review gates.
-- `architecture-refactoring-strategy`: incremental migration, blast radius, rollback.
+- `architecture-refactoring-strategy`: incremental code-boundary migration, AI-assisted architecture execution, blast radius, proof, and rollback.
 
 When the current work will create, preserve, or materially change architecture,
 do not stop at the router. Use this minimum chain:
@@ -72,7 +72,18 @@ Add `async-state-consistency` when caches, retained or replayable state,
 memoization, request coalescing, one-shot reads, expiry, invalidation, or
 competing async publishers can expose stale or out-of-order results.
 
-Use adjacent plugins for UI/UX, game design, Kotlin/Tauri specifics, security threat modeling, or non-architecture cleanup.
+When Codex, Claude Code, or another coding agent helps analyze, design,
+implement, or review an architecture-significant code change, keep the same
+minimum chain and use the AI-assisted code architecture path in
+`architecture-refactoring-strategy`. The subject remains the architecture of
+the application or library code.
+
+Use Agent Harness for model/tool authority, scheduling, cancellation, child-run
+control, provider behavior, checkpoints, and recovery. Use Context Density for
+prompt and context-budget work. Use Capability Workbench for skill/plugin
+authoring, trigger metadata, installation, and portfolio changes. Use adjacent
+plugins for UI/UX, game design, Kotlin/Tauri specifics, security threat
+modeling, or non-architecture cleanup.
 
 ## Evidence Rules
 
@@ -104,6 +115,10 @@ Use `references/contracts.md` for:
 - `architecture_intelligence.runtime_topology.v1`
 - `architecture_intelligence.structure_metrics.v1`
 - `architecture_intelligence.ownership_topology.v1`
+
+Use `references/ai-assisted-code-architecture.md` for the dated research
+snapshot, source-grounded patch rubric, cross-module ripple analysis,
+per-slice implementation loop, and limits of coding-agent architecture claims.
 
 ## Boundaries
 

@@ -22,12 +22,12 @@ For material `name` or `description` work, use `skill-trigger-metadata` first. F
 Use the bundled initializer unless you are editing an existing skill. Choose the destination from the selected delivery surface: plugin-contained skills go under the plugin source tree; repo-local skills go under the current or named repository; installed personal skills go in the active agent's global skills dir. Example for an installed Codex skill:
 
 ```bash
-python3 "$PLUGIN_ROOT/scripts/skill/init_skill.py" <skill-name> --path "${CODEX_HOME:-$HOME/.codex}/skills" --resources scripts,references
+python3 "$PLUGIN_ROOT/scripts/skill/init_skill.py" <skill-name> --path "$HOME/.agents/skills" --resources scripts,references
 ```
 
 Choose the destination deliberately:
 
-- installed personal skill: agent's global skills dir — Codex: `${CODEX_HOME:-$HOME/.codex}/skills/<skill-name>`, Claude: `${CLAUDE_HOME:-$HOME/.claude}/skills/<skill-name>`, Cursor: `${CURSOR_HOME:-$HOME/.cursor}/skills/<skill-name>`; detect the active agent with `$PLUGIN_ROOT/scripts/agent_target.py`
+- installed personal skill: agent's global skills dir — Codex: `$HOME/.agents/skills/<skill-name>`, Claude: `${CLAUDE_HOME:-$HOME/.claude}/skills/<skill-name>`, Cursor: `${CURSOR_HOME:-$HOME/.cursor}/skills/<skill-name>`; detect the active agent with `$PLUGIN_ROOT/scripts/agent_target.py`
 - plugin-contained skill: `<plugin-root>/skills/<skill-name>` when the user requested a plugin/plugin pack or the current repository is a plugin source tree
 - repo-local skill: when the user, repo instructions, or workspace profile selects the current/named repository as the source surface; record the evidence in `install-scope.json`
 - synthesis snapshot: `<output-dir>/synthesized-skill` only for reference-only drafts, failed/partial synthesis, or an explicit no-install request

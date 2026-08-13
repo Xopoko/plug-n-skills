@@ -1,0 +1,18 @@
+{
+  "schema_version": "technology_intelligence.observations.v1",
+  "snapshot_id": "fixture-technology-intelligence-v0-2",
+  "generated_at": "2026-08-10T12:00:00Z",
+  "observations": [
+    {
+      "id": "legacy-react-observation",
+      "technology_id": "legacy-react",
+      "signal": "documented-capability",
+      "claim": "Synthetic legacy observation.",
+      "source_id": "legacy-react-source",
+      "observed_at": "2026-08-10",
+      "scope": "Compatibility fixture only.",
+      "confidence": "low",
+      "limitations": "Not real evidence."
+    }
+  ]
+}

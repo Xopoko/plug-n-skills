@@ -1,9 +1,10 @@
 # Technology Intelligence Plugin
 
 Technology Intelligence supports explicit software adoption decisions with a
-small hot path and a versioned, inspectable evidence snapshot. It compares
-candidate fit for a stated context; it does not publish a universal technology
-ranking.
+small hot path and a versioned, inspectable evidence snapshot. It starts from a
+needed capability, compares candidate technologies and their interfaces, and
+keeps current runtime availability separate. It does not publish a universal
+technology ranking.
 
 ## Skills
 
@@ -15,9 +16,16 @@ ranking.
   refresh the evidence snapshot. Refresh captures raw source material and a
   receipt outside the plugin tree; it never changes assessments automatically.
 
-## Evidence Model
+## Decision And Evidence Model
 
-The versioned files under `data/` keep four concerns separate:
+The decision graph keeps four entities separate:
+
+- capability: the outcome or job that is needed;
+- technology: a candidate product, framework, protocol, or pattern;
+- interface: a documented CLI, SDK, WASM, MCP, API, app, or skill surface;
+- runtime: caller-supplied, short-lived installation and health facts.
+
+The evidence envelope remains separate from that graph:
 
 - candidate identity and aliases;
 - dated observations from primary sources;
@@ -25,8 +33,11 @@ The versioned files under `data/` keep four concerns separate:
 - publication, measurement, retrieval, and observation clocks kept separate;
 - a schema for caller-supplied runtime capability state.
 
-The researched snapshot contains 23 candidates across frontend/full-stack,
-backend/data/infrastructure, and agent delivery modes. A positive assessment
+The researched snapshot contains 24 candidates across frontend/full-stack,
+backend/data/infrastructure, agent delivery, and document processing. AnyDoc is
+the first complete capability-to-interface vertical slice: the
+`document-to-markdown` capability maps to its CLI, Node.js, Python, Rust,
+WebAssembly, and Agent Skill surfaces. A positive assessment
 must cite first-party evidence plus an independent signal or state a concrete
 unverified gap. Popularity is never converted into an opaque universal score.
 
@@ -36,6 +47,7 @@ From the repository root:
 
 ```bash
 python3 plugins/technology-intelligence/scripts/technology_intelligence.py validate
+python3 plugins/technology-intelligence/scripts/technology_intelligence.py query --capability document-to-markdown --format markdown
 python3 plugins/technology-intelligence/scripts/technology_intelligence.py query --family frontend-fullstack --stage startup --format markdown
 python3 plugins/technology-intelligence/scripts/technology_intelligence.py stale --as-of 2026-08-11
 python3 plugins/technology-intelligence/scripts/technology_intelligence.py evidence-window --since 2026-02-11 --as-of 2026-08-11
@@ -72,5 +84,5 @@ python3 plugins/technology-intelligence/scripts/technology_intelligence.py valid
 python3 -m unittest discover -s plugins/technology-intelligence/tests
 ```
 
-This source tree does not install or activate the plugin and does not mutate a
-runtime cache, marketplace, MCP configuration, or global skill surface.
+Source validation does not install candidate technologies or mutate runtime
+facts. Local plugin activation remains a separate repository installer step.

@@ -89,6 +89,16 @@ def default_cache_root() -> Path:
     return resolve_active_codex_home() / "plugins" / "cache"
 
 
+def plugin_cache_path(
+    cache_root: Path,
+    marketplace_name: str,
+    plugin_name: str,
+    version: str,
+) -> Path:
+    """Return the current Codex CLI cache locator for a plugin install."""
+    return cache_root / marketplace_name / plugin_name / version
+
+
 def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
     parser = argparse.ArgumentParser(
         description=(
@@ -273,7 +283,12 @@ def ensure_installed(
     ensure_same_plugin_source(source_path, plugin_root, marketplace_file, plugin_name)
 
     plugin_id = f"{plugin_name}@{marketplace_name}"
-    cache_path = cache_base / marketplace_name / plugin_name / version
+    cache_path = plugin_cache_path(
+        cache_base,
+        marketplace_name,
+        plugin_name,
+        version,
+    )
     ensure_path_within_cache_root(cache_path, cache_base)
     ensure_cache_path_has_no_symlink_components(
         cache_path=cache_path,
@@ -710,13 +725,18 @@ def try_cli_install(
     *,
     codex_home: Path | None = None,
 ) -> str:
+    # On Windows, CreateProcess does not reliably apply PATHEXT when a bare
+    # command also has an extensionless shim earlier on PATH. Resolve the
+    # executable first so an npm `codex.cmd` shim is selected instead of an
+    # inaccessible extensionless/AppX target.
+    resolved_codex_bin = shutil.which(codex_bin) or codex_bin
     child_env = None
     if codex_home is not None:
         child_env = os.environ.copy()
         child_env["CODEX_HOME"] = str(codex_home)
     try:
         result = subprocess.run(
-            [codex_bin, "plugin", "add", plugin_id],
+            [resolved_codex_bin, "plugin", "add", plugin_id],
             text=True,
             stdout=subprocess.PIPE,
             stderr=subprocess.PIPE,

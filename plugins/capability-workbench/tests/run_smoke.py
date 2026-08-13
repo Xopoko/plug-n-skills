@@ -11,9 +11,12 @@ from __future__ import annotations
 
 import json
 import os
+import binascii
+import struct
 import subprocess
 import sys
 import tempfile
+import zlib
 from pathlib import Path
 
 PLUGIN_ROOT = Path(__file__).resolve().parent.parent
@@ -58,6 +61,36 @@ def path_ends_with(path: str, *parts: str) -> bool:
     return tuple(Path(path).parts[-len(parts) :]) == parts
 
 
+def write_test_png(path: Path, *, size: int = 1024, rgba: bool = False) -> None:
+    channels = 4 if rgba else 3
+    background = bytes((12, 24, 36, 255) if rgba else (12, 24, 36))
+    foreground = bytes((240, 220, 160, 255) if rgba else (240, 220, 160))
+    inset = size // 4
+    rows = []
+    for y in range(size):
+        if inset <= y < size - inset:
+            row = background * inset + foreground * (size - 2 * inset) + background * inset
+        else:
+            row = background * size
+        rows.append(b"\x00" + row)
+
+    def chunk(kind: bytes, payload: bytes) -> bytes:
+        return (
+            struct.pack(">I", len(payload))
+            + kind
+            + payload
+            + struct.pack(">I", binascii.crc32(kind + payload) & 0xFFFFFFFF)
+        )
+
+    ihdr = struct.pack(">IIBBBBB", size, size, 8, 6 if rgba else 2, 0, 0, 0)
+    path.write_bytes(
+        b"\x89PNG\r\n\x1a\n"
+        + chunk(b"IHDR", ihdr)
+        + chunk(b"IDAT", zlib.compress(b"".join(rows)))
+        + chunk(b"IEND", b"")
+    )
+
+
 def test_validate_plugin() -> None:
     script = str(SCRIPTS / "plugin" / "validate_plugin.py")
 
@@ -79,12 +112,46 @@ def test_validate_plugin() -> None:
                 "developerName": "Test",
                 "category": "Productivity",
                 "capabilities": ["Testing"],
-                "defaultPrompt": "Use the fixture.",
+                "defaultPrompt": ["Use the fixture."],
             },
         }
         (plugin / ".codex-plugin" / "plugin.json").write_text(json.dumps(manifest))
         result = run([script, str(plugin)])
         check("validate_plugin: minimal codex-only fixture passes", result.returncode == 0, result.stdout)
+
+        manifest["interface"]["defaultPrompt"] = "Use the fixture."
+        (plugin / ".codex-plugin" / "plugin.json").write_text(json.dumps(manifest))
+        result = run([script, str(plugin)])
+        check(
+            "validate_plugin: scalar plugin defaultPrompt fails",
+            result.returncode != 0 and "non-empty array" in result.stdout,
+            result.stdout + result.stderr,
+        )
+        manifest["interface"]["defaultPrompt"] = ["Use the fixture."]
+
+        (plugin / "assets").mkdir()
+        write_test_png(plugin / "assets" / "icon.png")
+        manifest["interface"]["composerIcon"] = "assets/icon.png"
+        (plugin / ".codex-plugin" / "plugin.json").write_text(json.dumps(manifest))
+        result = run([script, str(plugin)])
+        check(
+            "validate_plugin: interface asset path without dot-slash fails",
+            result.returncode != 0 and "start with `./`" in result.stdout,
+            result.stdout + result.stderr,
+        )
+        manifest["interface"]["composerIcon"] = "./assets/icon.png"
+        manifest["interface"]["logo"] = "./assets/icon.png"
+        manifest["interface"]["brandColor"] = "#0C1824"
+
+        manifest["skills"] = "skills/"
+        (plugin / ".codex-plugin" / "plugin.json").write_text(json.dumps(manifest))
+        result = run([script, str(plugin)])
+        check(
+            "validate_plugin: component path without dot-slash fails",
+            result.returncode != 0 and "start with `./`" in result.stdout,
+            result.stdout + result.stderr,
+        )
+        manifest.pop("skills")
 
         manifest["mcpServers"] = "./.codex-mcp.json"
         (plugin / ".codex-plugin" / "plugin.json").write_text(json.dumps(manifest))
@@ -94,6 +161,26 @@ def test_validate_plugin() -> None:
         result = run([script, str(plugin)])
         check(
             "validate_plugin: alternate codex MCP manifest passes",
+            result.returncode == 0,
+            result.stdout + result.stderr,
+        )
+
+        (plugin / ".codex-mcp.json").write_text(
+            json.dumps({"mcp_servers": {"fixture": {"command": "python3"}}})
+        )
+        result = run([script, str(plugin)])
+        check(
+            "validate_plugin: official wrapped MCP manifest passes",
+            result.returncode == 0,
+            result.stdout + result.stderr,
+        )
+
+        (plugin / ".codex-mcp.json").write_text(
+            json.dumps({"fixture": {"command": "python3"}})
+        )
+        result = run([script, str(plugin)])
+        check(
+            "validate_plugin: official direct MCP manifest passes",
             result.returncode == 0,
             result.stdout + result.stderr,
         )
@@ -109,6 +196,63 @@ def test_validate_plugin() -> None:
         )
         manifest.pop("mcpServers")
         (plugin / ".codex-plugin" / "plugin.json").write_text(json.dumps(manifest))
+
+        hooks_dir = plugin / "hooks"
+        hooks_dir.mkdir()
+        (hooks_dir / "hooks.json").write_text(json.dumps({"hooks": {}}))
+        manifest["hooks"] = "./hooks/hooks.json"
+        (plugin / ".codex-plugin" / "plugin.json").write_text(json.dumps(manifest))
+        result = run([script, str(plugin)])
+        check(
+            "validate_plugin: official hooks path passes",
+            result.returncode == 0,
+            result.stdout + result.stderr,
+        )
+        manifest.pop("hooks")
+        (plugin / ".codex-plugin" / "plugin.json").write_text(json.dumps(manifest))
+
+        skill = write_skill(
+            plugin / "skills",
+            "fixture-skill",
+            "---\nname: fixture-skill\ndescription: Fixture skill.\n---\n\n# Fixture\n",
+        )
+        (skill / "agents").mkdir()
+        (skill / "agents" / "openai.yaml").write_text(
+            "interface:\n"
+            "  display_name: \"Fixture Skill\"\n"
+            "  short_description: \"Exercise official skill dependency metadata\"\n"
+            "  default_prompt: \"Use $fixture-skill for this fixture.\"\n"
+            "dependencies:\n"
+            "  tools:\n"
+            "    - type: \"mcp\"\n"
+            "      value: \"fixture\"\n"
+            "      description: \"Fixture MCP server\"\n"
+            "      transport: \"streamable_http\"\n"
+            "      url: \"https://example.com/mcp\"\n",
+            encoding="utf-8",
+        )
+        result = run([script, str(plugin)])
+        check(
+            "validate_plugin: official skill dependencies pass",
+            result.returncode == 0,
+            result.stdout + result.stderr,
+        )
+
+        missing_yaml = Path(tmp) / "missing-yaml"
+        missing_yaml.mkdir()
+        (missing_yaml / "yaml.py").write_text(
+            "raise ModuleNotFoundError(\"No module named 'yaml'\", name='yaml')\n",
+            encoding="utf-8",
+        )
+        result = run(
+            [script, str(plugin)],
+            env={"PYTHONPATH": str(missing_yaml)},
+        )
+        check(
+            "validate_plugin: fallback YAML parser accepts official dependencies",
+            result.returncode == 0,
+            result.stdout + result.stderr,
+        )
 
         # Diverging claude manifest must fail the consistency check.
         (plugin / ".claude-plugin").mkdir()
@@ -142,6 +286,173 @@ def test_validate_plugin() -> None:
         (plugin / ".codex-plugin" / "plugin.json").write_text(json.dumps(manifest))
         result = run([script, str(plugin)])
         check("validate_plugin: TODO marker fails", result.returncode != 0, result.stdout)
+
+
+def test_create_basic_plugin() -> None:
+    script = str(SCRIPTS / "plugin" / "create_basic_plugin.py")
+    validator = str(SCRIPTS / "plugin" / "validate_plugin.py")
+    with tempfile.TemporaryDirectory() as tmp:
+        home = Path(tmp) / "home"
+        plugin_parent = home / ".codex" / "plugins"
+        marketplace_path = home / ".agents" / "plugins" / "marketplace.json"
+        result = run(
+            [
+                script,
+                "generated-fixture",
+                "--path",
+                str(plugin_parent),
+                "--with-skills",
+                "--with-marketplace",
+                "--marketplace-path",
+                str(marketplace_path),
+            ]
+        )
+        plugin_root = plugin_parent / "generated-fixture"
+        manifest = json.loads(
+            (plugin_root / ".codex-plugin" / "plugin.json").read_text(encoding="utf-8")
+        )
+        marketplace = json.loads(marketplace_path.read_text(encoding="utf-8"))
+        validation = run([validator, str(plugin_root)])
+        check(
+            "create_basic_plugin: emits array defaultPrompt",
+            result.returncode == 0
+            and manifest["interface"]["defaultPrompt"] == ["Help me use Generated Fixture."],
+            result.stdout + result.stderr,
+        )
+        check(
+            "create_basic_plugin: personal marketplace uses current source path",
+            marketplace["plugins"][0]["source"]["path"]
+            == "./.codex/plugins/generated-fixture",
+            json.dumps(marketplace, sort_keys=True),
+        )
+        check(
+            "create_basic_plugin: generated plugin validates",
+            validation.returncode == 0,
+            validation.stdout + validation.stderr,
+        )
+
+
+def test_plugin_icon_system() -> None:
+    prompt_script = str(SCRIPTS / "plugin" / "prepare_plugin_icon_prompt.py")
+    icon_validator = str(SCRIPTS / "plugin" / "validate_plugin_icons.py")
+    plugin_validator = str(SCRIPTS / "plugin" / "validate_plugin.py")
+
+    career_result = run([prompt_script, "career", "--description", "Career decisions.", "--json"])
+    career = json.loads(career_result.stdout) if career_result.returncode == 0 else {}
+    check(
+        "plugin icons: known first-party name uses schema-v2 catalog semantics",
+        career_result.returncode == 0
+        and career.get("schema") == "capability_workbench.plugin_icon_prompt.v2"
+        and career.get("catalog", {}).get("source") == "first-party-catalog"
+        and "briefcase" in career.get("semantic_hero", {}).get("object", "")
+        and isinstance(career.get("support_cue"), dict)
+        and career.get("size_gates") == [16, 24, 32, 64],
+        career_result.stdout + career_result.stderr,
+    )
+
+    unknown_first = run([prompt_script, "unmapped-example-plugin", "--json"])
+    unknown_second = run([prompt_script, "unmapped-example-plugin", "--json"])
+    unknown = json.loads(unknown_first.stdout) if unknown_first.returncode == 0 else {}
+    check(
+        "plugin icons: unknown name gets deterministic concrete fallback",
+        unknown_first.returncode == 0
+        and unknown_first.stdout == unknown_second.stdout
+        and unknown.get("catalog", {}).get("source") == "deterministic-fallback"
+        and isinstance(unknown.get("semantic_hero", {}).get("object"), str)
+        and unknown.get("semantic_hero", {}).get("object", "").startswith("a "),
+        unknown_first.stdout + unknown_first.stderr + unknown_second.stderr,
+    )
+    unsafe_brand = run(
+        [prompt_script, "brand-fixture", "--brand-source-type", "authorized-brand", "--json"]
+    )
+    check(
+        "plugin icons: authorized brand direction requires provenance evidence",
+        unsafe_brand.returncode != 0 and "authorization evidence" in unsafe_brand.stderr,
+        unsafe_brand.stdout + unsafe_brand.stderr,
+    )
+
+    with tempfile.TemporaryDirectory() as tmp:
+        plugin = Path(tmp) / "career"
+        (plugin / ".codex-plugin").mkdir(parents=True)
+        (plugin / "assets").mkdir()
+        write_test_png(plugin / "assets" / "icon.png")
+        prompt_path = plugin / "assets" / "icon-prompt.json"
+        prompt_path.write_text(json.dumps(career), encoding="utf-8")
+        manifest = {
+            "name": "career",
+            "version": "1.0.0",
+            "description": "Career fixture.",
+            "author": {"name": "Test"},
+            "interface": {
+                "displayName": "Career",
+                "shortDescription": "Career fixture for icon validation.",
+                "longDescription": "Career fixture for icon validation.",
+                "developerName": "Test",
+                "category": "Productivity",
+                "capabilities": ["Testing"],
+                "defaultPrompt": ["Use the fixture."],
+                "brandColor": career["brandColor"],
+                "composerIcon": "./assets/icon.png",
+                "logo": "./assets/icon.png",
+            },
+        }
+        (plugin / ".codex-plugin" / "plugin.json").write_text(json.dumps(manifest), encoding="utf-8")
+        result = run([icon_validator, str(plugin), "--require-prompt", "--json"])
+        payload = json.loads(result.stdout) if result.stdout else {}
+        check(
+            "plugin icons: RGB asset, manifest parity, prompt, and thumbnail gates pass",
+            result.returncode == 0
+            and payload.get("valid") is True
+            and [item["size"] for item in payload.get("checks", {}).get("thumbnails", [])] == [16, 24, 32, 64]
+            and all(item["passes_non_flat_gate"] for item in payload["checks"]["thumbnails"]),
+            result.stdout + result.stderr,
+        )
+        integrated = run([plugin_validator, str(plugin)])
+        check(
+            "plugin icons: validate_plugin runs icon contract checks",
+            integrated.returncode == 0,
+            integrated.stdout + integrated.stderr,
+        )
+
+        write_test_png(plugin / "assets" / "icon.png", size=512)
+        result = run([icon_validator, str(plugin), "--require-prompt"])
+        check(
+            "plugin icons: non-1024 asset fails",
+            result.returncode != 0 and "exactly 1024x1024" in result.stdout,
+            result.stdout + result.stderr,
+        )
+
+        write_test_png(plugin / "assets" / "icon.png", rgba=True)
+        result = run([icon_validator, str(plugin), "--require-prompt"])
+        check(
+            "plugin icons: RGBA mode fails opaque RGB policy",
+            result.returncode != 0 and "opaque RGB" in result.stdout,
+            result.stdout + result.stderr,
+        )
+
+        write_test_png(plugin / "assets" / "icon.png")
+        invalid_prompt = dict(career)
+        invalid_prompt.pop("catalog")
+        prompt_path.write_text(json.dumps(invalid_prompt), encoding="utf-8")
+        result = run([icon_validator, str(plugin), "--require-prompt"])
+        check(
+            "plugin icons: missing catalog declaration fails",
+            result.returncode != 0 and "catalog" in result.stdout,
+            result.stdout + result.stderr,
+        )
+
+        legacy_prompt = dict(career)
+        legacy_prompt["schema"] = "capability_workbench.plugin_icon_prompt.v1"
+        prompt_path.write_text(json.dumps(legacy_prompt), encoding="utf-8")
+        integrated = run([plugin_validator, str(plugin)])
+        strict = run([icon_validator, str(plugin), "--require-prompt"])
+        check(
+            "plugin icons: integrated validation preserves legacy receipts but strict workflow requires v2",
+            integrated.returncode == 0
+            and strict.returncode != 0
+            and "plugin_icon_prompt.v2" in strict.stdout,
+            integrated.stdout + integrated.stderr + strict.stdout + strict.stderr,
+        )
 
 
 def test_quick_validate() -> None:
@@ -922,10 +1233,10 @@ def test_capability_inventory() -> None:
         if result.returncode == 0:
             payload = json.loads(result.stdout)
             check(
-                "capability_inventory: scans codex, claude, and cursor skill roots",
+                "capability_inventory: scans current, legacy, claude, and cursor skill roots",
                 all(
                     any(marker in root for root in payload["skill_roots"])
-                    for marker in (".codex", ".claude", ".cursor")
+                    for marker in (".agents", ".codex", ".claude", ".cursor")
                 ),
                 str(payload["skill_roots"]),
             )
@@ -1427,7 +1738,7 @@ def test_agent_target() -> None:
     script = str(SCRIPTS / "agent_target.py")
     for agent, marker in (
         ("claude", (".claude", "skills")),
-        ("codex", (".codex", "skills")),
+        ("codex", (".agents", "skills")),
         ("cursor", (".cursor", "skills")),
     ):
         result = run([script, "--json"], env={"AGENT_TARGET": agent, **NEUTRAL_HOMES})
@@ -1468,7 +1779,7 @@ def test_install_skill_default_dest() -> None:
         "print(mod._default_dest())"
     )
     for agent, marker in (
-        ("codex", (".codex", "skills")),
+        ("codex", (".agents", "skills")),
         ("claude", (".claude", "skills")),
         ("cursor", (".cursor", "skills")),
     ):
@@ -1478,6 +1789,27 @@ def test_install_skill_default_dest() -> None:
             result.returncode == 0 and path_ends_with(result.stdout.strip(), *marker),
             result.stdout + result.stderr,
         )
+
+
+def test_codex_cli_plugin_cache_locator() -> None:
+    plugin_dir = SCRIPTS / "plugin"
+    snippet = (
+        "import importlib.util, pathlib, sys; "
+        f"sys.path.insert(0, {str(plugin_dir)!r}); "
+        "spec = importlib.util.spec_from_file_location("
+        f"'installer', {str(plugin_dir / 'ensure_local_plugin_installed.py')!r}); "
+        "mod = importlib.util.module_from_spec(spec); "
+        "sys.modules['installer'] = mod; "
+        "spec.loader.exec_module(mod); "
+        "print(mod.plugin_cache_path(pathlib.Path('cache'), 'market', 'plugin', '0.5.1'))"
+    )
+    result = run(["-c", snippet])
+    check(
+        "ensure_local_plugin_installed: Codex CLI uses manifest-version locator",
+        result.returncode == 0
+        and path_ends_with(result.stdout.strip(), "market", "plugin", "0.5.1"),
+        result.stdout + result.stderr,
+    )
 
 
 def _audit(skill_dir: Path) -> dict:
@@ -1579,9 +1911,226 @@ def test_audit_skill_candidate_tier2() -> None:
         check("audit: persistence prose stays low (prose_active=false)", _audit(prose)["risk_level"] == "low", str(_audit(prose)["risk_level"]))
 
 
+def test_capability_evaluation() -> None:
+    script = str(SCRIPTS / "evaluation" / "validate_capability_evaluation.py")
+    skill = PLUGIN_ROOT / "skills" / "capability-evaluation" / "SKILL.md"
+    metadata = PLUGIN_ROOT / "skills" / "capability-evaluation" / "agents" / "openai.yaml"
+    router = PLUGIN_ROOT / "skills" / "capability-workbench" / "SKILL.md"
+    readme = PLUGIN_ROOT / "README.md"
+
+    surface_text = "\n".join(
+        path.read_text(encoding="utf-8")
+        for path in (skill, metadata, router, readme)
+        if path.is_file()
+    )
+    check(
+        "capability evaluation: source surface exists",
+        skill.is_file()
+        and metadata.is_file()
+        and Path(script).is_file()
+        and "name: capability-evaluation" in skill.read_text(encoding="utf-8")
+        and "capability-evaluation" in router.read_text(encoding="utf-8")
+        and "capability-evaluation" in readme.read_text(encoding="utf-8")
+        and "baseline" in surface_text.lower()
+        and "Agent Harness" in surface_text,
+        surface_text[:1000],
+    )
+
+    template_result = run([script, "--template"])
+    check(
+        "capability evaluation: template command succeeds",
+        template_result.returncode == 0,
+        template_result.stdout + template_result.stderr,
+    )
+    if template_result.returncode != 0:
+        return
+    template = json.loads(template_result.stdout)
+
+    with tempfile.TemporaryDirectory() as tmp:
+        root = Path(tmp)
+        planned_path = root / "planned.json"
+        planned_path.write_text(json.dumps(template), encoding="utf-8")
+        planned = run([script, str(planned_path), "--json"])
+        planned_repeat = run([script, str(planned_path), "--json"])
+        check(
+            "capability evaluation: planned template validates deterministically",
+            planned.returncode == 0
+            and planned.stdout == planned_repeat.stdout
+            and json.loads(planned.stdout)["valid"] is True,
+            planned.stdout + planned.stderr,
+        )
+
+        complete = json.loads(json.dumps(template))
+        complete["status"] = "complete"
+        complete["environment"]["parity_proved"] = True
+        complete["environment"]["parity_evidence"] = ["receipts/parity.json"]
+        complete["results"] = [
+            {
+                "case_id": "representative-1",
+                "baseline": {
+                    "attempted": 3,
+                    "passed": 1,
+                    "failed": 2,
+                    "quarantined": 0,
+                    "evidence": ["receipts/baseline.json"],
+                },
+                "candidate": {
+                    "attempted": 3,
+                    "passed": 3,
+                    "failed": 0,
+                    "quarantined": 0,
+                    "evidence": ["receipts/candidate.json"],
+                },
+                "outcome": "win",
+                "decision_basis": "The candidate passes the frozen deterministic assertion more often.",
+            }
+        ]
+        complete["summary"] = {
+            "case_count": 1,
+            "candidate_wins": 1,
+            "candidate_losses": 0,
+            "ties": 0,
+            "inconclusive": 0,
+            "critical_regressions": 0,
+            "quarantined_trials": 0,
+        }
+        complete["verdict"] = "adopt"
+        complete["rationale"] = "The candidate satisfies the predeclared adoption rule."
+        complete["limitations"] = ["One representative case cannot establish broad generality."]
+        complete_path = root / "complete.json"
+        complete_path.write_text(json.dumps(complete), encoding="utf-8")
+        result = run([script, str(complete_path), "--json"])
+        check(
+            "capability evaluation: paired complete receipt validates",
+            result.returncode == 0 and json.loads(result.stdout)["valid"] is True,
+            result.stdout + result.stderr,
+        )
+
+        invalid = json.loads(json.dumps(complete))
+        invalid["environment"]["parity_proved"] = False
+        invalid["summary"]["candidate_wins"] = 0
+        invalid_path = root / "invalid.json"
+        invalid_path.write_text(json.dumps(invalid), encoding="utf-8")
+        result = run([script, str(invalid_path), "--json"])
+        invalid_errors = json.loads(result.stdout)["errors"]
+        check(
+            "capability evaluation: parity and summary inflation fail closed",
+            result.returncode != 0
+            and "complete_requires_proved_environment_parity" in invalid_errors
+            and "summary_candidate_wins_must_equal_1" in invalid_errors,
+            result.stdout + result.stderr,
+        )
+
+        duplicate_path = root / "duplicate.json"
+        duplicate_path.write_text('{"schema":"a","schema":"b"}', encoding="utf-8")
+        result = run([script, str(duplicate_path), "--json"])
+        check(
+            "capability evaluation: duplicate JSON keys fail closed",
+            result.returncode != 0 and "duplicate_key:schema" in result.stdout,
+            result.stdout + result.stderr,
+        )
+
+        nan_path = root / "nan.json"
+        nan_path.write_text('{"value":NaN}', encoding="utf-8")
+        result = run([script, str(nan_path), "--json"])
+        check(
+            "capability evaluation: non-finite JSON numbers fail closed",
+            result.returncode != 0 and "non_finite_number:NaN" in result.stdout,
+            result.stdout + result.stderr,
+        )
+
+        contradicted = json.loads(json.dumps(complete))
+        contradicted["results"][0]["baseline"].update(passed=3, failed=0)
+        contradicted["results"][0]["candidate"].update(passed=0, failed=3)
+        contradicted_path = root / "contradicted-outcome.json"
+        contradicted_path.write_text(json.dumps(contradicted), encoding="utf-8")
+        result = run([script, str(contradicted_path), "--json"])
+        contradicted_errors = json.loads(result.stdout)["errors"]
+        check(
+            "capability evaluation: declared win cannot contradict paired counts",
+            result.returncode != 0
+            and "result_0_outcome_must_equal_loss" in contradicted_errors
+            and "adopt_verdict_forbidden_with_critical_regressions" in contradicted_errors,
+            result.stdout + result.stderr,
+        )
+
+        critical_failure = json.loads(json.dumps(complete))
+        critical_failure["results"][0]["baseline"].update(passed=0, failed=3)
+        critical_failure["results"][0]["candidate"].update(passed=2, failed=1)
+        critical_failure_path = root / "critical-failure.json"
+        critical_failure_path.write_text(
+            json.dumps(critical_failure), encoding="utf-8"
+        )
+        result = run([script, str(critical_failure_path), "--json"])
+        critical_errors = json.loads(result.stdout)["errors"]
+        check(
+            "capability evaluation: any critical candidate failure blocks adoption",
+            result.returncode != 0
+            and "adopt_verdict_forbidden_with_critical_regressions" in critical_errors
+            and "summary_critical_regressions_must_equal_1" in critical_errors,
+            result.stdout + result.stderr,
+        )
+
+        all_tie = json.loads(json.dumps(complete))
+        all_tie["adoption_rule"]["minimum_candidate_wins"] = 0
+        all_tie["results"][0]["baseline"].update(passed=3, failed=0)
+        all_tie["results"][0]["candidate"].update(passed=3, failed=0)
+        all_tie["results"][0]["outcome"] = "tie"
+        all_tie["summary"].update(candidate_wins=0, ties=1)
+        all_tie_path = root / "all-tie.json"
+        all_tie_path.write_text(json.dumps(all_tie), encoding="utf-8")
+        result = run([script, str(all_tie_path), "--json"])
+        tie_errors = json.loads(result.stdout)["errors"]
+        check(
+            "capability evaluation: all-tie receipt cannot adopt",
+            result.returncode != 0
+            and "adoption_rule_minimum_candidate_wins_must_be_positive_integer" in tie_errors
+            and "adopt_verdict_requires_candidate_win" in tie_errors,
+            result.stdout + result.stderr,
+        )
+
+        same_artifact = json.loads(json.dumps(complete))
+        same_artifact["target"]["baseline"] = {
+            "type": "artifact",
+            "identity": "example-capability@prior",
+            "sha256": same_artifact["target"]["candidate"]["sha256"],
+        }
+        same_artifact_path = root / "same-artifact.json"
+        same_artifact_path.write_text(json.dumps(same_artifact), encoding="utf-8")
+        result = run([script, str(same_artifact_path), "--json"])
+        check(
+            "capability evaluation: candidate and artifact baseline must differ",
+            result.returncode != 0
+            and "candidate_and_artifact_baseline_sha256_must_differ" in result.stdout,
+            result.stdout + result.stderr,
+        )
+
+        huge_metric = json.loads(json.dumps(complete))
+        huge_metric["scope"]["dimensions"].append("overhead")
+        huge_metric["results"][0]["baseline"]["metrics"] = {
+            "cost_usd": 10**400
+        }
+        huge_metric["results"][0]["candidate"]["metrics"] = {"cost_usd": 1}
+        huge_metric_path = root / "huge-metric.json"
+        huge_metric_path.write_text(json.dumps(huge_metric), encoding="utf-8")
+        result = run([script, str(huge_metric_path), "--json"])
+        huge_payload = json.loads(result.stdout)
+        check(
+            "capability evaluation: huge metric fails in a structured envelope",
+            result.returncode != 0
+            and huge_payload["valid"] is False
+            and "result_0_baseline_metrics_cost_usd_exceeds_supported_magnitude"
+            in huge_payload["errors"]
+            and "Traceback" not in result.stderr,
+            result.stdout + result.stderr,
+        )
+
+
 def main() -> int:
     for test in (
         test_validate_plugin,
+        test_create_basic_plugin,
+        test_plugin_icon_system,
         test_quick_validate,
         test_generate_openai_yaml_prefix,
         test_description_prefix_audit,
@@ -1593,8 +2142,10 @@ def main() -> int:
         test_capability_inventory,
         test_agent_target,
         test_install_skill_default_dest,
+        test_codex_cli_plugin_cache_locator,
         test_audit_skill_candidate,
         test_audit_skill_candidate_tier2,
+        test_capability_evaluation,
     ):
         test()
     print(f"\n{PASSES} passed, {len(FAILURES)} failed")

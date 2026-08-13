@@ -17,7 +17,7 @@ from typing import Iterable
 
 BUILD_FILE_NAMES = ("build.gradle.kts", "build.gradle")
 SETTINGS_FILE_NAMES = ("settings.gradle.kts", "settings.gradle")
-REPORT_SCHEMA_VERSION = 2
+REPORT_SCHEMA_VERSION = 3
 INSPECTED_GRADLE_PROPERTY_KEYS = frozenset(
     {
         "org.gradle.caching",
@@ -89,9 +89,9 @@ def read_text(path: Path) -> str:
 
 def rel(root: Path, path: Path) -> str:
     try:
-        return str(path.relative_to(root))
+        return path.relative_to(root).as_posix()
     except ValueError:
-        return str(path)
+        return path.as_posix()
 
 
 def parse_args() -> argparse.Namespace:
@@ -216,7 +216,7 @@ def classify(plugins: list[str], aliases: list[str], text: str) -> list[str]:
     if "native.cocoapods" in text or "cocoapods {" in text:
         labels.append("cocoapods")
     if "swiftPMDependencies" in text:
-        labels.append("swiftpm")
+        labels.append("swiftpm-import")
     if has_any(all_markers, ["co.touchlab.kmmbridge", "kmmbridge"]):
         labels.append("kmmbridge")
     if has_any(all_markers, ["maven-publish", "com.vanniktech.maven.publish"]):
@@ -308,10 +308,10 @@ def diagnose_module(root: Path, build_file: Path, catalog_plugins: dict[str, str
             add("warning", "common_android_dependency", "commonMain appears to contain Android/AndroidX dependencies; verify multiplatform target support.")
     if "debugImplementation" in text and "android-kmp-library" in labels:
         add("warning", "debug_implementation_in_android_kmp", "Android-KMP library plugin is single-variant; verify debugImplementation usage or use documented runtime classpath tooling pattern.")
-    if "cocoapods" in labels and "swiftpm" in labels:
-        add("info", "dual_cocoapods_swiftpm", "Both CocoaPods and SwiftPM are present; this is valid during a phased migration but should be temporary.")
+    if "cocoapods" in labels and "swiftpm-import" in labels:
+        add("info", "dual_cocoapods_swiftpm", "Both CocoaPods and SwiftPM dependency import are configured; official phased migration permits this overlap, but SwiftPM import is Alpha and the overlap should be temporary.")
     elif "cocoapods" in labels:
-        add("info", "cocoapods_present", "CocoaPods integration present; consider SwiftPM migration only when requested and after inventory.")
+        add("info", "cocoapods_present", "CocoaPods integration present; consider SwiftPM dependency-import migration only when requested, after inventory, and after accepting the current Alpha-tooling boundary.")
     if "cocoapods" in labels and re.search(r"cocoapods\s*\{(?P<body>.*?)framework\s*\{", text, re.S):
         add("warning", "cocoapods_framework_configuration", "Framework configuration inside cocoapods { framework { ... } } should be migrated to binaries.framework when moving to current KMP layout.")
     if "kmp" in labels and "maven-publish" in text and "abiValidation" not in text:
@@ -321,14 +321,14 @@ def diagnose_module(root: Path, build_file: Path, catalog_plugins: dict[str, str
         add("info", "broad_api_exposure", f"Detected {api_dependency_count} api(...) dependencies; verify each dependency is part of the intended public ABI.")
     if ("commonTest" in sets or "commonTest.dependencies" in text) and not re.search(r"kotlin\s*\(\s*[\"']test[\"']\s*\)|kotlin-test|kotlin\.test", text):
         add("info", "common_test_without_kotlin_test", "commonTest exists but kotlin('test')/kotlin.test was not detected in this module; verify a convention plugin adds it.")
-    if "swiftpm" in labels and not re.search(r"(?m)^\s*group\s*=", text):
-        add("warning", "swiftpm_missing_module_group", "swiftPMDependencies requires modules to define group for generated package metadata.")
+    if "swiftpm-import" in labels and not re.search(r"(?m)^\s*group\s*=", text):
+        add("warning", "swiftpm_missing_module_group", "Set an explicit Gradle group so swiftPMDependencies import namespaces are stable and intentional.")
     if "XCFramework" in text and "bundleId" not in text:
         add("info", "xcframework_bundle_id_not_detected", "XCFramework export detected without binaryOption('bundleId', ...); verify bundle identifiers before Swift package export.")
     if "kmp" in labels and re.search(r"\bios(?:Arm64|SimulatorArm64|X64)\s*\(", text) and "isStatic" not in text and "framework" in text:
         add("info", "ios_framework_linkage_not_explicit", "iOS framework export detected without explicit isStatic; verify dynamic/static linkage is intentional for the app integration.")
-    if "kmp" in labels and "swiftPMDependencies" in text and "Package.swift" not in text:
-        add("info", "swiftpm_manifest_validation_needed", "SwiftPM export/import detected; validate generated Package.swift with swift package tools during release checks.")
+    if "kmp" in labels and "swiftpm-import" in labels:
+        add("info", "swiftpm_import_alpha_gate", "SwiftPM dependency import detected. This KGP integration is Alpha: verify the project-pinned KGP against current official docs, commit the generated Package.resolved lock state, and do not assume Swift package export is supported.")
     if "kmmbridge" in labels:
         add("info", "kmmbridge_present", "KMMBridge detected; verify artifact hosting, versioning, and iOS consumer workflow in release checks.")
         if "spm(" not in text and "cocoapods(" not in text:
@@ -584,12 +584,12 @@ def score_readiness(
         items,
         {
             "published_library_without_abi_validation": 4,
-            "swiftpm_manifest_validation_needed": 2,
+            "swiftpm_import_alpha_gate": 2,
             "kmmbridge_distribution_mode_not_detected": 2,
             "native_binary_export_present": 1,
             "native_transitive_export_enabled": 3,
         },
-        [f"publishing_markers={','.join(sorted(label for label in classifications if label in {'maven-publish', 'swiftpm', 'kmmbridge', 'cocoapods'}))}"],
+        [f"release_integration_markers={','.join(sorted(label for label in classifications if label in {'maven-publish', 'swiftpm-import', 'kmmbridge', 'cocoapods'}))}"],
     )
     return [structure, governance, testing, interop, security, performance, publishing]
 

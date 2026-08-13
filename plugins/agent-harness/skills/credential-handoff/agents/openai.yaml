@@ -1,0 +1,4 @@
+interface:
+  display_name: "Credential Handoff"
+  short_description: "Apply credentials without exposing secret values."
+  default_prompt: "Use $credential-handoff to let me or 1Password satisfy this task's credential prompt without returning the value to the agent."

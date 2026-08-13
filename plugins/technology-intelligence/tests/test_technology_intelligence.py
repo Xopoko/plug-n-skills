@@ -12,6 +12,7 @@ from unittest import mock
 
 
 PLUGIN_ROOT = Path(__file__).resolve().parents[1]
+LEGACY_V02_FIXTURE = PLUGIN_ROOT / "tests" / "fixtures" / "legacy-v0.2"
 MODULE_PATH = PLUGIN_ROOT / "scripts" / "technology_intelligence.py"
 SPEC = importlib.util.spec_from_file_location("technology_intelligence", MODULE_PATH)
 assert SPEC and SPEC.loader
@@ -56,9 +57,9 @@ class TechnologyIntelligenceTests(unittest.TestCase):
     def test_snapshot_validates_offline(self) -> None:
         self.assertEqual([], technology_intelligence.validate_plugin())
 
-    def test_snapshot_has_23_candidates_across_all_families(self) -> None:
+    def test_snapshot_has_24_candidates_across_all_families(self) -> None:
         technologies = self.snapshot["technologies"]["technologies"]
-        self.assertEqual(23, len(technologies))
+        self.assertEqual(24, len(technologies))
         counts: dict[str, int] = {}
         for technology in technologies:
             counts[technology["family"]] = counts.get(technology["family"], 0) + 1
@@ -67,9 +68,55 @@ class TechnologyIntelligenceTests(unittest.TestCase):
                 "frontend-fullstack": 7,
                 "backend-data-infrastructure": 8,
                 "agent-delivery": 8,
+                "document-processing": 1,
             },
             counts,
         )
+
+    def test_capability_query_resolves_anydoc_and_exposes_interfaces(self) -> None:
+        rows = technology_intelligence.query_snapshot(
+            self.snapshot,
+            capability="document-to-markdown",
+        )
+        self.assertEqual(["anydoc"], [row["technology"]["id"] for row in rows])
+        self.assertEqual(
+            ["document-to-markdown"],
+            [capability["id"] for capability in rows[0]["capabilities"]],
+        )
+        interfaces = {interface["id"]: interface for interface in rows[0]["interfaces"]}
+        self.assertEqual(
+            {
+                "anydoc-agent-skill",
+                "anydoc-cli",
+                "anydoc-node-sdk",
+                "anydoc-python-sdk",
+                "anydoc-rust-sdk",
+                "anydoc-wasm",
+            },
+            set(interfaces),
+        )
+        self.assertEqual({"cli", "sdk", "skill", "wasm"}, {item["surface"] for item in interfaces.values()})
+        interface_rows = technology_intelligence.query_snapshot(self.snapshot, interface="anydoc-cli")
+        self.assertEqual(["anydoc"], [row["technology"]["id"] for row in interface_rows])
+        self.assertEqual(
+            ["anydoc-cli"],
+            [item["id"] for item in interface_rows[0]["interfaces"]],
+        )
+
+    def test_cli_accepts_capability_and_interface_filters(self) -> None:
+        args = technology_intelligence._build_parser().parse_args(
+            [
+                "query",
+                "--capability",
+                "document-to-markdown",
+                "--interface",
+                "anydoc-cli",
+                "--format",
+                "json",
+            ]
+        )
+        self.assertEqual("document-to-markdown", args.capability)
+        self.assertEqual("anydoc-cli", args.interface)
 
     def test_positive_assessments_have_first_party_and_triangulation_or_gap(self) -> None:
         sources = {record["id"]: record for record in self.snapshot["sources"]["sources"]}
@@ -98,7 +145,7 @@ class TechnologyIntelligenceTests(unittest.TestCase):
             )
 
     def test_durable_data_contains_no_universal_score_or_runtime_inventory(self) -> None:
-        for document_name in ("sources", "technologies", "observations", "assessments"):
+        for document_name in technology_intelligence.DATASET_FILES:
             for path, key in technology_intelligence._walk_keys(self.snapshot[document_name]):
                 self.assertNotIn(
                     key.casefold(), technology_intelligence.FORBIDDEN_SCORE_KEYS, f"{document_name}:{path}"
@@ -127,6 +174,8 @@ class TechnologyIntelligenceTests(unittest.TestCase):
         )
         react = technology_intelligence.query_snapshot(self.snapshot, technology="react")
         self.assertEqual(["react"], [row["technology"]["id"] for row in react])
+        self.assertEqual([], react[0]["capabilities"])
+        self.assertEqual([], react[0]["interfaces"])
 
     def test_runtime_inventory_is_validated_joined_and_not_persisted(self) -> None:
         before = json.dumps(self.snapshot, default=str, sort_keys=True)
@@ -162,6 +211,106 @@ class TechnologyIntelligenceTests(unittest.TestCase):
         )
         self.assertEqual("fixture.local/server", rows[0]["runtime_capabilities"][0]["identifier"])
         self.assertEqual(before, json.dumps(self.snapshot, default=str, sort_keys=True))
+
+    def test_runtime_inventory_can_join_a_known_interface(self) -> None:
+        before = json.dumps(self.snapshot, default=str, sort_keys=True)
+        interfaces = {item["id"]: item for item in self.snapshot["interfaces"]["interfaces"]}
+        inventory = {
+            "schema_version": "technology_intelligence.runtime_inventory.v1",
+            "observed_at": "2026-08-11T18:30:00Z",
+            "capabilities": [
+                {
+                    "technology_id": "anydoc",
+                    "interface_id": "anydoc-cli",
+                    "surface": "cli",
+                    "identifier": "anydoc",
+                    "provisioning_mode": "preinstalled",
+                    "installed": True,
+                    "enabled": True,
+                    "auth_state": "not-required",
+                    "health": "healthy",
+                    "checked_at": "2026-08-11T18:30:00Z",
+                    "version": "0.1.8",
+                },
+                {
+                    "technology_id": "anydoc",
+                    "interface_id": "anydoc-wasm",
+                    "surface": "wasm",
+                    "identifier": "@firecrawl/anydoc-wasm",
+                    "provisioning_mode": "bundled",
+                    "installed": True,
+                    "enabled": True,
+                    "auth_state": "not-required",
+                    "health": "healthy",
+                    "checked_at": "2026-08-11T18:30:00Z",
+                    "version": "0.1.8",
+                }
+            ],
+        }
+        self.assertEqual(
+            [],
+            technology_intelligence.validate_runtime_inventory(
+                inventory,
+                self.snapshot["runtime-capability-schema"],
+                known_technology_ids={item["id"] for item in self.snapshot["technologies"]["technologies"]},
+                known_interfaces=interfaces,
+                reference_time=datetime(2026, 8, 11, 18, 45, tzinfo=timezone.utc),
+            ),
+        )
+        rows = technology_intelligence.query_snapshot(
+            self.snapshot,
+            capability="document-to-markdown",
+            runtime_inventory=inventory,
+            runtime_reference_time=datetime(2026, 8, 11, 18, 45, tzinfo=timezone.utc),
+        )
+        self.assertEqual(2, len(rows[0]["runtime_capabilities"]))
+        runtime = rows[0]["runtime_capabilities"][0]
+        self.assertEqual("anydoc-cli", runtime["interface"]["id"])
+        self.assertEqual("preinstalled", runtime["provisioning_mode"])
+        cli_rows = technology_intelligence.query_snapshot(
+            self.snapshot,
+            interface="anydoc-cli",
+            runtime_inventory=inventory,
+            runtime_reference_time=datetime(2026, 8, 11, 18, 45, tzinfo=timezone.utc),
+        )
+        self.assertEqual(["anydoc-cli"], [item["id"] for item in cli_rows[0]["interfaces"]])
+        self.assertEqual(
+            ["anydoc-cli"],
+            [item["interface_id"] for item in cli_rows[0]["runtime_capabilities"]],
+        )
+        self.assertEqual(before, json.dumps(self.snapshot, default=str, sort_keys=True))
+
+    def test_runtime_inventory_rejects_wrong_interface_owner_and_surface(self) -> None:
+        interfaces = {item["id"]: item for item in self.snapshot["interfaces"]["interfaces"]}
+        inventory = {
+            "schema_version": "technology_intelligence.runtime_inventory.v1",
+            "observed_at": "2026-08-11T18:30:00Z",
+            "capabilities": [
+                {
+                    "technology_id": "react",
+                    "interface_id": "anydoc-cli",
+                    "surface": "sdk",
+                    "identifier": "fixture",
+                    "provisioning_mode": "bundled",
+                    "installed": True,
+                    "enabled": True,
+                    "auth_state": "not-required",
+                    "health": "healthy",
+                    "checked_at": "2026-08-11T18:30:00Z",
+                }
+            ],
+        }
+        errors = technology_intelligence.validate_runtime_inventory(
+            inventory,
+            self.snapshot["runtime-capability-schema"],
+            known_technology_ids={item["id"] for item in self.snapshot["technologies"]["technologies"]},
+            known_interfaces=interfaces,
+            reference_time=datetime(2026, 8, 11, 18, 45, tzinfo=timezone.utc),
+        )
+        joined = "\n".join(errors)
+        self.assertIn("belongs to another technology", joined)
+        self.assertIn("has a different surface", joined)
+        self.assertIn("provisioning_mode is not documented", joined)
 
     def test_runtime_inventory_rejects_secret_fields(self) -> None:
         inventory = {
@@ -284,13 +433,14 @@ class TechnologyIntelligenceTests(unittest.TestCase):
             date(2026, 2, 11),
             date(2026, 8, 11),
         )
-        self.assertEqual(16, report["source_counts"]["published_in_window"])
-        self.assertEqual(13, report["covered_technology_count"])
+        self.assertEqual(18, report["source_counts"]["published_in_window"])
+        self.assertEqual(14, report["covered_technology_count"])
         self.assertEqual(10, report["technology_gap_count"])
         coverage = {item["technology_id"]: item for item in report["technology_coverage"]}
         self.assertEqual("covered", coverage["a2a-protocol"]["status"])
         self.assertEqual("covered", coverage["agent-client-protocol"]["status"])
         self.assertEqual("gap", coverage["vue"]["status"])
+        self.assertEqual("covered", coverage["anydoc"]["status"])
         self.assertIn("vue-official", report["undated_or_live"])
 
     def test_record_ids_are_path_safe_lowercase_slugs(self) -> None:
@@ -383,6 +533,82 @@ class TechnologyIntelligenceTests(unittest.TestCase):
         ):
             self.assertIn(expected, markdown)
 
+    def test_capability_and_interface_relationships_are_validated(self) -> None:
+        with tempfile.TemporaryDirectory() as temporary:
+            plugin_root = Path(temporary) / "technology-intelligence"
+            shutil.copytree(PLUGIN_ROOT, plugin_root)
+            interface_path = plugin_root / "data" / "interfaces.v1.json"
+            document = json.loads(interface_path.read_text(encoding="utf-8"))
+            document["interfaces"][0]["capability_ids"] = ["missing-capability"]
+            document["interfaces"][0]["installed"] = True
+            interface_path.write_text(json.dumps(document, indent=2) + "\n", encoding="utf-8")
+            manifest_path = plugin_root / "data" / "snapshot-manifest.v1.json"
+            manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
+            for entry in manifest["files"]:
+                if entry["path"] == "interfaces.v1.json":
+                    entry["sha256"] = technology_intelligence._sha256(interface_path)
+            manifest_path.write_text(json.dumps(manifest, indent=2) + "\n", encoding="utf-8")
+            errors = technology_intelligence.validate_plugin(plugin_root)
+            joined = "\n".join(errors)
+            self.assertIn("references unknown capability missing-capability", joined)
+            self.assertIn("runtime state key forbidden", joined)
+
+        with tempfile.TemporaryDirectory() as temporary:
+            plugin_root = Path(temporary) / "technology-intelligence"
+            shutil.copytree(PLUGIN_ROOT, plugin_root)
+            technology_path = plugin_root / "data" / "technologies.v1.json"
+            document = json.loads(technology_path.read_text(encoding="utf-8"))
+            react = next(item for item in document["technologies"] if item["id"] == "react")
+            react["capability_ids"] = ["document-to-markdown"]
+            technology_path.write_text(json.dumps(document, indent=2) + "\n", encoding="utf-8")
+            manifest_path = plugin_root / "data" / "snapshot-manifest.v1.json"
+            manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
+            for entry in manifest["files"]:
+                if entry["path"] == "technologies.v1.json":
+                    entry["sha256"] = technology_intelligence._sha256(technology_path)
+            manifest_path.write_text(json.dumps(manifest, indent=2) + "\n", encoding="utf-8")
+            errors = technology_intelligence.validate_plugin(plugin_root)
+            self.assertIn(
+                "technology react capability document-to-markdown has no matching interface",
+                errors,
+            )
+
+    def test_load_and_query_frozen_v02_snapshot_without_additive_datasets(self) -> None:
+        snapshot = technology_intelligence.load_snapshot(LEGACY_V02_FIXTURE)
+        self.assertEqual([], snapshot["capabilities"]["capabilities"])
+        self.assertEqual([], snapshot["interfaces"]["interfaces"])
+        rows = technology_intelligence.query_snapshot(snapshot, technology="legacy-react")
+        self.assertEqual(["legacy-react"], [row["technology"]["id"] for row in rows])
+        self.assertEqual([], rows[0]["capabilities"])
+        self.assertEqual([], rows[0]["interfaces"])
+
+    def test_diff_accepts_legacy_directory_without_additive_datasets(self) -> None:
+        with tempfile.TemporaryDirectory() as temporary:
+            temporary_path = Path(temporary)
+            old_dir = temporary_path / "old"
+            new_dir = temporary_path / "new"
+            shutil.copytree(PLUGIN_ROOT / "data", old_dir)
+            shutil.copytree(PLUGIN_ROOT / "data", new_dir)
+            for filename in ("capabilities.v1.json", "interfaces.v1.json"):
+                (old_dir / filename).unlink()
+            manifest_path = old_dir / "snapshot-manifest.v1.json"
+            manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
+            manifest["files"] = [
+                entry
+                for entry in manifest["files"]
+                if entry["path"] not in {"capabilities.v1.json", "interfaces.v1.json"}
+            ]
+            manifest_path.write_text(json.dumps(manifest, indent=2) + "\n", encoding="utf-8")
+            result = technology_intelligence.diff_directories(old_dir, new_dir)
+            self.assertEqual(
+                ["document-to-markdown"],
+                result["datasets"]["capabilities"]["added"],
+            )
+            self.assertEqual(
+                sorted(item["id"] for item in self.snapshot["interfaces"]["interfaces"]),
+                result["datasets"]["interfaces"]["added"],
+            )
+
     def test_diff_reports_changed_observation_without_reclassifying_it(self) -> None:
         with tempfile.TemporaryDirectory() as temporary:
             temporary_path = Path(temporary)
@@ -471,7 +697,14 @@ class TechnologyIntelligenceTests(unittest.TestCase):
             (PLUGIN_ROOT / "tests" / "fixtures" / "trigger-cases.v1.json").read_text(encoding="utf-8")
         )
         contract = self.snapshot["trigger-contract"]
-        self.assertEqual(24, len(fixture["cases"]))
+        required_cases = {
+            "advisor-anydoc-compare",
+            "advisor-anydoc-adopt",
+            "maintainer-anydoc-evidence",
+            "none-anydoc-convert",
+            "none-anydoc-install",
+        }
+        self.assertTrue(required_cases.issubset({case["id"] for case in fixture["cases"]}))
         for case in fixture["cases"]:
             self.assertEqual(
                 case["expected_skill"],
@@ -518,7 +751,7 @@ class TechnologyIntelligenceTests(unittest.TestCase):
                 temporary,
                 acknowledge_network=True,
                 opener=opener,
-                now=datetime(2026, 8, 11, 12, 0, tzinfo=timezone.utc),
+                now=datetime(2026, 8, 11, 19, 0, tzinfo=timezone.utc),
             )
             receipt = result["receipt"]
             capture_dir = Path(result["capture_dir"])
@@ -528,7 +761,7 @@ class TechnologyIntelligenceTests(unittest.TestCase):
             self.assertFalse(receipt["normalization_performed"])
             self.assertFalse(receipt["recommendations_changed"])
             self.assertEqual(len(payload), receipt["bytes"])
-            self.assertEqual("research-2026-08-11", receipt["snapshot_id"])
+            self.assertEqual("research-2026-08-11-capability-model-v1", receipt["snapshot_id"])
             self.assertEqual(64, len(receipt["source_registry_sha256"]))
             self.assertEqual("generic-http-get", receipt["adapter"]["name"])
             self.assertEqual("not-used", receipt["cache_status"])
@@ -589,7 +822,7 @@ class TechnologyIntelligenceTests(unittest.TestCase):
                     temporary_path / "output",
                     acknowledge_network=True,
                     opener=opener,
-                    now=datetime(2026, 8, 11, 12, 0, tzinfo=timezone.utc),
+                    now=datetime(2026, 8, 11, 19, 0, tzinfo=timezone.utc),
                 )
             self.assertFalse((temporary_path / "output").exists())
 

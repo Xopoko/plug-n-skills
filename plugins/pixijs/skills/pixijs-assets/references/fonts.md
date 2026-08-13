@@ -202,4 +202,4 @@ If you don't pass `data.family`, the family name is derived from the filename. `
 - [loadWebFont](https://pixijs.download/release/docs/assets.loadWebFont.html.md)
 - [loadBitmapFont](https://pixijs.download/release/docs/assets.loadBitmapFont.html.md)
 - [LoadFontData](https://pixijs.download/release/docs/assets.LoadFontData.html.md)
-- [BitmapFont](https://pixijs.download/release/docs/scene.BitmapFont.html.md)
+- [BitmapFont](https://pixijs.download/release/docs/text.BitmapFont.html.md)

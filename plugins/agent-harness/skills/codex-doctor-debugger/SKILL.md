@@ -65,7 +65,7 @@ agent session:
 
 ```bash
 codex sandbox -C "$PROJECT" --log-denials -- <command> <args>
-codex sandbox -C "$PROJECT" --permissions-profile <name> -- <command> <args>
+codex sandbox -C "$PROJECT" --permission-profile <name> -- <command> <args>
 ```
 
 On macOS, `--log-denials` can help identify blocked paths or sockets. Keep

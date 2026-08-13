@@ -85,6 +85,11 @@ def write_archive(
         with zipfile.ZipFile(path, "w") as archive:
             for name, payload, mode in entries:
                 info = zipfile.ZipInfo(name)
+                # ZipInfo normalizes separators on Windows. Restore the
+                # requested member spelling so hostile-path fixtures exercise
+                # the archive guard identically on every host.
+                info.filename = name
+                info.orig_filename = name
                 info.create_system = (creator_systems or {}).get(name, 3)
                 info.external_attr = (external_attributes or {}).get(name, mode << 16)
                 info.compress_type = compression

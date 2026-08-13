@@ -17,7 +17,7 @@ For a private dependency resolution or consumption failure, do not open
 and check only whether the expected credential binding is present. If ordinary
 non-secret Gradle-setting diagnosis is later needed, consume only
 `gradle_properties_present`, `gradle_property_keys`, and relevant diagnostics
-from schema-v2 inspector output; never read the raw property file into a
+from schema-v3 inspector output; never read the raw property file into a
 model-visible surface.
 Use at most one narrow, artifact-consuming wrapper task. Keep cache availability
 separate from effective remote access; an access request, credential binding,
@@ -41,7 +41,7 @@ publishing or security workflow instead.
    ```bash
    python3 "$PLUGIN_ROOT/scripts/kmp_inspector.py" --root <project-root>
    ```
-   Inspector report schema v2 exposes only allowlisted Gradle property names
+   Inspector report schema v3 exposes only allowlisted Gradle property names
    and presence; it does not serialize values, arbitrary property names, or
    local absolute project paths.
 3. Classify modules:

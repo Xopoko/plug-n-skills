@@ -11,6 +11,9 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Any
 
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+import plugin_catalog  # noqa: E402
+
 
 ENCODING_NAME = "o200k_base"
 
@@ -138,10 +141,46 @@ def count_named_support_files(plugin_dir: Path, directory_name: str) -> int:
 def collect_reports(root: Path, encoder: Any) -> tuple[list[PluginReport], list[SkillReport]]:
     skill_reports: list[SkillReport] = []
     plugin_reports: list[PluginReport] = []
+    catalog = (
+        plugin_catalog.validate_catalog(root)
+        if (root / plugin_catalog.LOCKFILE_NAME).is_file()
+        else {"plugins": []}
+    )
+    first_party = {item["name"]: item for item in catalog["plugins"]}
 
     for plugin_name in plugin_order(root):
         plugin_dir = root / "plugins" / plugin_name
         if not plugin_dir.is_dir():
+            plugin = first_party.get(plugin_name)
+            if plugin is None:
+                continue
+            receipt = plugin_catalog.receipt_for(root, plugin)
+            plugin_skill_reports = [
+                SkillReport(
+                    plugin=plugin_name,
+                    skill=item["name"],
+                    path=(
+                        f"https://github.com/{plugin['source']['repository']}/blob/"
+                        f"{plugin['source']['commit']}/{item['path']}"
+                    ),
+                    description=normalize_text(item["description"]),
+                    startup_tokens=item["startupTokens"],
+                    body_tokens=item["bodyTokens"],
+                )
+                for item in receipt["skills"]["items"]
+            ]
+            skill_reports.extend(plugin_skill_reports)
+            plugin_reports.append(
+                PluginReport(
+                    name=plugin_name,
+                    description=normalize_text(plugin["description"]),
+                    skill_count=receipt["skills"]["count"],
+                    reference_count=receipt["counts"]["references"],
+                    script_count=receipt["counts"]["scripts"],
+                    startup_tokens=receipt["tokens"]["startup"],
+                    body_tokens=receipt["tokens"]["body"],
+                )
+            )
             continue
         manifest_path = plugin_dir / ".codex-plugin" / "plugin.json"
         manifest = read_json(manifest_path) if manifest_path.is_file() else {}
@@ -229,7 +268,7 @@ def render_markdown(plugin_reports: list[PluginReport], skill_reports: list[Skil
             "",
             "| Metric | Count | Tokens | Notes |",
             "| --- | ---: | ---: | --- |",
-            f"| Plugin packs | {fmt_int(len(plugin_reports))} | - | Installable packages under `plugins/`. |",
+            f"| Plugin packs | {fmt_int(len(plugin_reports))} | - | Local packages plus immutable standalone first-party catalog entries. |",
             f"| Skill entrypoints | {fmt_int(len(skill_reports))} | - | `SKILL.md` files exposed through plugin metadata. |",
             f"| Reference files | {fmt_int(reference_total)} | - | Longer ledgers, contracts, scorecards, and source notes. |",
             f"| Helper and validator scripts | {fmt_int(script_total)} | - | Deterministic plugin-local helpers. |",

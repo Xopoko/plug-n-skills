@@ -122,9 +122,9 @@ Discovery and scope:
   the current working directory up to the repository root, user skills under
   `$HOME/.agents/skills`, admin skills under `/etc/codex/skills`, and bundled
   system skills.
-- Existing local Codex installations and this repository's installer may also
-  use `${CODEX_HOME:-$HOME/.codex}/skills` for personal skills. Verify the
-  active environment before claiming a global skill is visible.
+- Legacy Codex profiles may still contain `${CODEX_HOME:-$HOME/.codex}/skills`.
+  Inventory that root when auditing old installs, but target `$HOME/.agents/skills`
+  for new personal Codex skills and verify runtime visibility separately.
 - If two skills share the same `name`, Codex does not merge them; both can
   appear in selectors.
 - Codex follows symlinked skill folders.
@@ -219,7 +219,8 @@ Discovery and scope:
 
 - Project skills load from `.agents/skills/` and `.cursor/skills/`.
 - User-level skills load from `~/.agents/skills/` and `~/.cursor/skills/`.
-- Cursor also reads compatible Claude and Codex skill directories:
+- Cursor also reads compatibility directories named for Claude and legacy Codex
+  layouts (these are Cursor roots, not the current OpenAI Codex authoring root):
   `.claude/skills/`, `.codex/skills/`, `~/.claude/skills/`, and
   `~/.codex/skills/`.
 - Cursor walks skill roots recursively; category folders are organizational and
@@ -381,15 +382,15 @@ evidence rather than assumptions:
   https://agentskills.io/specification
 - Open Agent Skills best practices:
   https://agentskills.io/skill-creation/best-practices
-- OpenAI Codex skills:
-  https://developers.openai.com/codex/skills
+- OpenAI Build skills:
+  https://learn.chatgpt.com/docs/build-skills
 - Audited Codex core renderer snapshot:
   https://github.com/openai/codex/blob/95c7265e849e6e360a7fa53ffeac70b25d6051a3/codex-rs/ext/skills/src/render.rs
 - Audited Codex explicit skill injection snapshot:
   https://github.com/openai/codex/blob/95c7265e849e6e360a7fa53ffeac70b25d6051a3/codex-rs/ext/skills/src/selection.rs
-- OpenAI Codex plugin build guide:
-  https://developers.openai.com/codex/plugins/build
+- OpenAI plugin build guide:
+  https://developers.openai.com/plugins/build/plugins
 - Claude Code skills:
-  https://docs.anthropic.com/en/docs/claude-code/skills
+  https://code.claude.com/docs/en/skills
 - Cursor skills:
   https://cursor.com/docs/skills

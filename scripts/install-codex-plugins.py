@@ -1,10 +1,11 @@
 #!/usr/bin/env python3
-"""Install repository plugins into the global Codex local marketplace."""
+"""Validate and install repository plugins through the Codex local marketplace."""
 
 from __future__ import annotations
 
 import argparse
 import json
+import os
 import shutil
 import subprocess
 import sys
@@ -16,9 +17,10 @@ _SCRIPT_DIR = Path(__file__).resolve().parent
 if str(_SCRIPT_DIR) not in sys.path:
     sys.path.insert(0, str(_SCRIPT_DIR))
 from agent_target import AgentResolutionError, resolve_codex_plugin_state_paths
+import plugin_catalog
 
 
-PLUGIN_NAMES = [
+LOCAL_PLUGIN_NAMES = [
     "agent-harness",
     "capability-workbench",
     "context-density",
@@ -29,12 +31,27 @@ PLUGIN_NAMES = [
     "design-intelligence",
     "architecture-intelligence",
     "spec-driven-development",
-    "build-swift-apps",
     "kotlin-multiplatform",
     "tauri",
     "pixijs",
     "game-design-intelligence",
 ]
+
+
+def catalog_payload(root: Path | None = None) -> dict[str, Any]:
+    return plugin_catalog.validate_catalog(
+        root or Path(__file__).resolve().parents[1]
+    )
+
+
+def all_plugin_names(root: Path | None = None) -> list[str]:
+    payload = catalog_payload(root)
+    return [*LOCAL_PLUGIN_NAMES, *(item["name"] for item in payload["plugins"])]
+
+
+# Kept as a public compatibility surface for tests and callers that import the
+# installer. The immutable catalog is validated before these names are exposed.
+PLUGIN_NAMES = all_plugin_names()
 
 LEGACY_PLUGIN_RENAMES = {
     "codex-cli": "agent-harness",
@@ -56,7 +73,10 @@ def parse_args() -> argparse.Namespace:
         "--plugin",
         action="append",
         choices=[*PLUGIN_NAMES, *LEGACY_PLUGIN_RENAMES],
-        help="Install one plugin. Repeat to install several. Defaults to all.",
+        help=(
+            "Install one local or pinned first-party plugin. Repeat to install "
+            "several. Defaults to every local plugin."
+        ),
     )
     parser.add_argument(
         "--exclude-plugin",
@@ -110,13 +130,40 @@ def parse_args() -> argparse.Namespace:
         action="store_true",
         help="Validate repository source and verify current global Codex install state.",
     )
+    parser.add_argument(
+        "--include-first-party",
+        action="store_true",
+        help="Also include pinned first-party entries whose selection.default is true.",
+    )
+    parser.add_argument(
+        "--offline",
+        action="store_true",
+        help="Never fetch; require selected standalone plugins in the verified cache.",
+    )
+    parser.add_argument(
+        "--first-party-cache-root",
+        default=None,
+        help="Override the pinned standalone source cache root.",
+    )
     return parser.parse_args()
 
 
 def main() -> None:
     args = parse_args()
+    if args.dry_run and args.check_only:
+        raise SystemExit("--dry-run and --check-only cannot be combined")
     root = repo_root()
-    selected = select_plugins(args.plugin, args.exclude_plugin)
+    payload = catalog_payload(root)
+    first_party = {item["name"]: item for item in payload["plugins"]}
+    default_names = list(LOCAL_PLUGIN_NAMES)
+    if args.include_first_party:
+        default_names.extend(plugin_catalog.default_plugin_names(payload))
+    selected = select_plugins(
+        args.plugin,
+        args.exclude_plugin,
+        available=all_plugin_names(root),
+        default_names=default_names,
+    )
     source_root = root / "plugins"
     global_source_root = (
         Path(args.global_source_root).expanduser().resolve()
@@ -161,16 +208,52 @@ def main() -> None:
     require_file(install_helper)
 
     manifests = {}
+    repository_sources: dict[str, Path] = {}
+    install_sources: dict[str, Path] = {}
     for name in selected:
+        if name in first_party:
+            plugin = first_party[name]
+            planned_source = plugin_catalog.materialized_path(
+                root, plugin, args.first_party_cache_root
+            )
+            if args.dry_run:
+                repository_sources[name] = planned_source
+                install_sources[name] = planned_source
+                manifests[name] = {
+                    "interface": {"category": "Productivity"},
+                }
+                print(
+                    f"would materialize verified pin: {name}@{plugin['source']['commit']} "
+                    f"from {plugin['source']['repository']}"
+                )
+                continue
+            try:
+                plugin_dir = plugin_catalog.materialize(
+                    root,
+                    name,
+                    offline=args.offline or args.check_only,
+                    cache_root=args.first_party_cache_root,
+                    validator=validate_helper,
+                )
+            except plugin_catalog.CatalogError as exc:
+                raise SystemExit(f"{name}: verified first-party cache unavailable: {exc}") from exc
+            repository_sources[name] = plugin_dir
+            install_sources[name] = plugin_dir
+            manifests[name] = load_json(plugin_dir / ".codex-plugin" / "plugin.json")
+            continue
+
         plugin_dir = source_root / name
         require_file(plugin_dir / ".codex-plugin" / "plugin.json")
         run([sys.executable, str(validate_helper), str(plugin_dir)])
+        repository_sources[name] = plugin_dir
+        destination = global_source_root / name
+        install_sources[name] = destination
         manifests[name] = load_json(plugin_dir / ".codex-plugin" / "plugin.json")
 
     if args.check_only:
         for name in selected:
-            repository_source = source_root / name
-            destination = global_source_root / name
+            repository_source = repository_sources[name]
+            destination = install_sources[name]
             command = [
                 sys.executable,
                 str(install_helper),
@@ -199,6 +282,8 @@ def main() -> None:
         canonical_source_root=source_root,
         manifests=manifests,
         dry_run=args.dry_run,
+        source_paths=install_sources,
+        marketplace_root=marketplace_root,
     )
     ensure_codex_marketplace_config(
         config_path=config_path,
@@ -207,9 +292,9 @@ def main() -> None:
     )
 
     for name in selected:
-        source = source_root / name
-        destination = global_source_root / name
-        if source.resolve() != destination.resolve():
+        source = repository_sources[name]
+        destination = install_sources[name]
+        if name not in first_party and source.resolve() != destination.resolve():
             sync_plugin_source(source, destination, dry_run=args.dry_run)
         if args.dry_run:
             print(f"would install {name}@local from {destination}")
@@ -220,12 +305,21 @@ def main() -> None:
             str(destination),
             "--marketplace-path",
             str(marketplace_path),
-            "--config-path",
-            str(config_path),
-            "--cache-root",
-            str(cache_root),
-            "--force-manual",
         ]
+        if args.marketplace_path is not None or args.offline:
+            command.extend(
+                [
+                    "--config-path",
+                    str(config_path),
+                    "--cache-root",
+                    str(cache_root),
+                    "--force-manual",
+                ]
+            )
+        elif args.config_path is not None:
+            command.extend(["--config-path", str(config_path)])
+        if args.marketplace_path is None and args.cache_root is not None:
+            command.extend(["--cache-root", str(cache_root)])
         if source.resolve() != destination.resolve():
             command.extend(
                 [
@@ -263,7 +357,14 @@ def main() -> None:
     print("install complete" if not args.dry_run else "dry run complete")
 
 
-def select_plugins(included: list[str] | None, excluded: list[str]) -> list[str]:
+def select_plugins(
+    included: list[str] | None,
+    excluded: list[str],
+    *,
+    available: list[str] | None = None,
+    default_names: list[str] | None = None,
+) -> list[str]:
+    known = set(available or PLUGIN_NAMES)
     canonical_included = list(
         dict.fromkeys(
             LEGACY_PLUGIN_RENAMES.get(name, name) for name in (included or [])
@@ -272,7 +373,12 @@ def select_plugins(included: list[str] | None, excluded: list[str]) -> list[str]
     canonical_excluded = list(
         dict.fromkeys(LEGACY_PLUGIN_RENAMES.get(name, name) for name in excluded)
     )
-    include_set = canonical_included if included else list(PLUGIN_NAMES)
+    unknown = sorted((set(canonical_included) | set(canonical_excluded)) - known)
+    if unknown:
+        raise SystemExit("unknown plugin(s): " + ", ".join(unknown))
+    include_set = canonical_included if included else list(
+        default_names if default_names is not None else LOCAL_PLUGIN_NAMES
+    )
     excluded_set = set(canonical_excluded)
     overlap = sorted(set(canonical_included) & excluded_set)
     if overlap:
@@ -309,7 +415,9 @@ def write_json(path: Path, payload: dict[str, Any], dry_run: bool) -> None:
 
 
 def run(command: list[str]) -> None:
-    subprocess.run(command, check=True)
+    environment = os.environ.copy()
+    environment["PYTHONDONTWRITEBYTECODE"] = "1"
+    subprocess.run(command, check=True, env=environment)
 
 
 def ensure_marketplace_file(
@@ -318,6 +426,8 @@ def ensure_marketplace_file(
     canonical_source_root: Path,
     manifests: dict[str, dict[str, Any]],
     dry_run: bool,
+    source_paths: dict[str, Path] | None = None,
+    marketplace_root: Path | None = None,
 ) -> list[str]:
     if marketplace_path.exists():
         marketplace = load_json(marketplace_path)
@@ -345,7 +455,7 @@ def ensure_marketplace_file(
     retired_plugins = sorted(
         name
         for name, entry in by_name.items()
-        if name not in PLUGIN_NAMES
+        if name not in manifests
         and name not in LEGACY_PLUGIN_RENAMES
         and is_missing_repo_owned_entry(
             name=name,
@@ -380,9 +490,20 @@ def ensure_marketplace_file(
         category = "Productivity"
         if isinstance(interface, dict) and isinstance(interface.get("category"), str):
             category = interface["category"]
+        source_path = (
+            source_paths[name]
+            if source_paths is not None and name in source_paths
+            else canonical_source_root / name
+        )
+        root_for_paths = marketplace_root or canonical_source_root.parent
+        try:
+            rendered_path = source_path.resolve().relative_to(root_for_paths.resolve()).as_posix()
+            rendered_path = f"./{rendered_path}"
+        except ValueError:
+            rendered_path = source_path.resolve().as_posix()
         by_name[name] = {
             "name": name,
-            "source": {"source": "local", "path": f"./plugins/{name}"},
+            "source": {"source": "local", "path": rendered_path},
             "policy": {
                 "installation": "AVAILABLE",
                 "authentication": "ON_INSTALL",

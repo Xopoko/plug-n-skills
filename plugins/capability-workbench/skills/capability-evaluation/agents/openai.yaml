@@ -1,0 +1,4 @@
+interface:
+  display_name: "Capability Evaluation"
+  short_description: "Evaluate capability artifacts against a baseline"
+  default_prompt: "Use Capability Evaluation to compare this skill, plugin, guidance, or trigger artifact against an explicit baseline and representative behavior cases, then produce evidence and a bounded adoption decision."

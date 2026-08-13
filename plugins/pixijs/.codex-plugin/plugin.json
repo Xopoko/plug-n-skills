@@ -1,6 +1,6 @@
 {
   "name": "pixijs",
-  "version": "0.1.2",
+  "version": "0.1.4",
   "description": "PixiJS v8 scene tooling builds and debugs Applications, assets, events, filters, shaders, performance, v7 migrations, and create-pixi projects.",
   "author": {
     "name": "PixiJS community"
@@ -29,7 +29,7 @@
       "Frontend"
     ],
     "websiteURL": "https://pixijs.com/",
-    "brandColor": "#17D6D8",
+    "brandColor": "#E72264",
     "composerIcon": "./assets/icon.png",
     "logo": "./assets/icon.png",
     "defaultPrompt": [

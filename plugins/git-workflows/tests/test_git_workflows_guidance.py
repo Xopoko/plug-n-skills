@@ -101,6 +101,9 @@ class GitWorkflowsGuidanceTests(unittest.TestCase):
         for field in ("name", "version", "description", "author", "license", "keywords"):
             self.assertEqual(codex[field], claude[field])
         self.assertEqual(codex["name"], "git-workflows")
+        self.assertEqual(codex["version"], "0.1.1")
+        self.assertIsInstance(codex["interface"]["defaultPrompt"], list)
+        self.assertTrue(codex["interface"]["defaultPrompt"])
         self.assertEqual(codex["interface"]["composerIcon"], "./assets/icon.png")
         self.assertEqual(codex["interface"]["logo"], "./assets/icon.png")
         self.assertTrue((ROOT / "assets" / "icon.png").is_file())

@@ -92,5 +92,5 @@ mapping is implemented.
 - [Compose `LinkAnnotation.Url`](https://developer.android.com/reference/kotlin/androidx/compose/ui/text/LinkAnnotation.Url)
 - [Android `Context.startActivity`](<https://developer.android.com/reference/android/content/Context#startActivity(android.content.Intent)>)
 - [Android package visibility use cases](https://developer.android.com/training/package-visibility/use-cases)
-- [Apple open URL API](https://developer.apple.com/documentation/uikit/uiapplication/open(_:options:completionhandler:))
+- [Apple open URL API](https://developer.apple.com/documentation/uikit/uiapplication/open%28_%3Aoptions%3Acompletionhandler%3A%29)
 - [Apple custom URL schemes](https://developer.apple.com/documentation/xcode/defining-a-custom-url-scheme-for-your-app)

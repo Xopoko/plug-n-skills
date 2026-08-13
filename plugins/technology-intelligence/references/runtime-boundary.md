@@ -3,6 +3,18 @@
 Technology Intelligence answers what should be chosen and why. A runtime router
 answers what can be used here now and how.
 
+The decision graph keeps four entities separate:
+
+- `capability`: the outcome or job that is needed;
+- `technology`: a candidate product, framework, protocol, or pattern;
+- `interface`: a durable access contract exposed by that technology;
+- `runtime`: caller-supplied, short-lived availability and health facts for one
+  environment.
+
+Catalog presence links a capability to a candidate and its documented
+interfaces. It never proves that one of those interfaces is installed or
+usable on the current host.
+
 ## Ownership
 
 Technology Intelligence owns:
@@ -26,6 +38,11 @@ The runtime owner retains:
 inventory. The query tool validates and attaches matching runtime facts to its
 result without persisting them. Never put secrets, tokens, complete environment
 variables, private tenant names, or raw credentials in this inventory.
+
+The v1 runtime contract retains `technology_id` for compatibility and accepts
+an optional `interface_id` for a more precise join. `provisioning_mode`
+distinguishes `preinstalled`, `on-demand`, `bundled`, `remote`, and `unknown`
+without pretending that on-demand resolution has already succeeded.
 
 The validator rejects unknown technologies and fields, blank identifiers,
 duplicate capability identities, stale or future checks, secret-like keys at

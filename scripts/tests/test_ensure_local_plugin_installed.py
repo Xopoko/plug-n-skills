@@ -60,7 +60,7 @@ class LocalPluginVisibilityTest(unittest.TestCase):
                 "developerName": "Test",
                 "category": "Productivity",
                 "capabilities": ["Testing"],
-                "defaultPrompt": "Use the fixture plugin.",
+                "defaultPrompt": ["Use the fixture plugin."],
             },
         }
         (self.plugin_root / ".codex-plugin" / "plugin.json").write_text(
@@ -350,6 +350,35 @@ class LocalPluginVisibilityTest(unittest.TestCase):
             str(active_home),
             run.call_args.kwargs["env"]["CODEX_HOME"],
         )
+
+    def test_native_cli_resolves_the_codex_executable_before_launch(self):
+        completed = subprocess.CompletedProcess(
+            args=[],
+            returncode=0,
+            stdout="installed",
+            stderr="",
+        )
+        resolved = r"C:\Users\example\AppData\Roaming\npm\codex.cmd"
+
+        with (
+            mock.patch.object(
+                ensure_local_plugin_installed.shutil,
+                "which",
+                return_value=resolved,
+            ),
+            mock.patch.object(
+                ensure_local_plugin_installed.subprocess,
+                "run",
+                return_value=completed,
+            ) as run,
+        ):
+            result = ensure_local_plugin_installed.try_cli_install(
+                "codex",
+                "fixture-plugin@local",
+            )
+
+        self.assertEqual("installed", result)
+        self.assertEqual(resolved, run.call_args.args[0][0])
 
     def test_identical_source_and_cache_verify_stably(self):
         outcome = self.check_only()

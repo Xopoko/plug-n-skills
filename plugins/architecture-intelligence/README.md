@@ -2,7 +2,8 @@
 
 Architecture Intelligence is a source-backed software architecture plugin for
 audits, ADRs, fitness functions, ownership/runtime topology, conformance checks,
-structure metrics, async state consistency, and incremental refactoring.
+structure metrics, async state consistency, AI-assisted code architecture, and
+incremental refactoring.
 
 It focuses on architecture qualities in code:
 
@@ -10,6 +11,7 @@ It focuses on architecture qualities in code:
 - CODEOWNERS/OWNERS coverage and cross-owned coordination risk;
 - runtime topology, deployment, observability, resilience, integration style;
 - async state lifecycle, invalidation, replay, cache, caller outcomes, and race proof;
+- coding-agent-assisted recovery, design options, source-grounded patch review, and incremental code-boundary refactoring;
 - ADRs, documentation drift, fitness functions, CI guardrails;
 - fan-in, fan-out, instability, migration slices, rollout gates, rollback paths.
 
@@ -23,7 +25,7 @@ It focuses on architecture qualities in code:
 - `async-state-consistency`: async lifecycle, invalidation, replay, publication, and race consistency.
 - `architecture-decisions`: ADR creation and review.
 - `architecture-fitness-functions`: architecture tests and guardrails.
-- `architecture-refactoring-strategy`: incremental architecture migration plans.
+- `architecture-refactoring-strategy`: incremental code-architecture migration and AI-assisted execution.
 
 ## Scripts
 
@@ -56,3 +58,9 @@ evidence calls for them. Durable handoff should use
 `architecture_intelligence.refactor_report.v1` so the before/after evidence,
 skill usage, dirty-tree state, validation, docs, runtime proof, and residual
 risks remain reviewable after the Codex session.
+
+When coding agents assist the change, the architectural object remains the
+application or library code. Recover intent and observed source separately,
+map cross-module ripple effects, compare design options, execute one smallest
+slice, combine functional and architecture proof, and review findings before a
+fix pass. Runtime scheduling and agent authority remain outside this plugin.

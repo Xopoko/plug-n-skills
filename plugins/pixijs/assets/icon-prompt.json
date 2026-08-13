@@ -1,0 +1,50 @@
+{
+  "schema": "capability_workbench.plugin_icon_prompt.v2",
+  "plugin_name": "pixijs",
+  "catalog": {
+    "source": "first-party-catalog",
+    "key": "pixijs"
+  },
+  "semantic_hero": {
+    "object": "the official unmodified PixiJS P mark",
+    "meaning": "PixiJS 2D web rendering",
+    "silhouette": "one white rounded P on the official square pink field"
+  },
+  "support_cue": null,
+  "avoid": [
+    "recolored mark",
+    "redrawn mark",
+    "diamond",
+    "crystal",
+    "fairy mascot",
+    "browser screenshot"
+  ],
+  "collision_avoid": [
+    "generic lettermark",
+    "cryptocurrency mark"
+  ],
+  "brand_source": {
+    "type": "authorized-brand",
+    "source": "https://files.pixijs.download/branding/pixijs-logo-mark-dark.png",
+    "trademark_status": "The official PixiJS branding page expressly recommends the supplied mark to plugin authors; the visual mark is used unmodified",
+    "license": "Official PixiJS brand asset terms published at https://pixijs.com/branding",
+    "authorization": "https://pixijs.com/branding"
+  },
+  "brandColor": "#E72264",
+  "recommended_asset_path": "assets/icon.png",
+  "imagegen_mode": "built-in",
+  "size_gates": [
+    16,
+    24,
+    32,
+    64
+  ],
+  "prompt": "Use case: logo-brand\nAsset type: 1024x1024 marketplace plugin icon\nPurpose: PixiJS v8 scene tooling for 2D web rendering.\nLiteral semantic hero: the official unmodified PixiJS P mark. It communicates PixiJS 2D web rendering.\nSilhouette: one white rounded P on the official square pink field. Use no support cue; the hero must carry the meaning alone.\nComposition: one centered dominant silhouette, full-bleed opaque background, meaningful content inside the central 72 percent, no more than one support cue.\nSmall-size requirement: the same hero must remain recognizable at 64, 32, 24, and 16 pixels; keep critical negative space open at 24 pixels.\nStyle: polished modern bitmap icon, bold filled shapes, crisp edges, restrained dimensional polish, consistent portfolio weight.\nBackground: a full-bleed field anchored on #E72264.\nForeground palette: high-contrast warm white with at most two restrained accents; meaningful adjacent colors meet at least 3:1 contrast.\nBrand-source rule: authorized-brand referencing https://files.pixijs.download/branding/pixijs-logo-mark-dark.png; The official PixiJS branding page expressly recommends the supplied mark to plugin authors; the visual mark is used unmodified. Do not introduce an unlicensed mark or distinctive trade dress.\nAvoid: recolored mark; redrawn mark; diamond; crystal; fairy mascot; browser screenshot.\nCollision avoid: generic lettermark; cryptocurrency mark.\nText: none. No letters, words, numbers, watermark, screenshot, photo, UI replica, tiny badge, thin-line detail, mascot, or private identifier.\nDo not replace the literal hero with a generic abstract symbol derived only from the plugin name.\n",
+  "checks": [
+    "save the selected image as a 1024x1024 opaque RGB PNG at assets/icon.png",
+    "inspect semantic recognition and the monochrome silhouette at 16, 24, 32, and 64 px",
+    "reject a competing second cue, closed critical gap, portfolio collision, text, screenshot, photo, watermark, or low contrast",
+    "verify brand-source, trademark, license, and authorization provenance manually",
+    "wire identical interface.composerIcon and interface.logo paths plus interface.brandColor"
+  ]
+}

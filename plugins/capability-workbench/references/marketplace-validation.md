@@ -22,7 +22,7 @@ The marketplace entry and install/cache flow on this page is Codex-specific. Cla
     "developerName": "Plugin Author",
     "category": "Productivity",
     "capabilities": ["Capability"],
-    "defaultPrompt": "Use this plugin to..."
+    "defaultPrompt": ["Use this plugin to..."]
   }
 }
 ```
@@ -31,10 +31,12 @@ Keep `apps` and `mcpServers` out unless companion files actually exist. Omit uns
 
 ## Marketplace Entry
 
-Global agent personal marketplace path when installation or marketplace activation is required:
+Use the marketplace path that matches the intended scope:
 
 ```text
-$HOME/.agents/plugins/marketplace.json
+repo:          $REPO_ROOT/.agents/plugins/marketplace.json
+repo legacy:   $REPO_ROOT/.claude-plugin/marketplace.json
+personal:      $HOME/.agents/plugins/marketplace.json
 ```
 
 Entry shape:
@@ -94,14 +96,14 @@ Source and cache trees must be disjoint and contain only regular files and
 directories. Symlinks present at roots, inside scanned trees, or along the cache
 path are rejected before install/config mutation; regular files are opened
 without following a swapped final-component symlink and the opened descriptor
-is revalidated. When this repository's helper takes its manual materialization
-path, it replaces only the selected target-version directory. It retains sibling
-version directories because already-running sessions can hold absolute skill
-locators into them; removing those siblings would break an active session
-without proving that it loaded the new version. Cleanup of retained versions is
-a separate, explicit lifecycle action after their consumers have ended. A
-native host CLI owns its cache lifecycle; the helper's target-equivalence
-receipt does not prove that a CLI-managed install retained siblings. Capability
+is revalidated. Prefer the idempotent
+`codex plugin add <plugin>@<marketplace>` command whenever it can target the
+active profile; the native host CLI owns its cache lifecycle. Current Codex CLI
+installs use the manifest version as the final cache locator, so the helper's
+manual compatibility path replaces only that selected target-version
+directory and retains sibling versions. The OpenAI packaging page separately
+documents a literal `local` locator for ChatGPT desktop local installs; do not
+substitute that desktop-specific locator for a Codex CLI receipt. Capability
 inventory scans every immediate source in the active Codex profile's cache
 read-only and reports one current locator per source/plugin pair. It selects the
 highest strict SemVer from the locator directory or its direct plugin manifest,
@@ -114,7 +116,7 @@ Histories without a valid SemVer or with multiple highest-precedence locators
 are omitted, and inaccessible cache sources are skipped without weakening
 other results. Historical locator directories remain untouched and are not
 reported as current plugin candidates. An expected upstream source must also
-be outside the target-version replacement scope.
+be outside the selected target-version replacement scope.
 Enabled config and marketplace selection are captured before and revalidated
 after the anchored tree proof. Concurrent adversarial directory replacement or
 change after the receipt returns is outside this helper's guarantee.
@@ -126,6 +128,18 @@ python3 "$PLUGIN_ROOT/scripts/plugin/update_plugin_cachebuster.py" <plugin-dir>
 python3 "$PLUGIN_ROOT/scripts/plugin/ensure_local_plugin_installed.py" <plugin-dir>
 python3 "$PLUGIN_ROOT/scripts/plugin/ensure_local_plugin_installed.py" <plugin-dir> --check-only
 ```
+
+The cachebuster helper preserves everything before `+` and replaces any prior
+suffix with one `+codex.<timestamp>` suffix. Do not increment numeric version
+components solely to refresh a local install. The personal marketplace is
+discovered implicitly; configure a different local marketplace with
+`codex plugin marketplace add <path-to-marketplace-root>` before adding the
+plugin.
+
+Current OpenAI contracts:
+
+- https://developers.openai.com/plugins/build/plugins
+- https://github.com/openai/codex/blob/main/codex-rs/skills/src/assets/samples/plugin-creator/references/installing-and-updating.md
 
 The final handoff should include the plugin path, validation result,
 install/cache state, separate runtime-discovery state, marketplace path when

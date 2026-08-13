@@ -8,8 +8,12 @@ import json
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Iterable
+import sys
 
 from PIL import Image, ImageDraw, ImageEnhance, ImageFilter, ImageFont, ImageOps
+
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+import plugin_catalog  # noqa: E402
 
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -43,6 +47,7 @@ PLUGIN_LAYOUT_ROWS = [
         "tauri",
         "pixijs",
         "game-design-intelligence",
+        "career",
     ],
 ]
 
@@ -50,7 +55,8 @@ PLUGIN_SUMMARIES = {
     "architecture-intelligence": "Architecture decisions, drift, and topology.",
     "agent-harness": "Codex, Claude, harnesses, and automation.",
     "build-swift-apps": "Build, debug, profile, and ship Apple apps.",
-    "capability-workbench": "Design, vet, package, and repair capabilities.",
+    "career": "Career evidence, search, interviews, and offers.",
+    "capability-workbench": "Engineer, evaluate, and govern agent capabilities.",
     "context-density": "Measure, compress, and verify agent context.",
     "design-intelligence": "Product framing, UX, access, and systems.",
     "engineering-hygiene": "Code, logic, UI, and toolchain maintenance.",
@@ -194,6 +200,17 @@ def load_plugins() -> dict[str, PluginCard]:
             summary=PLUGIN_SUMMARIES.get(name, short),
             icon=icon,
             brand_color=hex_color(interface.get("brandColor") or manifest.get("brandColor")),
+        )
+    catalog = plugin_catalog.validate_catalog(ROOT)
+    for item in catalog["plugins"]:
+        receipt = plugin_catalog.receipt_for(ROOT, item)
+        icon = ROOT.joinpath(*Path(receipt["icons"]["catalogAsset"]).parts)
+        plugins[item["name"]] = PluginCard(
+            name=item["name"],
+            display_name=item["displayName"],
+            summary=PLUGIN_SUMMARIES.get(item["name"], item["description"]),
+            icon=icon,
+            brand_color=hex_color(receipt["icons"]["brandColor"]),
         )
     return plugins
 

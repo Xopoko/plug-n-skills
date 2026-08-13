@@ -1,6 +1,6 @@
 {
   "name": "kotlin-multiplatform",
-  "version": "0.3.17",
+  "version": "0.3.19",
   "description": "Kotlin Multiplatform design, Gradle repair, Compose UI, data/interop architecture, migration, testing, governance, security, performance, CI, publishing, and readiness review.",
   "author": {
     "name": "Xopoko"
@@ -41,6 +41,8 @@
     "brandColor": "#7F52FF",
     "composerIcon": "./assets/icon.png",
     "logo": "./assets/icon.png",
-    "defaultPrompt": "Help me build or fix a Kotlin Multiplatform project."
+    "defaultPrompt": [
+      "Help me build or fix a Kotlin Multiplatform project."
+    ]
   }
 }

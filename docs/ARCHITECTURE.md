@@ -1,15 +1,21 @@
 # Architecture
 
 This repository separates plugin source from local runtime state. The Git tree
-contains installable source packages; Codex, Claude, and Cursor generated
-state is derived from those packages.
+contains installable source packages; ChatGPT/Codex, Claude, and Cursor
+generated state is derived from those packages.
 
 ## Source Of Truth
+
+Across machines, a synchronized clone of this Git repository is the canonical
+editable source. Changes flow from `plugins/<name>` through validation and Git
+to each host's installation. Host-local marketplaces, caches, authentication,
+and selection/exclusion policy are derived runtime state; they do not flow back
+into source and must not be edited as a substitute for a repository change.
 
 `plugins/<name>` is the editable source tree for a plugin. A typical plugin
 contains:
 
-- `.codex-plugin/plugin.json` for Codex metadata;
+- `.codex-plugin/plugin.json` for shared ChatGPT/Codex metadata;
 - `.claude-plugin/plugin.json` for Claude Code metadata;
 - `skills/` with `SKILL.md` entrypoints;
 - `references/` for long contracts, source ledgers, scorecards, or runbooks;
@@ -17,14 +23,27 @@ contains:
 - `assets/` for icons and other media.
 
 The root `.claude-plugin/marketplace.json` is the published Claude Code
-marketplace for the collection. Cursor has no plugin marketplace;
-`scripts/install-cursor-skills.py` copies plugin skills into Cursor's global
-skills directory instead.
+marketplace for the collection and a compatibility discovery surface for
+Codex when no repository-local `.agents/plugins/marketplace.json` exists.
+Cursor has no plugin marketplace; `scripts/install-cursor-skills.py` copies
+plugin skills into Cursor's global skills directory instead.
 
 ## Codex Install Model
 
-Codex local plugins are loaded through a marketplace named `local`. The default
-repository helper keeps the source of truth in this checkout:
+The [OpenAI plugin documentation](https://developers.openai.com/plugins/build/plugins)
+defines native `plugin marketplace`, `plugin list`, `plugin add`, and
+`plugin remove` commands. A fresh clone can use the published marketplace
+directly:
+
+```bash
+codex plugin marketplace add .
+codex plugin list --available --json
+codex plugin add capability-workbench@xopoko-plug-n-skills
+```
+
+The repository helper is the deterministic validation, bulk-refresh,
+host-selection, and legacy-ID migration layer. It keeps the source of truth in
+this checkout and registers a generated marketplace named `local`:
 
 ```bash
 python3 scripts/install-codex-plugins.py
@@ -32,13 +51,44 @@ python3 scripts/install-codex-plugins.py
 
 The helper writes `.agents/plugins/marketplace.json` as local generated state,
 configures Codex so `[marketplaces.local]` points at the repository root, and
-materializes cache entries below the active Codex home
-(`$CODEX_HOME` when nonempty, otherwise `~/.codex`). A configured home is
-canonicalized and must already be a directory; explicit config/cache paths
-remain the recovery override.
+delegates normal installs to native `codex plugin add`. Its deterministic
+config/cache materializer remains the compatibility fallback for older CLIs
+and explicit marketplace/state-path recovery. The active Codex home is `$CODEX_HOME` when
+nonempty, otherwise `~/.codex`; a configured home is canonicalized and must
+already be a directory.
 
 The generated `.agents/` directory is intentionally ignored by Git. It belongs
 to the local machine, not to the published source.
+
+## Standalone First-Party Plugin Model
+
+Large domain systems can keep a separate public repository while remaining a
+first-party part of this collection. `first-party-plugins.lock.json` is the
+only activation-capable federation surface. Each entry binds the GitHub
+repository to a full commit and tree, both manifest hashes, version, license,
+selection policy, and a repository-owned receipt. The receipt supplies the
+offline skill/token/dashboard metadata and binds its catalog icon snapshot by
+SHA-256.
+
+Default Codex and Cursor bulk installs select only local `plugins/` sources.
+An exact `--plugin NAME` may select either kind; `--include-first-party` adds
+only catalog entries with `selection.default=true`. Dry runs never fetch or
+materialize. Check-only runs are implicitly offline and require the exact
+verified source cache. Normal explicit selection materializes into the ignored
+`.agents/first-party-sources/NAME/COMMIT` cache before host installation.
+
+Claude Code uses the published marketplace directly. Local entries use
+`./plugins/NAME`; standalone entries use the official GitHub source object with
+the same full commit in `sha`. See [Standalone Plugins](STANDALONE_PLUGINS.md).
+
+```mermaid
+flowchart LR
+  A["Standalone canonical repository"] --> B["Immutable commit and tree"]
+  B --> C["Root lock and receipt"]
+  C --> D["Verified local source cache"]
+  D --> E["Codex or Cursor install"]
+  C --> F["Claude GitHub source with sha"]
+```
 
 For compatibility with older local layouts, the installer can still copy source
 to `~/plugins/<name>`:
@@ -110,16 +160,19 @@ write; only authoritative readback may recover a unique receipt.
 
 ## Technology Evidence Model
 
-`technology-intelligence` separates four layers that change at different
-cadences:
+`technology-intelligence` uses a four-entity decision graph:
 
-- source snapshots record provenance, edition, retrieval time, content
-  identity, methodology, licensing, and known bias;
-- observations record source-backed maintenance, adoption, security, maturity,
-  compatibility, cost, and operational signals;
-- reviewed assessments apply explicit decision profiles and hard gates;
-- runtime capability inventories describe what is installed, enabled,
-  authenticated, healthy, and callable in one environment.
+- capabilities name the needed outcome without choosing a product;
+- technologies are candidate products, frameworks, protocols, or patterns;
+- interfaces are documented CLI, SDK, WASM, MCP, API, app, or skill access
+  contracts exposed by a technology;
+- runtime inventories are caller-supplied, short-lived facts about what is
+  installed, enabled, authenticated, healthy, and callable in one environment.
+
+That graph is wrapped by a separate evidence envelope: source snapshots record
+provenance, editions, clocks, methodology, rights, and known bias; observations
+preserve dated claims; reviewed assessments apply decision profiles and hard
+gates. A catalog interface is therefore not proof of runtime availability.
 
 Evidence refreshes may produce a proposed diff, but they never silently change
 an adoption disposition. Published recommendations remain versioned and
@@ -191,11 +244,13 @@ plugin's `.claude-plugin/plugin.json` and shared `skills/` directory.
 ```mermaid
 flowchart LR
   A["Edit plugins/<name> source"] --> B["Validate repository"]
-  B --> C["Codex: generate local .agents marketplace"]
-  C --> D["Codex: refresh plugin cache"]
-  B --> E["Claude: root marketplace points at plugin source"]
-  F["Edit external dependency lock"] --> G["Validate pin, policy, and review report"]
-  G --> B
+  B --> C["Codex native CLI: register published marketplace"]
+  B --> D["Repository helper: generate local .agents marketplace"]
+  C --> E["Codex: install or remove selected plugins"]
+  D --> F["Codex: validate and refresh selected cache entries"]
+  B --> G["Claude: root marketplace points at plugin source"]
+  H["Edit external dependency lock"] --> I["Validate pin, policy, and review report"]
+  I --> B
 ```
 
 ## Publication Boundary

@@ -1,6 +1,6 @@
 ---
 name: capability-auditor
-description: Audit agent skills/plugins for safety, evidence coverage, duplication, context cost, prompt contracts, dependencies, and install risk. Excludes code line/branch/mutation/test coverage; use portfolio architect for structural changes.
+description: Audit capability artifacts for static safety, evidence coverage, duplication, context cost, prompt contracts, dependencies, and install risk. Use capability-evaluation for behavioral baselines and portfolio architect for structural change.
 ---
 
 # Capability Auditor
@@ -8,6 +8,12 @@ description: Audit agent skills/plugins for safety, evidence coverage, duplicati
 Bundled commands use `$PLUGIN_ROOT` (`$env:PLUGIN_ROOT` in PowerShell; same path suffix) for the plugin root. Set it once: use the host's plugin-root variable when defined (Claude Code: `PLUGIN_ROOT="$CLAUDE_PLUGIN_ROOT"`), otherwise the absolute path of this skill folder's `../..`.
 
 Use this for independent review before adopting, installing, publishing, or relying on a skill or plugin.
+
+This is a static/source audit. When the decision depends on whether a candidate
+artifact changes agent behavior relative to an explicit baseline, route the
+controlled comparison and adoption receipt to `capability-evaluation`. Route
+runner, orchestration, cancellation, recovery, or harness reliability failures
+to Agent Harness.
 
 ## Audit Spine
 

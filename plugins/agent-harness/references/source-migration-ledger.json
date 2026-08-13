@@ -1206,6 +1206,72 @@
           "contract": "Add an explicit non-POSIX reservation fail-closed assertion."
         }
       ]
+    },
+    {
+      "source_path": "plugins/codex-cli/skills/codex-doctor-debugger/SKILL.md",
+      "destination_path": "skills/codex-doctor-debugger/SKILL.md",
+      "treatment": "refresh_current_vendor_contract",
+      "allowed_changes": [
+        {
+          "old": "codex sandbox -C \"$PROJECT\" --permissions-profile <name> -- <command> <args>",
+          "new": "codex sandbox -C \"$PROJECT\" --permission-profile <name> -- <command> <args>",
+          "expected_replacements": 1
+        }
+      ]
+    },
+    {
+      "source_path": "plugins/codex-cli/skills/codex-exec-automation/SKILL.md",
+      "destination_path": "skills/codex-exec-automation/SKILL.md",
+      "treatment": "refresh_current_vendor_contract",
+      "allowed_changes": [
+        {
+          "old": "Build commands from these decisions, in this order:",
+          "new": "Build commands from these decisions, in this order. Put global options before\nthe subcommand and `exec`-specific options after `exec`:",
+          "expected_replacements": 1
+        },
+        {
+          "old": "codex exec -C \"$PROJECT\" --sandbox workspace-write --ask-for-approval on-request \"Implement the requested fix and run targeted tests.\"",
+          "new": "codex --ask-for-approval on-request exec -C \"$PROJECT\" --sandbox workspace-write \"Implement the requested fix and run targeted tests.\"",
+          "expected_replacements": 1
+        },
+        {
+          "old": "codex exec -C \"$PROJECT\" --sandbox read-only --ask-for-approval never --json \"Inspect this repo and report risks only.\"",
+          "new": "codex --ask-for-approval never exec -C \"$PROJECT\" --sandbox read-only --json \"Inspect this repo and report risks only.\"",
+          "expected_replacements": 1
+        },
+        {
+          "old": "codex review -C \"$PROJECT\" --uncommitted",
+          "new": "codex -C \"$PROJECT\" review --uncommitted",
+          "expected_replacements": 1
+        },
+        {
+          "old": "codex review -C \"$PROJECT\" --base main",
+          "new": "codex -C \"$PROJECT\" review --base main",
+          "expected_replacements": 1
+        },
+        {
+          "old": "codex exec -C \"$PROJECT\" --sandbox workspace-write --ask-for-approval on-request - < prompt.md",
+          "new": "codex --ask-for-approval on-request exec -C \"$PROJECT\" --sandbox workspace-write - < prompt.md",
+          "expected_replacements": 1
+        }
+      ]
+    },
+    {
+      "source_path": "plugins/codex-cli/skills/codex-plugin-mcp-manager/SKILL.md",
+      "destination_path": "skills/codex-plugin-mcp-manager/SKILL.md",
+      "treatment": "refresh_current_vendor_contract",
+      "allowed_changes": [
+        {
+          "old": "For marketplace source changes, require a clear marketplace name and source:",
+          "new": "For marketplace source changes, inspect the marketplace manifest for its name,\nthen pass the source root or marketplace manifest path to the add command:",
+          "expected_replacements": 1
+        },
+        {
+          "old": "codex plugin marketplace add <name> <source>",
+          "new": "codex plugin marketplace add <source>",
+          "expected_replacements": 1
+        }
+      ]
     }
   ],
   "file_mappings": [
@@ -1645,9 +1711,9 @@
       "source_sha256": "2f48176796ffae32c0566f82dd1b34c46b93e0d18afc6782d40a522f7901427c",
       "source_bytes": 5151,
       "destination_path": "skills/codex-doctor-debugger/SKILL.md",
-      "treatment": "verbatim",
-      "destination_sha256": "2f48176796ffae32c0566f82dd1b34c46b93e0d18afc6782d40a522f7901427c",
-      "destination_bytes": 5151
+      "treatment": "refresh_current_vendor_contract",
+      "destination_sha256": "8afc30373b9c3f47ec900fe6858bd6d095409a81cab77a1d222edb03dc1c8ff7",
+      "destination_bytes": 5150
     },
     {
       "source_plugin": "codex-cli",
@@ -1667,9 +1733,9 @@
       "source_sha256": "77a8015e726331e3317fa1d39f3d77376520882a04bcda26b22317025c702db3",
       "source_bytes": 4571,
       "destination_path": "skills/codex-exec-automation/SKILL.md",
-      "treatment": "verbatim",
-      "destination_sha256": "77a8015e726331e3317fa1d39f3d77376520882a04bcda26b22317025c702db3",
-      "destination_bytes": 4571
+      "treatment": "refresh_current_vendor_contract",
+      "destination_sha256": "b210d063ba7a962ce077496ec66cf905a2095c616679b99efbd119098fd19fe0",
+      "destination_bytes": 4654
     },
     {
       "source_plugin": "codex-cli",
@@ -1689,9 +1755,9 @@
       "source_sha256": "efc1e622ae63176e3f1c19916fea6ccafe98353743e00a3d4c3a97a983e8de40",
       "source_bytes": 4987,
       "destination_path": "skills/codex-plugin-mcp-manager/SKILL.md",
-      "treatment": "verbatim",
-      "destination_sha256": "efc1e622ae63176e3f1c19916fea6ccafe98353743e00a3d4c3a97a983e8de40",
-      "destination_bytes": 4987
+      "treatment": "refresh_current_vendor_contract",
+      "destination_sha256": "48f01c3bffdef54b4306fbfcb11ae3a9713ef0064c8b9b58fb68f28307866eea",
+      "destination_bytes": 5057
     },
     {
       "source_plugin": "codex-cli",

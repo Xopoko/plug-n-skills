@@ -1,0 +1,21 @@
+{
+  "schema_version": "technology_intelligence.assessments.v1",
+  "snapshot_id": "fixture-technology-intelligence-v0-2",
+  "generated_at": "2026-08-10T12:00:00Z",
+  "assessments": [
+    {
+      "id": "legacy-react-profile",
+      "technology_id": "legacy-react",
+      "profile": {"stages": ["experiment"], "use_cases": ["compatibility fixture"], "constraints": ["synthetic only"]},
+      "disposition": "watch",
+      "rationale": ["Exercise pre-capability-model query compatibility."],
+      "hard_gates": ["Never use this fixture as real evidence."],
+      "evidence_ids": ["legacy-react-observation"],
+      "verification_gap": "All real-world evidence is intentionally absent.",
+      "confidence": "low",
+      "reviewed_at": "2026-08-10",
+      "expires_at": "2026-09-09",
+      "alternatives": []
+    }
+  ]
+}

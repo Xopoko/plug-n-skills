@@ -1,0 +1,53 @@
+{
+  "schema": "capability_workbench.plugin_icon_prompt.v2",
+  "plugin_name": "capability-workbench",
+  "catalog": {
+    "source": "first-party-catalog",
+    "key": "capability-workbench"
+  },
+  "semantic_hero": {
+    "object": "a workshop pegboard with large round holes",
+    "meaning": "building and repairing agent capabilities",
+    "silhouette": "one broad perforated tool wall"
+  },
+  "support_cue": {
+    "object": "one crossed hammer-and-wrench pair",
+    "meaning": "hands-on capability construction"
+  },
+  "avoid": [
+    "table",
+    "bridge",
+    "arch",
+    "gear",
+    "magic wand",
+    "tool collection beyond the pair"
+  ],
+  "collision_avoid": [
+    "developer toolbox",
+    "engineering hygiene brush"
+  ],
+  "brand_source": {
+    "type": "original-domain-metaphor",
+    "source": "none",
+    "trademark_status": "no proprietary mark requested",
+    "license": "original-generated-artwork",
+    "authorization": "not-required-no-brand-mark"
+  },
+  "brandColor": "#0F766E",
+  "recommended_asset_path": "assets/icon.png",
+  "imagegen_mode": "built-in",
+  "size_gates": [
+    16,
+    24,
+    32,
+    64
+  ],
+  "prompt": "Use case: logo-brand\nAsset type: 1024x1024 marketplace plugin icon\nPurpose: Artifact-first agent capability engineering for skills, plugins, guidance, and trigger contracts.\nLiteral semantic hero: a workshop pegboard with large round holes. It communicates building and repairing agent capabilities.\nSilhouette: one broad perforated tool wall. Use exactly one subordinate support cue: one crossed hammer-and-wrench pair, meaning hands-on capability construction.\nComposition: one centered dominant silhouette, full-bleed opaque background, meaningful content inside the central 72 percent, no more than one support cue.\nSmall-size requirement: the same hero must remain recognizable at 64, 32, 24, and 16 pixels; keep critical negative space open at 24 pixels.\nStyle: polished modern bitmap icon, bold filled shapes, crisp edges, restrained dimensional polish, consistent portfolio weight.\nBackground: a full-bleed field anchored on #0F766E.\nForeground palette: high-contrast warm white with at most two restrained accents; meaningful adjacent colors meet at least 3:1 contrast.\nBrand-source rule: original-domain-metaphor referencing none; no proprietary mark requested. Do not introduce an unlicensed mark or distinctive trade dress.\nAvoid: table; bridge; arch; gear; magic wand; tool collection beyond the pair.\nCollision avoid: developer toolbox; engineering hygiene brush.\nText: none. No letters, words, numbers, watermark, screenshot, photo, UI replica, tiny badge, thin-line detail, mascot, or private identifier.\nDo not replace the literal hero with a generic abstract symbol derived only from the plugin name.\n",
+  "checks": [
+    "save the selected image as a 1024x1024 opaque RGB PNG at assets/icon.png",
+    "inspect semantic recognition and the monochrome silhouette at 16, 24, 32, and 64 px",
+    "reject a competing second cue, closed critical gap, portfolio collision, text, screenshot, photo, watermark, or low contrast",
+    "verify brand-source, trademark, license, and authorization provenance manually",
+    "wire identical interface.composerIcon and interface.logo paths plus interface.brandColor"
+  ]
+}

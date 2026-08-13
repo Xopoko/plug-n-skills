@@ -1,7 +1,7 @@
 {
   "name": "capability-workbench",
-  "version": "0.5.0",
-  "description": "Design, audit, synthesize, package, install, repair, and reshape agent skills and plugins with trigger metadata, catalog analysis, guidance authoring, vetting, and validation.",
+  "version": "0.6.1",
+  "description": "Artifact-first agent capability engineering for skills, plugins, guidance, and trigger contracts: frame behavior gaps, evaluate baselines and candidates, author validated changes, govern portfolios, and activate explicitly. Use Agent Harness for runtime and harness-level evaluation.",
   "author": {
     "name": "Xopoko"
   },
@@ -21,13 +21,15 @@
     "validation",
     "repair",
     "portfolio",
-    "guidance"
+    "guidance",
+    "agent-capability-engineering",
+    "behavioral-evaluation"
   ],
   "skills": "./skills/",
   "interface": {
     "displayName": "Capability Workbench",
-    "shortDescription": "Design, audit, and package reliable agent capabilities.",
-    "longDescription": "Design, audit, synthesize, and package reliable agent skills and plugins. Capability Workbench covers web-first discovery, portfolio architecture, trigger metadata and catalog-pressure analysis, skill authoring, AGENTS.md and CLAUDE.md guidance, reality repair, safety vetting, optional installation, plugin packaging, icon workflows, evidence-coverage gates, and context-density tooling. Runtime comparisons stay version-pinned and distinguish model-visible metadata, entry omission, body loading, disk/cache state, and exact vendor-specific diagnosis. Agent runtime operation, harness engineering, and harness evaluation belong to Agent Harness. Artifacts remain on the validated source surface unless the user explicitly requests installed or global use.",
+    "shortDescription": "Engineer reliable agent skills, plugins, and guidance.",
+    "longDescription": "Capability Workbench is the artifact authoring and governance plane of agent capability engineering. It turns desired behavior, observed gaps, and trusted sources into reusable skills, plugins, agent guidance, trigger contracts, and coherent portfolios. It covers discovery, synthesis, portfolio architecture, authoring, behavioral evaluation against a baseline, audit, reality repair, safety vetting, packaging, and explicit activation. Agent Harness owns runtime design, operation, orchestration, and harness-level evaluation. Artifacts remain on the validated source surface unless the user explicitly requests installed or global use.",
     "developerName": "Xopoko",
     "category": "Productivity",
     "capabilities": [
@@ -41,19 +43,21 @@
       "Skill name and description trigger metadata design",
       "Cross-runtime model-visible skill catalog, overflow, and body-loading comparison",
       "Exact item-by-dimension evidence coverage gates for aggregate audit claims",
+      "Provider-neutral behavioral evaluation of candidate capability artifacts against a baseline",
       "Reality repair for stale or false skill, script, plugin, and MCP contracts",
       "Global agent skill installation with safety vetting",
       "Agent marketplace plugin creation and global visibility validation",
       "Context-density and prompt-contract audits"
     ],
     "defaultPrompt": [
-      "Use Capability Workbench to decide whether this request needs skill creation, skill installation, plugin packaging, synthesis, or audit.",
-      "Use Capability Workbench to perform broad web-first discovery and synthesize a well-vetted agent skill or agent marketplace plugin for global agent installation.",
+      "Use Capability Workbench to turn an observed agent behavior gap into the right validated skill, plugin, guidance, trigger, evaluation, or portfolio change.",
+      "Use Capability Workbench to perform broad external-first discovery and synthesize a well-vetted agent skill or plugin on the selected source surface, activating it only when requested.",
       "Use Capability Workbench to audit a skill/plugin portfolio across plugins and decide whether capabilities should be kept, split, merged, moved, deleted, routed, moved to references, extracted into shared mechanics, or extracted into scripts.",
       "Use Capability Workbench to create, refresh, audit, or migrate AGENTS.md, CLAUDE.md, and Cursor rule files for coding agents.",
       "Use Capability Workbench to design or debug skill names and descriptions so the host agent loads the right SKILL.md.",
       "Use Capability Workbench to compare how Codex, Claude-family snapshots, OpenClaw, Hermes Agent, OpenCode, and Qwen Code expose skill catalogs and load selected bodies.",
       "Use Capability Workbench to validate a broad audit claim against an exact declared item-by-dimension evidence matrix.",
+      "Use Capability Workbench to compare a candidate skill, plugin, or guidance change against a baseline with realistic cases, deterministic assertions, repeated trials, and an adoption decision.",
       "Use Capability Workbench to repair a stale skill, script, plugin, or MCP contract that contradicted live behavior during work.",
       "Use Capability Workbench to generate a coherent imagegen-backed icon for a new marketplace-backed plugin and wire it into the plugin manifest.",
       "Use Capability Workbench to validate and install an agent marketplace plugin so it is visible globally in the host agent."

@@ -26,7 +26,7 @@ class ResolveAgentTest(unittest.TestCase):
         t = resolve_agent(explicit=None, env={"AGENT_TARGET": "codex"},
                           home=Path("/home/u"), home_exists=lambda p: True)
         self.assertEqual(t.agent, "codex")
-        self.assertEqual(t.skills_dir, Path("/home/u/.codex/skills"))
+        self.assertEqual(t.skills_dir, Path("/home/u/.agents/skills"))
         self.assertEqual(t.marketplace_path,
                          Path("/home/u/.agents/plugins/marketplace.json"))
 

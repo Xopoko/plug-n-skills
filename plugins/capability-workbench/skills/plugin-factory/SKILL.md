@@ -25,13 +25,13 @@ python3 "$PLUGIN_ROOT/scripts/plugin/create_basic_plugin.py" <plugin-name> --wit
 
 Defaults:
 
-- plugin path: `$HOME/plugins/<plugin-name>`
+- plugin path: `$HOME/.codex/plugins/<plugin-name>`
 - marketplace path: `$HOME/.agents/plugins/marketplace.json`
-- marketplace source path: `./plugins/<plugin-name>`
+- marketplace source path: `./.codex/plugins/<plugin-name>`
 - policies: `installation=AVAILABLE`, `authentication=ON_INSTALL`
 
 This creates a marketplace-ready source path. It is installed globally as
-`<plugin-name>@local` only after the install helper enables it and verifies an
+`<plugin-name>@<marketplace-name>` only after the install helper enables it and verifies an
 equivalent cache copy. That receipt does not prove runtime discovery. For
 repo-local plugin source work, create or update the plugin under that repository
 and skip marketplace/cache mutation unless `install_required=true`.
@@ -41,12 +41,17 @@ For new marketplace-facing plugins, generate the icon through the system
 `$PLUGIN_ROOT/references/plugin-icon-system.md`:
 
 1. Scaffold with `--with-assets`.
-2. Run `$PLUGIN_ROOT/scripts/plugin/prepare_plugin_icon_prompt.py` to produce the
-   prompt contract.
-3. Call built-in image generation with that prompt.
-4. Save the selected bitmap to `assets/icon.png`.
-5. Run `$PLUGIN_ROOT/scripts/plugin/wire_plugin_icon.py` to set
-   `interface.composerIcon`, `interface.logo`, and `interface.brandColor`.
+2. Generate the schema-v2 prompt contract with
+   `$PLUGIN_ROOT/scripts/plugin/prepare_plugin_icon_prompt.py`. Start from the
+   first-party catalog: one literal semantic hero and at most one support cue;
+   unknown names use a deterministic concrete-object fallback.
+3. Review the declared collision avoids and brand-source trademark/license
+   provenance, then call built-in image generation with the emitted prompt.
+4. Save an opaque 1024x1024 RGB PNG to `assets/icon.png` and wire identical
+   `interface.composerIcon` and `interface.logo` paths plus `brandColor`.
+5. Run `$PLUGIN_ROOT/scripts/plugin/validate_plugin_icons.py <plugin-dir>
+   --require-prompt`; manually review meaning and monochrome silhouette at
+   16/24/32/64 because quantitative thumbnail gates cannot prove semantics.
 
 When the host has no imagegen skill (for example Claude Code), use a
 user-supplied asset or host-native image generation when available; otherwise
@@ -71,9 +76,10 @@ Keep `.codex-plugin/plugin.json` validation-ready:
 - For new marketplace-facing plugins, generate or preserve an icon under
   `assets/` and wire `interface.composerIcon`, `interface.logo`, and
   `interface.brandColor` when the target agent supports them. Use the system
-  `$imagegen` skill plus `$PLUGIN_ROOT/references/plugin-icon-system.md`; avoid
-  text-heavy, tiny, screenshot-based, photographic, API-key-only, or
-  private/project-specific icons.
+  `$imagegen` skill plus `$PLUGIN_ROOT/references/plugin-icon-system.md`; use one
+  concrete semantic hero, no more than one support cue, explicit collision and
+  brand provenance fields, and no text-heavy, tiny, screenshot-based,
+  photographic, API-key-only, or private/project-specific icon.
 
 Use `$PLUGIN_ROOT/references/marketplace-validation.md` for the expected manifest and marketplace entry shapes.
 
@@ -148,7 +154,7 @@ When a marketplace entry was created, updated, or installed, finish with:
 - validation results;
 - `source_validated`, `install_cache_verified`, and `runtime_discovery` as
   separate states;
-- installed plugin id, usually `<name>@local`, or `not installed` for source-only work;
+- installed plugin id, `<name>@<marketplace-name>`, or `not installed` for source-only work;
 - absolute plugin path;
 - absolute marketplace path when applicable;
 - Codex app View and Share deeplinks only for installed Codex marketplace entries.

@@ -1,0 +1,178 @@
+{
+  "schemaVersion": 1,
+  "name": "career",
+  "source": {
+    "provider": "github",
+    "repository": "Xopoko/career-skills",
+    "commit": "d387a7e2c982da24eaa73790310ce37ad2337f44",
+    "tree": "a86472db6bb19cd640e3e6f947f3654a9924be17"
+  },
+  "version": "0.1.1",
+  "manifest": {
+    "codexSha256": "9dd5d9e60f042cb5723e8f5b4afe60942ee301bfbf49174af590c0011ea98181",
+    "claudeSha256": "a51d0754a40e217c8180653925977d0b8227b63738f3a360a9159ff8599de72c"
+  },
+  "license": "MIT",
+  "verifiedAt": "2026-08-13",
+  "skills": {
+    "count": 20,
+    "items": [
+      {
+        "name": "application-assistance",
+        "path": "skills/application-assistance/SKILL.md",
+        "description": "Application assistance maps reviewed candidate data into a specific form, isolates sensitive or legal questions, previews every external effect, and stops before submission until explicitly authorized.",
+        "startupTokens": 86,
+        "bodyTokens": 496
+      },
+      {
+        "name": "application-campaign",
+        "path": "skills/application-campaign/SKILL.md",
+        "description": "Application campaigns plan and execute bounded multi-role rosters with exact per-role artifacts, approval hashes, outcome accounting, and reconciliation. Excludes blind bulk apply and single-form drafting.",
+        "startupTokens": 91,
+        "bodyTokens": 481
+      },
+      {
+        "name": "application-tailoring",
+        "path": "skills/application-tailoring/SKILL.md",
+        "description": "Role-specific tailoring produces truthful resumes, cover letters, short answers, and narrative plans from verified evidence, with claim traceability and artifact review. Excludes browser form mutation.",
+        "startupTokens": 90,
+        "bodyTokens": 471
+      },
+      {
+        "name": "career",
+        "path": "skills/career/SKILL.md",
+        "description": "Career routing coordinates context, direction, research, opportunities, materials, applications, networking, recruiters, interviews, offers, development, and pipeline learning. Triggers on broad or multi-stage career requests.",
+        "startupTokens": 92,
+        "bodyTokens": 1106
+      },
+      {
+        "name": "career-context",
+        "path": "skills/career-context/SKILL.md",
+        "description": "Career context capture turns source material and user corrections into provenance-linked facts, evidence, preferences, constraints, accomplishments, and reusable story candidates. Excludes drafting a role-specific application.",
+        "startupTokens": 90,
+        "bodyTokens": 567
+      },
+      {
+        "name": "career-data-governance",
+        "path": "skills/career-data-governance/SKILL.md",
+        "description": "Career data governance inventories private workspace data and plans disclosure, export, retention, legal hold, scoped deletion, and deletion proof. Excludes automatic evidence cleanup and provider writes without approval.",
+        "startupTokens": 97,
+        "bodyTokens": 389
+      },
+      {
+        "name": "career-development",
+        "path": "skills/career-development/SKILL.md",
+        "description": "Career development converts recurring evidence gaps and long-term goals into bounded learning, portfolio, visibility, mentoring, and internal-mobility experiments with measurable checkpoints.",
+        "startupTokens": 85,
+        "bodyTokens": 412
+      },
+      {
+        "name": "career-direction",
+        "path": "skills/career-direction/SKILL.md",
+        "description": "Role-family uncertainty, career pivots, and transferable-skill questions when the user needs target options rather than current vacancies.",
+        "startupTokens": 79,
+        "bodyTokens": 435
+      },
+      {
+        "name": "career-inbox",
+        "path": "skills/career-inbox/SKILL.md",
+        "description": "Career inbox reconciliation reads bounded accounts and queries, classifies job-search communications, maps candidates to opportunities, and gates exact message mutations. Excludes general mail cleanup and recruiter prose drafting.",
+        "startupTokens": 93,
+        "bodyTokens": 437
+      },
+      {
+        "name": "career-market-research",
+        "path": "skills/career-market-research/SKILL.md",
+        "description": "Career market research investigates occupations, employers, compensation, demand, geography, work authorization language, and hiring practices using dated sources and explicit uncertainty. Excludes personalized fit scoring.",
+        "startupTokens": 93,
+        "bodyTokens": 438
+      },
+      {
+        "name": "career-materials",
+        "path": "skills/career-materials/SKILL.md",
+        "description": "Career asset creation builds evidence-backed baseline resumes, profiles, portfolios, case studies, accomplishment inventories, and reference briefs. Excludes tailoring to one open role.",
+        "startupTokens": 88,
+        "bodyTokens": 574
+      },
+      {
+        "name": "career-networking",
+        "path": "skills/career-networking/SKILL.md",
+        "description": "Career networking finds authorized warm paths and drafts grounded referral, recruiter, informational-interview, and follow-up messages while minimizing retained contact data. Excludes sending without approval.",
+        "startupTokens": 90,
+        "bodyTokens": 392
+      },
+      {
+        "name": "career-operations",
+        "path": "skills/career-operations/SKILL.md",
+        "description": "Career operations reconstructs durable workspace state and produces a daily action queue, campaign and inbox reconciliation, metrics, follow-ups, and drift checks. Excludes using dashboards, tabs, or README notes as canonical state.",
+        "startupTokens": 99,
+        "bodyTokens": 381
+      },
+      {
+        "name": "career-pipeline",
+        "path": "skills/career-pipeline/SKILL.md",
+        "description": "Career pipeline tracking records event-sourced opportunity status, distinct outcomes, artifact lineage, follow-ups, interviews, offers, conversion metrics, and evidence-backed learning.",
+        "startupTokens": 88,
+        "bodyTokens": 522
+      },
+      {
+        "name": "career-source-adapter",
+        "path": "skills/career-source-adapter/SKILL.md",
+        "description": "Career source adapters specify and vet new job, mail, calendar, taxonomy, document, or browser providers through capability, normalization, privacy, licensing, and effect contracts. Excludes automatic activation.",
+        "startupTokens": 97,
+        "bodyTokens": 529
+      },
+      {
+        "name": "interview-preparation",
+        "path": "skills/interview-preparation/SKILL.md",
+        "description": "Interview preparation builds a stage-specific competency map, evidence-backed story bank, practice loop, interviewer questions, reference plan, and follow-up capture. Covers behavioral and role-specific interviews.",
+        "startupTokens": 93,
+        "bodyTokens": 436
+      },
+      {
+        "name": "offer-negotiation",
+        "path": "skills/offer-negotiation/SKILL.md",
+        "description": "Offer decision support normalizes cash, equity, benefits, constraints, uncertainty, and current market evidence; compares options and drafts a negotiation plan without accepting or sending.",
+        "startupTokens": 91,
+        "bodyTokens": 400
+      },
+      {
+        "name": "opportunity-analysis",
+        "path": "skills/opportunity-analysis/SKILL.md",
+        "description": "Opportunity analysis maps a posting to verified evidence, hard constraints, gaps, employer signals, scam risks, and a transparent apply, clarify, defer, or decline recommendation. Triggers on pasted text or a job URL.",
+        "startupTokens": 99,
+        "bodyTokens": 457
+      },
+      {
+        "name": "opportunity-search",
+        "path": "skills/opportunity-search/SKILL.md",
+        "description": "Fresh job-lead requests with an explicit or discoverable search policy, authorized sources, and hard filters. Not for deciding fit on one posting or submitting an application.",
+        "startupTokens": 89,
+        "bodyTokens": 508
+      },
+      {
+        "name": "recruiter-coordination",
+        "path": "skills/recruiter-coordination/SKILL.md",
+        "description": "Recruiter coordination reconciles messages and calendars, distinguishes chat, proposed slot, and confirmed interview, drafts responses, and records follow-ups without sending or booking until approved.",
+        "startupTokens": 93,
+        "bodyTokens": 426
+      }
+    ]
+  },
+  "counts": {
+    "references": 21,
+    "scripts": 3
+  },
+  "tokens": {
+    "encoding": "o200k_base",
+    "startup": 1823,
+    "body": 9857
+  },
+  "icons": {
+    "composerIcon": "./assets/icon.png",
+    "logo": "./assets/icon.png",
+    "brandColor": "#001A3F",
+    "sha256": "2dadee0da0d0d1e71af03bc5ddc30afaee9e48cda4fd92dd1f83ee24cba036bd",
+    "catalogAsset": "assets/first-party-plugins/career.png"
+  }
+}

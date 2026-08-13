@@ -639,6 +639,7 @@ def test_fetch_opencitations_requires_doi_query() -> None:
 
 def test_fetch_opencitations_parses_doi_metadata() -> None:
     mod = load_module()
+    captured: dict[str, str] = {}
     payload = json.dumps([
         {
             "id": "doi:10.1000/oc1 omid:br/123",
@@ -649,7 +650,11 @@ def test_fetch_opencitations_parses_doi_metadata() -> None:
         }
     ])
     original = mod.http_text
-    mod.http_text = lambda url, **kw: payload
+    def fake_http_text(url: str, **kwargs):
+        captured["url"] = url
+        return payload
+
+    mod.http_text = fake_http_text
     try:
         records, _ = mod.fetch_opencitations("https://doi.org/10.1000/oc1", 5, 10.0)
     finally:
@@ -658,6 +663,10 @@ def test_fetch_opencitations_parses_doi_metadata() -> None:
     assert "omid" not in records[0]["creators"]
     assert records[0]["container"] == "Some Venue"
     assert records[0]["year"] == "2022"
+    assert captured["url"].startswith(
+        "https://api.opencitations.net/meta/v1/metadata/doi:"
+    )
+    assert mod.USER_AGENT.startswith("PlugNSkillsScientificResearch/0.3.4 ")
 
 
 def test_fetch_core_without_key_is_auth_required() -> None:

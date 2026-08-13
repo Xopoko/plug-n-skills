@@ -20,6 +20,20 @@ Triggers: compare code to ADR/docs/policy, detect drift or erosion, turn intent 
 
 If intent is thin, label it incomplete. Do not convert recovered source shape into design intent.
 
+## AI-Produced Architecture Changes
+
+Apply the same conformance standard to human- and agent-authored patches.
+For an AI-produced change, derive issue-specific review axes from source:
+components and responsibilities, dependency direction and layering, public
+APIs and extension points, cross-cutting conventions, critical boundaries,
+and cross-module propagation. Give each axis evidence, priority, confidence,
+an ideal anchor, and a poor anchor.
+
+Use `convergence`, `divergence`, or `absence` only when an ADR, policy, doc, or
+explicit constraint supplies intent. Without that source, report alignment or
+deviation from observed conventions as audit evidence, not a conformance
+verdict. See `$PLUGIN_ROOT/references/ai-assisted-code-architecture.md`.
+
 ## Probe
 
 ```bash

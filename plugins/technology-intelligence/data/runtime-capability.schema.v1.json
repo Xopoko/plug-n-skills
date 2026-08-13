@@ -5,12 +5,14 @@
   "optional_top_level": [],
   "runtime_schema_version": "technology_intelligence.runtime_inventory.v1",
   "capability_required": ["technology_id", "surface", "identifier", "installed", "enabled", "auth_state", "health", "checked_at"],
-  "capability_optional": ["version", "permissions", "notes"],
-  "allowed_surfaces": ["cli", "mcp", "api", "sdk", "app", "skill"],
+  "capability_optional": ["interface_id", "provisioning_mode", "version", "permissions", "notes"],
+  "allowed_surfaces": ["cli", "mcp", "api", "sdk", "wasm", "app", "skill"],
+  "allowed_provisioning_modes": ["preinstalled", "on-demand", "bundled", "remote", "unknown"],
   "allowed_auth_states": ["not-required", "unknown", "missing", "configured", "verified"],
   "allowed_health_states": ["unknown", "unavailable", "degraded", "healthy"],
   "max_capability_age_seconds": 3600,
   "forbidden_fields": ["token", "access_token", "refresh_token", "api_key", "secret", "password", "cookie", "authorization", "authorization_header", "environment_dump"],
   "persistence": "never",
-  "join_key": "technology_id"
+  "join_key": "technology_id",
+  "interface_join_key": "interface_id"
 }

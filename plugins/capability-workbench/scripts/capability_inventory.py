@@ -12,6 +12,7 @@ from typing import Any
 
 
 DEFAULT_SKILL_ROOTS = [
+    "$HOME/.agents/skills",
     "${CODEX_HOME:-$HOME/.codex}/skills",
     "${CODEX_HOME:-$HOME/.codex}/skills/.system",
     "${CLAUDE_HOME:-$HOME/.claude}/skills",
@@ -22,6 +23,7 @@ DEFAULT_CODEX_CACHE_ROOTS = [
     "${CODEX_HOME:-$HOME/.codex}/plugins/cache",
 ]
 DEFAULT_PLUGIN_ROOTS = [
+    "${CODEX_HOME:-$HOME/.codex}/plugins",
     "$HOME/plugins",
     *DEFAULT_CODEX_CACHE_ROOTS,
     "${CLAUDE_HOME:-$HOME/.claude}/plugins",
@@ -209,6 +211,15 @@ def resolved_path_is_within(path: Path, root: Path) -> bool:
     return True
 
 
+def lexical_path_is_within(path: Path, root: Path) -> bool:
+    """Check containment without following a symlink out of the named tree."""
+    try:
+        path.absolute().relative_to(root.absolute())
+    except ValueError:
+        return False
+    return True
+
+
 def cache_plugin_candidates(plugin_dir: Path) -> list[tuple[tuple[Any, ...], Path]]:
     candidates: dict[Path, tuple[Any, ...]] = {}
     for candidate in readable_directories(plugin_dir):
@@ -304,6 +315,10 @@ def inventory_plugins(
                 for manifest_dir in PLUGIN_MANIFEST_NAMES
                 for manifest in root.rglob(
                     f"{manifest_dir}/plugin.json"
+                )
+                if not any(
+                    lexical_path_is_within(manifest, cache_root)
+                    for cache_root in cache_roots
                 )
             ]
         for manifest in sorted(manifests):

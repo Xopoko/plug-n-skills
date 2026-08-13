@@ -1,18 +1,20 @@
 {
   "name": "agent-harness",
-  "version": "0.1.0",
-  "description": "Agent harness design and evaluation plus Codex CLI, Claude Code, MCP, hooks, sessions, deferred completion, and local scheduler proof.",
+  "version": "0.1.3",
+  "description": "Agent harness design and evaluation plus Codex and Claude runtime operations, secret-safe human credential handoff, 1Password, sessions, deferred completion, and scheduler proof.",
   "author": {
     "name": "Xopoko"
   },
   "license": "MIT",
   "keywords": [
+    "1password",
     "agent-harness",
     "agents",
     "automation",
     "claude-code",
     "cli",
     "codex",
+    "credentials",
     "evaluation",
     "hooks",
     "mcp",

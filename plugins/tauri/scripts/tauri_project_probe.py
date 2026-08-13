@@ -94,7 +94,6 @@ def parse_tauri_config(src_tauri: Path) -> dict[str, Any]:
         src_tauri / "tauri.conf.json",
         src_tauri / "tauri.conf.json5",
         src_tauri / "Tauri.toml",
-        src_tauri / "tauri.conf.toml",
     ]
     for path in candidates:
         if not path.exists():
@@ -190,17 +189,38 @@ def probe(root: Path) -> dict[str, Any]:
     package = parse_package(root)
     config = parse_tauri_config(src_tauri) if src_tauri.exists() else {"path": None}
     capabilities = parse_capabilities(src_tauri) if src_tauri.exists() else []
+    declared_capabilities = config.get("declared_capabilities")
+    if config.get("path") is not None and config.get("parse_error"):
+        capability_enablement = {
+            "mode": "unknown-config-unparsed",
+            "entry_count": None,
+            "capability_file_count": len(capabilities),
+        }
+    elif isinstance(declared_capabilities, list) and declared_capabilities:
+        capability_enablement = {
+            "mode": "explicit-config",
+            "entry_count": len(declared_capabilities),
+        }
+    elif capabilities:
+        capability_enablement = {
+            "mode": "automatic-files",
+            "entry_count": len(capabilities),
+        }
+    else:
+        capability_enablement = {"mode": "none-detected", "entry_count": 0}
     warnings: list[str] = []
     if not src_tauri.exists():
         warnings.append("missing src-tauri directory")
     if config.get("path") is None:
         warnings.append("missing tauri config")
-    if src_tauri.exists() and not capabilities:
-        warnings.append("no capability files found")
+    if (
+        src_tauri.exists()
+        and not capabilities
+        and declared_capabilities in (None, [])
+    ):
+        warnings.append("no capability files or inline app.security.capabilities found")
     if config.get("parse_error"):
         warnings.append(f"config parse issue: {config['parse_error']}")
-    if capabilities and config.get("declared_capabilities") is None:
-        warnings.append("capabilities found; app.security.capabilities not explicit")
     return {
         "root": str(root),
         "src_tauri_exists": src_tauri.exists(),
@@ -209,6 +229,7 @@ def probe(root: Path) -> dict[str, Any]:
         "cargo": parse_cargo(src_tauri) if src_tauri.exists() else {"exists": False},
         "tauri_config": config,
         "capabilities": capabilities,
+        "capability_enablement": capability_enablement,
         "suggested_commands": {
             "dev": tauri_command(manager, "dev"),
             "build": tauri_command(manager, "build"),
@@ -265,7 +286,60 @@ def self_test() -> None:
         assert result["package_manager"] == "pnpm"
         assert result["tauri_config"]["identifier"] == "com.example.probe"
         assert result["capabilities"][0]["identifier"] == "main"
+        assert result["capability_enablement"] == {
+            "mode": "explicit-config",
+            "entry_count": 1,
+        }
         assert result["suggested_commands"]["dev"] == "pnpm tauri dev"
+
+        (src_tauri / "tauri.conf.json").write_text(
+            json.dumps(
+                {
+                    "productName": "Probe",
+                    "version": "0.1.0",
+                    "identifier": "com.example.probe",
+                    "app": {"security": {"capabilities": []}},
+                }
+            ),
+            encoding="utf-8",
+        )
+        automatic_result = probe(root)
+        assert automatic_result["capability_enablement"] == {
+            "mode": "automatic-files",
+            "entry_count": 1,
+        }
+        assert not any(
+            "capabilities not explicit" in warning
+            for warning in automatic_result["warnings"]
+        )
+
+        (src_tauri / "tauri.conf.json").unlink()
+        (src_tauri / "tauri.conf.json5").write_text(
+            "{ app: { security: { capabilities: ['main'] } } }\n",
+            encoding="utf-8",
+        )
+        json5_result = probe(root)
+        assert json5_result["capability_enablement"] == {
+            "mode": "unknown-config-unparsed",
+            "entry_count": None,
+            "capability_file_count": 1,
+        }
+        assert any(
+            "json5 parsing not supported" in warning
+            for warning in json5_result["warnings"]
+        )
+        (src_tauri / "tauri.conf.json5").unlink()
+        (src_tauri / "tauri.conf.toml").write_text(
+            'productName = "UnsupportedName"\n', encoding="utf-8"
+        )
+        assert parse_tauri_config(src_tauri)["path"] is None
+        (src_tauri / "Tauri.toml").write_text(
+            'productName = "Probe"\nidentifier = "com.example.probe"\n',
+            encoding="utf-8",
+        )
+        toml_result = parse_tauri_config(src_tauri)
+        assert toml_result["path"] == str(src_tauri / "Tauri.toml")
+        assert toml_result["identifier"] == "com.example.probe"
     print("self-test ok")
 
 

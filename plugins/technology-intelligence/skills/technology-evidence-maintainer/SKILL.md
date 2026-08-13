@@ -48,7 +48,11 @@ path of this skill folder's `../..`.
    make a separate source edit to observations. Make any assessment change as a
    second, explicit review step with rationale, alternatives, expiry, and
    evidence coverage.
-6. Diff the complete old and proposed data directories, validate again, and run
+6. Treat capability and interface mappings as separate reviewed relations.
+   Every interface needs first-party observation support, and neither a
+   documented interface nor a package identifier may be converted into an
+   installed or healthy runtime claim.
+7. Diff the complete old and proposed data directories, validate again, and run
    plugin-local tests. Never publish a partially updated snapshot manifest.
 
 ## Completion

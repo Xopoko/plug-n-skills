@@ -10,6 +10,8 @@ from pathlib import Path, PurePosixPath
 from typing import Any
 from urllib.parse import urlparse
 
+from validate_plugin_icons import validate_plugin_icons
+
 try:
     import yaml
 except Exception:  # pragma: no cover - import environment issue.
@@ -61,6 +63,14 @@ def validate_plugin(plugin_root: Path) -> list[str]:
     reject_todo_markers(manifest, "$", errors)
     validate_manifest_shape(plugin_root, manifest, errors)
     validate_manifest_consistency(plugin_root, manifest, errors)
+    interface = manifest.get("interface")
+    has_icon_contract = (
+        isinstance(interface, dict)
+        and any(field in interface for field in ("composerIcon", "logo"))
+    ) or (plugin_root / "assets" / "icon-prompt.json").is_file()
+    if has_icon_contract:
+        icon_result = validate_plugin_icons(plugin_root)
+        errors.extend(f"icon contract: {error}" for error in icon_result["errors"])
     return errors
 
 
@@ -160,6 +170,7 @@ def validate_manifest_shape(
         "skills",
         "apps",
         "mcpServers",
+        "hooks",
         "interface",
         "author",
         "homepage",
@@ -189,6 +200,7 @@ def validate_manifest_shape(
     mcp_manifest_path = validate_optional_mcp_contract_path(
         plugin_root, manifest, errors
     )
+    validate_optional_hooks_contract(plugin_root, manifest, errors)
 
     if manifest.get("apps") is not None:
         validate_app_manifest(
@@ -235,10 +247,28 @@ def validate_manifest_shape(
         "category",
     ):
         require_non_empty_string(interface, field, errors, prefix="interface")
-    if "defaultPrompt" not in interface and "default_prompt" not in interface:
+    prompt_fields = [
+        field
+        for field in ("defaultPrompt", "default_prompt")
+        if field in interface
+    ]
+    if not prompt_fields:
         errors.append(
             "plugin.json field `interface.defaultPrompt` or `interface.default_prompt` is required"
         )
+    elif len(prompt_fields) > 1:
+        errors.append(
+            "plugin.json interface must use only one of `defaultPrompt` or `default_prompt`"
+        )
+    else:
+        prompt_field = prompt_fields[0]
+        prompts = interface[prompt_field]
+        if not isinstance(prompts, list) or not prompts or not all(
+            isinstance(value, str) and value.strip() for value in prompts
+        ):
+            errors.append(
+                f"plugin.json field `interface.{prompt_field}` must be a non-empty array of non-empty strings"
+            )
     capabilities = interface.get("capabilities")
     if not isinstance(capabilities, list) or not all(
         isinstance(value, str) and value.strip() for value in capabilities
@@ -252,7 +282,14 @@ def validate_manifest_shape(
     ):
         errors.append("plugin.json field `interface.brandColor` must use `#RRGGBB`")
     for field in ("composerIcon", "logo"):
-        validate_optional_asset_path(plugin_root, plugin_root, interface, field, errors)
+        validate_optional_asset_path(
+            plugin_root,
+            plugin_root,
+            interface,
+            field,
+            errors,
+            require_dot_slash=True,
+        )
     screenshots = interface.get("screenshots", [])
     if not isinstance(screenshots, list):
         errors.append("plugin.json field `interface.screenshots` must be an array")
@@ -264,6 +301,7 @@ def validate_manifest_shape(
                 raw_path,
                 f"interface.screenshots[{index}]",
                 errors,
+                require_dot_slash=True,
             )
 
 
@@ -344,8 +382,14 @@ def validate_optional_contract_path(
     if value is None:
         return
     normalized = normalize_contract_path(value) if isinstance(value, str) else None
-    if normalized != expected:
-        errors.append(f"plugin.json field `{key}` must resolve to `{expected}`")
+    if (
+        not isinstance(value, str)
+        or not value.startswith("./")
+        or normalized != expected
+    ):
+        errors.append(
+            f"plugin.json field `{key}` must start with `./` and resolve to `{expected}`"
+        )
 
 
 def normalize_contract_path(raw_path: str) -> str | None:
@@ -366,9 +410,13 @@ def validate_optional_mcp_contract_path(
         return None
     normalized = normalize_contract_path(value) if isinstance(value, str) else None
     allowed = {".mcp.json", ".codex-mcp.json"}
-    if normalized not in allowed:
+    if (
+        not isinstance(value, str)
+        or not value.startswith("./")
+        or normalized not in allowed
+    ):
         errors.append(
-            "plugin.json field `mcpServers` must resolve to `.mcp.json` or "
+            "plugin.json field `mcpServers` must start with `./` and resolve to `.mcp.json` or "
             "`.codex-mcp.json`"
         )
         return None
@@ -405,15 +453,64 @@ def validate_app_manifest(path: Path, errors: list[str]) -> None:
             errors.append(f"`.app.json` app `{key}` field `id` must be a non-empty string")
 
 
+def validate_optional_hooks_contract(
+    plugin_root: Path,
+    manifest: dict[str, Any],
+    errors: list[str],
+) -> None:
+    hooks = manifest.get("hooks")
+    if hooks is None:
+        return
+    entries = hooks if isinstance(hooks, list) else [hooks]
+    if not entries:
+        errors.append("plugin.json field `hooks` must not be an empty array")
+        return
+    for index, entry in enumerate(entries):
+        field = "hooks" if not isinstance(hooks, list) else f"hooks[{index}]"
+        if isinstance(entry, dict):
+            if not entry:
+                errors.append(
+                    f"plugin.json field `{field}` inline hooks object must not be empty"
+                )
+            continue
+        if not isinstance(entry, str) or not entry.startswith("./"):
+            errors.append(
+                f"plugin.json field `{field}` must be an inline hooks object or a path starting with `./`"
+            )
+            continue
+        validate_asset_path(
+            plugin_root,
+            plugin_root,
+            entry,
+            field,
+            errors,
+            require_dot_slash=True,
+        )
+
+
 def validate_mcp_manifest(path: Path, errors: list[str]) -> None:
     label = f"`{path.name}`"
     payload = load_companion_json_object(path, label, errors)
     if payload is None:
         return
-    reject_companion_unknown_fields(payload, {"mcpServers"}, label, errors)
-    servers = payload.get("mcpServers")
+    wrapper_fields = [
+        field for field in ("mcp_servers", "mcpServers") if field in payload
+    ]
+    if len(wrapper_fields) > 1:
+        errors.append(
+            f"{label} must use only one of `mcp_servers` or compatibility `mcpServers`"
+        )
+        return
+    if wrapper_fields:
+        wrapper = wrapper_fields[0]
+        reject_companion_unknown_fields(payload, {wrapper}, label, errors)
+        servers = payload.get(wrapper)
+        field_label = f" field `{wrapper}`"
+    else:
+        servers = payload
+        field_label = ""
     if not isinstance(servers, dict):
-        errors.append(f"{label} field `mcpServers` must be an object")
+        errors.append(f"{label}{field_label} must be an object")
         return
     for key, value in servers.items():
         if not isinstance(key, str) or not key.strip():
@@ -561,6 +658,13 @@ def validate_skill_agent_manifest(
             errors.append(
                 f"skill `{skill_root.name}` agent field `interface.{field}` must be non-empty"
             )
+    short_description = interface.get("short_description")
+    if isinstance(short_description, str) and not (
+        25 <= len(short_description.strip()) <= 64
+    ):
+        errors.append(
+            f"skill `{skill_root.name}` agent field `interface.short_description` must contain 25-64 characters"
+        )
     for field in ("icon_small", "icon_large"):
         validate_optional_asset_path(
             skill_root,
@@ -621,6 +725,53 @@ def validate_skill_agent_manifest(
                 errors,
                 prefix="dependencies",
             )
+            tools = dependencies.get("tools")
+            if not isinstance(tools, list) or not tools:
+                errors.append(
+                    f"skill `{skill_root.name}` agent field `dependencies.tools` must be a non-empty array"
+                )
+            else:
+                for index, tool in enumerate(tools):
+                    prefix = f"dependencies.tools[{index}]"
+                    if not isinstance(tool, dict):
+                        errors.append(
+                            f"skill `{skill_root.name}` agent field `{prefix}` must be an object"
+                        )
+                        continue
+                    reject_skill_agent_unknown_fields(
+                        tool,
+                        {"type", "value", "description", "transport", "url"},
+                        skill_root,
+                        errors,
+                        prefix=prefix,
+                    )
+                    for field in ("type", "value", "description"):
+                        value = tool.get(field)
+                        if not isinstance(value, str) or not value.strip():
+                            errors.append(
+                                f"skill `{skill_root.name}` agent field `{prefix}.{field}` must be non-empty"
+                            )
+                    if tool.get("type") != "mcp":
+                        errors.append(
+                            f"skill `{skill_root.name}` agent field `{prefix}.type` currently supports only `mcp`"
+                        )
+                    transport = tool.get("transport")
+                    if transport is not None and (
+                        not isinstance(transport, str) or not transport.strip()
+                    ):
+                        errors.append(
+                            f"skill `{skill_root.name}` agent field `{prefix}.transport` must be non-empty"
+                        )
+                    url = tool.get("url")
+                    parsed_url = urlparse(url) if isinstance(url, str) else None
+                    if url is not None and (
+                        parsed_url is None
+                        or parsed_url.scheme != "https"
+                        or not parsed_url.netloc
+                    ):
+                        errors.append(
+                            f"skill `{skill_root.name}` agent field `{prefix}.url` must be an absolute `https://` URL"
+                        )
 
 
 def reject_skill_agent_unknown_fields(
@@ -660,7 +811,7 @@ def load_yaml_mapping(text: str, label: str, errors: list[str]) -> dict[str, Any
 
 def parse_simple_yaml_mapping(text: str) -> dict[str, Any]:
     root: dict[str, Any] = {}
-    stack: list[tuple[int, dict[str, Any]]] = [(-1, root)]
+    stack: list[tuple[int, dict[str, Any] | list[Any]]] = [(-1, root)]
     lines = text.splitlines()
     index = 0
     while index < len(lines):
@@ -671,7 +822,40 @@ def parse_simple_yaml_mapping(text: str) -> dict[str, Any]:
             continue
         indent = count_indent(raw_line)
         if stripped.startswith("- "):
-            raise ValueError("sequence YAML is not supported by the fallback parser")
+            while stack and indent <= stack[-1][0]:
+                stack.pop()
+            if not stack or not isinstance(stack[-1][1], list):
+                raise ValueError("sequence item must belong to a YAML list")
+            current_list = stack[-1][1]
+            item = stripped[2:].strip()
+            if not item:
+                child: dict[str, Any] = {}
+                current_list.append(child)
+                stack.append((indent, child))
+                index += 1
+                continue
+            if ":" not in item:
+                current_list.append(parse_simple_yaml_scalar(item))
+                index += 1
+                continue
+            key, raw_value = item.split(":", 1)
+            key = key.strip()
+            if not key:
+                raise ValueError("empty YAML key")
+            child = {}
+            current_list.append(child)
+            stack.append((indent, child))
+            value = raw_value.strip()
+            if not value:
+                nested: dict[str, Any] | list[Any] = (
+                    [] if next_yaml_line_is_sequence(lines, index + 1, indent) else {}
+                )
+                child[key] = nested
+                stack.append((indent + 1, nested))
+            else:
+                child[key] = parse_simple_yaml_scalar(value)
+            index += 1
+            continue
         if ":" not in stripped:
             raise ValueError("expected key-value YAML")
         key, raw_value = stripped.split(":", 1)
@@ -684,10 +868,14 @@ def parse_simple_yaml_mapping(text: str) -> dict[str, Any]:
         if not stack:
             raise ValueError("invalid YAML indentation")
         current = stack[-1][1]
+        if not isinstance(current, dict):
+            raise ValueError("mapping entry must belong to a YAML object")
 
         value = raw_value.strip()
         if not value:
-            child: dict[str, Any] = {}
+            child: dict[str, Any] | list[Any] = (
+                [] if next_yaml_line_is_sequence(lines, index + 1, indent) else {}
+            )
             current[key] = child
             stack.append((indent, child))
             index += 1
@@ -699,6 +887,20 @@ def parse_simple_yaml_mapping(text: str) -> dict[str, Any]:
         current[key] = parse_simple_yaml_scalar(value)
         index += 1
     return root
+
+
+def next_yaml_line_is_sequence(
+    lines: list[str],
+    start: int,
+    parent_indent: int,
+) -> bool:
+    for raw_line in lines[start:]:
+        stripped = raw_line.strip()
+        if not stripped or stripped.startswith("#"):
+            continue
+        indent = count_indent(raw_line)
+        return indent > parent_indent and stripped.startswith("- ")
+    return False
 
 
 def count_indent(line: str) -> int:
@@ -785,11 +987,19 @@ def validate_optional_asset_path(
     errors: list[str],
     *,
     prefix: str = "interface",
+    require_dot_slash: bool = False,
 ) -> None:
     raw_path = payload.get(key)
     if raw_path is None:
         return
-    validate_asset_path(base_dir, allowed_root, raw_path, f"{prefix}.{key}", errors)
+    validate_asset_path(
+        base_dir,
+        allowed_root,
+        raw_path,
+        f"{prefix}.{key}",
+        errors,
+        require_dot_slash=require_dot_slash,
+    )
 
 
 def validate_asset_path(
@@ -798,10 +1008,15 @@ def validate_asset_path(
     raw_path: Any,
     field: str,
     errors: list[str],
+    *,
+    require_dot_slash: bool = False,
 ) -> None:
     label = field if field.startswith("skill `") else f"plugin.json field `{field}`"
     if not isinstance(raw_path, str) or not raw_path.strip():
         errors.append(f"{label} must be a non-empty relative path")
+        return
+    if require_dot_slash and not raw_path.startswith("./"):
+        errors.append(f"{label} must start with `./`")
         return
     candidate = PurePosixPath(raw_path.replace("\\", "/"))
     if candidate.is_absolute() or any(part in {"", ".", ".."} for part in candidate.parts):

@@ -1,0 +1,17 @@
+{
+  "schema_version": "technology_intelligence.capabilities.v1",
+  "snapshot_id": "research-2026-08-11-capability-model-v1",
+  "generated_at": "2026-08-11T18:47:00Z",
+  "capabilities": [
+    {
+      "id": "document-to-markdown",
+      "name": "Document to Markdown Conversion",
+      "domain": "document-processing",
+      "kind": "content-transformation",
+      "aliases": ["document conversion", "document ingestion", "document extraction"],
+      "tags": ["documents", "markdown", "structured-content", "agent-context"],
+      "summary": "Convert document content into readable Markdown while preserving useful structure for people, retrieval, or agent workflows.",
+      "decision_dimensions": ["format coverage", "content fidelity", "locality and privacy", "OCR requirements", "latency", "runtime and integration fit"]
+    }
+  ]
+}

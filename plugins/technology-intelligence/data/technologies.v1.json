@@ -1,6 +1,7 @@
 {
   "schema_version": "technology_intelligence.technologies.v1",
-  "snapshot_id": "research-2026-08-11",
+  "snapshot_id": "research-2026-08-11-capability-model-v1",
+  "generated_at": "2026-08-11T18:47:00Z",
   "technologies": [
     {"id": "react", "name": "React", "family": "frontend-fullstack", "kind": "ui-library", "aliases": ["reactjs"], "tags": ["web", "ui", "javascript", "typescript"], "official_source_ids": ["react-official"], "summary": "Component-oriented library for web and native user interfaces."},
     {"id": "nextjs", "name": "Next.js", "family": "frontend-fullstack", "kind": "web-framework", "aliases": ["next"], "tags": ["web", "react", "full-stack", "server-rendering"], "official_source_ids": ["nextjs-official"], "summary": "React application framework spanning routing, rendering, server, and deployment concerns."},
@@ -24,6 +25,7 @@
     {"id": "mcp-streamable-http", "name": "MCP over Streamable HTTP", "family": "agent-delivery", "kind": "delivery-mode", "aliases": ["remote-mcp", "http-mcp"], "tags": ["mcp", "remote", "http", "tools"], "official_source_ids": ["mcp-spec-2026-07-28"], "summary": "A remote Model Context Protocol server using the specification's HTTP transport and authorization model."},
     {"id": "agent-skill-package", "name": "Agent Skill Package", "family": "agent-delivery", "kind": "delivery-mode", "aliases": ["agent-skill", "skill-bundle"], "tags": ["instructions", "scripts", "references", "portable"], "official_source_ids": ["agent-skills-spec-live"], "summary": "A portable SKILL.md bundle containing routing metadata, instructions, scripts, references, and assets."},
     {"id": "a2a-protocol", "name": "A2A Protocol", "family": "agent-delivery", "kind": "agent-interoperability-protocol", "aliases": ["agent2agent", "agent-to-agent"], "tags": ["agents", "delegation", "discovery", "remote", "interoperability"], "official_source_ids": ["a2a-1-0-0-2026-03-12", "a2a-v1-announcement-live"], "summary": "An open protocol for discovery, task delegation, and communication between independent agent systems."},
-    {"id": "agent-client-protocol", "name": "Agent Client Protocol", "family": "agent-delivery", "kind": "editor-agent-protocol", "aliases": ["acp"], "tags": ["coding-agent", "editor", "sessions", "tools", "interoperability"], "official_source_ids": ["acp-session-updates-2026-04-23"], "summary": "A protocol for connecting editors and other interactive clients to coding agents."}
+    {"id": "agent-client-protocol", "name": "Agent Client Protocol", "family": "agent-delivery", "kind": "editor-agent-protocol", "aliases": ["acp"], "tags": ["coding-agent", "editor", "sessions", "tools", "interoperability"], "official_source_ids": ["acp-session-updates-2026-04-23"], "summary": "A protocol for connecting editors and other interactive clients to coding agents."},
+    {"id": "anydoc", "name": "AnyDoc", "family": "document-processing", "kind": "document-conversion-engine", "aliases": ["@firecrawl/anydoc", "firecrawl-anydoc", "@firecrawl/anydoc-wasm"], "tags": ["document-conversion", "markdown", "local", "rust", "cli", "nodejs", "python", "wasm"], "capability_ids": ["document-to-markdown"], "official_source_ids": ["anydoc-readme-v0-1-8", "anydoc-node-package-v0-1-8", "anydoc-python-package-v0-1-8", "anydoc-rust-package-v0-1-8", "anydoc-benchmark-v0-1-8", "anydoc-release-v0-1-8"], "summary": "Local Rust document-to-Markdown conversion engine exposed through an npm CLI and Rust, Node.js, Python, and browser WebAssembly libraries."}
   ]
 }

@@ -1,6 +1,6 @@
 {
   "name": "git-workflows",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "Git code review, GitLab discussion response, stacked-change delivery, worktree recovery, and SSH commit-signing recovery use exact-state, capability-selected, fail-closed workflows.",
   "author": {
     "name": "Xopoko"
@@ -35,7 +35,9 @@
       "Fail-closed Git worktree pointer recovery",
       "SSH-signed-commit snapshots with one-use retry recovery and post-commit verification"
     ],
-    "defaultPrompt": "Inspect this Git review, delivery, or recovery task and choose the narrow exact-state workflow that applies.",
+    "defaultPrompt": [
+      "Inspect this Git review, delivery, or recovery task and choose the narrow exact-state workflow that applies."
+    ],
     "brandColor": "#173F5F",
     "composerIcon": "./assets/icon.png",
     "logo": "./assets/icon.png"

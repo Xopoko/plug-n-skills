@@ -1,5 +1,5 @@
 {
-  "$schema": "https://raw.githubusercontent.com/anthropics/claude-code/refs/heads/main/marketplace/marketplace.schema.json",
+  "$schema": "https://json.schemastore.org/claude-code-marketplace.json",
   "name": "xopoko-plug-n-skills",
   "owner": {
     "name": "Xopoko"
@@ -11,12 +11,12 @@
     {
       "name": "agent-harness",
       "source": "./plugins/agent-harness",
-      "description": "Agent harness design and evaluation plus Codex CLI, Claude Code, MCP, hooks, sessions, deferred completion, and local scheduler proof."
+      "description": "Agent harness design and evaluation plus Codex and Claude runtime operations, secret-safe human credential handoff, 1Password, sessions, deferred completion, and scheduler proof."
     },
     {
       "name": "capability-workbench",
       "source": "./plugins/capability-workbench",
-      "description": "Design, audit, synthesize, package, install, repair, and reshape agent skills and plugins with trigger metadata, catalog analysis, guidance authoring, vetting, and validation."
+      "description": "Artifact-first agent capability engineering for skills, plugins, guidance, and trigger contracts: frame behavior gaps, evaluate baselines and candidates, author validated changes, govern portfolios, and activate explicitly. Use Agent Harness for runtime and harness-level evaluation."
     },
     {
       "name": "context-density",
@@ -41,7 +41,7 @@
     {
       "name": "technology-intelligence",
       "source": "./plugins/technology-intelligence",
-      "description": "Evidence-backed technology decisions compare frameworks, platforms, infrastructure, and CLI/MCP/API delivery modes with dated primary-source observations, explicit gaps, staleness checks, and review-gated refreshes."
+      "description": "Capability-first technology decisions map needs to candidate products and documented CLI/SDK/WASM/MCP/API/skill interfaces using dated evidence, explicit gaps, and separate runtime facts."
     },
     {
       "name": "design-intelligence",
@@ -51,7 +51,7 @@
     {
       "name": "architecture-intelligence",
       "source": "./plugins/architecture-intelligence",
-      "description": "Software architecture audits and decisions grounded in source evidence: boundaries, ownership/runtime topology, async state consistency, conformance, ADRs, fitness functions, and staged refactoring."
+      "description": "Software architecture audits and decisions grounded in source evidence: boundaries, AI-assisted code architecture, ownership/runtime topology, async state consistency, conformance, ADRs, fitness functions, and staged refactoring."
     },
     {
       "name": "spec-driven-development",
@@ -60,8 +60,13 @@
     },
     {
       "name": "build-swift-apps",
-      "source": "./plugins/build-swift-apps",
-      "description": "Build, debug, profile, test, refactor, and release Swift apps across iOS, macOS, Xcode, SwiftUI, SwiftPM, Tuist, and App Store Connect."
+      "source": {
+        "source": "github",
+        "repo": "Xopoko/build-swift-apps",
+        "sha": "b269c774c2decc8169d9b4bcbc6d97dbf60edb2e"
+      },
+      "description": "Build, debug, profile, test, refactor, and release Swift apps across iOS, macOS, Xcode, SwiftUI, SwiftPM, Tuist, and App Store Connect.",
+      "version": "0.3.10"
     },
     {
       "name": "kotlin-multiplatform",
@@ -82,6 +87,16 @@
       "name": "game-design-intelligence",
       "source": "./plugins/game-design-intelligence",
       "description": "Game design judgment grounded in evidence: core loops, gameplay systems, progression/economy/balance, motivation/retention, onboarding/difficulty, and multiplayer/live-service health; excludes engines, graphics, assets, and code."
+    },
+    {
+      "name": "career",
+      "source": {
+        "source": "github",
+        "repo": "Xopoko/career-skills",
+        "sha": "d387a7e2c982da24eaa73790310ce37ad2337f44"
+      },
+      "description": "Evidence-first career support for direction, research, job discovery, materials, applications and campaigns, inbox and recruiter coordination, interviews, offers, operations, development, and data governance.",
+      "version": "0.1.1"
     }
   ]
 }

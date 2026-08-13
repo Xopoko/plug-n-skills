@@ -10,8 +10,11 @@ import sys
 from pathlib import Path
 from typing import Any
 
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+import plugin_catalog  # noqa: E402
 
-PLUGIN_NAMES = [
+
+LOCAL_PLUGIN_NAMES = [
     "agent-harness",
     "capability-workbench",
     "context-density",
@@ -22,7 +25,6 @@ PLUGIN_NAMES = [
     "design-intelligence",
     "architecture-intelligence",
     "spec-driven-development",
-    "build-swift-apps",
     "kotlin-multiplatform",
     "tauri",
     "pixijs",
@@ -164,19 +166,26 @@ def main() -> None:
         errors.append(f"missing validator: {validate_helper}")
     if not external_dependency_helper.is_file():
         errors.append(f"missing validator: {external_dependency_helper}")
-
+    try:
+        first_party_catalog = plugin_catalog.validate_catalog(root)
+    except plugin_catalog.CatalogError as exc:
+        errors.append(f"First-party plugin catalog validation failed: {exc}")
+        first_party_catalog = {"plugins": []}
+    first_party_plugins = {
+        item["name"]: item for item in first_party_catalog["plugins"]
+    }
     manifest_plugin_names = {
         path.parent.parent.name
         for path in (root / "plugins").glob("*/.codex-plugin/plugin.json")
     }
-    unexpected_plugins = sorted(manifest_plugin_names - set(PLUGIN_NAMES))
+    unexpected_plugins = sorted(manifest_plugin_names - set(LOCAL_PLUGIN_NAMES))
     if unexpected_plugins:
         errors.append(
             "unexpected manifest-bearing plugin directories: "
             + ", ".join(unexpected_plugins)
         )
 
-    for name in PLUGIN_NAMES:
+    for name in LOCAL_PLUGIN_NAMES:
         plugin_dir = root / "plugins" / name
         if not plugin_dir.is_dir():
             errors.append(f"missing plugin directory: plugins/{name}")
@@ -227,8 +236,17 @@ def main() -> None:
                 f"{result.stdout}{result.stderr}"
             )
 
-    errors.extend(validate_marketplace(root))
+    for name in first_party_plugins:
+        if (root / "plugins" / name).exists():
+            errors.append(
+                f"plugins/{name}: standalone first-party plugin must not be vendored"
+            )
+
+    errors.extend(validate_marketplace(root, LOCAL_PLUGIN_NAMES, first_party_plugins))
+    errors.extend(validate_capability_workbench_surface(root))
     errors.extend(validate_agent_harness_surface(root))
+    errors.extend(validate_technology_intelligence_surface(root))
+    errors.extend(validate_architecture_intelligence_surface(root))
     errors.extend(scan_files(root))
 
     if errors:
@@ -276,12 +294,21 @@ def validate_manifest_metadata(name: str, manifest: dict[str, Any], errors: list
             errors.append(f"{rel}: developerName should not include local-only branding")
 
 
-def validate_marketplace(root: Path) -> list[str]:
+def validate_marketplace(
+    root: Path,
+    local_names: list[str],
+    first_party: dict[str, dict[str, Any]],
+) -> list[str]:
     errors: list[str] = []
     path = root / ".claude-plugin" / "marketplace.json"
     data = load_json(path, errors)
     if data is None:
         return errors
+    expected_schema = "https://json.schemastore.org/claude-code-marketplace.json"
+    if data.get("$schema") != expected_schema:
+        errors.append(
+            f".claude-plugin/marketplace.json: $schema must be {expected_schema}"
+        )
     plugins = data.get("plugins")
     if not isinstance(plugins, list):
         errors.append(".claude-plugin/marketplace.json: 'plugins' must be an array")
@@ -294,12 +321,138 @@ def validate_marketplace(root: Path) -> list[str]:
             errors.append(".claude-plugin/marketplace.json: entry missing 'name'")
             continue
         listed.append(name)
-        if not isinstance(src, str) or not (root / src.lstrip("./")).is_dir():
-            errors.append(f".claude-plugin/marketplace.json: bad source for {name}")
-        if not (root / "plugins" / name / ".claude-plugin" / "plugin.json").is_file():
-            errors.append(f".claude-plugin/marketplace.json: {name} lacks a Claude manifest")
-    if set(listed) != set(PLUGIN_NAMES):
-        errors.append(".claude-plugin/marketplace.json: plugin set does not match PLUGIN_NAMES")
+        if name in first_party:
+            plugin = first_party[name]
+            expected_source = {
+                "source": "github",
+                "repo": plugin["source"]["repository"],
+                "sha": plugin["source"]["commit"],
+            }
+            if src != expected_source:
+                errors.append(
+                    f".claude-plugin/marketplace.json: first-party source mismatch for {name}"
+                )
+            if entry.get("description") != plugin["description"]:
+                errors.append(
+                    f".claude-plugin/marketplace.json: description mismatch for {name}"
+                )
+            if entry.get("version") != plugin["manifest"]["version"]:
+                errors.append(
+                    f".claude-plugin/marketplace.json: version mismatch for {name}"
+                )
+        else:
+            expected_source = f"./plugins/{name}"
+            if src != expected_source or not (root / "plugins" / name).is_dir():
+                errors.append(f".claude-plugin/marketplace.json: bad source for {name}")
+            if not (root / "plugins" / name / ".claude-plugin" / "plugin.json").is_file():
+                errors.append(f".claude-plugin/marketplace.json: {name} lacks a Claude manifest")
+    if set(listed) != set(local_names) | set(first_party):
+        errors.append(".claude-plugin/marketplace.json: plugin set does not match local plus first-party catalog")
+    if len(listed) != len(set(listed)):
+        errors.append(".claude-plugin/marketplace.json: plugin names must be unique")
+    return errors
+
+
+def validate_capability_workbench_surface(root: Path) -> list[str]:
+    """Keep flagship positioning and artifact-evaluation ownership coherent."""
+    errors: list[str] = []
+    plugin = root / "plugins" / "capability-workbench"
+    skill = plugin / "skills" / "capability-evaluation" / "SKILL.md"
+    metadata = skill.parent / "agents" / "openai.yaml"
+    reference = plugin / "references" / "capability-evaluation.md"
+    validator = plugin / "scripts" / "evaluation" / "validate_capability_evaluation.py"
+    router = plugin / "skills" / "capability-workbench" / "SKILL.md"
+    plugin_readme = plugin / "README.md"
+    dashboard_script = root / "scripts" / "render_plugin_dashboard_header.py"
+
+    for path in (skill, metadata, reference, validator, router, plugin_readme):
+        if not path.is_file():
+            errors.append(
+                "plugins/capability-workbench: missing agent-capability-engineering "
+                f"surface {path.relative_to(plugin)}"
+            )
+
+    skill_text = skill.read_text(encoding="utf-8") if skill.is_file() else ""
+    router_text = router.read_text(encoding="utf-8") if router.is_file() else ""
+    readme_text = plugin_readme.read_text(encoding="utf-8") if plugin_readme.is_file() else ""
+    dashboard_text = (
+        dashboard_script.read_text(encoding="utf-8")
+        if dashboard_script.is_file()
+        else ""
+    )
+    for label, text, markers in (
+        (
+            "evaluation skill",
+            skill_text,
+            ("name: capability-evaluation", "baseline", "Agent Harness"),
+        ),
+        (
+            "router",
+            router_text,
+            ("capability-evaluation", "Assure/evolve", "harness-level evaluation"),
+        ),
+        (
+            "plugin README",
+            readme_text,
+            ("Agent Capability Engineering", "capability-evaluation", "Lifecycle"),
+        ),
+        (
+            "dashboard renderer",
+            dashboard_text,
+            ("Engineer, evaluate, and govern agent capabilities.",),
+        ),
+    ):
+        for marker in markers:
+            if marker not in text:
+                errors.append(
+                    f"plugins/capability-workbench: {label} missing {marker!r}"
+                )
+
+    codex = load_json(plugin / ".codex-plugin" / "plugin.json", errors)
+    claude = load_json(plugin / ".claude-plugin" / "plugin.json", errors)
+    if codex is not None and claude is not None:
+        for field in ("name", "version", "description", "author", "license", "keywords"):
+            if codex.get(field) != claude.get(field):
+                errors.append(
+                    f"plugins/capability-workbench: manifest {field} mismatch"
+                )
+        description = codex.get("description", "")
+        if "Artifact-first agent capability engineering" not in description:
+            errors.append(
+                "plugins/capability-workbench: manifest description lacks "
+                "artifact-first positioning"
+            )
+        if "harness-level evaluation" not in description:
+            errors.append(
+                "plugins/capability-workbench: manifest description lacks "
+                "Agent Harness evaluation boundary"
+            )
+        keywords = codex.get("keywords", [])
+        for keyword in ("agent-capability-engineering", "behavioral-evaluation"):
+            if keyword not in keywords:
+                errors.append(
+                    f"plugins/capability-workbench: missing manifest keyword {keyword}"
+                )
+
+        marketplace = load_json(root / ".claude-plugin" / "marketplace.json", errors)
+        entries = marketplace.get("plugins", []) if marketplace else []
+        entry = next(
+            (
+                item
+                for item in entries
+                if isinstance(item, dict) and item.get("name") == "capability-workbench"
+            ),
+            None,
+        )
+        if entry is None:
+            errors.append(
+                "plugins/capability-workbench: marketplace entry is missing"
+            )
+        elif entry.get("description") != description:
+            errors.append(
+                "plugins/capability-workbench: marketplace description must match manifest"
+            )
+
     return errors
 
 
@@ -321,8 +474,23 @@ def validate_agent_harness_surface(root: Path) -> list[str]:
         "agent_harness.evaluation_plan.v1",
         "agent_harness.run_result.v1",
     )
+    credential_skill = plugin / "skills" / "credential-handoff" / "SKILL.md"
+    credential_reference = plugin / "references" / "credential-handoff-contract.md"
+    credential_helper = plugin / "scripts" / "credential_handoff.py"
 
     router_text = router.read_text(encoding="utf-8") if router.is_file() else ""
+    for path in (credential_skill, credential_reference, credential_helper):
+        if not path.is_file():
+            errors.append(
+                "plugins/agent-harness: missing credential handoff surface "
+                f"{path.relative_to(plugin)}"
+            )
+    for marker in ("credential-handoff", "1Password", "native prompts"):
+        if marker not in router_text:
+            errors.append(
+                "plugins/agent-harness/skills/agent-harness/SKILL.md: "
+                f"missing credential route marker {marker!r}"
+            )
     for name in skill_names:
         skill = plugin / "skills" / name / "SKILL.md"
         if not skill.is_file():
@@ -378,6 +546,141 @@ def validate_agent_harness_surface(root: Path) -> list[str]:
                 errors.append(
                     f"plugins/agent-harness/skills/{skill_name}/SKILL.md: missing {schema}"
                 )
+
+    return errors
+
+
+def validate_technology_intelligence_surface(root: Path) -> list[str]:
+    """Bind the capability-first decision graph to its offline validator."""
+    errors: list[str] = []
+    plugin = root / "plugins" / "technology-intelligence"
+    helper = plugin / "scripts" / "technology_intelligence.py"
+    for relative in (
+        "data/capabilities.v1.json",
+        "data/interfaces.v1.json",
+        "data/runtime-capability.schema.v1.json",
+        "data/snapshot-manifest.v1.json",
+    ):
+        if not (plugin / relative).is_file():
+            errors.append(f"plugins/technology-intelligence: missing {relative}")
+    if not helper.is_file():
+        errors.append("plugins/technology-intelligence: missing offline validator")
+        return errors
+    result = subprocess.run(
+        [sys.executable, str(helper), "validate", "--json"],
+        cwd=root,
+        text=True,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE,
+        check=False,
+    )
+    if result.returncode != 0:
+        errors.append(
+            "plugins/technology-intelligence: capability model validation failed:\n"
+            f"{result.stdout}{result.stderr}"
+        )
+    return errors
+
+
+def validate_architecture_intelligence_surface(root: Path) -> list[str]:
+    """Keep the AI-assisted code-architecture evidence path coherent."""
+    errors: list[str] = []
+    plugin = root / "plugins" / "architecture-intelligence"
+    router = plugin / "skills" / "architecture-intelligence" / "SKILL.md"
+    skill_name = "architecture-refactoring-strategy"
+    skill = plugin / "skills" / skill_name / "SKILL.md"
+    reference = plugin / "references" / "ai-assisted-code-architecture.md"
+    fixture = plugin / "tests" / "fixtures" / f"{skill_name}-trigger-probes.json"
+    contracts = plugin / "references" / "contracts.md"
+
+    required_paths = (router, skill, reference, fixture, contracts)
+    for path in required_paths:
+        if not path.is_file():
+            errors.append(
+                "plugins/architecture-intelligence: missing AI-assisted "
+                f"code-architecture surface {path.relative_to(plugin)}"
+            )
+
+    router_text = router.read_text(encoding="utf-8") if router.is_file() else ""
+    skill_text = skill.read_text(encoding="utf-8") if skill.is_file() else ""
+    reference_text = reference.read_text(encoding="utf-8") if reference.is_file() else ""
+    contracts_text = contracts.read_text(encoding="utf-8") if contracts.is_file() else ""
+    for label, text, markers in (
+        (
+            "router",
+            router_text,
+            ("AI-assisted code architecture", skill_name, "Agent Harness"),
+        ),
+        (
+            "skill",
+            skill_text,
+            (
+                "architecture of the application or library code",
+                "one smallest behavior-preserving architecture slice",
+                "review findings before mutation",
+            ),
+        ),
+        (
+            "reference",
+            reference_text,
+            (
+                "2026-05-11",
+                "2026-08-11",
+                "AICA-10",
+                "Beyond Correctness",
+                "Source-Grounded Rubric",
+            ),
+        ),
+        (
+            "contracts",
+            contracts_text,
+            ("Optional `architecture_assessment` appendix",),
+        ),
+    ):
+        for marker in markers:
+            if marker not in text:
+                errors.append(
+                    "plugins/architecture-intelligence: "
+                    f"AI-assisted code-architecture {label} missing {marker!r}"
+                )
+
+    if fixture.is_file():
+        payload = load_json(fixture, errors)
+        if payload is not None:
+            if payload.get("schema") != "architecture_intelligence.trigger_probes.v1":
+                errors.append(
+                    "plugins/architecture-intelligence: invalid AI-assisted "
+                    "trigger-probe schema"
+                )
+            if payload.get("skill") != skill_name:
+                errors.append(
+                    "plugins/architecture-intelligence: AI-assisted trigger "
+                    "probes target the wrong skill"
+                )
+            if len(payload.get("should_trigger", [])) < 6:
+                errors.append(
+                    "plugins/architecture-intelligence: AI-assisted trigger "
+                    "probes need at least six positive cases"
+                )
+            if len(payload.get("should_not_trigger", [])) < 4:
+                errors.append(
+                    "plugins/architecture-intelligence: AI-assisted trigger "
+                    "probes need at least four near misses"
+                )
+
+    codex_manifest_path = plugin / ".codex-plugin" / "plugin.json"
+    manifest = load_json(codex_manifest_path, errors)
+    if manifest is not None:
+        if "AI-assisted code architecture" not in manifest.get("description", ""):
+            errors.append(
+                "plugins/architecture-intelligence: Codex manifest does not publish "
+                "AI-assisted code architecture"
+            )
+        if "ai-assisted-code-architecture" not in manifest.get("keywords", []):
+            errors.append(
+                "plugins/architecture-intelligence: Codex manifest is missing "
+                "ai-assisted-code-architecture keyword"
+            )
 
     return errors
 

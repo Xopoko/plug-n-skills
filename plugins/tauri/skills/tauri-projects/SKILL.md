@@ -19,13 +19,16 @@ python3 "$PLUGIN_ROOT/scripts/tauri_project_probe.py" .
 If the current working directory is not inside the plugin, resolve the script path relative to this skill folder.
 
 3. Inspect `package.json`, lockfiles, `src-tauri/Cargo.toml`,
-   `src-tauri/tauri.conf.*`, `src-tauri/capabilities/*`, and
+   `src-tauri/tauri.conf.json` (or feature-enabled `tauri.conf.json5` /
+   `Tauri.toml`), `src-tauri/capabilities/*`, and
    `src-tauri/src/lib.rs` before editing.
 
 ## Scaffolding
 
-- Prefer official package-manager scaffolding such as `pnpm create tauri-app@2`,
-  `npm create tauri-app@2`, or `cargo create-tauri-app`; choose by repo/team convention.
+- Prefer current official scaffolding such as `pnpm create tauri-app`,
+  `npm create tauri-app@latest`, or, after
+  `cargo install create-tauri-app --locked`, `cargo create-tauri-app`; choose by
+  repo/team convention.
 - Do not run remote shell installers such as `curl | sh` as the default.
 - Treat Rustup, Node, Xcode, Android SDK, WebView/system packages, and mobile
   SDK installation as environment mutations requiring explicit approval.

@@ -46,6 +46,20 @@ python3 "$PLUGIN_ROOT/scripts/architecture_probe.py" <repo-path> --json --policy
 
 The probe covers top-level coupling, instability, cycles, runtime signals, ownership topology, and simple policy checks.
 
+## AI-Produced Change Gate
+
+For code produced or refactored with a coding agent, combine functional proof
+with at least one architecture-specific signal for every architecture claim.
+Examples: public-entry-point imports, forbidden edges, cycle absence, API
+compatibility, ownership, cross-module consumers, runtime dependency, or an
+ADR/policy relation. A green unit test does not prove module, layer, or
+dependency conformance.
+
+Derive the rule from explicit intent when possible. If only source convention
+exists, start in `measure` or `warn` mode and avoid calling deviation a
+violation. See `$PLUGIN_ROOT/references/ai-assisted-code-architecture.md` for
+the source-grounded review axes and per-slice proof loop.
+
 ## Workflow
 
 1. State architecture principle in one sentence.

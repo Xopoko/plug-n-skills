@@ -1,0 +1,423 @@
+{
+  "schema": "capability.evidence_coverage.v1",
+  "subject": "plugin-freshness-audit",
+  "cutoff": "head:2648633dd68fa6ca1403c30ad8ef78f8f0997ece+audited-diff-sha256:8ec63c1a4b8daa6126cb10961e1039ebc37af6adf5b82c6c67b50f5bd8d5fdaa+as-of:2026-08-11",
+  "universe": {
+    "status": "complete",
+    "items": [
+      "agent-harness",
+      "architecture-intelligence",
+      "build-swift-apps",
+      "capability-workbench",
+      "context-density",
+      "design-intelligence",
+      "engineering-hygiene",
+      "game-design-intelligence",
+      "git-workflows",
+      "kotlin-multiplatform",
+      "pixijs",
+      "scientific-research",
+      "spec-driven-development",
+      "tauri",
+      "technology-intelligence"
+    ],
+    "dimensions": [
+      "inventory",
+      "freshness-disposition",
+      "validation"
+    ],
+    "evidence_refs": [
+      "docs/freshness-audit-2026-08-11.md#outcome@8ec63c1a"
+    ]
+  },
+  "checks": [
+    {
+      "item": "agent-harness",
+      "dimension": "inventory",
+      "outcome": "pass",
+      "evidence_refs": [
+        "docs/freshness-audit-2026-08-11.md#method@8ec63c1a"
+      ]
+    },
+    {
+      "item": "agent-harness",
+      "dimension": "freshness-disposition",
+      "outcome": "pass",
+      "evidence_refs": [
+        "docs/freshness-audit-2026-08-11.md#portfolio-disposition@8ec63c1a"
+      ]
+    },
+    {
+      "item": "agent-harness",
+      "dimension": "validation",
+      "outcome": "pass",
+      "evidence_refs": [
+        "docs/freshness-audit-2026-08-11.md#validation-receipts@8ec63c1a"
+      ]
+    },
+    {
+      "item": "architecture-intelligence",
+      "dimension": "inventory",
+      "outcome": "pass",
+      "evidence_refs": [
+        "docs/freshness-audit-2026-08-11.md#method@8ec63c1a"
+      ]
+    },
+    {
+      "item": "architecture-intelligence",
+      "dimension": "freshness-disposition",
+      "outcome": "pass",
+      "evidence_refs": [
+        "docs/freshness-audit-2026-08-11.md#portfolio-disposition@8ec63c1a"
+      ]
+    },
+    {
+      "item": "architecture-intelligence",
+      "dimension": "validation",
+      "outcome": "pass",
+      "evidence_refs": [
+        "docs/freshness-audit-2026-08-11.md#validation-receipts@8ec63c1a"
+      ]
+    },
+    {
+      "item": "build-swift-apps",
+      "dimension": "inventory",
+      "outcome": "pass",
+      "evidence_refs": [
+        "docs/freshness-audit-2026-08-11.md#method@8ec63c1a"
+      ]
+    },
+    {
+      "item": "build-swift-apps",
+      "dimension": "freshness-disposition",
+      "outcome": "pass",
+      "evidence_refs": [
+        "docs/freshness-audit-2026-08-11.md#portfolio-disposition@8ec63c1a"
+      ]
+    },
+    {
+      "item": "build-swift-apps",
+      "dimension": "validation",
+      "outcome": "pass",
+      "evidence_refs": [
+        "docs/freshness-audit-2026-08-11.md#validation-receipts@8ec63c1a"
+      ]
+    },
+    {
+      "item": "capability-workbench",
+      "dimension": "inventory",
+      "outcome": "pass",
+      "evidence_refs": [
+        "docs/freshness-audit-2026-08-11.md#method@8ec63c1a"
+      ]
+    },
+    {
+      "item": "capability-workbench",
+      "dimension": "freshness-disposition",
+      "outcome": "pass",
+      "evidence_refs": [
+        "docs/freshness-audit-2026-08-11.md#portfolio-disposition@8ec63c1a"
+      ]
+    },
+    {
+      "item": "capability-workbench",
+      "dimension": "validation",
+      "outcome": "pass",
+      "evidence_refs": [
+        "docs/freshness-audit-2026-08-11.md#validation-receipts@8ec63c1a"
+      ]
+    },
+    {
+      "item": "context-density",
+      "dimension": "inventory",
+      "outcome": "pass",
+      "evidence_refs": [
+        "docs/freshness-audit-2026-08-11.md#method@8ec63c1a"
+      ]
+    },
+    {
+      "item": "context-density",
+      "dimension": "freshness-disposition",
+      "outcome": "pass",
+      "evidence_refs": [
+        "docs/freshness-audit-2026-08-11.md#portfolio-disposition@8ec63c1a"
+      ]
+    },
+    {
+      "item": "context-density",
+      "dimension": "validation",
+      "outcome": "pass",
+      "evidence_refs": [
+        "docs/freshness-audit-2026-08-11.md#validation-receipts@8ec63c1a"
+      ]
+    },
+    {
+      "item": "design-intelligence",
+      "dimension": "inventory",
+      "outcome": "pass",
+      "evidence_refs": [
+        "docs/freshness-audit-2026-08-11.md#method@8ec63c1a"
+      ]
+    },
+    {
+      "item": "design-intelligence",
+      "dimension": "freshness-disposition",
+      "outcome": "pass",
+      "evidence_refs": [
+        "docs/freshness-audit-2026-08-11.md#portfolio-disposition@8ec63c1a"
+      ]
+    },
+    {
+      "item": "design-intelligence",
+      "dimension": "validation",
+      "outcome": "pass",
+      "evidence_refs": [
+        "docs/freshness-audit-2026-08-11.md#validation-receipts@8ec63c1a"
+      ]
+    },
+    {
+      "item": "engineering-hygiene",
+      "dimension": "inventory",
+      "outcome": "pass",
+      "evidence_refs": [
+        "docs/freshness-audit-2026-08-11.md#method@8ec63c1a"
+      ]
+    },
+    {
+      "item": "engineering-hygiene",
+      "dimension": "freshness-disposition",
+      "outcome": "pass",
+      "evidence_refs": [
+        "docs/freshness-audit-2026-08-11.md#portfolio-disposition@8ec63c1a"
+      ]
+    },
+    {
+      "item": "engineering-hygiene",
+      "dimension": "validation",
+      "outcome": "pass",
+      "evidence_refs": [
+        "docs/freshness-audit-2026-08-11.md#validation-receipts@8ec63c1a"
+      ]
+    },
+    {
+      "item": "game-design-intelligence",
+      "dimension": "inventory",
+      "outcome": "pass",
+      "evidence_refs": [
+        "docs/freshness-audit-2026-08-11.md#method@8ec63c1a"
+      ]
+    },
+    {
+      "item": "game-design-intelligence",
+      "dimension": "freshness-disposition",
+      "outcome": "pass",
+      "evidence_refs": [
+        "docs/freshness-audit-2026-08-11.md#portfolio-disposition@8ec63c1a"
+      ]
+    },
+    {
+      "item": "game-design-intelligence",
+      "dimension": "validation",
+      "outcome": "pass",
+      "evidence_refs": [
+        "docs/freshness-audit-2026-08-11.md#validation-receipts@8ec63c1a"
+      ]
+    },
+    {
+      "item": "git-workflows",
+      "dimension": "inventory",
+      "outcome": "pass",
+      "evidence_refs": [
+        "docs/freshness-audit-2026-08-11.md#method@8ec63c1a"
+      ]
+    },
+    {
+      "item": "git-workflows",
+      "dimension": "freshness-disposition",
+      "outcome": "pass",
+      "evidence_refs": [
+        "docs/freshness-audit-2026-08-11.md#portfolio-disposition@8ec63c1a"
+      ]
+    },
+    {
+      "item": "git-workflows",
+      "dimension": "validation",
+      "outcome": "pass",
+      "evidence_refs": [
+        "docs/freshness-audit-2026-08-11.md#validation-receipts@8ec63c1a"
+      ]
+    },
+    {
+      "item": "kotlin-multiplatform",
+      "dimension": "inventory",
+      "outcome": "pass",
+      "evidence_refs": [
+        "docs/freshness-audit-2026-08-11.md#method@8ec63c1a"
+      ]
+    },
+    {
+      "item": "kotlin-multiplatform",
+      "dimension": "freshness-disposition",
+      "outcome": "pass",
+      "evidence_refs": [
+        "docs/freshness-audit-2026-08-11.md#portfolio-disposition@8ec63c1a"
+      ]
+    },
+    {
+      "item": "kotlin-multiplatform",
+      "dimension": "validation",
+      "outcome": "pass",
+      "evidence_refs": [
+        "docs/freshness-audit-2026-08-11.md#validation-receipts@8ec63c1a"
+      ]
+    },
+    {
+      "item": "pixijs",
+      "dimension": "inventory",
+      "outcome": "pass",
+      "evidence_refs": [
+        "docs/freshness-audit-2026-08-11.md#method@8ec63c1a"
+      ]
+    },
+    {
+      "item": "pixijs",
+      "dimension": "freshness-disposition",
+      "outcome": "pass",
+      "evidence_refs": [
+        "docs/freshness-audit-2026-08-11.md#portfolio-disposition@8ec63c1a"
+      ]
+    },
+    {
+      "item": "pixijs",
+      "dimension": "validation",
+      "outcome": "pass",
+      "evidence_refs": [
+        "docs/freshness-audit-2026-08-11.md#validation-receipts@8ec63c1a"
+      ]
+    },
+    {
+      "item": "scientific-research",
+      "dimension": "inventory",
+      "outcome": "pass",
+      "evidence_refs": [
+        "docs/freshness-audit-2026-08-11.md#method@8ec63c1a"
+      ]
+    },
+    {
+      "item": "scientific-research",
+      "dimension": "freshness-disposition",
+      "outcome": "pass",
+      "evidence_refs": [
+        "docs/freshness-audit-2026-08-11.md#portfolio-disposition@8ec63c1a"
+      ]
+    },
+    {
+      "item": "scientific-research",
+      "dimension": "validation",
+      "outcome": "pass",
+      "evidence_refs": [
+        "docs/freshness-audit-2026-08-11.md#validation-receipts@8ec63c1a"
+      ]
+    },
+    {
+      "item": "spec-driven-development",
+      "dimension": "inventory",
+      "outcome": "pass",
+      "evidence_refs": [
+        "docs/freshness-audit-2026-08-11.md#method@8ec63c1a"
+      ]
+    },
+    {
+      "item": "spec-driven-development",
+      "dimension": "freshness-disposition",
+      "outcome": "pass",
+      "evidence_refs": [
+        "docs/freshness-audit-2026-08-11.md#portfolio-disposition@8ec63c1a"
+      ]
+    },
+    {
+      "item": "spec-driven-development",
+      "dimension": "validation",
+      "outcome": "pass",
+      "evidence_refs": [
+        "docs/freshness-audit-2026-08-11.md#validation-receipts@8ec63c1a"
+      ]
+    },
+    {
+      "item": "tauri",
+      "dimension": "inventory",
+      "outcome": "pass",
+      "evidence_refs": [
+        "docs/freshness-audit-2026-08-11.md#method@8ec63c1a"
+      ]
+    },
+    {
+      "item": "tauri",
+      "dimension": "freshness-disposition",
+      "outcome": "pass",
+      "evidence_refs": [
+        "docs/freshness-audit-2026-08-11.md#portfolio-disposition@8ec63c1a"
+      ]
+    },
+    {
+      "item": "tauri",
+      "dimension": "validation",
+      "outcome": "pass",
+      "evidence_refs": [
+        "docs/freshness-audit-2026-08-11.md#validation-receipts@8ec63c1a"
+      ]
+    },
+    {
+      "item": "technology-intelligence",
+      "dimension": "inventory",
+      "outcome": "pass",
+      "evidence_refs": [
+        "docs/freshness-audit-2026-08-11.md#method@8ec63c1a"
+      ]
+    },
+    {
+      "item": "technology-intelligence",
+      "dimension": "freshness-disposition",
+      "outcome": "pass",
+      "evidence_refs": [
+        "docs/freshness-audit-2026-08-11.md#portfolio-disposition@8ec63c1a"
+      ]
+    },
+    {
+      "item": "technology-intelligence",
+      "dimension": "validation",
+      "outcome": "pass",
+      "evidence_refs": [
+        "docs/freshness-audit-2026-08-11.md#validation-receipts@8ec63c1a"
+      ]
+    }
+  ],
+  "claims": [
+    {
+      "id": "full-plugin-freshness-review",
+      "kind": "full_matrix",
+      "items": [
+        "agent-harness",
+        "architecture-intelligence",
+        "build-swift-apps",
+        "capability-workbench",
+        "context-density",
+        "design-intelligence",
+        "engineering-hygiene",
+        "game-design-intelligence",
+        "git-workflows",
+        "kotlin-multiplatform",
+        "pixijs",
+        "scientific-research",
+        "spec-driven-development",
+        "tauri",
+        "technology-intelligence"
+      ],
+      "dimensions": [
+        "inventory",
+        "freshness-disposition",
+        "validation"
+      ]
+    }
+  ]
+}

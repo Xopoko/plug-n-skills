@@ -114,7 +114,7 @@ Platform docs:
 
 - OpenAI Structured Outputs: `https://developers.openai.com/api/docs/guides/structured-outputs`
 - OpenAI Prompt Caching: `https://developers.openai.com/api/docs/guides/prompt-caching`
-- Anthropic Prompt Caching: `https://docs.anthropic.com/en/docs/build-with-claude/prompt-caching`
+- Anthropic Prompt Caching: `https://platform.claude.com/docs/en/build-with-claude/prompt-caching`
 
 Peer-reviewed and preprint sources:
 

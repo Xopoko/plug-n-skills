@@ -174,13 +174,17 @@ npm 7+ consumes flags after the package spec unless you pass `--` to forward the
 PixiJS requires Node 18+ or 20+. Some templates (framework-react, creation-web) expect a newer Node for their tooling. Upgrade Node before re-running the CLI if you see an "engines" warning from your package manager.
 
 
-### [MEDIUM] Top-level `await app.init()` broken in Vite production builds
+### [MEDIUM] Top-level `await app.init()` depends on the production target
 
-On Vite versions `<=6.0.6`, top-level `await` works in dev but breaks in production builds, so a `bundler-vite` project that does this at module scope will fail after `npm run build`:
+Do not infer a Vite version cutoff from dev-mode behavior. Top-level `await`
+support depends on the project's production output target and bundler setup. A
+historical upstream report reproduced a stalled `app.init()` after a Vite
+production build, while the current official `create-pixi` Vite template avoids
+that boundary with an async IIFE:
 
 ```ts
 const app = new Application();
-await app.init({ resizeTo: window }); // broken at module top level in prod
+await app.init({ resizeTo: window }); // requires production-target support
 ```
 
 Wrap the init in an async IIFE instead:
@@ -193,11 +197,15 @@ Wrap the init in an async IIFE instead:
 })();
 ```
 
-Upgrading Vite past 6.0.6 also resolves it, but the IIFE pattern is safe on every version and matches the PixiJS quick-start guide.
+Prefer the IIFE when scaffolding or when the project's production target is
+unknown. Keep top-level `await` only after the actual production build and
+supported browsers pass; upgrading Vite alone is not proof.
 
 
 ## API Reference
 
 - [create-pixi on GitHub](https://github.com/pixijs/create-pixi)
 - [create-pixi documentation site](https://pixijs.io/create-pixi/)
+- [Current create-pixi Vite entry point](https://github.com/pixijs/create-pixi/blob/main/templates/template-bundler-vite/src/main.ts)
+- [Upstream top-level-await report](https://github.com/pixijs/pixijs/issues/10456)
 - [Application](https://pixijs.download/release/docs/app.Application.html.md): the class the generated entry point instantiates.

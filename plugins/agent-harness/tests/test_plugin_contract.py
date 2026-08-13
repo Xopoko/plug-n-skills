@@ -31,6 +31,7 @@ EXPECTED_SKILLS = {
     "codex-log-reader",
     "codex-plugin-mcp-manager",
     "codex-thread-supervisor",
+    "credential-handoff",
     "scheduled-automation-runtime",
 }
 
@@ -62,12 +63,13 @@ class AgentHarnessPluginContractTests(unittest.TestCase):
             encoding="utf-8"
         )
         self.assertIn(
-            "  Agent harnesses and Codex/Claude runtimes: route design/evaluation,",
+            "  Agent runtimes and human credential handoff: route harnesses, Codex/Claude",
             router,
         )
-        self.assertIn("skill/plugin authoring (Capability Workbench)", router)
-        self.assertRegex(router, r"generic app\s+architecture")
+        self.assertIn("Use Capability Workbench for skill or plugin authoring", router)
+        self.assertRegex(router, r"generic\s+(?:app|application)\s+architecture")
         self.assertIn("scheduled-automation-runtime", router)
+        self.assertIn("credential-handoff", router)
 
     def test_manifests_are_aligned_and_searchable(self) -> None:
         codex = load_json(".codex-plugin/plugin.json")
@@ -75,8 +77,10 @@ class AgentHarnessPluginContractTests(unittest.TestCase):
         for field in ("name", "version", "description", "author", "license", "keywords"):
             self.assertEqual(codex[field], claude[field], field)
         self.assertEqual("agent-harness", codex["name"])
-        self.assertEqual("0.1.0", codex["version"])
+        self.assertEqual("0.1.3", codex["version"])
         self.assertEqual("Agent Harness", codex["interface"]["displayName"])
+        self.assertIsInstance(codex["interface"]["defaultPrompt"], list)
+        self.assertTrue(codex["interface"]["defaultPrompt"])
         self.assertEqual("./skills/", codex["skills"])
         self.assertEqual("./.codex-mcp.json", codex["mcpServers"])
         self.assertEqual("./assets/icon.png", codex["interface"]["composerIcon"])
@@ -85,6 +89,7 @@ class AgentHarnessPluginContractTests(unittest.TestCase):
             {
                 "agent-harness",
                 "codex",
+                "credentials",
                 "claude-code",
                 "hooks",
                 "mcp",
@@ -93,6 +98,24 @@ class AgentHarnessPluginContractTests(unittest.TestCase):
                 "evaluation",
             }.issubset(set(codex["keywords"]))
         )
+
+    def test_current_codex_cli_command_shapes(self) -> None:
+        exec_skill = (ROOT / "skills" / "codex-exec-automation" / "SKILL.md").read_text(
+            encoding="utf-8"
+        )
+        plugin_skill = (
+            ROOT / "skills" / "codex-plugin-mcp-manager" / "SKILL.md"
+        ).read_text(encoding="utf-8")
+        doctor_skill = (
+            ROOT / "skills" / "codex-doctor-debugger" / "SKILL.md"
+        ).read_text(encoding="utf-8")
+        self.assertIn("codex --ask-for-approval never exec", exec_skill)
+        self.assertIn('codex -C "$PROJECT" review --uncommitted', exec_skill)
+        self.assertNotIn("codex exec -C \"$PROJECT\" --sandbox read-only --ask-for-approval", exec_skill)
+        self.assertIn("codex plugin marketplace add <source>", plugin_skill)
+        self.assertNotIn("marketplace add <name> <source>", plugin_skill)
+        self.assertIn("--permission-profile <name>", doctor_skill)
+        self.assertNotIn("--permissions-profile", doctor_skill)
 
     def test_mcp_companions_keep_the_bounded_server(self) -> None:
         codex = load_json(".codex-mcp.json")["mcpServers"]
@@ -170,6 +193,7 @@ class AgentHarnessPluginContractTests(unittest.TestCase):
                 "vendor-mcp",
                 "claude-session",
                 "scheduler-proof",
+                "credential-handoff",
             }.issubset(routed)
         )
         self.assertEqual("capability-workbench", excluded["skill-authoring"]["expected_owner"])

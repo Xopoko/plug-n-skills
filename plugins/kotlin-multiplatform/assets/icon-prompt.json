@@ -1,0 +1,52 @@
+{
+  "schema": "capability_workbench.plugin_icon_prompt.v2",
+  "plugin_name": "kotlin-multiplatform",
+  "catalog": {
+    "source": "first-party-catalog",
+    "key": "kotlin-multiplatform"
+  },
+  "semantic_hero": {
+    "object": "a shared-code tile",
+    "meaning": "one implementation spanning device platforms",
+    "silhouette": "one central tile with an oversized code-brace pair"
+  },
+  "support_cue": {
+    "object": "one phone and one desktop window joined behind it",
+    "meaning": "mobile and desktop platform reach"
+  },
+  "avoid": [
+    "Kotlin letter K",
+    "Kotlin diagonal-square mark",
+    "Kotlin Multiplatform logo",
+    "mascot",
+    "platform vendor logos"
+  ],
+  "collision_avoid": [
+    "responsive design",
+    "generic mobile development"
+  ],
+  "brand_source": {
+    "type": "brand-adjacent",
+    "source": "Kotlin Multiplatform",
+    "trademark_status": "name describes compatibility; no JetBrains or Kotlin mark requested",
+    "license": "original-generated-artwork",
+    "authorization": "not-required-no-brand-mark"
+  },
+  "brandColor": "#7F52FF",
+  "recommended_asset_path": "assets/icon.png",
+  "imagegen_mode": "built-in",
+  "size_gates": [
+    16,
+    24,
+    32,
+    64
+  ],
+  "prompt": "Use case: logo-brand\nAsset type: 1024x1024 marketplace plugin icon\nPurpose: Kotlin Multiplatform engineering across mobile and desktop targets.\nLiteral semantic hero: a shared-code tile. It communicates one implementation spanning device platforms.\nSilhouette: one central tile with an oversized code-brace pair. Use exactly one subordinate support cue: one phone and one desktop window joined behind it, meaning mobile and desktop platform reach.\nComposition: one centered dominant silhouette, full-bleed opaque background, meaningful content inside the central 72 percent, no more than one support cue.\nSmall-size requirement: the same hero must remain recognizable at 64, 32, 24, and 16 pixels; keep critical negative space open at 24 pixels.\nStyle: polished modern bitmap icon, bold filled shapes, crisp edges, restrained dimensional polish, consistent portfolio weight.\nBackground: a full-bleed field anchored on #7F52FF.\nForeground palette: high-contrast warm white with at most two restrained accents; meaningful adjacent colors meet at least 3:1 contrast.\nBrand-source rule: brand-adjacent referencing Kotlin Multiplatform; name describes compatibility; no JetBrains or Kotlin mark requested. Do not introduce an unlicensed mark or distinctive trade dress.\nAvoid: Kotlin letter K; Kotlin diagonal-square mark; Kotlin Multiplatform logo; mascot; platform vendor logos.\nCollision avoid: responsive design; generic mobile development.\nText: none. No letters, words, numbers, watermark, screenshot, photo, UI replica, tiny badge, thin-line detail, mascot, or private identifier.\nDo not replace the literal hero with a generic abstract symbol derived only from the plugin name.\n",
+  "checks": [
+    "save the selected image as a 1024x1024 opaque RGB PNG at assets/icon.png",
+    "inspect semantic recognition and the monochrome silhouette at 16, 24, 32, and 64 px",
+    "reject a competing second cue, closed critical gap, portfolio collision, text, screenshot, photo, watermark, or low contrast",
+    "verify brand-source, trademark, license, and authorization provenance manually",
+    "wire identical interface.composerIcon and interface.logo paths plus interface.brandColor"
+  ]
+}

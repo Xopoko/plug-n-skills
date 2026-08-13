@@ -1,11 +1,11 @@
 ---
 name: capability-workbench
-description: Route agent skill and plugin lifecycle work across discovery, synthesis, creation, installation, packaging, audit, portfolio design, trigger metadata, guidance authoring, and repair. Excludes runtime harness operations.
+description: "Route artifact-first agent capability work: frame behavior gaps; choose, evaluate, author, validate, govern, and explicitly activate skill, plugin, guidance, or trigger artifacts. Use Agent Harness for runtime and harness-level evaluation."
 ---
 
 # Capability Workbench
 
-First stop for agent capability work: decide the output shape, call the narrow sibling skill, keep validation complete. Treat installation or cache refresh as an explicit activation step, not an automatic side effect of every synthesis.
+Artifact authoring and governance plane for agent capability engineering. Turn desired behavior and observed gaps into reusable, validated skills, plugins, agent guidance, trigger contracts, and coherent capability portfolios. Route runtime design, operation, orchestration, and harness-level evaluation to Agent Harness. Treat installation or cache refresh as an explicit activation step, not an automatic side effect of authoring.
 
 ## Plugin Root
 
@@ -13,30 +13,38 @@ Bundled commands use `$PLUGIN_ROOT` (`$env:PLUGIN_ROOT` in PowerShell; same path
 
 ## Route The Work
 
-Choose one primary mode before making changes:
+Choose one primary lifecycle lane before making changes:
 
-| Capability situation | Use | Output |
-| --- | --- | --- |
-| Build well-vetted skill or plugin from references | `capability-synthesizer` | Reports plus final skill/plugin |
-| Redesign skill/plugin architecture: split, merge, delete, move, router, cross-plugin overlap, reference extraction, script extraction, shared capability extraction, or boundary changes | `capability-portfolio-architect` | Portfolio decision ledger plus structural refactor plan |
-| Create or refactor one skill | `skill-factory` | Skill folder and validation |
-| Design, audit, or debug skill names/descriptions, trigger metadata, or cross-runtime catalog survivability | `skill-trigger-metadata` | Trigger-ready frontmatter, prompt boundary examples, and target-runtime validation route |
-| Find, vet, install, or update skills | `skill-installer-vetter` | Provenance, vetting, install state |
-| Create, update, install, or publish agent marketplace plugin | `plugin-factory` | Plugin folder, marketplace entry when needed, validation, optional install/cache proof and separate discovery state |
-| Review safety, coverage, validation, token cost, or prompt contracts | `capability-auditor` | Structured audit and fixes or recommendations |
-| Repair a false, stale, or broken skill/script/plugin/MCP contract discovered during work | `capability-reality-repair` | Updated source of truth plus validation proof |
+| Lifecycle lane | Capability situation | Use | Output |
+| --- | --- | --- | --- |
+| Frame | Turn behavior gaps and trusted sources into a well-vetted capability design | `capability-synthesizer` | Evidence, decisions, and final skill/plugin |
+| Frame | Redesign split, merge, delete, move, router, shared mechanics, references, scripts, or cross-plugin boundaries | `capability-portfolio-architect` | Portfolio decision ledger and structural plan |
+| Frame | Design or debug names, descriptions, trigger metadata, and cross-runtime catalog survivability | `skill-trigger-metadata` | Trigger contract, boundary probes, and runtime validation route |
+| Author | Create or refactor one portable skill | `skill-factory` | Skill folder and validation |
+| Author | Create or update an agent marketplace plugin | `plugin-factory` | Plugin folder, manifests, marketplace entry when needed, and validation |
+| Author | Create or refresh AGENTS.md, CLAUDE.md, or scoped agent rules | `agent-guidance-factory` | Repository guidance and precedence checks |
+| Assure/evolve | Compare a candidate skill, plugin, guidance, or trigger change against a baseline | `capability-evaluation` | Evaluation plan, run receipt, evidence, and adoption verdict |
+| Assure/evolve | Review safety, evidence coverage, validation, token cost, dependencies, or prompt contracts | `capability-auditor` | Structured audit and fixes or recommendations |
+| Assure/evolve | Repair a false, stale, or broken skill/script/plugin/MCP contract discovered during work | `capability-reality-repair` | Updated source of truth plus validation proof |
+| Activate | Find, vet, install, or update skills | `skill-installer-vetter` | Provenance, vetting, and explicit install state |
+| Activate | Install or publish a completed marketplace plugin | `plugin-factory` | Optional install/cache proof and separate runtime-discovery state |
 
-If the request spans modes, sequence them explicitly. Typical full lifecycle:
-`capability-synthesizer` -> optional `capability-portfolio-architect` -> `skill-factory` or `plugin-factory` -> `capability-auditor` -> optional install/cache gate and separate runtime-discovery probe.
+If the request spans lanes, sequence them explicitly. Typical full lifecycle:
+frame with `capability-synthesizer` and optional `capability-portfolio-architect` -> author with `skill-factory`, `plugin-factory`, or `agent-guidance-factory` -> assure with `capability-auditor` and, when behavior needs evidence, `capability-evaluation` -> explicitly activate only when requested.
 
 Agent runtime operation, Codex or Claude commands, scheduler proof, harness
-engineering, and harness evaluation belong to the adjacent `agent-harness`
+engineering, and harness reliability evaluation belong to the adjacent `agent-harness`
 plugin. If the user asks to create a skill that teaches one of those workflows,
 route the capability artifact through `capability-synthesizer` and
 `skill-factory`; route execution of the resulting runtime workflow to
 `agent-harness`. Keep generic application structure in Architecture
 Intelligence, prompt/context deep work in Context Density, and literature
 synthesis in Scientific Research.
+
+`capability-evaluation` evaluates whether a capability artifact changes target
+agent behavior under a controlled, provider-neutral comparison. It does not
+diagnose the runner, orchestration loop, cancellation, recovery, memory, or
+runtime reliability; those are Agent Harness concerns.
 
 For portable skill discovery and catalog comparisons, use
 `$PLUGIN_ROOT/references/skill-catalog-runtime-comparison.md`. Route exact
@@ -58,7 +66,7 @@ Bind the primary target and delivery surface before editing. If the user names a
 2. Validate the delivery surface and install requirement with the install-scope gate before implementation; keep `install_required=false` unless the user asked for activation. Surface rules and commands: `$PLUGIN_ROOT/references/install-scope.md`.
 3. For synthesis, augmentation, plugin-pack, or marketplace capability work, default discovery to `external-broad`, create and validate the external-discovery ledger, and search public sources before local ones. Source families, search waves, and stop conditions: `$PLUGIN_ROOT/references/external-discovery.md`. Inventory local surfaces as supplementary candidates with `python3 "$PLUGIN_ROOT/scripts/capability_inventory.py" --query "<topic>" --json`.
 4. Lightweight lane: when the change is confined to one existing skill's text or metadata — no new scripts, no new capability claims, no installation — skip the JSON ledgers; run `quick_validate.py` and record a one-line scope note in the final report instead.
-5. Execute through the routed sibling skill, adopting only mechanisms that improve quality, reliability, safety, flexibility, controllability, validation, or developer usability: candidate audits and distillation in `capability-synthesizer`, structural decisions in `capability-portfolio-architect`, trigger metadata in `skill-trigger-metadata`, packaging and icon generation in `plugin-factory` (`$PLUGIN_ROOT/references/plugin-icon-system.md`). For local Codex skill/plugin QA, use structured quality-review evidence per `$PLUGIN_ROOT/references/quality-review-adoption.md`.
+5. Execute through the routed sibling skill, adopting only mechanisms that improve quality, reliability, safety, flexibility, controllability, validation, or developer usability: candidate audits and distillation in `capability-synthesizer`, structural decisions in `capability-portfolio-architect`, trigger metadata in `skill-trigger-metadata`, packaging and icon generation in `plugin-factory` (`$PLUGIN_ROOT/references/plugin-icon-system.md`), and controlled candidate-versus-baseline evidence in `capability-evaluation`. For local skill/plugin QA, use structured quality-review evidence per `$PLUGIN_ROOT/references/quality-review-adoption.md`.
 6. Before compacting or distilling capability evidence, preserve commitments per `$PLUGIN_ROOT/references/context-density.md`: must-keep workflows, trigger semantics, safety boundaries, install scope, provenance, validation proof, and recovery pointers to source records.
 7. Report what was adopted, adapted, rejected, deferred, tested, the validated delivery surface, whether anything was installed, and where the user can inspect or use it.
 
@@ -66,9 +74,9 @@ Bind the primary target and delivery surface before editing. If the user names a
 
 - Do not blindly merge whole skills or plugin packs.
 - Do not treat a model transcript as a checkpoint, model output as permission, telemetry as correctness evidence, or a skill/package scan as a safety guarantee.
-- Do not route runtime or harness work through this plugin; use `agent-harness`.
+- Do not route runtime or harness work through this plugin; use `agent-harness`. Capability evaluation may consume a runner's receipts but must not claim the runner itself is reliable.
 - Do not delete, move, merge, or split skills/plugins from token pressure alone. Preserve or explicitly transfer trigger coverage, safety boundaries, commands, output contracts, install surface, and validators.
-- Do not execute candidate skills or unknown install scripts during evaluation.
+- Do not execute candidate-provided scripts, hooks, graders, configuration, or installers during evaluation. Controlled activation of the capability artifact itself is allowed only through the declared, authorized evaluation runner and isolation contract.
 - Do not include paid APIs, required API keys, external generation services, hidden network dependencies, telemetry, unsafe shell execution, obscure installers, or project-specific infrastructure in the core path.
 - Network-backed discovery is expected for synthesis/augmentation unless explicitly scoped out or unsafe. Network-backed install remains explicit and approval/user-intent gated.
 - Do not mutate global agent, marketplace, cache, or MCP configuration just because synthesis produced a usable artifact. Global activation needs install intent, an install/update mode, or an install-required contract.
@@ -81,6 +89,12 @@ Bind the primary target and delivery surface before editing. If the user names a
 ## Completion Gate
 
 For a skill: run `python3 "$PLUGIN_ROOT/scripts/skill/quick_validate.py" <skill-dir>` and any resource tests.
+
+For a capability evaluation receipt, run:
+
+```bash
+python3 "$PLUGIN_ROOT/scripts/evaluation/validate_capability_evaluation.py" <evaluation.json>
+```
 
 For a plugin source artifact, always validate the manifest:
 

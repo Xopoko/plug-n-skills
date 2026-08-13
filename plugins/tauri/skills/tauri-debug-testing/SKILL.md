@@ -65,9 +65,11 @@ it("mocks a command", async () => {
 ## WebDriver
 
 Use WebDriver when the native shell is part of the risk: windows, dialogs,
-menus, permissions, packaged launch, or cross-process UI flows. Tauri WebDriver
-coverage is practical on Linux and Windows; macOS WKWebView has tooling limits,
-so use other proof there.
+menus, permissions, packaged launch, or cross-process UI flows. The current
+recommended route is WebdriverIO with `@wdio/tauri-service`; its embedded
+WebDriver provider supports Windows, Linux, and macOS. Direct `tauri-driver`
+remains Windows/Linux only because macOS has no WKWebView driver, so use the
+embedded service or other platform-specific proof on macOS.
 
 ## Debugging Discipline
 

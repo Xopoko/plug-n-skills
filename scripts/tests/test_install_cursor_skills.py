@@ -12,6 +12,17 @@ spec.loader.exec_module(install_cursor_skills)
 
 
 class CursorInstallerTest(unittest.TestCase):
+    def test_default_available_can_exclude_opt_in_catalog_entries(self):
+        selected, unknown = install_cursor_skills.select_plugins(
+            ["local", "standalone"],
+            [],
+            [],
+            default_available=["local"],
+        )
+
+        self.assertEqual([], unknown)
+        self.assertEqual(["local"], selected)
+
     def test_exclude_plugins_removes_default_plugins(self):
         selected, unknown = install_cursor_skills.select_plugins(
             ["a", "b", "c"],

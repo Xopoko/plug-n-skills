@@ -1078,12 +1078,12 @@ def inspect_archive(
             local_data_offsets[id(info)] = data_offset
             local_ranges.append((info.header_offset, record_end))
             raw_name = getattr(info, "orig_filename", info.filename)
+            member_path = normalized_member_path(raw_name, label="archive member")
             if raw_name != info.filename:
                 fail(
                     "ambiguous_member_name",
                     "archive member name was normalized by ZIP parsing",
                 )
-            member_path = normalized_member_path(raw_name, label="archive member")
             classify_member(info, member_path)
 
             if member_path in seen_exact:

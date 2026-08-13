@@ -1,6 +1,7 @@
 {
   "schema_version": "technology_intelligence.assessments.v1",
-  "snapshot_id": "research-2026-08-11",
+  "snapshot_id": "research-2026-08-11-capability-model-v1",
+  "generated_at": "2026-08-11T18:47:00Z",
   "method": "profile-specific dispositions with hard gates; no universal score",
   "assessments": [
     {
@@ -416,6 +417,24 @@
       "reviewed_at": "2026-08-11",
       "expires_at": "2026-11-09",
       "alternatives": ["cli-process-interface", "mcp-stdio", "native-sdk-integration"]
+    },
+    {
+      "id": "anydoc-local-document-normalization-profile",
+      "technology_id": "anydoc",
+      "profile": {
+        "stages": ["experiment", "startup"],
+        "use_cases": ["local conversion of heterogeneous text-bearing office documents to Markdown", "document normalization for retrieval or agent pipelines"],
+        "constraints": ["required inputs fit the documented format set", "OCR is unnecessary or an explicit OCR-capable fallback exists", "native package or WebAssembly compatibility can be pinned and tested"]
+      },
+      "disposition": "pilot",
+      "rationale": ["One local engine exposes CLI and in-process interfaces across Rust, Node.js, Python, and browser WebAssembly; non-PDF office, ebook, and tabular formats use its shared document model while text-based PDFs use a separate pdf-inspector path.", "The candidate is on an early v0.1.8 release and all candidate-specific comparative evidence is project-authored, so adoption should remain a bounded pilot."],
+      "hard_gates": ["Route scanned or image-only PDFs and unsupported inputs to an OCR-capable fallback; do not describe AnyDoc itself as OCR-capable.", "Pin the exact release and test a representative, rights-cleared corpus across required formats, malformed and encrypted inputs, resource limits, embedded assets, tables, and every selected package surface.", "Measure end-to-end latency with identical process-start accounting, fixed hardware and configuration, repetitions, variability, and task-specific ground truth.", "Compare at least one fit-for-format baseline such as LibreOffice, MarkItDown, Docling, Pandoc, Unstructured, or Mammoth under the same receipt."],
+      "evidence_ids": ["anydoc-capabilities-v0-1-8", "anydoc-interfaces-v0-1-8", "anydoc-cli-provisioning-v0-1-8", "anydoc-node-compatibility-v0-1-8", "anydoc-python-compatibility-v0-1-8", "anydoc-rust-compatibility-v0-1-8", "anydoc-release-v0-1-8", "anydoc-vendor-benchmark-v0-1-8"],
+      "verification_gap": "No candidate-relative independent evidence is recorded. The only comparative benchmark is Firecrawl-authored, uses a private corpus, excludes PDF, judges only the first six rendered pages, reports one warm run without variability, and applies asymmetric timing; no independent target-corpus, security, maintenance, or cross-platform compatibility receipt exists. Normalized comparator technologies have not yet been added for this capability, so alternatives remain empty and the hard gate names only unassessed baselines.",
+      "confidence": "low",
+      "reviewed_at": "2026-08-11",
+      "expires_at": "2026-09-10",
+      "alternatives": []
     }
   ]
 }

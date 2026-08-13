@@ -1,0 +1,75 @@
+{
+  "schema": "architecture_intelligence.trigger_probes.v1",
+  "skill": "architecture-refactoring-strategy",
+  "should_trigger": [
+    {
+      "id": "public-api-bypass",
+      "prompt": "A coding agent produced a passing patch that imports an internal adapter instead of the module's public API. Repair the code architecture and add a boundary proof."
+    },
+    {
+      "id": "layer-crossing",
+      "prompt": "Move domain decisions out of the UI and infrastructure layers in small behavior-preserving slices with characterization tests."
+    },
+    {
+      "id": "dependency-cycle",
+      "prompt": "Break the new package cycle, restore dependency direction, and prove the intended layer rule without rewriting the subsystem."
+    },
+    {
+      "id": "module-split",
+      "prompt": "Compare boundaries for splitting this overloaded module, choose the smallest migration seam, and execute the first reversible slice."
+    },
+    {
+      "id": "extension-point-ripple",
+      "prompt": "Refactor a base class and extension point after tracing subclasses, sibling implementations, importers, and downstream consumers."
+    },
+    {
+      "id": "multi-file-architecture-refactor",
+      "prompt": "Use Codex to improve cohesion across this 12-file refactor, keep public behavior stable, and prove module and dependency changes before taking the next slice."
+    },
+    {
+      "id": "adr-violating-patch",
+      "prompt": "Tests pass, but the agent-authored patch reverses a dependency forbidden by an ADR. Rework the patch and add conformance and fitness evidence."
+    },
+    {
+      "id": "buried-code-architecture",
+      "prompt": "Implement the feature with Claude Code; while doing so, extract the domain boundary behind a stable interface, isolate incidental cleanup, compare before and after edges, and keep rollback possible."
+    }
+  ],
+  "should_not_trigger": [
+    {
+      "id": "audit-only",
+      "prompt": "Map the existing modules and dependency cycles without changing code.",
+      "route": "codebase-architecture-audit"
+    },
+    {
+      "id": "adr-only",
+      "prompt": "Record the tradeoffs for choosing event delivery over synchronous calls.",
+      "route": "architecture-decisions"
+    },
+    {
+      "id": "fitness-only",
+      "prompt": "Add a CI rule that forbids UI imports from the domain package.",
+      "route": "architecture-fitness-functions"
+    },
+    {
+      "id": "async-race",
+      "prompt": "A stale in-flight load republishes cache state after invalidation.",
+      "route": "async-state-consistency"
+    },
+    {
+      "id": "routine-cleanup",
+      "prompt": "Rename three local variables and format this function without changing any boundary or quality attribute.",
+      "route": "ordinary code maintenance"
+    },
+    {
+      "id": "agent-runtime",
+      "prompt": "Design subagent roles, tool permissions, retries, cancellation, and checkpoint recovery.",
+      "route": "agent-harness"
+    },
+    {
+      "id": "context-budget",
+      "prompt": "Measure and compress the prompt, skill catalog, and agent handoff context.",
+      "route": "context-density"
+    }
+  ]
+}

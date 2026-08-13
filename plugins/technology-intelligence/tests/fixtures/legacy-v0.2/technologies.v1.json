@@ -1,0 +1,17 @@
+{
+  "schema_version": "technology_intelligence.technologies.v1",
+  "snapshot_id": "fixture-technology-intelligence-v0-2",
+  "generated_at": "2026-08-10T12:00:00Z",
+  "technologies": [
+    {
+      "id": "legacy-react",
+      "name": "Legacy React",
+      "family": "frontend-fullstack",
+      "kind": "ui-library",
+      "aliases": ["legacy fixture"],
+      "tags": ["fixture"],
+      "official_source_ids": ["legacy-react-source"],
+      "summary": "Synthetic pre-capability-model candidate."
+    }
+  ]
+}

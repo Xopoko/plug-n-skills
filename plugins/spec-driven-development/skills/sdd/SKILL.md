@@ -33,7 +33,7 @@ Before major edits state: `LANE`, `EVIDENCE_PROFILE`, source-of-truth paths, ass
 ## Lanes
 
 - `tiny-direct`: local, low-risk, clear. Use 3-line mini-spec: intent, non-goal, proof. Never use for ambiguous/cross-boundary/security/privacy work.
-- `spec-kit`: `.specify/`, GitHub Spec Kit, `specify`, `/speckit.*`, `$speckit-*`, or constitution -> specify -> plan -> tasks -> analyze -> implement.
+- `spec-kit`: `.specify/`, GitHub Spec Kit, `specify`, `/speckit.*`, `$speckit-*`, or constitution -> specify -> clarify -> plan -> checklist -> tasks -> analyze -> implement -> converge. Use `taskstoissues` only for an explicitly requested GitHub issue publication step.
 - `kiro-lite`: `.kiro/specs/` or `requirements.md` + `design.md` + `tasks.md`.
 - `brownfield-gap`: desired behavior depends on existing code; mark inferred behavior `[TO VERIFY]`.
 - `bugfix-spec`: meaningful regression risk; capture current/expected/unchanged behavior, root-cause hypothesis, regression proof.

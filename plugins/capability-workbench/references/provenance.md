@@ -1,6 +1,8 @@
 # Provenance
 
-This plugin distills and bundles mechanisms from inspectable sources:
+This plugin distills and bundles mechanisms from inspectable sources. The paths
+below are provenance snapshots of the original local inputs, not current install
+targets; the `.codex/skills` entries are legacy Codex locations.
 
 | Source | Path | Adopted or adapted mechanisms |
 | --- | --- | --- |

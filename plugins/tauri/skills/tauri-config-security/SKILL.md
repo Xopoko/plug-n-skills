@@ -7,8 +7,9 @@ description: Tauri 2 configuration and security review for tauri.conf, capabilit
 
 Bundled commands use `$PLUGIN_ROOT` (`$env:PLUGIN_ROOT` in PowerShell; same path suffix) for the plugin root. Set it once: use the host's plugin-root variable when defined (Claude Code: `PLUGIN_ROOT="$CLAUDE_PLUGIN_ROOT"`), otherwise the absolute path of this plugin's root directory.
 
-Use this skill when changing `tauri.conf.*`, `src-tauri/capabilities/*`,
-permissions, CSP, plugin access, or any frontend-callable native API.
+Use this skill when changing `tauri.conf.json`, optional `tauri.conf.json5` or
+`Tauri.toml`, `src-tauri/capabilities/*`, permissions, CSP, plugin access, or
+any frontend-callable native API.
 
 ## Security Baseline
 
@@ -28,10 +29,14 @@ python3 "$PLUGIN_ROOT/scripts/tauri_project_probe.py" .
 
 Then inspect:
 
-- `src-tauri/tauri.conf.json`, `.json5`, or `.toml`;
-- platform configs such as `tauri.macos.conf.json`,
+- `src-tauri/tauri.conf.json`; `tauri.conf.json5` requires the `config-json5`
+  Cargo feature, and `Tauri.toml` requires `config-toml`;
+- JSON platform configs such as `tauri.macos.conf.json`,
   `tauri.windows.conf.json`, `tauri.linux.conf.json`,
   `tauri.android.conf.json`, `tauri.ios.conf.json`;
+- when the TOML format is active, the matching names are
+  `Tauri.macos.toml`, `Tauri.windows.toml`, `Tauri.linux.toml`,
+  `Tauri.android.toml`, and `Tauri.ios.toml`;
 - `src-tauri/capabilities/*.json` or `*.toml`;
 - `src-tauri/Cargo.toml`;
 - Rust window creation labels and plugin registration.
@@ -58,8 +63,11 @@ Prefer file-based capabilities under `src-tauri/capabilities/`:
 }
 ```
 
-If `app.security.capabilities` is set in config, keep it synchronized with
-capability identifiers. Window labels are case-sensitive and are not titles.
+By default, every JSON/TOML file under `src-tauri/capabilities/` is enabled. An
+absent or empty `app.security.capabilities` list keeps that default. A non-empty
+list becomes the explicit selection and only those entries are used; keep it
+synchronized with capability identifiers. Window labels are case-sensitive
+and are not titles.
 
 ## Review Checklist
 

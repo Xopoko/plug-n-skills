@@ -1,10 +1,10 @@
 ---
 name: technology-advisor
 description: >-
-  Compare software frameworks, databases, platforms, and CLI/MCP/API delivery
-  modes for an explicit adoption or migration decision using dated evidence
-  and constraints. Excludes routine coding and running or installing
-  already-selected tools.
+  Map software capabilities to candidate technologies and
+  CLI/SDK/WASM/MCP/API/skill interfaces for adoption or migration using dated
+  evidence. Keeps runtime separate; excludes routine coding and tool execution
+  or installation.
 ---
 
 # Technology Advisor
@@ -18,7 +18,8 @@ path of this skill folder's `../..`.
 
 ## Workflow
 
-1. Bind the decision profile: lifecycle stage, use case, team and platform,
+1. Name the needed outcome as a capability, then bind the decision profile:
+   lifecycle stage, use case, team and platform,
    delivery horizon, scale and reliability, security and compliance, budget and
    operating capacity, lock-in tolerance, and hard requirements. Ask only for a
    missing constraint that could change the shortlist.
@@ -28,13 +29,15 @@ path of this skill folder's `../..`.
    python3 "$PLUGIN_ROOT/scripts/technology_intelligence.py" validate
    ```
 
-3. Query only the relevant slice. Add `--runtime-inventory <json>` when the
+3. Query only the relevant slice. Prefer `--capability` when the need is known
+   but the product is not. Use `--technology` or `--interface` for a named
+   candidate or access surface. Add `--runtime-inventory <json>` when the
    caller already has a read-only live inventory; never infer availability from
    the catalog.
 
    ```bash
    python3 "$PLUGIN_ROOT/scripts/technology_intelligence.py" query \
-     --family <family> --stage <stage> --use-case <use-case> --format json
+     --capability <capability> --stage <stage> --use-case <use-case> --format json
    ```
 
    For a time-bounded decision, inspect publication coverage separately from
@@ -45,7 +48,11 @@ path of this skill folder's `../..`.
      --since <YYYY-MM-DD> --as-of <YYYY-MM-DD> --json
    ```
 
-4. Treat retrieved assessments as dated decision cards, not universal truth.
+4. Keep four entities explicit: a capability is the needed outcome, a
+   technology is a candidate product or pattern, an interface is its durable
+   access contract, and runtime inventory is short-lived evidence of what can
+   be used here now. Treat retrieved assessments as dated decision cards, not
+   universal truth.
    Apply hard gates first, compare visible dimensions, preserve conflicting
    evidence, and name missing evidence. Popularity alone cannot promote a
    candidate.
@@ -62,6 +69,7 @@ path of this skill folder's `../..`.
 Report:
 
 - decision profile and hard gates;
+- normalized capability and candidate interfaces;
 - preferred candidate or bounded shortlist;
 - why each candidate fits this context and where it does not;
 - dated observations with direct source URLs;

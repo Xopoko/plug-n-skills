@@ -27,12 +27,17 @@ PLUGIN_ROOT = Path(__file__).resolve().parents[1]
 DATA_DIR = PLUGIN_ROOT / "data"
 TRIGGER_CASES = PLUGIN_ROOT / "tests" / "fixtures" / "trigger-cases.v1.json"
 
-DATASET_FILES = {
+CORE_DATASET_FILES = {
     "sources": ("source-registry.v1.json", "sources"),
     "technologies": ("technologies.v1.json", "technologies"),
     "observations": ("observations.v1.json", "observations"),
     "assessments": ("assessments.v1.json", "assessments"),
 }
+ADDITIVE_DATASET_FILES = {
+    "capabilities": ("capabilities.v1.json", "capabilities"),
+    "interfaces": ("interfaces.v1.json", "interfaces"),
+}
+DATASET_FILES = {**CORE_DATASET_FILES, **ADDITIVE_DATASET_FILES}
 SINGLETON_FILES = {
     "runtime-capability-schema": "runtime-capability.schema.v1.json",
     "trigger-contract": "trigger-contract.v1.json",
@@ -42,6 +47,8 @@ EXPECTED_SCHEMA_VERSIONS = {
     "technologies": "technology_intelligence.technologies.v1",
     "observations": "technology_intelligence.observations.v1",
     "assessments": "technology_intelligence.assessments.v1",
+    "capabilities": "technology_intelligence.capabilities.v1",
+    "interfaces": "technology_intelligence.interfaces.v1",
     "runtime-capability-schema": "technology_intelligence.runtime_capability_schema.v1",
     "trigger-contract": "technology_intelligence.trigger_contract.v1",
 }
@@ -54,7 +61,12 @@ EXPECTED_FAMILIES = {
     "frontend-fullstack",
     "backend-data-infrastructure",
     "agent-delivery",
+    "document-processing",
 }
+MIN_TECHNOLOGIES = 18
+MAX_TECHNOLOGIES = 32
+MAX_CAPABILITIES = 32
+MAX_INTERFACES = 96
 FORBIDDEN_SCORE_KEYS = {"score", "scores", "rank", "ranking", "weighted_score", "universal_score"}
 RUNTIME_STATE_KEYS = {"installed", "enabled", "auth_state", "health", "checked_at", "permissions"}
 
@@ -170,12 +182,191 @@ def _record_unique_profile(
         assessed_profiles[profile_key] = assessment_id
 
 
-def load_snapshot(data_dir: Path | str = DATA_DIR) -> dict[str, Any]:
+def _validate_capability_model(
+    *,
+    capabilities: dict[str, dict[str, Any]],
+    technologies: dict[str, dict[str, Any]],
+    interfaces: dict[str, dict[str, Any]],
+    observations: dict[str, dict[str, Any]],
+    sources: dict[str, dict[str, Any]],
+    runtime_schema: dict[str, Any],
+    errors: list[str],
+    allow_empty: bool = False,
+) -> None:
+    """Validate capability -> technology -> interface relations without runtime state."""
+    if not capabilities and not interfaces:
+        if not allow_empty:
+            errors.append("capability and interface datasets must be non-empty")
+        return
+    if not capabilities or not interfaces:
+        errors.append("capability and interface datasets must be introduced together")
+        return
+    if len(capabilities) > MAX_CAPABILITIES:
+        errors.append(f"capability count must not exceed {MAX_CAPABILITIES}, found {len(capabilities)}")
+    if len(interfaces) > MAX_INTERFACES:
+        errors.append(f"interface count must not exceed {MAX_INTERFACES}, found {len(interfaces)}")
+
+    entity_groups = {
+        "capability": set(capabilities),
+        "technology": set(technologies),
+        "interface": set(interfaces),
+    }
+    group_names = list(entity_groups)
+    for left_index, left_name in enumerate(group_names):
+        for right_name in group_names[left_index + 1 :]:
+            collisions = sorted(entity_groups[left_name] & entity_groups[right_name])
+            if collisions:
+                errors.append(
+                    f"{left_name} and {right_name} ids must be globally distinct: {collisions}"
+                )
+
+    technology_capabilities: dict[str, set[str]] = {}
+    capability_technologies: dict[str, set[str]] = {}
+    for technology_id, technology in technologies.items():
+        capability_ids = technology.get("capability_ids", [])
+        if not isinstance(capability_ids, list):
+            errors.append(f"technology {technology_id} capability_ids must be an array")
+            continue
+        if len(capability_ids) != len(set(capability_ids)):
+            errors.append(f"technology {technology_id} capability_ids must be unique")
+        technology_capabilities[technology_id] = set()
+        for capability_id in capability_ids:
+            if capability_id not in capabilities:
+                errors.append(f"technology {technology_id} references unknown capability {capability_id}")
+                continue
+            technology_capabilities[technology_id].add(capability_id)
+            capability_technologies.setdefault(capability_id, set()).add(technology_id)
+
+    for capability_id, capability in capabilities.items():
+        for field in ("name", "domain", "kind", "summary"):
+            if not isinstance(capability.get(field), str) or not capability.get(field).strip():
+                errors.append(f"capability {capability_id} {field} must be a non-empty string")
+        for field in ("aliases", "tags", "decision_dimensions"):
+            values = capability.get(field)
+            if not isinstance(values, list) or not values:
+                errors.append(f"capability {capability_id} {field} must be a non-empty array")
+            elif any(not isinstance(value, str) or not value.strip() for value in values):
+                errors.append(f"capability {capability_id} {field} values must be non-empty strings")
+            elif len(values) != len(set(values)):
+                errors.append(f"capability {capability_id} {field} values must be unique")
+
+    allowed_surfaces = set(runtime_schema.get("allowed_surfaces", []))
+    allowed_provisioning = set(runtime_schema.get("allowed_provisioning_modes", []))
+    capability_interfaces: dict[str, set[str]] = {}
+    technology_capability_interfaces: set[tuple[str, str]] = set()
+    seen_interface_identity: set[tuple[str, str, str]] = set()
+    for interface_id, interface in interfaces.items():
+        for field in ("name", "identifier", "summary"):
+            if not isinstance(interface.get(field), str) or not interface.get(field).strip():
+                errors.append(f"interface {interface_id} {field} must be a non-empty string")
+        technology_id = interface.get("technology_id")
+        if technology_id not in technologies:
+            errors.append(f"interface {interface_id} references unknown technology {technology_id}")
+        surface = interface.get("surface")
+        if surface not in allowed_surfaces:
+            errors.append(f"interface {interface_id} has unsupported surface {surface!r}")
+        identity = (str(technology_id), str(surface), str(interface.get("identifier")))
+        if identity in seen_interface_identity:
+            errors.append(f"interface {interface_id} duplicates interface identity {identity!r}")
+        seen_interface_identity.add(identity)
+
+        capability_ids = interface.get("capability_ids")
+        if not isinstance(capability_ids, list) or not capability_ids:
+            errors.append(f"interface {interface_id} capability_ids must be a non-empty array")
+            capability_ids = []
+        elif len(capability_ids) != len(set(capability_ids)):
+            errors.append(f"interface {interface_id} capability_ids must be unique")
+        for capability_id in capability_ids:
+            if capability_id not in capabilities:
+                errors.append(f"interface {interface_id} references unknown capability {capability_id}")
+                continue
+            capability_interfaces.setdefault(capability_id, set()).add(interface_id)
+            if capability_id not in technology_capabilities.get(str(technology_id), set()):
+                errors.append(
+                    f"interface {interface_id} capability {capability_id} is not declared by technology {technology_id}"
+                )
+            else:
+                technology_capability_interfaces.add((str(technology_id), capability_id))
+
+        delivery_technology_id = interface.get("delivery_technology_id")
+        delivery_technology = technologies.get(delivery_technology_id)
+        if delivery_technology is None:
+            errors.append(
+                f"interface {interface_id} references unknown delivery technology {delivery_technology_id}"
+            )
+        elif delivery_technology.get("family") != "agent-delivery":
+            errors.append(
+                f"interface {interface_id} delivery technology must belong to agent-delivery"
+            )
+
+        provisioning_modes = interface.get("provisioning_modes")
+        if not isinstance(provisioning_modes, list) or not provisioning_modes:
+            errors.append(f"interface {interface_id} provisioning_modes must be a non-empty array")
+        else:
+            if len(provisioning_modes) != len(set(provisioning_modes)):
+                errors.append(f"interface {interface_id} provisioning_modes must be unique")
+            for mode in provisioning_modes:
+                if mode not in allowed_provisioning:
+                    errors.append(f"interface {interface_id} has unsupported provisioning mode {mode!r}")
+
+        evidence_ids = interface.get("evidence_ids")
+        if not isinstance(evidence_ids, list) or not evidence_ids:
+            errors.append(f"interface {interface_id} evidence_ids must be a non-empty array")
+            evidence_ids = []
+        elif len(evidence_ids) != len(set(evidence_ids)):
+            errors.append(f"interface {interface_id} evidence_ids must be unique")
+        has_first_party_evidence = False
+        for evidence_id in evidence_ids:
+            observation = observations.get(evidence_id)
+            if observation is None:
+                errors.append(f"interface {interface_id} references unknown observation {evidence_id}")
+                continue
+            if observation.get("technology_id") != technology_id:
+                errors.append(f"interface {interface_id} uses evidence for another technology")
+            source = sources.get(observation.get("source_id"))
+            if source is not None and source.get("evidence_role") == "first-party":
+                has_first_party_evidence = True
+        if evidence_ids and not has_first_party_evidence:
+            errors.append(f"interface {interface_id} lacks first-party interface evidence")
+
+    for capability_id in capabilities:
+        if not capability_technologies.get(capability_id):
+            errors.append(f"capability {capability_id} has no candidate technology")
+        if not capability_interfaces.get(capability_id):
+            errors.append(f"capability {capability_id} has no delivery interface")
+    for technology_id, capability_ids in technology_capabilities.items():
+        for capability_id in sorted(capability_ids):
+            if (technology_id, capability_id) not in technology_capability_interfaces:
+                errors.append(
+                    f"technology {technology_id} capability {capability_id} has no matching interface"
+                )
+
+
+def load_snapshot(
+    data_dir: Path | str = DATA_DIR,
+    *,
+    allow_missing_additive: bool | None = None,
+) -> dict[str, Any]:
     """Load the durable datasets without performing network access."""
     directory = Path(data_dir)
+    if allow_missing_additive is None:
+        additive_presence = [
+            (directory / filename).is_file()
+            for filename, _ in ADDITIVE_DATASET_FILES.values()
+        ]
+        allow_missing_additive = not any(additive_presence)
     snapshot: dict[str, Any] = {"data_dir": directory}
     for name, (filename, _) in DATASET_FILES.items():
-        snapshot[name] = _read_json(directory / filename)
+        path = directory / filename
+        if allow_missing_additive and name in ADDITIVE_DATASET_FILES and not path.exists():
+            record_key = ADDITIVE_DATASET_FILES[name][1]
+            snapshot[name] = {
+                "schema_version": EXPECTED_SCHEMA_VERSIONS[name],
+                "snapshot_id": snapshot.get("technologies", {}).get("snapshot_id"),
+                record_key: [],
+            }
+        else:
+            snapshot[name] = _read_json(path)
     for name, filename in SINGLETON_FILES.items():
         snapshot[name] = _read_json(directory / filename)
     manifest_path = directory / "snapshot-manifest.v1.json"
@@ -198,6 +389,7 @@ def validate_runtime_inventory(
     schema: dict[str, Any],
     *,
     known_technology_ids: set[str] | None = None,
+    known_interfaces: dict[str, dict[str, Any]] | None = None,
     reference_time: datetime | None = None,
 ) -> list[str]:
     """Validate caller-supplied runtime facts without retaining them."""
@@ -231,6 +423,7 @@ def validate_runtime_inventory(
     allowed_surfaces = set(schema.get("allowed_surfaces", []))
     allowed_auth = set(schema.get("allowed_auth_states", []))
     allowed_health = set(schema.get("allowed_health_states", []))
+    allowed_provisioning = set(schema.get("allowed_provisioning_modes", []))
     required_capability = schema.get("capability_required", [])
     optional_capability = schema.get("capability_optional", [])
     allowed_capability = set(required_capability) | set(optional_capability)
@@ -271,6 +464,31 @@ def validate_runtime_inventory(
             errors.append(f"{label} has unsupported auth_state")
         if capability.get("health") not in allowed_health:
             errors.append(f"{label} has unsupported health")
+        interface_id = capability.get("interface_id")
+        resolved_interface: dict[str, Any] | None = None
+        if interface_id is not None:
+            if not isinstance(interface_id, str) or not interface_id.strip():
+                errors.append(f"{label} interface_id must be a non-empty string")
+            elif known_interfaces is not None:
+                resolved_interface = known_interfaces.get(interface_id)
+                if resolved_interface is None:
+                    errors.append(f"{label} references unknown interface {interface_id!r}")
+                else:
+                    if resolved_interface.get("technology_id") != technology_id:
+                        errors.append(f"{label} interface {interface_id!r} belongs to another technology")
+                    if resolved_interface.get("surface") != capability.get("surface"):
+                        errors.append(f"{label} interface {interface_id!r} has a different surface")
+        if "provisioning_mode" in capability:
+            provisioning_mode = capability.get("provisioning_mode")
+            if provisioning_mode not in allowed_provisioning:
+                errors.append(f"{label} has unsupported provisioning_mode")
+            elif (
+                resolved_interface is not None
+                and provisioning_mode not in resolved_interface.get("provisioning_modes", [])
+            ):
+                errors.append(
+                    f"{label} provisioning_mode is not documented for interface {interface_id!r}"
+                )
         if not isinstance(capability.get("installed"), bool):
             errors.append(f"{label} installed must be boolean")
         if not isinstance(capability.get("enabled"), bool):
@@ -322,7 +540,7 @@ def validate_plugin(root: Path | str = PLUGIN_ROOT, check_manifest: bool = True)
     data_dir = plugin_root / "data"
     errors: list[str] = []
     try:
-        snapshot = load_snapshot(data_dir)
+        snapshot = load_snapshot(data_dir, allow_missing_additive=False)
     except SnapshotError as exc:
         return [str(exc)]
 
@@ -365,13 +583,12 @@ def validate_plugin(root: Path | str = PLUGIN_ROOT, check_manifest: bool = True)
     technology_doc = snapshot["technologies"]
     observation_doc = snapshot["observations"]
     assessment_doc = snapshot["assessments"]
+    capability_doc = snapshot["capabilities"]
+    interface_doc = snapshot["interfaces"]
     for name, expected in EXPECTED_SCHEMA_VERSIONS.items():
         if snapshot[name].get("schema_version") != expected:
             errors.append(f"{name} schema_version must be {expected}")
-    snapshot_ids = {
-        document.get("snapshot_id")
-        for document in (source_doc, technology_doc, observation_doc, assessment_doc)
-    }
+    snapshot_ids = {snapshot[name].get("snapshot_id") for name in DATASET_FILES}
     if len(snapshot_ids) != 1 or None in snapshot_ids:
         errors.append("core dataset snapshot_id values must be identical and non-null")
     manifest = snapshot.get("manifest")
@@ -385,12 +602,8 @@ def validate_plugin(root: Path | str = PLUGIN_ROOT, check_manifest: bool = True)
             snapshot_cutoff = snapshot_generated_at.date()
         except SnapshotError as exc:
             errors.append(str(exc))
-    for document_name, document in (
-        ("sources", source_doc),
-        ("technologies", technology_doc),
-        ("observations", observation_doc),
-        ("assessments", assessment_doc),
-    ):
+    for document_name in DATASET_FILES:
+        document = snapshot[document_name]
         if "generated_at" not in document:
             continue
         try:
@@ -404,6 +617,8 @@ def validate_plugin(root: Path | str = PLUGIN_ROOT, check_manifest: bool = True)
     technologies = _ids(technology_doc.get("technologies"), "technologies", errors)
     observations = _ids(observation_doc.get("observations"), "observations", errors)
     assessments = _ids(assessment_doc.get("assessments"), "assessments", errors)
+    capabilities = _ids(capability_doc.get("capabilities"), "capabilities", errors)
+    interfaces = _ids(interface_doc.get("interfaces"), "interfaces", errors)
 
     for source_id, source in sources.items():
         for field in ("publisher", "title", "source_type", "edition", "scope", "limitations"):
@@ -462,8 +677,10 @@ def validate_plugin(root: Path | str = PLUGIN_ROOT, check_manifest: bool = True)
             if not isinstance(refresh.get("max_bytes"), int) or refresh.get("max_bytes", 0) <= 0:
                 errors.append(f"source {source_id} refresh max_bytes must be positive")
 
-    if not 18 <= len(technologies) <= 24:
-        errors.append(f"technology count must be 18-24, found {len(technologies)}")
+    if not MIN_TECHNOLOGIES <= len(technologies) <= MAX_TECHNOLOGIES:
+        errors.append(
+            f"technology count must be {MIN_TECHNOLOGIES}-{MAX_TECHNOLOGIES}, found {len(technologies)}"
+        )
     family_counts = Counter(record.get("family") for record in technologies.values())
     if set(family_counts) != EXPECTED_FAMILIES:
         errors.append(f"technology families must be {sorted(EXPECTED_FAMILIES)}")
@@ -519,6 +736,16 @@ def validate_plugin(root: Path | str = PLUGIN_ROOT, check_manifest: bool = True)
     for technology_id in technologies:
         if technology_id not in observations_by_technology:
             errors.append(f"technology {technology_id} has no observation")
+
+    _validate_capability_model(
+        capabilities=capabilities,
+        technologies=technologies,
+        interfaces=interfaces,
+        observations=observations,
+        sources=sources,
+        runtime_schema=snapshot["runtime-capability-schema"],
+        errors=errors,
+    )
 
     assessed_technologies: set[str] = set()
     assessed_profiles: dict[tuple[str, tuple[tuple[str, ...], ...]], str] = {}
@@ -606,7 +833,7 @@ def validate_plugin(root: Path | str = PLUGIN_ROOT, check_manifest: bool = True)
         missing = sorted(set(technologies) - assessed_technologies)
         errors.append(f"every technology needs at least one assessment; missing {missing}")
 
-    for document_name in ("sources", "technologies", "observations", "assessments"):
+    for document_name in DATASET_FILES:
         for key_path, key in _walk_keys(snapshot[document_name]):
             if key.casefold() in FORBIDDEN_SCORE_KEYS:
                 errors.append(f"opaque score key forbidden at {document_name}:{key_path}")
@@ -616,6 +843,8 @@ def validate_plugin(root: Path | str = PLUGIN_ROOT, check_manifest: bool = True)
     runtime_schema = snapshot["runtime-capability-schema"]
     if runtime_schema.get("persistence") != "never" or runtime_schema.get("join_key") != "technology_id":
         errors.append("runtime capability schema must declare persistence=never and join_key=technology_id")
+    if runtime_schema.get("interface_join_key") != "interface_id":
+        errors.append("runtime capability schema must declare interface_join_key=interface_id")
     if runtime_schema.get("runtime_schema_version") != "technology_intelligence.runtime_inventory.v1":
         errors.append("runtime capability schema has unexpected runtime_schema_version")
     if not isinstance(runtime_schema.get("max_capability_age_seconds"), int) or runtime_schema.get("max_capability_age_seconds", 0) <= 0:
@@ -626,6 +855,11 @@ def validate_plugin(root: Path | str = PLUGIN_ROOT, check_manifest: bool = True)
         errors.append("runtime capability schema field lists must be arrays")
     elif set(required_runtime) & set(optional_runtime):
         errors.append("runtime capability required and optional fields must not overlap")
+    if "interface_id" not in optional_runtime:
+        errors.append("runtime capability schema must allow optional interface_id")
+    allowed_provisioning = runtime_schema.get("allowed_provisioning_modes")
+    if not isinstance(allowed_provisioning, list) or not allowed_provisioning:
+        errors.append("runtime capability schema allowed_provisioning_modes must be non-empty")
 
     try:
         trigger_cases_doc = _read_json(plugin_root / "tests" / "fixtures" / "trigger-cases.v1.json")
@@ -795,6 +1029,8 @@ def query_snapshot(
     snapshot: dict[str, Any],
     *,
     family: str | None = None,
+    capability: str | None = None,
+    interface: str | None = None,
     stage: str | None = None,
     use_case: str | None = None,
     disposition: str | None = None,
@@ -806,33 +1042,119 @@ def query_snapshot(
 ) -> list[dict[str, Any]]:
     """Query profile-specific assessments and attach their dated evidence."""
     technologies = {item["id"]: item for item in snapshot["technologies"]["technologies"]}
+    capabilities = {item["id"]: item for item in snapshot["capabilities"]["capabilities"]}
+    interfaces = {item["id"]: item for item in snapshot["interfaces"]["interfaces"]}
     observations = {item["id"]: item for item in snapshot["observations"]["observations"]}
     sources = {item["id"]: item for item in snapshot["sources"]["sources"]}
+    interfaces_by_technology: dict[str, list[dict[str, Any]]] = {}
+    for interface_record in interfaces.values():
+        interfaces_by_technology.setdefault(interface_record["technology_id"], []).append(interface_record)
     runtime_by_technology: dict[str, list[dict[str, Any]]] = {}
     if runtime_inventory is not None:
         runtime_errors = validate_runtime_inventory(
             runtime_inventory,
             snapshot["runtime-capability-schema"],
             known_technology_ids=set(technologies),
+            known_interfaces=interfaces,
             reference_time=runtime_reference_time,
         )
         if runtime_errors:
             raise SnapshotError("invalid runtime inventory: " + "; ".join(runtime_errors))
-        for capability in runtime_inventory["capabilities"]:
-            runtime_by_technology.setdefault(capability["technology_id"], []).append(dict(capability))
+        for runtime_capability in runtime_inventory["capabilities"]:
+            attached = dict(runtime_capability)
+            interface_id = attached.get("interface_id")
+            if interface_id in interfaces:
+                attached["interface"] = interfaces[interface_id]
+            runtime_by_technology.setdefault(attached["technology_id"], []).append(attached)
     query_name = technology.casefold() if technology else None
+    query_capability = capability.casefold() if capability else None
+    query_interface = interface.casefold() if interface else None
     query_use_case = use_case.casefold() if use_case else None
+    matched_capability_ids = {
+        capability_id
+        for capability_id, capability_record in capabilities.items()
+        if query_capability
+        and any(
+            query_capability in value.casefold()
+            for value in [
+                capability_id,
+                capability_record["name"],
+                *capability_record.get("aliases", []),
+                *capability_record.get("tags", []),
+            ]
+        )
+    }
+    matched_interface_ids = {
+        interface_id
+        for interface_id, interface_record in interfaces.items()
+        if query_interface
+        and any(
+            query_interface in value.casefold()
+            for value in [interface_id, interface_record["name"], interface_record["identifier"]]
+        )
+    }
     rows: list[dict[str, Any]] = []
     for assessment in snapshot["assessments"]["assessments"]:
         candidate = technologies[assessment["technology_id"]]
+        candidate_capability_ids = list(candidate.get("capability_ids", []))
+        all_candidate_interfaces = interfaces_by_technology.get(candidate["id"], [])
+        candidate_interfaces = [
+            item
+            for item in all_candidate_interfaces
+            if (not query_capability or matched_capability_ids.intersection(item.get("capability_ids", [])))
+            and (not query_interface or item["id"] in matched_interface_ids)
+        ]
+        candidate_interfaces = sorted(
+            candidate_interfaces,
+            key=lambda item: (item["surface"], item["name"].casefold(), item["id"]),
+        )
         if family and candidate.get("family") != family:
             continue
+        if query_capability and not matched_capability_ids.intersection(candidate.get("capability_ids", [])):
+            continue
+        if (query_capability or query_interface) and not candidate_interfaces:
+            continue
+        selected_interface_capability_ids = {
+            capability_id
+            for item in candidate_interfaces
+            for capability_id in item.get("capability_ids", [])
+        }
+        if query_capability:
+            candidate_capability_ids = [
+                capability_id
+                for capability_id in candidate_capability_ids
+                if capability_id in matched_capability_ids
+            ]
+        if query_interface:
+            candidate_capability_ids = [
+                capability_id
+                for capability_id in candidate_capability_ids
+                if capability_id in selected_interface_capability_ids
+            ]
+        candidate_capabilities = [
+            capabilities[capability_id]
+            for capability_id in candidate_capability_ids
+            if capability_id in capabilities
+        ]
         if stage and stage not in assessment["profile"].get("stages", []):
             continue
         if disposition and assessment.get("disposition") != disposition:
             continue
         if query_use_case:
-            haystack = " ".join(assessment["profile"].get("use_cases", []) + candidate.get("tags", [])).casefold()
+            capability_terms = [
+                term
+                for capability_record in candidate_capabilities
+                for term in [
+                    capability_record["name"],
+                    *capability_record.get("aliases", []),
+                    *capability_record.get("tags", []),
+                ]
+            ]
+            haystack = " ".join(
+                assessment["profile"].get("use_cases", [])
+                + candidate.get("tags", [])
+                + capability_terms
+            ).casefold()
             if query_use_case not in haystack:
                 continue
         if query_name:
@@ -870,6 +1192,8 @@ def query_snapshot(
             )
         row: dict[str, Any] = {
             "technology": candidate,
+            "capabilities": candidate_capabilities,
+            "interfaces": candidate_interfaces,
             "assessment": assessment,
             "evidence": evidence,
         }
@@ -891,8 +1215,21 @@ def query_snapshot(
                 "retrieval_freshness_note": "Retrieval freshness is separate from publication currency and measurement age.",
             }
         if runtime_inventory is not None:
+            runtime_capabilities = runtime_by_technology.get(candidate["id"], [])
+            if query_capability or query_interface:
+                selected_interface_ids = {item["id"] for item in candidate_interfaces}
+                selected_surfaces = {item["surface"] for item in candidate_interfaces}
+                runtime_capabilities = [
+                    item
+                    for item in runtime_capabilities
+                    if (
+                        item.get("interface_id") in selected_interface_ids
+                        if item.get("interface_id") is not None
+                        else item.get("surface") in selected_surfaces
+                    )
+                ]
             row["runtime_capabilities"] = sorted(
-                runtime_by_technology.get(candidate["id"], []),
+                runtime_capabilities,
                 key=lambda item: (str(item.get("surface")), str(item.get("identifier"))),
             )
         rows.append(row)
@@ -914,8 +1251,15 @@ def query_snapshot(
 def validate_data_directory(data_dir: Path | str) -> list[str]:
     """Validate the integrity envelope required before comparing a data directory."""
     directory = Path(data_dir)
+    additive_presence = {
+        name: (directory / filename).is_file()
+        for name, (filename, _) in ADDITIVE_DATASET_FILES.items()
+    }
+    if any(additive_presence.values()) and not all(additive_presence.values()):
+        return ["capability and interface datasets must both be present or both be absent for a legacy directory"]
+    legacy_additive = not any(additive_presence.values())
     try:
-        snapshot = load_snapshot(directory)
+        snapshot = load_snapshot(directory, allow_missing_additive=legacy_additive)
     except SnapshotError as exc:
         return [str(exc)]
     errors: list[str] = []
@@ -930,6 +1274,8 @@ def validate_data_directory(data_dir: Path | str) -> list[str]:
     technologies = indexed["technologies"]
     observations = indexed["observations"]
     assessments = indexed["assessments"]
+    capabilities = indexed["capabilities"]
+    interfaces = indexed["interfaces"]
     for technology_id, technology in technologies.items():
         official_ids = technology.get("official_source_ids")
         if not isinstance(official_ids, list):
@@ -992,6 +1338,16 @@ def validate_data_directory(data_dir: Path | str) -> list[str]:
         errors.append(f"technology {technology_id} has no observation")
     for technology_id in sorted(set(technologies) - assessed_technologies):
         errors.append(f"technology {technology_id} has no assessment")
+    _validate_capability_model(
+        capabilities=capabilities,
+        technologies=technologies,
+        interfaces=interfaces,
+        observations=observations,
+        sources=sources,
+        runtime_schema=snapshot["runtime-capability-schema"],
+        errors=errors,
+        allow_empty=legacy_additive,
+    )
     snapshot_ids = {
         snapshot[name].get("snapshot_id")
         for name in DATASET_FILES
@@ -1022,7 +1378,12 @@ def validate_data_directory(data_dir: Path | str) -> list[str]:
         except SnapshotError as exc:
             errors.append(str(exc))
     entries = manifest.get("files")
-    expected_paths = {filename for filename, _ in DATASET_FILES.values()} | set(SINGLETON_FILES.values())
+    active_dataset_files = {
+        name: value
+        for name, value in DATASET_FILES.items()
+        if name not in ADDITIVE_DATASET_FILES or additive_presence[name]
+    }
+    expected_paths = {filename for filename, _ in active_dataset_files.values()} | set(SINGLETON_FILES.values())
     if not isinstance(entries, list):
         return errors + ["snapshot manifest files must be an array"]
     seen_paths: set[str] = set()
@@ -1043,7 +1404,7 @@ def validate_data_directory(data_dir: Path | str) -> list[str]:
             errors.append(f"snapshot manifest hash mismatch: {relative}")
         document = _read_json(path)
         expected_count = 1
-        for _, (candidate_file, record_key) in DATASET_FILES.items():
+        for _, (candidate_file, record_key) in active_dataset_files.items():
             if candidate_file == relative:
                 records = document.get(record_key)
                 if not isinstance(records, list):
@@ -1066,8 +1427,12 @@ def diff_directories(old_dir: Path | str, new_dir: Path | str) -> dict[str, Any]
     if old_errors or new_errors:
         messages = [*(f"old:{error}" for error in old_errors), *(f"new:{error}" for error in new_errors)]
         raise SnapshotError("cannot diff invalid data directories: " + "; ".join(messages))
-    old_snapshot = load_snapshot(Path(old_dir))
-    new_snapshot = load_snapshot(Path(new_dir))
+    old_path = Path(old_dir)
+    new_path = Path(new_dir)
+    old_legacy = all(not (old_path / filename).exists() for filename, _ in ADDITIVE_DATASET_FILES.values())
+    new_legacy = all(not (new_path / filename).exists() for filename, _ in ADDITIVE_DATASET_FILES.values())
+    old_snapshot = load_snapshot(old_path, allow_missing_additive=old_legacy)
+    new_snapshot = load_snapshot(new_path, allow_missing_additive=new_legacy)
     datasets: dict[str, Any] = {}
     for name, (_, record_key) in DATASET_FILES.items():
         old_records = {record["id"]: record for record in old_snapshot[name].get(record_key, [])}
@@ -1300,6 +1665,21 @@ def _render_query_markdown(rows: list[dict[str, Any]]) -> str:
             "",
             technology["summary"],
             "",
+            "Capabilities: " + (
+                "; ".join(capability["name"] for capability in row["capabilities"])
+                if row["capabilities"]
+                else "No normalized capability mapping recorded"
+            ),
+            "",
+            "Interfaces: " + (
+                "; ".join(
+                    f"{interface['name']} ({interface['surface']}: {interface['identifier']})"
+                    for interface in row["interfaces"]
+                )
+                if row["interfaces"]
+                else "No normalized interface mapping recorded"
+            ),
+            "",
             "Profile stages: " + "; ".join(assessment["profile"]["stages"]),
             "",
             "Profile use cases: " + "; ".join(assessment["profile"]["use_cases"]),
@@ -1350,9 +1730,20 @@ def _render_query_markdown(rows: list[dict[str, Any]]) -> str:
             lines.extend(["", "Caller-supplied runtime facts:", ""])
             if row["runtime_capabilities"]:
                 for capability in row["runtime_capabilities"]:
+                    interface_text = (
+                        f", interface={capability['interface_id']}"
+                        if capability.get("interface_id")
+                        else ""
+                    )
+                    provisioning_text = (
+                        f", provisioning={capability['provisioning_mode']}"
+                        if capability.get("provisioning_mode")
+                        else ""
+                    )
                     lines.append(
                         f"- {capability['surface']} `{capability['identifier']}`: installed={capability['installed']}, "
-                        f"enabled={capability['enabled']}, auth={capability['auth_state']}, health={capability['health']}."
+                        f"enabled={capability['enabled']}, auth={capability['auth_state']}, health={capability['health']}"
+                        f"{interface_text}{provisioning_text}."
                     )
             else:
                 lines.append("- No matching capability was present in the supplied inventory.")
@@ -1379,6 +1770,8 @@ def _build_parser() -> argparse.ArgumentParser:
 
     query_parser = subparsers.add_parser("query", help="query context-specific assessments without network access")
     query_parser.add_argument("--family", choices=sorted(EXPECTED_FAMILIES))
+    query_parser.add_argument("--capability", help="filter by capability id, name, alias, or tag")
+    query_parser.add_argument("--interface", help="filter by interface id, name, or identifier")
     query_parser.add_argument("--stage")
     query_parser.add_argument("--use-case")
     query_parser.add_argument("--disposition", choices=sorted(ALLOWED_DISPOSITIONS))
@@ -1432,7 +1825,9 @@ def main(argv: list[str] | None = None) -> int:
                 snapshot = load_snapshot()
                 print(
                     "PASS: "
+                    f"{len(snapshot['capabilities']['capabilities'])} capabilities, "
                     f"{len(snapshot['technologies']['technologies'])} technologies, "
+                    f"{len(snapshot['interfaces']['interfaces'])} interfaces, "
                     f"{len(snapshot['observations']['observations'])} observations, "
                     f"{len(snapshot['assessments']['assessments'])} assessments"
                 )
@@ -1446,6 +1841,8 @@ def main(argv: list[str] | None = None) -> int:
             rows = query_snapshot(
                 snapshot,
                 family=args.family,
+                capability=args.capability,
+                interface=args.interface,
                 stage=args.stage,
                 use_case=args.use_case,
                 disposition=args.disposition,

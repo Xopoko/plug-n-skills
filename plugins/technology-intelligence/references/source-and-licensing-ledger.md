@@ -45,6 +45,16 @@ candidate's independent-evidence gate by itself.
   and freshness vary by ecosystem and upstream source.
 - MCP Registry is preview discovery metadata and may reset. Presence does not
   prove trust, installation, authentication, or health.
+- AnyDoc v0.1.8 documentation and benchmark material are immutable, first-party
+  Firecrawl evidence. The benchmark excludes PDF and excludes CSV from quality
+  judging; its corpus is private, the LLM judge sees only the first six rendered
+  pages, each document receives one warm run, dependency versions are not fully
+  pinned, process timing differs by tool, and the measurement window is
+  undisclosed. Retain it as an affiliated vendor benchmark, not an independent
+  ranking. Package manifests document Node.js 20+, Python 3.10+, Rust 1.88, and
+  no published Windows ARM64 native target; actual runtime compatibility remains
+  caller-supplied. Text-based PDF support uses a separate path and does not imply
+  OCR for scanned or image-only PDFs.
 
 ## Usage Modes
 

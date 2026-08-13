@@ -18,7 +18,7 @@ Read `$PLUGIN_ROOT/references/skill-runtime-model.md` when choosing a skill inst
 - Local folder: treat as a source candidate; audit and copy only if it is a valid skill and the destination is clear.
 - Candidate reference in synthesis: inspect only; do not install during evaluation.
 
-For explicit skill installation, use the active agent's skills dir unless the user or repo instructions select another destination — Codex: `${CODEX_HOME:-$HOME/.codex}/skills/<skill-name>`, Claude: `${CLAUDE_HOME:-$HOME/.claude}/skills/<skill-name>`, Cursor: `${CURSOR_HOME:-$HOME/.cursor}/skills/<skill-name>`. Detect the active agent with `$PLUGIN_ROOT/scripts/agent_target.py`. For repository source work, audit and validate the skill in place instead of copying it globally unless installation was requested.
+For explicit skill installation, use the active agent's skills dir unless the user or repo instructions select another destination — Codex: `$HOME/.agents/skills/<skill-name>`, Claude: `${CLAUDE_HOME:-$HOME/.claude}/skills/<skill-name>`, Cursor: `${CURSOR_HOME:-$HOME/.cursor}/skills/<skill-name>`. Detect the active agent with `$PLUGIN_ROOT/scripts/agent_target.py`. For repository source work, audit and validate the skill in place instead of copying it globally unless installation was requested.
 
 ## List Curated Skills
 

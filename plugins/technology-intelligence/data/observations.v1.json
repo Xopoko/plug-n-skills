@@ -1,6 +1,7 @@
 {
   "schema_version": "technology_intelligence.observations.v1",
-  "snapshot_id": "research-2026-08-11",
+  "snapshot_id": "research-2026-08-11-capability-model-v1",
+  "generated_at": "2026-08-11T18:47:00Z",
   "observations": [
     {
       "id": "react-first-party-capabilities",
@@ -650,6 +651,94 @@
       "scope": "Editor-to-coding-agent session lifecycle contract.",
       "confidence": "high",
       "limitations": "The update log does not prove complete or identical implementation across agents, editors, wrappers, and SDK versions."
+    },
+    {
+      "id": "anydoc-capabilities-v0-1-8",
+      "technology_id": "anydoc",
+      "signal": "documented-capability",
+      "claim": "The v0.1.8 documentation describes local conversion of Word, PowerPoint, Excel, OpenDocument, RTF, EPUB, CSV, and text-based PDF inputs into GitHub-Flavored Markdown.",
+      "source_id": "anydoc-readme-v0-1-8",
+      "observed_at": "2026-08-11",
+      "scope": "Documented local conversion surface and supported format families.",
+      "confidence": "high",
+      "limitations": "Image-only or scanned PDFs require an OCR-capable fallback; project documentation does not independently establish fidelity on a target corpus."
+    },
+    {
+      "id": "anydoc-interfaces-v0-1-8",
+      "technology_id": "anydoc",
+      "signal": "documented-interface",
+      "claim": "The v0.1.8 project exposes an npm-distributed CLI plus Node.js, Python, Rust, browser WebAssembly, and Agent Skill interfaces.",
+      "source_id": "anydoc-readme-v0-1-8",
+      "observed_at": "2026-08-11",
+      "scope": "Documented packaging and invocation surfaces, not installed-runtime availability.",
+      "confidence": "high",
+      "limitations": "The documentation does not prove package compatibility, installation success, identical behavior, or operational reliability on every target platform."
+    },
+    {
+      "id": "anydoc-cli-provisioning-v0-1-8",
+      "technology_id": "anydoc",
+      "signal": "package-provisioning",
+      "claim": "The v0.1.8 README states that npx downloads a prebuilt binary for the caller's platform on first run, while a global npm installation provides a persistent anydoc command.",
+      "source_id": "anydoc-readme-v0-1-8",
+      "observed_at": "2026-08-11",
+      "scope": "Documented on-demand and preinstalled CLI provisioning modes.",
+      "confidence": "high",
+      "limitations": "The documentation does not prove that a matching binary exists, downloads, installs, or executes successfully in a caller's environment."
+    },
+    {
+      "id": "anydoc-node-compatibility-v0-1-8",
+      "technology_id": "anydoc",
+      "signal": "package-compatibility",
+      "claim": "The v0.1.8 Node manifest requires Node.js 20 or newer and lists seven N-API targets; its Windows list contains x86_64-pc-windows-msvc but no Windows ARM64 target.",
+      "source_id": "anydoc-node-package-v0-1-8",
+      "observed_at": "2026-08-11",
+      "scope": "Declared Node.js floor and native target matrix for the npm CLI and Node interface.",
+      "confidence": "high",
+      "limitations": "A declared target list does not prove package availability, installation success, or runtime health."
+    },
+    {
+      "id": "anydoc-python-compatibility-v0-1-8",
+      "technology_id": "anydoc",
+      "signal": "package-compatibility",
+      "claim": "The v0.1.8 Python manifest names the firecrawl-anydoc distribution and requires Python 3.10 or newer.",
+      "source_id": "anydoc-python-package-v0-1-8",
+      "observed_at": "2026-08-11",
+      "scope": "Declared Python package identity and interpreter floor.",
+      "confidence": "high",
+      "limitations": "The manifest does not enumerate every published wheel or prove installation success and runtime health."
+    },
+    {
+      "id": "anydoc-rust-compatibility-v0-1-8",
+      "technology_id": "anydoc",
+      "signal": "package-compatibility",
+      "claim": "The v0.1.8 Cargo manifest sets rust-version to 1.88 and includes the Node, Python, and WebAssembly bindings in the workspace.",
+      "source_id": "anydoc-rust-package-v0-1-8",
+      "observed_at": "2026-08-11",
+      "scope": "Declared Rust compiler floor and binding workspace membership.",
+      "confidence": "high",
+      "limitations": "The manifest does not prove successful compilation, package publication, or runtime compatibility on a target platform."
+    },
+    {
+      "id": "anydoc-release-v0-1-8",
+      "technology_id": "anydoc",
+      "signal": "project-release",
+      "claim": "GitHub reported v0.1.8 as the latest AnyDoc release when retrieved on 2026-08-11, with publication dated 2026-08-10.",
+      "source_id": "anydoc-release-v0-1-8",
+      "observed_at": "2026-08-11",
+      "scope": "Point-in-time release identity and freshness.",
+      "confidence": "high",
+      "limitations": "A latest-release label can change and does not establish maturity, stability, compatibility, or support duration."
+    },
+    {
+      "id": "anydoc-vendor-benchmark-v0-1-8",
+      "technology_id": "anydoc",
+      "signal": "vendor-benchmark",
+      "claim": "The project reports a benchmark over 100 real-world documents spanning 14 formats, with AnyDoc covering 14 of 14 formats and recording a 4.4 millisecond median warm conversion time.",
+      "source_id": "anydoc-benchmark-v0-1-8",
+      "observed_at": "2026-08-11",
+      "scope": "Project-run format-coverage and latency benchmark on the disclosed Windows and Ryzen configuration.",
+      "confidence": "medium",
+      "limitations": "PDF is excluded entirely and CSV is excluded from quality judging. The corpus is private and non-redistributable; quality judging uses an LLM over only the first six pages rendered by LibreOffice; each document receives one warm run without a variability estimate; AnyDoc uses self-reported conversion time while Pandoc and LibreOffice include process spawn; the benchmark page does not disclose competitor versions or a complete locked environment; the measurement date and window are undisclosed; no independent reproduction is supplied."
     }
   ]
 }
