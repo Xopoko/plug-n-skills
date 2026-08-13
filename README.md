@@ -185,7 +185,7 @@ replaced to match the repository source, and repeated runs converge.
 | `agent-harness` | Agent harness runtime-reconfiguration design and evaluation; Codex and Claude Code operations, secret-safe operator/1Password credential handoff, automation, diagnostics, MCP, hooks, sessions, deferred completion, and local scheduler proof. |
 | `capability-workbench` | Agent capability engineering: frame behavior gaps, author skills/plugins/guidance, validate them against evidence and behavioral baselines, evolve portfolios, and activate vetted artifacts explicitly. |
 | `context-density` | Context design, long-context placement, typed state and companion-drift validation, research-backed acceptance gates, prompt contracts, skill compression, structural handoff, and validation reporting. |
-| `i-have-adhd` | Explicit focus mode for short numbered steps, visible progress, concrete time estimates, calm recovery, and one next action. |
+| `i-have-adhd` | Explicit per-request focus formatting for short numbered steps, visible progress, concrete time estimates, calm recovery, and one next action. |
 | `git-workflows` | Capability-bound read-only GitHub/GitLab code review, race-safe GitLab review response, stacked change delivery, worktree recovery, and SSH commit-signing recovery across eligible MCP, connector, CLI, and API adapters. |
 | `engineering-hygiene` | Touched-surface code maintenance, business-logic untangling, rendered UI inspection, and evidence-first missing-tool provisioning. |
 | `scientific-research` | Scholarly discovery, deduplication, source routing, claim ledgers, provenance, and evidence quality gates. |
@@ -265,7 +265,7 @@ instructions.
 | Reference files | 278 | - | Longer ledgers, contracts, scorecards, and source notes. |
 | Helper and validator scripts | 96 | - | Deterministic plugin-local helpers. |
 | Startup metadata | 200 skills | 17,029 | Skill name, description, and file pointer for routing. |
-| On-demand skill bodies | 200 skills | 146,532 | Instruction bodies after frontmatter, loaded only when selected. |
+| On-demand skill bodies | 200 skills | 146,537 | Instruction bodies after frontmatter, loaded only when selected. |
 
 Regenerate the report after skill edits:
 
@@ -285,7 +285,7 @@ Token columns are `startup metadata / on-demand body`.
 | `agent-harness` | 19 | 19 | 7 | 1,447 | 20,753 |
 | `capability-workbench` | 11 | 17 | 25 | 807 | 14,939 |
 | `context-density` | 1 | 9 | 8 | 70 | 2,806 |
-| `i-have-adhd` | 1 | 1 | 0 | 80 | 583 |
+| `i-have-adhd` | 1 | 1 | 0 | 80 | 588 |
 | `git-workflows` | 5 | 10 | 6 | 416 | 7,339 |
 | `engineering-hygiene` | 4 | 3 | 0 | 319 | 3,239 |
 | `scientific-research` | 1 | 4 | 1 | 84 | 2,024 |
@@ -307,7 +307,7 @@ Token columns are `startup metadata / on-demand body`.
 | `agent-harness` | Agent harness runtime-reconfiguration design and evaluation plus Codex and Claude runtime operations, secret-safe human credential handoff, 1Password, sessions, deferred completion, and scheduler proof. |
 | `capability-workbench` | Artifact-first agent capability engineering for skills, plugins, guidance, and trigger contracts: frame behavior gaps, evaluate baselines and candidates, author validated changes, govern portfolios, and activate explicitly. Use Agent Harness for runtime and harness-level evaluation. |
 | `context-density` | Agent context audits measure token cost, validate prompt/output contracts and typed state, test compression, and route structural skill or plugin overlap to Capability Workbench. |
-| `i-have-adhd` | Explicit opt-in focus mode turns work into short numbered steps, visible progress, concrete time boxes, calm recovery, and one next action. |
+| `i-have-adhd` | Explicit opt-in focus formatting turns the current response into short numbered steps, visible progress, concrete time boxes, calm recovery, and one next action. |
 | `git-workflows` | Git code review, GitLab discussion response, stacked-change delivery, worktree recovery, and SSH commit-signing recovery use exact-state, capability-selected, fail-closed workflows. |
 | `engineering-hygiene` | Engineering hygiene audits changed code, untangles business logic, inspects rendered UI, and provisions missing tools with evidence-first, touched-surface discipline. |
 | `scientific-research` | Scholarly research discovers papers, deduplicates DOIs, extracts source-backed claims, and validates evidence across arXiv, OpenAlex, Crossref, Europe PMC, Semantic Scholar, PubMed, and OpenCitations. |
@@ -376,7 +376,7 @@ Token cells are shown as `startup/body`.
 
 | Skill | Tokens | Description |
 | --- | ---: | --- |
-| `i-have-adhd` | 80/583 | Explicit opt-in focus mode for short numbered steps, visible progress, concrete time estimates, calm error recovery, and one next action. Activate only for $i-have-adhd or a direct request for I Have ADHD mode. |
+| `i-have-adhd` | 80/588 | Explicit opt-in focus formatting for short numbered steps, visible progress, concrete time estimates, calm error recovery, and one next action. Activate only for $i-have-adhd or a direct request for I Have ADHD mode. |
 
 #### `git-workflows`
 

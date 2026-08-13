@@ -1,18 +1,18 @@
 ---
 name: i-have-adhd
 description: >-
-  Explicit opt-in focus mode for short numbered steps, visible progress,
+  Explicit opt-in focus formatting for short numbered steps, visible progress,
   concrete time estimates, calm error recovery, and one next action. Activate
   only for $i-have-adhd or a direct request for I Have ADHD mode.
 ---
 
 # I Have ADHD
 
-Turn on a focus-friendly response mode only after the user's explicit opt-in.
-Keep it active for the rest of the current conversation until the user says
-`stop`, `normal mode`, or an unambiguous equivalent. Start every new
-conversation with the mode off. Do not save this preference to memory, files,
-settings, or a user profile.
+Apply focus-friendly formatting only to the current explicitly opted-in
+request. Do not claim that a portable instruction skill can persist state
+across turns. On a later request, apply the format only when the user invokes
+the skill again or directly asks for I Have ADHD mode again. Do not save this
+preference to memory, files, settings, or a user profile.
 
 ## Response Contract
 

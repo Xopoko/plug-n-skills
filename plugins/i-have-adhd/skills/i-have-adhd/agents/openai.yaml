@@ -1,6 +1,6 @@
 interface:
   display_name: "I Have ADHD"
-  short_description: "Explicit focus mode with one next action"
+  short_description: "Explicit response format with one next action"
   default_prompt: "Use $i-have-adhd to turn this task into short, timed steps and give me one next action."
 policy:
   allow_implicit_invocation: false

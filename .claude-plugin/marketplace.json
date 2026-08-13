@@ -26,7 +26,7 @@
     {
       "name": "i-have-adhd",
       "source": "./plugins/i-have-adhd",
-      "description": "Explicit opt-in focus mode turns work into short numbered steps, visible progress, concrete time boxes, calm recovery, and one next action."
+      "description": "Explicit opt-in focus formatting turns the current response into short numbered steps, visible progress, concrete time boxes, calm recovery, and one next action."
     },
     {
       "name": "git-workflows",
