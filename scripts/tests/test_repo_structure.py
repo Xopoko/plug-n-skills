@@ -247,7 +247,7 @@ class RepoStructureTest(unittest.TestCase):
         )
         for field in ("name", "version", "description", "author", "license", "keywords"):
             self.assertEqual(codex[field], claude[field], f"manifest {field} mismatch")
-        self.assertEqual(codex["version"], "0.6.2")
+        self.assertEqual(codex["version"], "0.6.3")
         self.assertIn("Artifact-first agent capability engineering", codex["description"])
         self.assertIn("harness-level evaluation", codex["description"])
         self.assertIn("agent-capability-engineering", codex["keywords"])
@@ -339,7 +339,7 @@ class RepoStructureTest(unittest.TestCase):
         claude = json.loads(
             (plugin / ".claude-plugin" / "plugin.json").read_text(encoding="utf-8")
         )
-        self.assertEqual("0.3.0", codex["version"])
+        self.assertEqual("0.3.1", codex["version"])
         self.assertEqual(codex["version"], claude["version"])
         self.assertIn("Capability-first", codex["description"])
 

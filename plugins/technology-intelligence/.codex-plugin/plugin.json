@@ -1,6 +1,6 @@
 {
   "name": "technology-intelligence",
-  "version": "0.3.0",
+  "version": "0.3.1",
   "description": "Capability-first technology decisions map needs to frameworks, platforms, document tools, and CLI/SDK/WASM/MCP/API/skill interfaces using dated evidence, explicit gaps, and runtime boundaries.",
   "author": {
     "name": "Xopoko"

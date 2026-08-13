@@ -105,11 +105,18 @@ class LocalPluginVisibilityTest(unittest.TestCase):
         self.materialize_cache()
 
     def materialize_cache(self):
-        ensure_local_plugin_installed.ensure_cache_materialized(
+        return ensure_local_plugin_installed.ensure_cache_materialized(
             plugin_root=self.plugin_root,
             cache_path=self.cache_path,
+            cache_root=self.cache_root,
             dry_run=False,
         )
+
+    def reset_cache_from_source(self):
+        """Test-only setup reset; production version caches are immutable."""
+        if self.cache_path.exists():
+            shutil.rmtree(self.cache_path)
+        self.materialize_cache()
 
     def check_only(self):
         return ensure_local_plugin_installed.ensure_installed(
@@ -387,6 +394,166 @@ class LocalPluginVisibilityTest(unittest.TestCase):
         self.assertTrue(outcome.install_state_verified)
         self.assertTrue(self.check_only().install_state_verified)
 
+    def test_matching_immutable_cache_is_not_mutated(self):
+        cached_readme = self.cache_path / "README.md"
+        cache_identity = ensure_local_plugin_installed.directory_identity(
+            self.cache_path
+        )
+        cached_mtime = cached_readme.stat().st_mtime_ns
+        cached_entries = (
+            ensure_local_plugin_installed.build_installable_tree_manifest(
+                self.cache_path
+            )
+        )
+
+        with (
+            mock.patch.object(
+                ensure_local_plugin_installed.shutil,
+                "copytree",
+            ) as copytree,
+            mock.patch.object(
+                ensure_local_plugin_installed.os,
+                "rename",
+            ) as rename,
+        ):
+            changed = self.materialize_cache()
+
+        self.assertFalse(changed)
+        copytree.assert_not_called()
+        rename.assert_not_called()
+        self.assertEqual(
+            cache_identity,
+            ensure_local_plugin_installed.directory_identity(self.cache_path),
+        )
+        self.assertEqual(cached_mtime, cached_readme.stat().st_mtime_ns)
+        self.assertEqual(
+            cached_entries,
+            ensure_local_plugin_installed.build_installable_tree_manifest(
+                self.cache_path
+            ),
+        )
+
+    def test_mismatching_immutable_cache_fails_without_mutation(self):
+        cached_readme = self.cache_path / "README.md"
+        cached_bytes = cached_readme.read_bytes()
+        cached_entries = (
+            ensure_local_plugin_installed.build_installable_tree_manifest(
+                self.cache_path
+            )
+        )
+        (self.plugin_root / "README.md").write_text(
+            "# Changed under the same version\n",
+            encoding="utf-8",
+        )
+
+        with self.assertRaisesRegex(
+            ValueError,
+            r"immutable plugin cache version.*bump the plugin manifest version",
+        ):
+            self.materialize_cache()
+
+        self.assertEqual(cached_bytes, cached_readme.read_bytes())
+        self.assertEqual(
+            cached_entries,
+            ensure_local_plugin_installed.build_installable_tree_manifest(
+                self.cache_path
+            ),
+        )
+        self.assertFalse(
+            list(self.cache_path.parent.glob(f".{self.cache_path.name}.publish-*"))
+        )
+
+    def test_failed_cache_publication_does_not_enable_plugin(self):
+        self.config_path.write_text(
+            '[plugins."fixture-plugin@local"]\nenabled = false\n',
+            encoding="utf-8",
+        )
+        cached_bytes = (self.cache_path / "README.md").read_bytes()
+        (self.plugin_root / "README.md").write_text(
+            "# Changed under the same version\n",
+            encoding="utf-8",
+        )
+
+        with self.assertRaisesRegex(ValueError, r"bump the plugin manifest version"):
+            ensure_local_plugin_installed.ensure_installed(
+                plugin_path=self.plugin_root,
+                marketplace_path=self.marketplace_path,
+                config_path=self.config_path,
+                cache_root=self.cache_root,
+                codex_bin="codex",
+                force_manual=True,
+            )
+
+        self.assertIn("enabled = false", self.config_path.read_text(encoding="utf-8"))
+        self.assertEqual(cached_bytes, (self.cache_path / "README.md").read_bytes())
+
+    def test_concurrent_initial_publishers_converge_without_overwrite(self):
+        concurrent_root = self.root / "concurrent-cache"
+        concurrent_path = concurrent_root / "local" / "fixture-plugin" / "0.1.0"
+        helper_directory = HELPER_PATH.parent
+        snippet = (
+            "import importlib.util,pathlib,sys;"
+            f"sys.path.insert(0,{str(helper_directory)!r});"
+            f"s=importlib.util.spec_from_file_location('racer',{str(HELPER_PATH)!r});"
+            "m=importlib.util.module_from_spec(s);sys.modules['racer']=m;"
+            "s.loader.exec_module(m);"
+            "print(m.ensure_cache_materialized("
+            f"plugin_root=pathlib.Path({str(self.plugin_root)!r}),"
+            f"cache_path=pathlib.Path({str(concurrent_path)!r}),"
+            f"cache_root=pathlib.Path({str(concurrent_root)!r}),dry_run=False))"
+        )
+        racers = [
+            subprocess.Popen(
+                [sys.executable, "-c", snippet],
+                cwd=str(ROOT),
+                stdout=subprocess.PIPE,
+                stderr=subprocess.PIPE,
+                text=True,
+            )
+            for _ in range(2)
+        ]
+        results = [process.communicate(timeout=30) for process in racers]
+
+        self.assertEqual([0, 0], [process.returncode for process in racers], results)
+        self.assertEqual(["False", "True"], sorted(out.strip() for out, _ in results))
+        self.assertEqual(
+            ensure_local_plugin_installed.build_installable_tree_manifest(
+                self.plugin_root
+            ),
+            ensure_local_plugin_installed.build_installable_tree_manifest(
+                concurrent_path
+            ),
+        )
+        self.assertTrue(
+            (concurrent_path.parent / ".0.1.0.install.lock").is_file()
+        )
+        self.assertFalse(
+            list(concurrent_path.parent.glob(".0.1.0.publish-*"))
+        )
+
+    def test_failed_publish_cleans_read_only_staging_without_masking_error(self):
+        publish_root = self.root / "read-only-cache"
+        publish_path = publish_root / "local" / "fixture-plugin" / "0.1.0"
+        source_file = self.plugin_root / "README.md"
+        os.chmod(source_file, stat.S_IREAD)
+        self.addCleanup(os.chmod, source_file, stat.S_IREAD | stat.S_IWRITE)
+
+        with mock.patch.object(
+            ensure_local_plugin_installed.os,
+            "rename",
+            side_effect=PermissionError(32, "primary publish failure"),
+        ):
+            with self.assertRaisesRegex(PermissionError, r"primary publish failure"):
+                ensure_local_plugin_installed.ensure_cache_materialized(
+                    plugin_root=self.plugin_root,
+                    cache_path=publish_path,
+                    cache_root=publish_root,
+                    dry_run=False,
+                )
+
+        self.assertFalse(publish_path.exists())
+        self.assertFalse(list(publish_path.parent.glob(".0.1.0.publish-*")))
+
     def test_installing_new_version_preserves_active_session_cache_locator(self):
         cached_skill = self.cache_path / "skills" / "fixture-skill" / "SKILL.md"
         cached_skill_bytes = cached_skill.read_bytes()
@@ -437,7 +604,7 @@ class LocalPluginVisibilityTest(unittest.TestCase):
         with self.assertRaisesRegex(ValueError, r"missing=1"):
             self.check_only()
 
-        self.materialize_cache()
+        self.reset_cache_from_source()
         (self.cache_path / "unexpected.txt").write_text(
             "unexpected\n",
             encoding="utf-8",
@@ -937,7 +1104,7 @@ class LocalPluginVisibilityTest(unittest.TestCase):
 
     def test_internal_tree_digest_uses_canonical_utf8_names(self):
         (self.plugin_root / "café.txt").write_text("coffee\n", encoding="utf-8")
-        self.materialize_cache()
+        self.reset_cache_from_source()
 
         first = ensure_local_plugin_installed.digest_tree_manifest(
             ensure_local_plugin_installed.build_installable_tree_manifest(
@@ -1029,7 +1196,7 @@ class LocalPluginVisibilityTest(unittest.TestCase):
             private_source,
             encoding="utf-8",
         )
-        self.materialize_cache()
+        self.reset_cache_from_source()
         (self.cache_path / private_name).write_text(
             "PRIVATE_SENTINEL=other-secret\n",
             encoding="utf-8",

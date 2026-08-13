@@ -1,6 +1,6 @@
 {
   "name": "scientific-research",
-  "version": "0.3.4",
+  "version": "0.3.5",
   "description": "Scholarly research discovers papers, deduplicates DOIs, extracts source-backed claims, and validates evidence across arXiv, OpenAlex, Crossref, Europe PMC, Semantic Scholar, PubMed, and OpenCitations.",
   "author": {
     "name": "Xopoko"

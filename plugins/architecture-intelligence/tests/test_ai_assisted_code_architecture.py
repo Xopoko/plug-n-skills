@@ -147,7 +147,7 @@ class AiAssistedCodeArchitectureTest(unittest.TestCase):
         claude_manifest = json.loads(
             (ROOT / ".claude-plugin" / "plugin.json").read_text(encoding="utf-8")
         )
-        self.assertEqual(codex_manifest["version"], "0.1.12")
+        self.assertEqual(codex_manifest["version"], "0.1.13")
         self.assertEqual(codex_manifest["version"], claude_manifest["version"])
         for manifest in (codex_manifest, claude_manifest):
             self.assertIn("AI-assisted code architecture", manifest["description"])

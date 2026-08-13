@@ -100,11 +100,15 @@ is revalidated. Prefer the idempotent
 `codex plugin add <plugin>@<marketplace>` command whenever it can target the
 active profile; the native host CLI owns its cache lifecycle. Current Codex CLI
 installs use the manifest version as the final cache locator. The helper's
-manual compatibility path stages and verifies the new tree, snapshots the
-selected target version for rollback, preserves that version directory's root,
-syncs its entries in place, and verifies source parity before success. A failed
-refresh restores the prior verified tree when the affected entries remain
-replaceable. Sibling versions are retained. The OpenAI packaging page separately
+manual compatibility path treats every published version directory as
+immutable: an exact installable-tree match is a no-op, while changed source
+requires a manifest version bump. A missing version is staged and verified,
+then published as one directory rename under a persistent per-version lock.
+The lock serializes cooperating publishers under a trusted cache root; it is
+not a security boundary against another same-user process that ignores the
+lock or replaces trusted ancestors. Generated `.git`, `__pycache__`, `*.pyc`,
+and `.DS_Store` entries remain outside the installable-tree projection.
+Sibling versions are retained. The OpenAI packaging page separately
 documents a literal `local` locator for ChatGPT desktop local installs; do not
 substitute that desktop-specific locator for a Codex CLI receipt. Capability
 inventory scans every immediate source in the active Codex profile's cache

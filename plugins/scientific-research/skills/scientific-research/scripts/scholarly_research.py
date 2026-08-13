@@ -20,7 +20,7 @@ SCHEMA_QUERY_LOG = "scientific_research.query_log.v1"
 SCHEMA_SOURCE_STATUS = "scientific_research.source_status.v1"
 SCHEMA_SCREENING = "scientific_research.screening_summary.v1"
 SCHEMA_QUALITY = "scientific_research.quality_gate.v1"
-USER_AGENT = "PlugNSkillsScientificResearch/0.3.4 (+https://github.com/Xopoko/plug-n-skills)"
+USER_AGENT = "PlugNSkillsScientificResearch/0.3.5 (+https://github.com/Xopoko/plug-n-skills)"
 MAX_RESPONSE_BYTES = 32 * 1024 * 1024
 MAX_SUMMARY_CHARS = 4000
 

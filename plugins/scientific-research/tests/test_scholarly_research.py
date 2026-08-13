@@ -666,7 +666,7 @@ def test_fetch_opencitations_parses_doi_metadata() -> None:
     assert captured["url"].startswith(
         "https://api.opencitations.net/meta/v1/metadata/doi:"
     )
-    assert mod.USER_AGENT.startswith("PlugNSkillsScientificResearch/0.3.4 ")
+    assert mod.USER_AGENT.startswith("PlugNSkillsScientificResearch/0.3.5 ")
 
 
 def test_fetch_core_without_key_is_auth_required() -> None:

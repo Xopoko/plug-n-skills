@@ -11,6 +11,7 @@ Runtime discovery is a separate proof and is never claimed by this helper.
 from __future__ import annotations
 
 import argparse
+import contextlib
 import fnmatch
 import hashlib
 import json
@@ -380,13 +381,14 @@ def ensure_installed(
         if cli_result is not None and cli_result != "unsupported":
             raise RuntimeError(cli_result)
 
-    config_changed = ensure_config_enabled(
-        config_file, plugin_id, write=True, dry_run=dry_run
-    )
     cache_changed = ensure_cache_materialized(
         plugin_root=plugin_root,
         cache_path=cache_path,
+        cache_root=cache_base,
         dry_run=dry_run,
+    )
+    config_changed = ensure_config_enabled(
+        config_file, plugin_id, write=True, dry_run=dry_run
     )
     if dry_run:
         install_state_verified = False
@@ -835,28 +837,58 @@ def ensure_cache_materialized(
     *,
     plugin_root: Path,
     cache_path: Path,
+    cache_root: Path | None = None,
     dry_run: bool,
 ) -> bool:
+    """Publish one immutable manifest-version cache directory.
+
+    An existing version is verification-only: exact content is a no-op and any
+    difference requires a new manifest version. A missing version is copied to
+    a verified sibling staging directory and published with one directory
+    rename. Concurrent publishers use loser-verifies-winner semantics.
+    """
     ensure_disjoint_install_paths(plugin_root=plugin_root, cache_path=cache_path)
+    target_cache_root = cache_path.parent if cache_root is None else cache_root
+    ensure_cache_destination_is_safe(
+        cache_path=cache_path,
+        cache_root=target_cache_root,
+    )
     source_entries = build_installable_tree_manifest(plugin_root)
+
+    if verify_existing_immutable_cache(
+        plugin_root=plugin_root,
+        cache_path=cache_path,
+        expected_source_entries=source_entries,
+    ):
+        return False
     if dry_run:
         return True
-    if cache_path.is_symlink():
-        raise ValueError("plugin cache root must not be a symlink")
-    cache_path.parent.mkdir(parents=True, exist_ok=True)
-    cache_exists = cache_path.exists()
-    if cache_exists and not cache_path.is_dir():
-        raise ValueError("plugin cache root must be a directory")
 
+    ensure_cache_parent_directory(
+        cache_path=cache_path,
+        cache_root=target_cache_root,
+    )
+    # Another installer may have published while this process created parents.
+    if verify_existing_immutable_cache(
+        plugin_root=plugin_root,
+        cache_path=cache_path,
+        expected_source_entries=source_entries,
+    ):
+        return False
+
+    ensure_cache_destination_is_safe(
+        cache_path=cache_path,
+        cache_root=target_cache_root,
+    )
+    parent_identity = directory_identity(cache_path.parent)
     transaction_root = Path(
         tempfile.mkdtemp(
-            prefix=f".{cache_path.name}.refresh-",
+            prefix=f".{cache_path.name}.publish-",
             dir=cache_path.parent,
         )
     )
     staged_path = transaction_root / "staged"
-    backup_path = transaction_root / "backup"
-    retain_transaction = False
+    primary_error: BaseException | None = None
     try:
         shutil.copytree(
             plugin_root,
@@ -878,267 +910,217 @@ def ensure_cache_materialized(
             mismatch_subject="staged cache content does not match plugin source",
             remediation="Do not publish an incomplete plugin cache.",
         )
-
-        if not cache_exists:
-            cache_created = False
-            try:
-                os.replace(staged_path, cache_path)
-                cache_created = True
-                verify_materialized_cache(
-                    plugin_root=plugin_root,
-                    cache_path=cache_path,
-                    expected_source_entries=source_entries,
-                )
-            except Exception as refresh_error:
-                if cache_created:
-                    failed_cache_path = transaction_root / "failed-cache"
-                    try:
-                        os.replace(cache_path, failed_cache_path)
-                    except Exception as cleanup_error:
-                        retain_transaction = True
-                        raise RuntimeError(
-                            "new plugin cache failed verification and could not be "
-                            f"withdrawn; failed tree retained at {cache_path}: "
-                            f"{cleanup_error}"
-                        ) from refresh_error
-                raise
-            return True
-
-        cache_before_entries = build_installable_tree_manifest(cache_path)
-        shutil.copytree(
-            cache_path,
-            backup_path,
-            ignore=ignored_cache_entry_names,
-            symlinks=True,
-        )
-        current_cache_entries, backup_entries = read_stable_tree_snapshots(
-            [cache_path, backup_path]
-        )
-        ensure_snapshot_unchanged(
-            cache_before_entries,
-            current_cache_entries,
-            "plugin cache changed while preparing the refresh rollback",
-        )
-        compare_installable_tree_manifests(
-            expected_entries=cache_before_entries,
-            actual_entries=backup_entries,
-            mismatch_subject="plugin cache rollback snapshot is incomplete",
-            remediation="Do not refresh a cache without a verified rollback tree.",
-        )
-
-        try:
-            sync_installable_tree_in_place(
-                source_root=staged_path,
-                expected_entries=source_entries,
-                destination_root=cache_path,
-                current_entries=cache_before_entries,
-                quarantine_root=transaction_root / "quarantine",
+        lock_path = cache_path.parent / f".{cache_path.name}.install.lock"
+        with cache_publication_lock(lock_path):
+            ensure_directory_identity_unchanged(cache_path.parent, parent_identity)
+            ensure_cache_destination_is_safe(
+                cache_path=cache_path,
+                cache_root=target_cache_root,
             )
-            verify_materialized_cache(
+            if verify_existing_immutable_cache(
                 plugin_root=plugin_root,
                 cache_path=cache_path,
                 expected_source_entries=source_entries,
-            )
-        except Exception as refresh_error:
-            try:
-                restore_materialized_cache(
-                    backup_path=backup_path,
-                    expected_backup_entries=cache_before_entries,
-                    cache_path=cache_path,
-                    transaction_root=transaction_root,
-                )
-            except Exception as rollback_error:
-                retain_transaction = True
+            ):
+                return False
+            os.rename(staged_path, cache_path)
+            if not verify_existing_immutable_cache(
+                plugin_root=plugin_root,
+                cache_path=cache_path,
+                expected_source_entries=source_entries,
+            ):
                 raise RuntimeError(
-                    "plugin cache refresh failed and rollback could not restore "
-                    f"the prior tree; backup retained at {backup_path}; "
-                    f"refresh error: {refresh_error}; rollback error: {rollback_error}"
-                ) from refresh_error
-            raise
+                    "published plugin cache version disappeared during verification"
+                )
         return True
+    except BaseException as err:
+        primary_error = err
+        raise
     finally:
-        if not retain_transaction and transaction_root.exists():
-            shutil.rmtree(transaction_root)
+        cleanup_temporary_tree(transaction_root, primary_error=primary_error)
 
 
-def verify_materialized_cache(
+@contextlib.contextmanager
+def cache_publication_lock(lock_path: Path):
+    """Serialize cooperating publishers; the persistent lock file is never removed."""
+    if path_is_link_or_reparse_point(lock_path):
+        raise ValueError("plugin cache publication lock must not be a symlink")
+    with lock_path.open("a+b") as lock_file:
+        if lock_file.tell() == 0:
+            lock_file.write(b"\0")
+            lock_file.flush()
+        lock_file.seek(0)
+        if os.name == "nt":
+            import msvcrt
+
+            msvcrt.locking(lock_file.fileno(), msvcrt.LK_LOCK, 1)
+            try:
+                yield
+            finally:
+                lock_file.seek(0)
+                msvcrt.locking(lock_file.fileno(), msvcrt.LK_UNLCK, 1)
+        else:
+            import fcntl
+
+            fcntl.flock(lock_file.fileno(), fcntl.LOCK_EX)
+            try:
+                yield
+            finally:
+                fcntl.flock(lock_file.fileno(), fcntl.LOCK_UN)
+
+
+def verify_existing_immutable_cache(
     *,
     plugin_root: Path,
     cache_path: Path,
     expected_source_entries: dict[str, TreeEntry],
-) -> None:
+) -> bool:
+    if path_is_link_or_reparse_point(cache_path):
+        raise ValueError("plugin cache version path must not be a symlink")
+    if not cache_path.exists():
+        return False
+    if not cache_path.is_dir():
+        raise ValueError(
+            "immutable plugin cache version path already exists but is not a "
+            "directory; bump the plugin manifest version before installing again"
+        )
+
     current_source_entries, cache_entries = read_stable_tree_snapshots(
         [plugin_root, cache_path]
     )
     ensure_snapshot_unchanged(
         expected_source_entries,
         current_source_entries,
-        "plugin source changed during cache refresh",
+        "plugin source changed while verifying the immutable cache version",
     )
     compare_installable_tree_manifests(
         expected_entries=expected_source_entries,
         actual_entries=cache_entries,
-        mismatch_subject="refreshed cache content does not match plugin source",
-        remediation="Restore the prior verified cache before returning failure.",
+        mismatch_subject=(
+            "immutable plugin cache version already exists and does not match "
+            "plugin source"
+        ),
+        remediation=(
+            "Existing manifest-version cache directories are never refreshed; "
+            "bump the plugin manifest version before installing changed source."
+        ),
     )
+    return True
 
 
-def restore_materialized_cache(
+def ensure_cache_destination_is_safe(
     *,
-    backup_path: Path,
-    expected_backup_entries: dict[str, TreeEntry],
     cache_path: Path,
-    transaction_root: Path,
+    cache_root: Path,
 ) -> None:
-    rollback_staged_path = transaction_root / "rollback-staged"
-    shutil.copytree(backup_path, rollback_staged_path, symlinks=True)
-    rollback_entries = build_installable_tree_manifest(rollback_staged_path)
-    ensure_snapshot_unchanged(
-        expected_backup_entries,
-        rollback_entries,
-        "plugin cache rollback snapshot changed before restoration",
-    )
-    current_entries = build_installable_tree_manifest(cache_path)
-    sync_installable_tree_in_place(
-        source_root=rollback_staged_path,
-        expected_entries=expected_backup_entries,
-        destination_root=cache_path,
-        current_entries=current_entries,
-        quarantine_root=transaction_root / "rollback-quarantine",
-    )
-    restored_entries = read_stable_tree_snapshots([cache_path])[0]
-    ensure_snapshot_unchanged(
-        expected_backup_entries,
-        restored_entries,
-        "plugin cache rollback did not restore the prior verified tree",
+    ensure_root_is_not_symlink(cache_root, "plugin cache root")
+    ensure_path_within_cache_root(cache_path, cache_root)
+    ensure_cache_path_has_no_symlink_components(
+        cache_path=cache_path,
+        cache_root=cache_root,
     )
 
 
-def sync_installable_tree_in_place(
+def ensure_cache_parent_directory(
     *,
-    source_root: Path,
-    expected_entries: dict[str, TreeEntry],
-    destination_root: Path,
-    current_entries: dict[str, TreeEntry],
-    quarantine_root: Path,
+    cache_path: Path,
+    cache_root: Path,
 ) -> None:
-    """Synchronize a cache tree without replacing its potentially open root."""
-    if destination_root.is_symlink() or not destination_root.is_dir():
-        raise ValueError("plugin cache root must remain a real directory")
+    cache_root.mkdir(parents=True, exist_ok=True)
+    if path_is_link_or_reparse_point(cache_root) or not cache_root.is_dir():
+        raise ValueError("plugin cache root must be a real directory")
+    try:
+        relative_parent = cache_path.parent.relative_to(cache_root)
+    except ValueError:
+        raise ValueError("plugin cache path escapes the configured cache root") from None
 
-    # Temporarily make existing directories owner-writable so a prior source
-    # mode cannot prevent an update. Final source modes are restored below.
-    current_directories = [
-        relative_path
-        for relative_path, entry in current_entries.items()
-        if entry.kind == "directory"
-    ]
-    for relative_path in sorted(
-        current_directories,
-        key=lambda value: (len(tree_path_parts(value)), canonical_utf8(value)),
-    ):
-        directory_path = installable_tree_path(destination_root, relative_path)
-        os.chmod(
-            directory_path,
-            current_entries[relative_path].mode | stat.S_IWUSR | stat.S_IXUSR,
-        )
-
-    removal_roots = minimal_refresh_removal_roots(
-        current_entries=current_entries,
-        expected_entries=expected_entries,
-    )
-    for relative_path in removal_roots:
-        current_path = installable_tree_path(destination_root, relative_path)
-        quarantine_path = installable_tree_path(quarantine_root, relative_path)
-        quarantine_path.parent.mkdir(parents=True, exist_ok=True)
-        os.replace(current_path, quarantine_path)
-
-    expected_directories = [
-        relative_path
-        for relative_path, entry in expected_entries.items()
-        if relative_path != "." and entry.kind == "directory"
-    ]
-    for relative_path in sorted(
-        expected_directories,
-        key=lambda value: (len(tree_path_parts(value)), canonical_utf8(value)),
-    ):
-        destination_path = installable_tree_path(destination_root, relative_path)
-        destination_path.mkdir(exist_ok=True)
-        if destination_path.is_symlink() or not destination_path.is_dir():
-            raise ValueError("plugin cache changed to an unsafe directory during refresh")
-
-    expected_files = [
-        relative_path
-        for relative_path, entry in expected_entries.items()
-        if entry.kind == "file"
-    ]
-    for relative_path in sorted(expected_files, key=canonical_utf8):
-        expected_entry = expected_entries[relative_path]
-        current_entry = current_entries.get(relative_path)
-        source_path = installable_tree_path(source_root, relative_path)
-        destination_path = installable_tree_path(destination_root, relative_path)
-        if current_entry == expected_entry:
-            continue
-        if (
-            current_entry is not None
-            and current_entry.kind == "file"
-            and current_entry.size == expected_entry.size
-            and current_entry.content_digest == expected_entry.content_digest
-        ):
-            shutil.copymode(source_path, destination_path, follow_symlinks=False)
-            continue
-        os.replace(source_path, destination_path)
-
-    # Apply directory modes after mutations so a read-only source directory
-    # does not block its own materialization. The root is deliberately kept in
-    # place even when Codex holds an open directory handle on Windows.
-    for relative_path in sorted(
-        expected_directories,
-        key=lambda value: (-len(tree_path_parts(value)), canonical_utf8(value)),
-    ):
-        shutil.copymode(
-            installable_tree_path(source_root, relative_path),
-            installable_tree_path(destination_root, relative_path),
-            follow_symlinks=False,
-        )
-    shutil.copymode(source_root, destination_root, follow_symlinks=False)
+    current = cache_root
+    for component in relative_parent.parts:
+        current /= component
+        if path_is_link_or_reparse_point(current):
+            raise ValueError("plugin cache path components must not be symlinks")
+        current.mkdir(exist_ok=True)
+        if path_is_link_or_reparse_point(current) or not current.is_dir():
+            raise ValueError("plugin cache path components must be real directories")
+    ensure_cache_destination_is_safe(cache_path=cache_path, cache_root=cache_root)
 
 
-def minimal_refresh_removal_roots(
+def directory_identity(path: Path) -> tuple[int, int]:
+    if path_is_link_or_reparse_point(path):
+        raise ValueError("plugin cache parent must not be a symlink")
+    metadata = path.stat(follow_symlinks=False)
+    if not stat.S_ISDIR(metadata.st_mode):
+        raise ValueError("plugin cache parent must be a directory")
+    return metadata.st_dev, metadata.st_ino
+
+
+def ensure_directory_identity_unchanged(
+    path: Path,
+    expected_identity: tuple[int, int],
+) -> None:
+    if directory_identity(path) != expected_identity:
+        raise ValueError("plugin cache parent changed during publication")
+
+
+def cleanup_temporary_tree(
+    path: Path,
     *,
-    current_entries: dict[str, TreeEntry],
-    expected_entries: dict[str, TreeEntry],
-) -> list[str]:
-    candidates = [
-        relative_path
-        for relative_path, current_entry in current_entries.items()
-        if relative_path != "."
-        and (
-            relative_path not in expected_entries
-            or expected_entries[relative_path].kind != current_entry.kind
-        )
-    ]
-    selected: list[str] = []
-    selected_parts: list[tuple[str, ...]] = []
-    for relative_path in sorted(
-        candidates,
-        key=lambda value: (len(tree_path_parts(value)), canonical_utf8(value)),
+    primary_error: BaseException | None,
+) -> None:
+    try:
+        if path.is_symlink() or path.exists():
+            remove_temporary_tree(path)
+    except Exception as cleanup_error:
+        if primary_error is None:
+            raise
+        note = f"temporary cache staging cleanup also failed: {cleanup_error}"
+        add_note = getattr(primary_error, "add_note", None)
+        if callable(add_note):
+            add_note(note)
+
+
+def remove_temporary_tree(path: Path) -> None:
+    """Remove a private staging tree, including read-only copied entries."""
+    if path.is_symlink():
+        path.unlink()
+        return
+    if not path.exists():
+        return
+
+    def make_owner_writable(target: Path) -> None:
+        if target.is_symlink():
+            return
+        metadata = target.stat(follow_symlinks=False)
+        extra_mode = stat.S_IRUSR | stat.S_IWUSR
+        if stat.S_ISDIR(metadata.st_mode):
+            extra_mode |= stat.S_IXUSR
+        os.chmod(target, stat.S_IMODE(metadata.st_mode) | extra_mode)
+
+    def raise_walk_error(error: OSError) -> None:
+        raise error
+
+    for directory, directory_names, file_names in os.walk(
+        path,
+        topdown=False,
+        followlinks=False,
+        onerror=raise_walk_error,
     ):
-        parts = tree_path_parts(relative_path)
-        if any(parts[: len(parent)] == parent for parent in selected_parts):
-            continue
-        selected.append(relative_path)
-        selected_parts.append(parts)
-    return selected
+        directory_path = Path(directory)
+        for name in file_names:
+            make_owner_writable(directory_path / name)
+        for name in directory_names:
+            make_owner_writable(directory_path / name)
+        make_owner_writable(directory_path)
 
+    def retry_after_chmod(function, target: str, exception_info) -> None:
+        original_error = exception_info[1]
+        try:
+            make_owner_writable(Path(target))
+            function(target)
+        except Exception:
+            raise original_error
 
-def tree_path_parts(relative_path: str) -> tuple[str, ...]:
-    return () if relative_path == "." else tuple(relative_path.split("/"))
-
-
-def installable_tree_path(root: Path, relative_path: str) -> Path:
-    parts = tree_path_parts(relative_path)
-    return root.joinpath(*parts) if parts else root
+    shutil.rmtree(path, onerror=retry_after_chmod)
 
 
 def ensure_installation_receipt(
@@ -1388,7 +1370,7 @@ def ignored_cache_entry_names(_: str, names: list[str]) -> set[str]:
 
 
 def build_installable_tree_manifest(root: Path) -> dict[str, TreeEntry]:
-    if root.is_symlink():
+    if path_is_link_or_reparse_point(root):
         raise ValueError("plugin source and cache roots must not be symlinks")
     if not root.is_dir():
         raise ValueError(f"plugin tree is missing or not a directory: {root}")
@@ -1419,7 +1401,8 @@ def build_installable_tree_manifest(root: Path) -> dict[str, TreeEntry]:
             relative_path = relative_directory / child.name
             relative_key = relative_path.as_posix()
             canonical_utf8(relative_key)
-            if child.is_symlink():
+            metadata = os.stat(child_path, follow_symlinks=False)
+            if path_is_link_or_reparse_point(child_path, metadata=metadata):
                 raise ValueError(
                     "plugin source and cache trees must not contain symlinks"
                 )
@@ -1427,7 +1410,6 @@ def build_installable_tree_manifest(root: Path) -> dict[str, TreeEntry]:
             # though os.fstat() exposes the real file identity. Re-stat the
             # path without following links so the pre-open identity remains
             # comparable to the opened descriptor.
-            metadata = os.stat(child_path, follow_symlinks=False)
             mode = stat.S_IMODE(metadata.st_mode)
             if stat.S_ISDIR(metadata.st_mode):
                 entries[relative_key] = TreeEntry(
@@ -1534,7 +1516,7 @@ def ensure_path_within_cache_root(cache_path: Path, cache_root: Path) -> None:
 
 
 def ensure_root_is_not_symlink(path: Path, label: str) -> None:
-    if path.is_symlink():
+    if path_is_link_or_reparse_point(path):
         raise ValueError(f"{label} must not be a symlink")
 
 
@@ -1552,8 +1534,24 @@ def ensure_cache_path_has_no_symlink_components(
     current = cache_root
     for component in relative_cache_path.parts:
         current /= component
-        if current.is_symlink():
+        if path_is_link_or_reparse_point(current):
             raise ValueError("plugin cache path components must not be symlinks")
+
+
+def path_is_link_or_reparse_point(
+    path: Path,
+    *,
+    metadata: os.stat_result | None = None,
+) -> bool:
+    if metadata is None:
+        try:
+            metadata = os.stat(path, follow_symlinks=False)
+        except FileNotFoundError:
+            return False
+    if stat.S_ISLNK(metadata.st_mode):
+        return True
+    reparse_attribute = getattr(stat, "FILE_ATTRIBUTE_REPARSE_POINT", 0x400)
+    return bool(getattr(metadata, "st_file_attributes", 0) & reparse_attribute)
 
 
 def ensure_disjoint_install_paths(*, plugin_root: Path, cache_path: Path) -> None:
