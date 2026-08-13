@@ -24,6 +24,7 @@
     "longDescription": "Spec-Driven Development routes lightweight, Spec Kit, Kiro-style, OpenSpec-style, brownfield, bugfix, proposal, and orchestration lanes while separating requirements, design, tasks, code, proof, traceability, and completion evidence.",
     "developerName": "Xopoko",
     "category": "Coding",
+    "websiteURL": "https://github.com/Xopoko/plug-n-skills",
     "capabilities": [
       "SDD lane and evidence-profile selection for tiny fixes, feature work, bugfixes, brownfield changes, and large initiatives",
       "GitHub Spec Kit workflow integration without hiding the underlying project artifacts",

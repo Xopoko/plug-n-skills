@@ -10,6 +10,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 import plugin_catalog  # noqa: E402
 
 ROOT = Path(__file__).resolve().parents[2]
+CATALOG_WEBSITE_URL = "https://github.com/Xopoko/plug-n-skills"
 LOCAL_PLUGINS = [
     "agent-harness",
     "capability-workbench",
@@ -66,6 +67,19 @@ class RepoStructureTest(unittest.TestCase):
                 )
                 self.assertEqual(data.get("name"), name,
                                  f"{name}/{marker} name mismatch")
+
+    def test_codex_manifest_website_points_to_catalog(self):
+        for name in LOCAL_PLUGINS:
+            manifest = json.loads(
+                (
+                    ROOT / "plugins" / name / ".codex-plugin" / "plugin.json"
+                ).read_text()
+            )
+            self.assertEqual(
+                CATALOG_WEBSITE_URL,
+                manifest.get("interface", {}).get("websiteURL"),
+                f"{name} website must point to the Plug'n Skills catalog",
+            )
 
     def test_root_marketplace_lists_all_plugins(self):
         mp = json.loads((ROOT / ".claude-plugin" / "marketplace.json").read_text())

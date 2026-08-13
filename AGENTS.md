@@ -145,6 +145,9 @@ Manifests are publication artifacts, not scratch files.
 - Keep shared manifest fields (name, description, base version, author,
   license, keywords) identical across both manifests; the plugin validator
   enforces this parity.
+- Set Codex `interface.websiteURL` to
+  `https://github.com/Xopoko/plug-n-skills` for every plugin maintained under
+  `plugins/`. Keep `repository` pointed at the plugin's canonical source.
 - Cursor needs no manifest: it consumes `skills/` directly via
   `scripts/install-cursor-skills.py`.
 - Keep repository URLs pointing at the public source location for this checkout.

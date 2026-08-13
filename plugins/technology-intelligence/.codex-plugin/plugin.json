@@ -29,6 +29,7 @@
     "longDescription": "Start from a needed capability, compare candidate technologies, inspect their documented CLI, SDK, WASM, MCP, API, app, or skill interfaces, and keep caller-supplied runtime availability separate. Dated primary-source observations preserve publication and measurement windows, explicit decision profiles, hard gates, alternatives, confidence, and visible evidence gaps. A separate maintenance workflow validates staleness and bounded-window coverage, reviews source and licensing constraints, captures hash-bound allowlisted refresh receipts outside tracked source, and proposes reviewable dataset changes without automatically changing recommendations or owning runtime installation and invocation.",
     "developerName": "Xopoko",
     "category": "Coding",
+    "websiteURL": "https://github.com/Xopoko/plug-n-skills",
     "capabilities": [
       "Context-specific technology and framework comparison",
       "Capability-to-technology-to-interface decision graph",

@@ -27,6 +27,7 @@
     "longDescription": "Product and UX design decisions use technology-agnostic, source-backed judgment across framing, interface architecture, interaction design, usability/accessibility review, visual communication, and design-system governance. Technical explanations can select the smallest useful table, tree, pseudocode, call flow, state view, structural diff, or wireframe while separating observed evidence from proposed structure. The plugin deliberately avoids Figma automation, CSS recipes, framework recipes, general data charting, and image generation.",
     "developerName": "Xopoko",
     "category": "Productivity",
+    "websiteURL": "https://github.com/Xopoko/plug-n-skills",
     "capabilities": [
       "Outcome-first product framing",
       "Technology-agnostic UI pattern review",

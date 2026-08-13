@@ -24,6 +24,7 @@
     "longDescription": "Scholarly literature workflows discover papers, route open copies, deduplicate DOIs, and bind synthesized claims to evidence across arXiv, OpenAlex, Crossref, Europe PMC, Semantic Scholar, PubMed, CORE, and OpenCitations.",
     "developerName": "Xopoko",
     "category": "Research",
+    "websiteURL": "https://github.com/Xopoko/plug-n-skills",
     "capabilities": [
       "Research",
       "Read",

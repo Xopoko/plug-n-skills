@@ -28,6 +28,7 @@
     "longDescription": "Game design decisions use source-backed judgment across loops, mechanics, progression, economies, rewards, onboarding, difficulty, motivation, retention, multiplayer dynamics, content cadence, and live-service health. The plugin deliberately avoids game engines, graphics, asset creation, programming, and implementation details.",
     "developerName": "Xopoko",
     "category": "Productivity",
+    "websiteURL": "https://github.com/Xopoko/plug-n-skills",
     "capabilities": [
       "Core gameplay loop and system critique",
       "Emergence and gameplay dynamics design",

@@ -22,6 +22,7 @@
     "longDescription": "Kotlin Multiplatform engineering for Gradle/source sets, Android-KMP/AGP migration, Compose UI, data, iOS interop, CocoaPods/SwiftPM, testing, governance, performance/observability, security/privacy, CI, publishing, and readiness audits.",
     "developerName": "Xopoko",
     "category": "Coding",
+    "websiteURL": "https://github.com/Xopoko/plug-n-skills",
     "capabilities": [
       "Kotlin Multiplatform architecture and source-set design",
       "Gradle, KGP, AGP, Compose Multiplatform configuration diagnosis",

@@ -32,6 +32,7 @@
     "longDescription": "Capability Workbench is the artifact authoring and governance plane of agent capability engineering. It turns desired behavior, observed gaps, and trusted sources into reusable skills, plugins, agent guidance, trigger contracts, and coherent portfolios. It covers discovery, synthesis, portfolio architecture, authoring, behavioral evaluation against a baseline, audit, reality repair, safety vetting, packaging, and explicit activation. Agent Harness owns runtime design, operation, orchestration, and harness-level evaluation. Artifacts remain on the validated source surface unless the user explicitly requests installed or global use.",
     "developerName": "Xopoko",
     "category": "Productivity",
+    "websiteURL": "https://github.com/Xopoko/plug-n-skills",
     "capabilities": [
       "Skill and plugin lifecycle routing",
       "Broad external-first capability discovery",

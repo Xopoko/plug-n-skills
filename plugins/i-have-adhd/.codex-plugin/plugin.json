@@ -21,6 +21,7 @@
     "longDescription": "Explicitly invoked focus formatting that leads with action, keeps the current response short, shows progress, uses concrete time estimates, handles errors calmly, and ends with one next action. Invoke it again on later requests when the same format is wanted.",
     "developerName": "Xopoko",
     "category": "Productivity",
+    "websiteURL": "https://github.com/Xopoko/plug-n-skills",
     "capabilities": [
       "Instructions"
     ],

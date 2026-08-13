@@ -31,6 +31,7 @@ LOCAL_PLUGIN_NAMES = [
     "pixijs",
     "game-design-intelligence",
 ]
+CATALOG_WEBSITE_URL = "https://github.com/Xopoko/plug-n-skills"
 
 TEXT_EXTENSIONS = {
     "",
@@ -289,7 +290,13 @@ def validate_manifest_metadata(name: str, manifest: dict[str, Any], errors: list
         if isinstance(author_name, str) and "Local" in author_name:
             errors.append(f"{rel}: author name should not include local-only branding")
     interface = manifest.get("interface")
-    if isinstance(interface, dict):
+    if not isinstance(interface, dict):
+        errors.append(f"{rel}: interface must be an object")
+    else:
+        if interface.get("websiteURL") != CATALOG_WEBSITE_URL:
+            errors.append(
+                f"{rel}: interface.websiteURL must be {CATALOG_WEBSITE_URL}"
+            )
         developer = interface.get("developerName")
         if isinstance(developer, str) and "Local" in developer:
             errors.append(f"{rel}: developerName should not include local-only branding")

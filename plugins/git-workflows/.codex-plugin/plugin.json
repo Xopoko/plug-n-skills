@@ -25,6 +25,7 @@
     "longDescription": "GitHub pull requests and GitLab merge requests can be reviewed through capability-selected read adapters; GitLab discussions retain their race-safe exact-head reply transaction; stacked changes preserve parent-head and proof freshness across descriptions, statuses, checkpoints, and handoffs; and worktree pointers plus SSH-signed commits retain their existing fail-closed recovery contracts. Forge access keeps MCP, connector, CLI, and REST transports interchangeable only where their probed evidence semantics are genuinely equivalent.",
     "developerName": "Xopoko",
     "category": "Coding",
+    "websiteURL": "https://github.com/Xopoko/plug-n-skills",
     "capabilities": [
       "Read-only GitHub pull request and GitLab merge request review with complete changed-file pagination and explicit truncation detection",
       "Capability-probed MCP, connector, CLI, and REST forge adapter selection",

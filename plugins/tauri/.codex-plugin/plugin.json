@@ -22,6 +22,7 @@
     "longDescription": "Tauri 2 app development for project scaffolding and migration, tauri.conf/capability security, Rust IPC and plugins, desktop-shell UI, debugging and tests, distribution, signing, updater delivery, and Android/iOS release readiness.",
     "developerName": "Xopoko",
     "category": "Coding",
+    "websiteURL": "https://github.com/Xopoko/plug-n-skills",
     "capabilities": [
       "Read",
       "Write",

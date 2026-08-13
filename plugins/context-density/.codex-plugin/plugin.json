@@ -24,6 +24,7 @@
     "longDescription": "Agent context audits measure token cost, placement, provenance, typed-state integrity, compression, and prompt/output contracts. Structural plugin split, merge, move, delete, router, and overlap decisions route to Capability Workbench.",
     "developerName": "Xopoko",
     "category": "Productivity",
+    "websiteURL": "https://github.com/Xopoko/plug-n-skills",
     "capabilities": [
       "Token-efficient context design",
       "Long-context placement and context packing",

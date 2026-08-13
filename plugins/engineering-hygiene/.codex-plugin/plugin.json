@@ -25,6 +25,7 @@
     "longDescription": "Engineering hygiene audits changed code, untangles domain rules, inspects rendered UI, and provisions missing tools. Evidence comes from searches, tool output, tests, builds, or screenshots; edits stay within the touched surface.",
     "developerName": "Xopoko",
     "category": "Productivity",
+    "websiteURL": "https://github.com/Xopoko/plug-n-skills",
     "capabilities": [
       "Dead-code and stale-leftover sweep over changed and adjacent code",
       "Safe local consolidation of duplicate code with abstraction guardrails",

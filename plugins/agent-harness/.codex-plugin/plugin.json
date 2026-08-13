@@ -32,6 +32,7 @@
     "longDescription": "Design and evaluate reliable LLM agent harnesses, including contracts and evidence gates for versioned runtime reconfiguration and rollback; operate Codex CLI and Claude Code; hand task-scoped credentials from a human or 1Password directly to target processes without returning secret values to the model; manage plugins, MCP servers, hooks, settings, sessions, worktrees, and environments; inspect rollout evidence; use producer-native deferred completion; and prove local operating-system scheduler runs.",
     "developerName": "Xopoko",
     "category": "Coding",
+    "websiteURL": "https://github.com/Xopoko/plug-n-skills",
     "capabilities": [
       "Vendor-neutral agent harness design with typed control, runtime-generation and reconfiguration contracts, state, policy, recovery, cancellation, and delegation",
       "Harness evaluation, replay, mixed-generation fault injection, rollback evidence, failure attribution, reliability analysis, and release gates",

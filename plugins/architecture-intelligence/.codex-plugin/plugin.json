@@ -41,6 +41,7 @@
     "longDescription": "Software architecture audits and decisions use source evidence to evaluate code boundaries, AI-assisted code architecture, ownership/runtime topology, async state consistency, conformance, ADRs, fitness functions, structure metrics, and staged refactoring. Coding agents can assist architecture recovery, design-option comparison, incremental refactoring, and source-grounded patch review, while dependency direction, public APIs, domain/data seams, runtime coupling, quality attributes, policy checks, cycles, and before/after proof remain the architectural subject.",
     "developerName": "Xopoko",
     "category": "Productivity",
+    "websiteURL": "https://github.com/Xopoko/plug-n-skills",
     "capabilities": [
       "Source-backed codebase architecture audit",
       "Ownership topology, CODEOWNERS/OWNERS coverage, and cross-owned coordination risk",
