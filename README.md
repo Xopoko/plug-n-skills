@@ -263,7 +263,7 @@ instructions.
 | Skill entrypoints | 198 | - | `SKILL.md` files exposed through plugin metadata. |
 | Reference files | 277 | - | Longer ledgers, contracts, scorecards, and source notes. |
 | Helper and validator scripts | 96 | - | Deterministic plugin-local helpers. |
-| Startup metadata | 198 skills | 16,761 | Skill name, description, and file pointer for routing. |
+| Startup metadata | 198 skills | 16,871 | Skill name, description, and file pointer for routing. |
 | On-demand skill bodies | 198 skills | 144,456 | Instruction bodies after frontmatter, loaded only when selected. |
 
 Regenerate the report after skill edits:
@@ -296,7 +296,7 @@ Token columns are `startup metadata / on-demand body`.
 | `tauri` | 6 | 0 | 1 | 438 | 3,472 |
 | `pixijs` | 26 | 64 | 0 | 1,837 | 7,967 |
 | `game-design-intelligence` | 6 | 2 | 1 | 452 | 2,916 |
-| `career` | 20 | 21 | 3 | 1,823 | 9,857 |
+| `career` | 20 | 21 | 3 | 1,933 | 9,857 |
 
 ### Plugin Focus
 
@@ -580,26 +580,26 @@ Token cells are shown as `startup/body`.
 
 | Skill | Tokens | Description |
 | --- | ---: | --- |
-| `application-assistance` | 86/496 | Application assistance maps reviewed candidate data into a specific form, isolates sensitive or legal questions, previews every external effect, and stops before submission until explicitly authorized. |
-| `application-campaign` | 91/481 | Application campaigns plan and execute bounded multi-role rosters with exact per-role artifacts, approval hashes, outcome accounting, and reconciliation. Excludes blind bulk apply and single-form drafting. |
-| `application-tailoring` | 90/471 | Role-specific tailoring produces truthful resumes, cover letters, short answers, and narrative plans from verified evidence, with claim traceability and artifact review. Excludes browser form mutation. |
-| `career` | 92/1,106 | Career routing coordinates context, direction, research, opportunities, materials, applications, networking, recruiters, interviews, offers, development, and pipeline learning. Triggers on broad or multi-stage career requests. |
-| `career-context` | 90/567 | Career context capture turns source material and user corrections into provenance-linked facts, evidence, preferences, constraints, accomplishments, and reusable story candidates. Excludes drafting a role-specific application. |
-| `career-data-governance` | 97/389 | Career data governance inventories private workspace data and plans disclosure, export, retention, legal hold, scoped deletion, and deletion proof. Excludes automatic evidence cleanup and provider writes without approval. |
-| `career-development` | 85/412 | Career development converts recurring evidence gaps and long-term goals into bounded learning, portfolio, visibility, mentoring, and internal-mobility experiments with measurable checkpoints. |
-| `career-direction` | 79/435 | Role-family uncertainty, career pivots, and transferable-skill questions when the user needs target options rather than current vacancies. |
-| `career-inbox` | 93/437 | Career inbox reconciliation reads bounded accounts and queries, classifies job-search communications, maps candidates to opportunities, and gates exact message mutations. Excludes general mail cleanup and recruiter prose drafting. |
-| `career-market-research` | 93/438 | Career market research investigates occupations, employers, compensation, demand, geography, work authorization language, and hiring practices using dated sources and explicit uncertainty. Excludes personalized fit scoring. |
-| `career-materials` | 88/574 | Career asset creation builds evidence-backed baseline resumes, profiles, portfolios, case studies, accomplishment inventories, and reference briefs. Excludes tailoring to one open role. |
-| `career-networking` | 90/392 | Career networking finds authorized warm paths and drafts grounded referral, recruiter, informational-interview, and follow-up messages while minimizing retained contact data. Excludes sending without approval. |
-| `career-operations` | 99/381 | Career operations reconstructs durable workspace state and produces a daily action queue, campaign and inbox reconciliation, metrics, follow-ups, and drift checks. Excludes using dashboards, tabs, or README notes as canonical state. |
-| `career-pipeline` | 88/522 | Career pipeline tracking records event-sourced opportunity status, distinct outcomes, artifact lineage, follow-ups, interviews, offers, conversion metrics, and evidence-backed learning. |
-| `career-source-adapter` | 97/529 | Career source adapters specify and vet new job, mail, calendar, taxonomy, document, or browser providers through capability, normalization, privacy, licensing, and effect contracts. Excludes automatic activation. |
-| `interview-preparation` | 93/436 | Interview preparation builds a stage-specific competency map, evidence-backed story bank, practice loop, interviewer questions, reference plan, and follow-up capture. Covers behavioral and role-specific interviews. |
-| `offer-negotiation` | 91/400 | Offer decision support normalizes cash, equity, benefits, constraints, uncertainty, and current market evidence; compares options and drafts a negotiation plan without accepting or sending. |
-| `opportunity-analysis` | 99/457 | Opportunity analysis maps a posting to verified evidence, hard constraints, gaps, employer signals, scam risks, and a transparent apply, clarify, defer, or decline recommendation. Triggers on pasted text or a job URL. |
-| `opportunity-search` | 89/508 | Fresh job-lead requests with an explicit or discoverable search policy, authorized sources, and hard filters. Not for deciding fit on one posting or submitting an application. |
-| `recruiter-coordination` | 93/426 | Recruiter coordination reconciles messages and calendars, distinguishes chat, proposed slot, and confirmed interview, drafts responses, and records follow-ups without sending or booking until approved. |
+| `application-assistance` | 89/496 | Application assistance maps reviewed candidate data into a specific form, isolates sensitive or legal questions, previews every external effect, and stops before submission until explicitly authorized. |
+| `application-campaign` | 94/481 | Application campaigns plan and execute bounded multi-role rosters with exact per-role artifacts, approval hashes, outcome accounting, and reconciliation. Excludes blind bulk apply and single-form drafting. |
+| `application-tailoring` | 93/471 | Role-specific tailoring produces truthful resumes, cover letters, short answers, and narrative plans from verified evidence, with claim traceability and artifact review. Excludes browser form mutation. |
+| `career` | 100/1,106 | Career routing handles broad or multi-stage requests across context, direction, market, jobs, materials, applications, communication, interviews, offers, operations, development, governance, and sources. Focused tasks use the owning skill. |
+| `career-context` | 93/567 | Career context capture turns source material and user corrections into provenance-linked facts, evidence, preferences, constraints, accomplishments, and reusable story candidates. Excludes drafting a role-specific application. |
+| `career-data-governance` | 100/389 | Career data governance inventories private workspace data and plans disclosure, export, retention, legal hold, scoped deletion, and deletion proof. Excludes automatic evidence cleanup and provider writes without approval. |
+| `career-development` | 95/412 | Career development turns verified targets or repeated evidence gaps into bounded learning, portfolio, visibility, mentoring, and internal-mobility experiments with checkpoints. Excludes role-family selection and application work. |
+| `career-direction` | 96/435 | Career direction compares role families, pivots, and transferable evidence, then defines reversible experiments when the user needs target options. Excludes live-opening search and growth plans for an already chosen target. |
+| `career-inbox` | 96/437 | Career inbox reconciliation reads bounded accounts and queries, classifies job-search messages, maps them to opportunities, and gates exact mail mutations. Excludes general mailbox cleanup and recruiter reply drafting. |
+| `career-market-research` | 96/438 | Career market research investigates occupations, employers, compensation, demand, geography, work authorization language, and hiring practices using dated sources and explicit uncertainty. Excludes personalized fit scoring. |
+| `career-materials` | 91/574 | Career asset creation builds evidence-backed baseline resumes, profiles, portfolios, case studies, accomplishment inventories, and reference briefs. Excludes tailoring to one open role. |
+| `career-networking` | 98/392 | Career networking finds authorized warm paths and drafts outbound referral, recruiter-outreach, informational-interview, and follow-up messages with minimal contact data. Excludes inbound recruiter threads and unapproved sending. |
+| `career-operations` | 102/381 | Career operations reconstructs durable workspace state and produces a daily action queue, campaign and inbox reconciliation, metrics, follow-ups, and drift checks. Excludes using dashboards, tabs, or README notes as canonical state. |
+| `career-pipeline` | 101/522 | Career pipeline records event-sourced opportunity stages, outcomes, artifact lineage, follow-ups, interviews, and offers, and analyzes bounded conversion history. Excludes cross-surface daily operations and unverified status changes. |
+| `career-source-adapter` | 100/529 | Career source adapters specify and vet new job, mail, calendar, taxonomy, document, or browser providers through capability, normalization, privacy, licensing, and effect contracts. Excludes automatic activation. |
+| `interview-preparation` | 98/436 | Interview preparation handles stage-specific competency maps, evidence-backed stories, mock practice, interviewer questions, reference planning, logistics, and post-interview debriefs across behavioral and role-specific interviews. |
+| `offer-negotiation` | 94/400 | Offer decision support normalizes cash, equity, benefits, constraints, uncertainty, and current market evidence; compares options and drafts a negotiation plan without accepting or sending. |
+| `opportunity-analysis` | 102/457 | Opportunity analysis maps a posting to verified evidence, hard constraints, gaps, employer signals, scam risks, and a transparent apply, clarify, defer, or decline recommendation. Triggers on pasted text or a job URL. |
+| `opportunity-search` | 99/508 | Opportunity search finds, normalizes, filters, deduplicates, and ranks fresh job leads under an explicit or discoverable policy and authorized sources. Excludes fit decisions on one posting and application submission. |
+| `recruiter-coordination` | 96/426 | Recruiter coordination reconciles messages and calendars, distinguishes chat, proposed slot, and confirmed interview, drafts responses, and records follow-ups without sending or booking until approved. |
 
 ## Repository Design
 

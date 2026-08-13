@@ -39,13 +39,13 @@
       "source": {
         "provider": "github",
         "repository": "Xopoko/career-skills",
-        "commit": "d387a7e2c982da24eaa73790310ce37ad2337f44",
-        "tree": "a86472db6bb19cd640e3e6f947f3654a9924be17"
+        "commit": "42e77fbe5592f1953e6407784bba024e6956f2e7",
+        "tree": "3f79c5d842868670e6c9ec8f74e1b73aa4e14183"
       },
       "manifest": {
-        "version": "0.1.1",
-        "codexSha256": "9dd5d9e60f042cb5723e8f5b4afe60942ee301bfbf49174af590c0011ea98181",
-        "claudeSha256": "a51d0754a40e217c8180653925977d0b8227b63738f3a360a9159ff8599de72c"
+        "version": "0.1.2",
+        "codexSha256": "bebf5968995c7f522fdcd0d7c85d3afa5e5ae46a785a17d61d61f7fea075cec9",
+        "claudeSha256": "2f047d1fe9fa1282a974d41e6f413d5be561d2d974f15ab9ce4c8a04f7ea3be2"
       },
       "license": "MIT",
       "selection": {

@@ -93,10 +93,10 @@
       "source": {
         "source": "github",
         "repo": "Xopoko/career-skills",
-        "sha": "d387a7e2c982da24eaa73790310ce37ad2337f44"
+        "sha": "42e77fbe5592f1953e6407784bba024e6956f2e7"
       },
       "description": "Evidence-first career support for direction, research, job discovery, materials, applications and campaigns, inbox and recruiter coordination, interviews, offers, operations, development, and data governance.",
-      "version": "0.1.1"
+      "version": "0.1.2"
     }
   ]
 }
