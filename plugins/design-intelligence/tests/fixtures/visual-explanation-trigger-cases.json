@@ -1,0 +1,80 @@
+{
+  "schema": "visual-explanation.trigger-probes.v1",
+  "skill": "visual-explanation",
+  "should_trigger": [
+    {
+      "id": "explicit-current-topic",
+      "prompt": "Given this approved refactor plan, show visually what moves where.",
+      "representation": "structural diff",
+      "evidenceLabels": ["given", "proposed"]
+    },
+    {
+      "id": "runtime-sequence",
+      "prompt": "Using this captured trace, explain the request path across the client, API, queue, and worker.",
+      "representation": "sequence diagram",
+      "evidenceLabels": ["observed"]
+    },
+    {
+      "id": "module-ownership",
+      "prompt": "From the inspected ownership declarations, show which modules own each responsibility.",
+      "representation": "tree",
+      "evidenceLabels": ["observed"]
+    },
+    {
+      "id": "state-transition",
+      "prompt": "Given this job-state specification, map pending, running, retrying, and terminal transitions.",
+      "representation": "state diagram",
+      "evidenceLabels": ["given"]
+    },
+    {
+      "id": "field-comparison",
+      "prompt": "Given these three adapter contracts, compare them field by field in a compact view.",
+      "representation": "table",
+      "evidenceLabels": ["given"]
+    },
+    {
+      "id": "branching-logic",
+      "prompt": "From this inspected function, make the nested retry and fallback logic easier to follow.",
+      "representation": "pseudocode",
+      "evidenceLabels": ["observed"]
+    },
+    {
+      "id": "layout-wireframe",
+      "prompt": "Given this already-approved settings layout, restate its regions as a compact wireframe.",
+      "representation": "wireframe",
+      "evidenceLabels": ["given", "proposed"]
+    }
+  ],
+  "should_not_trigger": [
+    {
+      "id": "simple-fact",
+      "prompt": "What version is declared in this manifest?",
+      "route": "concise prose"
+    },
+    {
+      "id": "ui-screenshot-audit",
+      "prompt": "Inspect this screenshot for hierarchy and capture-state defects.",
+      "route": "visual-communication"
+    },
+    {
+      "id": "architecture-recovery",
+      "prompt": "Recover the architecture of this unfamiliar repository from source.",
+      "route": "architecture-intelligence"
+    },
+    {
+      "id": "quantitative-chart",
+      "prompt": "Plot monthly conversion and retention from this CSV.",
+      "route": "data visualization"
+    },
+    {
+      "id": "image-asset",
+      "prompt": "Create a polished hero illustration for the landing page.",
+      "route": "image generation"
+    },
+    {
+      "id": "focus-mode",
+      "prompt": "Activate I Have ADHD mode and give me one next action.",
+      "route": "i-have-adhd"
+    }
+  ]
+}
