@@ -17,13 +17,13 @@
       "source": {
         "provider": "github",
         "repository": "Xopoko/build-swift-apps",
-        "commit": "1b3f2ecec1448ee081f718e0ddc3c4e730cf0d7f",
-        "tree": "37f5416efe8e69e52fa2351461a0c9091444e9bb"
+        "commit": "df13ae96198c2563c8ad61c0ff48e692c0b55e56",
+        "tree": "bec1b8ac93b4489def263e3dc80fe982853b41de"
       },
       "manifest": {
-        "version": "0.3.11",
-        "codexSha256": "989d485038585f31fef95e9a42aa4c7623ea4d66129330369ee7be392ddb2d24",
-        "claudeSha256": "15922520cb222dfa410db2a65543e1668e093807ff3927ad4c3752413b1e686b"
+        "version": "0.3.12",
+        "codexSha256": "ec8515938f880bbf71bbd9610b6a23618dc12afc87ca2cc127d95196fa3d22f9",
+        "claudeSha256": "6a8b0f46b777fcdde263548f667dfdda3ec37de659da834aa4ca73b2cc4343e5"
       },
       "license": "MIT",
       "selection": {

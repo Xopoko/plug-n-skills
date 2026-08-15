@@ -24,7 +24,8 @@ class SkillReport:
     skill: str
     path: str
     description: str
-    startup_tokens: int
+    source_routing_tokens: int
+    published_url_routing_tokens: int | None
     body_tokens: int
 
 
@@ -35,7 +36,8 @@ class PluginReport:
     skill_count: int
     reference_count: int
     script_count: int
-    startup_tokens: int
+    source_routing_tokens: int
+    published_url_routing_tokens: int | None
     body_tokens: int
 
 
@@ -61,6 +63,21 @@ def count_tokens(encoder: Any, text: str) -> int:
 def normalize_newlines(text: str) -> str:
     """Make token counts stable across Git checkouts with CRLF or LF."""
     return text.replace("\r\n", "\n").replace("\r", "\n")
+
+
+def routing_metadata_text(
+    plugin_name: str,
+    skill_name: str,
+    description: str,
+    source_path: str,
+) -> str:
+    """Serialize the comparable, source-relative routing estimate input."""
+
+    return (
+        f"name: {plugin_name}:{skill_name}\n"
+        f"description: {description}\n"
+        f"file: {source_path}\n"
+    )
 
 
 def plugin_order(root: Path) -> list[str]:
@@ -155,20 +172,29 @@ def collect_reports(root: Path, encoder: Any) -> tuple[list[PluginReport], list[
             if plugin is None:
                 continue
             receipt = plugin_catalog.receipt_for(root, plugin)
-            plugin_skill_reports = [
-                SkillReport(
-                    plugin=plugin_name,
-                    skill=item["name"],
-                    path=(
-                        f"https://github.com/{plugin['source']['repository']}/blob/"
-                        f"{plugin['source']['commit']}/{item['path']}"
-                    ),
-                    description=normalize_text(item["description"]),
-                    startup_tokens=item["startupTokens"],
-                    body_tokens=item["bodyTokens"],
+            plugin_skill_reports: list[SkillReport] = []
+            for item in receipt["skills"]["items"]:
+                description = normalize_text(item["description"])
+                source_path = item["path"]
+                plugin_skill_reports.append(
+                    SkillReport(
+                        plugin=plugin_name,
+                        skill=item["name"],
+                        path=source_path,
+                        description=description,
+                        source_routing_tokens=count_tokens(
+                            encoder,
+                            routing_metadata_text(
+                                plugin_name,
+                                item["name"],
+                                description,
+                                source_path,
+                            ),
+                        ),
+                        published_url_routing_tokens=item["startupTokens"],
+                        body_tokens=item["bodyTokens"],
+                    )
                 )
-                for item in receipt["skills"]["items"]
-            ]
             skill_reports.extend(plugin_skill_reports)
             plugin_reports.append(
                 PluginReport(
@@ -177,7 +203,11 @@ def collect_reports(root: Path, encoder: Any) -> tuple[list[PluginReport], list[
                     skill_count=receipt["skills"]["count"],
                     reference_count=receipt["counts"]["references"],
                     script_count=receipt["counts"]["scripts"],
-                    startup_tokens=receipt["tokens"]["startup"],
+                    source_routing_tokens=sum(
+                        skill.source_routing_tokens
+                        for skill in plugin_skill_reports
+                    ),
+                    published_url_routing_tokens=receipt["tokens"]["startup"],
                     body_tokens=receipt["tokens"]["body"],
                 )
             )
@@ -192,18 +222,22 @@ def collect_reports(root: Path, encoder: Any) -> tuple[list[PluginReport], list[
             fields, body = parse_frontmatter(text)
             skill_name = fields.get("name") or skill_path.parent.name
             description = normalize_text(fields.get("description", ""))
-            rel_path = skill_path.relative_to(root).as_posix()
-            startup_text = (
-                f"name: {plugin_name}:{skill_name}\n"
-                f"description: {description}\n"
-                f"file: {rel_path}\n"
-            )
+            rel_path = skill_path.relative_to(plugin_dir).as_posix()
             report = SkillReport(
                 plugin=plugin_name,
                 skill=skill_name,
                 path=rel_path,
                 description=description,
-                startup_tokens=count_tokens(encoder, startup_text),
+                source_routing_tokens=count_tokens(
+                    encoder,
+                    routing_metadata_text(
+                        plugin_name,
+                        skill_name,
+                        description,
+                        rel_path,
+                    ),
+                ),
+                published_url_routing_tokens=None,
                 body_tokens=count_tokens(encoder, body),
             )
             plugin_skills.append(report)
@@ -218,7 +252,10 @@ def collect_reports(root: Path, encoder: Any) -> tuple[list[PluginReport], list[
                     plugin_dir, "references"
                 ),
                 script_count=count_named_support_files(plugin_dir, "scripts"),
-                startup_tokens=sum(skill.startup_tokens for skill in plugin_skills),
+                source_routing_tokens=sum(
+                    skill.source_routing_tokens for skill in plugin_skills
+                ),
+                published_url_routing_tokens=None,
                 body_tokens=sum(skill.body_tokens for skill in plugin_skills),
             )
         )
@@ -241,12 +278,22 @@ def fmt_int(value: int) -> str:
     return f"{value:,}"
 
 
-def fmt_tokens(startup: int, body: int) -> str:
-    return f"{fmt_int(startup)}/{fmt_int(body)}"
+def fmt_optional_tokens(value: int | None) -> str:
+    return "-" if value is None else fmt_int(value)
 
 
 def render_markdown(plugin_reports: list[PluginReport], skill_reports: list[SkillReport]) -> str:
-    startup_total = sum(plugin.startup_tokens for plugin in plugin_reports)
+    source_routing_total = sum(
+        plugin.source_routing_tokens for plugin in plugin_reports
+    )
+    published_url_routing_total = sum(
+        plugin.published_url_routing_tokens or 0 for plugin in plugin_reports
+    )
+    published_url_skill_count = sum(
+        1
+        for skill in skill_reports
+        if skill.published_url_routing_tokens is not None
+    )
     body_total = sum(plugin.body_tokens for plugin in plugin_reports)
     reference_total = sum(plugin.reference_count for plugin in plugin_reports)
     script_total = sum(plugin.script_count for plugin in plugin_reports)
@@ -256,24 +303,25 @@ def render_markdown(plugin_reports: list[PluginReport], skill_reports: list[Skil
         [
             "## Token Efficiency",
             "",
-            "This collection is designed around progressive disclosure. Agents can",
-            "route from lightweight metadata first, then load the selected",
-            "`SKILL.md` body only for the chosen workflow.",
+            "This collection is structured for progressive disclosure: lightweight",
+            "routing metadata is kept separate from each `SKILL.md` instruction",
+            "body.",
             "",
             "These estimates are generated with `scripts/token-report.py` using",
             f"`tiktoken` and the `{ENCODING_NAME}` encoding. Different agents may",
-            "wrap metadata differently, so the exact number is less important than",
-            "the split between always-visible routing metadata and on-demand skill",
-            "instructions.",
+            "serialize, filter, truncate, or load skills differently. These are",
+            "static source measurements, not evidence of what a host injects into",
+            "a prompt or makes visible to a model at runtime.",
             "",
             "| Metric | Count | Tokens | Notes |",
             "| --- | ---: | ---: | --- |",
             f"| Plugin packs | {fmt_int(len(plugin_reports))} | - | Local packages plus immutable standalone first-party catalog entries. |",
-            f"| Skill entrypoints | {fmt_int(len(skill_reports))} | - | `SKILL.md` files exposed through plugin metadata. |",
+            f"| Skill entrypoints | {fmt_int(len(skill_reports))} | - | `SKILL.md` files catalogued in local source or immutable receipts. |",
             f"| Reference files | {fmt_int(reference_total)} | - | Longer ledgers, contracts, scorecards, and source notes. |",
-            f"| Helper and validator scripts | {fmt_int(script_total)} | - | Deterministic plugin-local helpers. |",
-            f"| Startup metadata | {fmt_int(len(skill_reports))} skills | {fmt_int(startup_total)} | Skill name, description, and file pointer for routing. |",
-            f"| On-demand skill bodies | {fmt_int(len(skill_reports))} skills | {fmt_int(body_total)} | Instruction bodies after frontmatter, loaded only when selected. |",
+            f"| Script/support files | {fmt_int(script_total)} | - | All regular files below `scripts/`, including helpers, templates, and manifests. |",
+            f"| Source-relative routing estimate | {fmt_int(len(skill_reports))} skills | {fmt_int(source_routing_total)} | Skill name, description, and plugin-relative `skills/.../SKILL.md` path; comparable across local and standalone sources. |",
+            f"| Published first-party URL locator snapshot | {fmt_int(published_url_skill_count)} skills | {fmt_int(published_url_routing_total)} | Receipt values that serialize immutable GitHub blob URLs; preserved separately and not added to the source-relative total. |",
+            f"| Skill body source estimate | {fmt_int(len(skill_reports))} skills | {fmt_int(body_total)} | Body text after frontmatter; not proof that a host loads it, or when. |",
             "",
             "Regenerate the report after skill edits:",
             "",
@@ -286,10 +334,12 @@ def render_markdown(plugin_reports: list[PluginReport], skill_reports: list[Skil
             "Descriptions are split from the numeric rollup so GitHub does not",
             "compress long prose into narrow table cells.",
             "",
-            "Token columns are `startup metadata / on-demand body`.",
+            "Token columns are static source estimates. `Published URL routing`",
+            "appears only for standalone first-party receipts and preserves their",
+            "immutable GitHub locator snapshot.",
             "",
-            "| Plugin | Skills | Refs | Scripts | Startup | Body |",
-            "| --- | ---: | ---: | ---: | ---: | ---: |",
+            "| Plugin | Skills | Refs | Script/support files | Source routing | Published URL routing | Body source |",
+            "| --- | ---: | ---: | ---: | ---: | ---: | ---: |",
         ]
     )
 
@@ -302,7 +352,8 @@ def render_markdown(plugin_reports: list[PluginReport], skill_reports: list[Skil
                     fmt_int(plugin.skill_count),
                     fmt_int(plugin.reference_count),
                     fmt_int(plugin.script_count),
-                    fmt_int(plugin.startup_tokens),
+                    fmt_int(plugin.source_routing_tokens),
+                    fmt_optional_tokens(plugin.published_url_routing_tokens),
                     fmt_int(plugin.body_tokens),
                 ]
             )
@@ -336,7 +387,9 @@ def render_markdown(plugin_reports: list[PluginReport], skill_reports: list[Skil
             "",
             "### Skill Token Index",
             "",
-            "Token cells are shown as `startup/body`.",
+            "Each row separates the comparable source-relative routing estimate",
+            "from the publication receipt's URL-locator snapshot and body source",
+            "size. None is a runtime prompt measurement.",
         ]
     )
 
@@ -355,8 +408,8 @@ def render_markdown(plugin_reports: list[PluginReport], skill_reports: list[Skil
                 "",
                 f"#### `{markdown_escape(plugin.name)}`",
                 "",
-                "| Skill | Tokens | Description |",
-                "| --- | ---: | --- |",
+                "| Skill | Source routing | Published URL routing | Body source | Description |",
+                "| --- | ---: | ---: | ---: | --- |",
             ]
         )
         for skill in plugin_skills:
@@ -365,10 +418,9 @@ def render_markdown(plugin_reports: list[PluginReport], skill_reports: list[Skil
                 + " | ".join(
                     [
                         f"`{markdown_escape(skill.skill)}`",
-                        fmt_tokens(
-                            skill.startup_tokens,
-                            skill.body_tokens,
-                        ),
+                        fmt_int(skill.source_routing_tokens),
+                        fmt_optional_tokens(skill.published_url_routing_tokens),
+                        fmt_int(skill.body_tokens),
                         markdown_escape(skill.description),
                     ]
                 )
