@@ -68,10 +68,10 @@
       "source": {
         "source": "github",
         "repo": "Xopoko/build-swift-apps",
-        "sha": "1b3f2ecec1448ee081f718e0ddc3c4e730cf0d7f"
+        "sha": "105407cd7f49390fc9e21fab840399f543352ba8"
       },
       "description": "Build, debug, profile, test, refactor, and release Swift apps across iOS, macOS, Xcode, SwiftUI, SwiftPM, Tuist, and App Store Connect.",
-      "version": "0.3.11"
+      "version": "0.3.13"
     },
     {
       "name": "kotlin-multiplatform",
