@@ -71,9 +71,11 @@ When local help and docs disagree, trust local help for the installed binary and
 say that the docs may describe a different version.
 
 For "what did this existing task see?", its exact rollout evidence outranks a
-new `codex debug prompt-input` render. The debug command uses the current
-executable, cwd, model/config, and plugin state; it is not a task replay and may
-initialize or refresh runtime caches.
+new `codex debug prompt-input` render. The command builds a standalone
+diagnostic request, not a live-task parity oracle, and can take a different
+provider or plugin-admission path from Desktop or app-server. Bind the runtime
+origin, generation, and admission inputs before comparing catalogs; the command
+may also initialize or refresh runtime caches.
 
 ## Completion Standard
 

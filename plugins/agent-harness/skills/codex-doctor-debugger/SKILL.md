@@ -104,8 +104,10 @@ For an existing task, locate its exact rollout with `codex-log-reader` before
 interpreting the recorded `<skills_instructions>` fragment. For a fresh render,
 bind the exact executable/version and cwd, inspect `codex debug prompt-input
 --help`, then inspect the output without publishing full prompts or absolute
-paths. `prompt-input` is not a replay and may initialize or refresh runtime
-caches.
+paths. Treat that render as a standalone diagnostic, not a live-task parity
+oracle: also bind the runtime origin, generation, and provider/plugin-admission
+inputs. It does not capture separately supplied tool schemas and may initialize
+or refresh runtime caches.
 
 For source-only inventory modeling:
 

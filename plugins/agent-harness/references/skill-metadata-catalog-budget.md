@@ -126,6 +126,26 @@ of a visible omission marker does not prove `omitted_count = 0`, and short
 descriptions alone do not prove renderer truncation without session-time
 source/cache evidence.
 
+### Runtime-Path Provenance
+
+In Codex `0.147.0` at commit
+[`3ed6f04f6bf8b7c46299d1cb1ff99c74ce21a51d`](https://github.com/openai/codex/blob/3ed6f04f6bf8b7c46299d1cb1ff99c74ce21a51d/codex-rs/core/src/prompt_debug.rs),
+`debug prompt-input` builds a standalone request without entering the normal
+turn path and returns only the prompt input. Normal request construction carries
+tool definitions separately in
+[`client.rs`](https://github.com/openai/codex/blob/3ed6f04f6bf8b7c46299d1cb1ff99c74ce21a51d/codex-rs/core/src/client.rs).
+Therefore a fresh debug render is not proof of the catalog or tool schemas seen
+by a Desktop, app-server, or earlier CLI task.
+
+Before comparing catalogs, bind the executable revision, runtime origin,
+runtime generation, cwd, model/config, provider/plugin catalog and admission
+state, and the selected catalog-block digest. If those inputs differ, report a
+cross-path observation rather than a causal ablation. A fixed metadata budget
+can also reallocate freed space into longer retained descriptions, so the token
+sum of removed entries is not recurring savings. Measure the final serialized
+catalog with the same tokenizer and require a paired task outcome before making
+an optimization claim.
+
 For source-only inventory modeling, run:
 
 ```bash

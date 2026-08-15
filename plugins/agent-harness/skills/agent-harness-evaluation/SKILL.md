@@ -15,6 +15,10 @@ Read `$PLUGIN_ROOT/references/agent-harness-evaluation.md` for suite and reporti
 
 - Model output is not proof that a side effect was authorized, executed, durable, or correct.
 - A transcript is not a checkpoint and cannot prove restart or recovery behavior.
+- A diagnostic prompt render does not prove the exact prompt, skill catalog, or
+  tool schemas seen by another task or runtime origin. Bind the exact rollout
+  and runtime generation, and capture separately supplied tool schemas
+  independently.
 - Prompt instructions, skills, and scanners do not prove sandbox or policy enforcement.
 - Do not infer exactly-once behavior from a clean run. Test duplicate delivery, idempotency, reconciliation, and partial effects.
 - Compare providers by declared capabilities and degraded paths; do not score silent adapter substitutions as equivalent behavior.
