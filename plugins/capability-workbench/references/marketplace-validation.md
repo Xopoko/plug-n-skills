@@ -28,6 +28,9 @@ The marketplace entry and install/cache flow on this page is Codex-specific. Cla
 ```
 
 Keep `apps` and `mcpServers` out unless companion files actually exist. Omit unsupported fields.
+Codex accepts one to three `defaultPrompt` strings, each no longer than 128
+characters. The validator rejects larger arrays or longer prompts because the
+runtime otherwise ignores them.
 
 ## Marketplace Entry
 

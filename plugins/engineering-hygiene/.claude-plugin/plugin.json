@@ -1,6 +1,6 @@
 {
   "name": "engineering-hygiene",
-  "version": "0.1.3",
+  "version": "0.1.4",
   "description": "Engineering hygiene audits changed code, untangles business logic, inspects rendered UI, and provisions missing tools with evidence-first, touched-surface discipline.",
   "author": {
     "name": "Xopoko"

@@ -4,6 +4,7 @@ import sys
 import tempfile
 import unittest
 from pathlib import Path
+from unittest import mock
 
 
 ROOT = Path(__file__).resolve().parents[3]
@@ -46,6 +47,9 @@ class CodexContextReportTests(unittest.TestCase):
                     "",
                     "[mcp_servers.demo.env]",
                     'SECRET_TOKEN = "should-not-leak"',
+                    "",
+                    '[plugins."demo-plugin@local"]',
+                    "enabled = true",
                 ]
             ),
             encoding="utf-8",
@@ -108,6 +112,19 @@ class CodexContextReportTests(unittest.TestCase):
         self.assertIn("onDemandTokens", payload)
         self.assertIn("categories", payload)
         self.assertGreater(payload["rowCount"], 0)
+        self.assertIsNone(payload["startupTokens"])
+        self.assertIsNone(payload["modelVisibleStartupTokens"])
+        self.assertGreater(payload["discoveredMetadataTokens"], 0)
+        self.assertGreater(payload["onDemandCorpusTokens"], 0)
+        self.assertEqual(payload["loadedBodyTokens"], 0)
+        self.assertEqual(payload["pluginInventoryStatus"], "enabled-ids-available")
+        self.assertEqual(payload["enabledPluginCount"], 1)
+        self.assertIsNone(payload["activePluginCount"])
+        self.assertEqual(payload["pluginVersionStatus"], "unverified")
+        categories = {row["type"] for row in payload["categories"]}
+        self.assertIn("Discovered Skill Metadata", categories)
+        self.assertIn("On-demand Skill Bodies", categories)
+        self.assertNotIn("Loaded Skill Bodies", categories)
 
     def test_skills_include_standalone_and_plugin_cache_skills(self):
         result = self.run_report("skills", "--json")
@@ -115,12 +132,63 @@ class CodexContextReportTests(unittest.TestCase):
         names = {row["name"] for row in payload}
         self.assertIn("sample", names)
         self.assertIn("demo-plugin:plugin-skill", names)
+        plugin_skill = next(row for row in payload if row["name"] == "demo-plugin:plugin-skill")
+        self.assertFalse(plugin_skill["startupLoaded"])
+        self.assertFalse(plugin_skill["onDemandLoaded"])
+        self.assertTrue(plugin_skill["onDemandAvailable"])
+        self.assertEqual(plugin_skill["bodyReadCount"], 0)
+        self.assertEqual(plugin_skill["bodyLoadEvidence"], "not-observed")
+        self.assertTrue(plugin_skill["configuredEnabledPlugin"])
+        self.assertIsNone(plugin_skill["activePluginVersion"])
 
     def test_skill_lookup_matches_plugin_skill(self):
         result = self.run_report("skill", "demo-plugin:plugin-skill", "--json")
         payload = json.loads(result.stdout)
         self.assertEqual(payload["name"], "demo-plugin:plugin-skill")
         self.assertGreater(payload["bodyTokens"], 0)
+        self.assertFalse(payload["onDemandLoaded"])
+
+    def test_config_enabled_ids_filter_other_plugins_but_not_unverified_versions(self):
+        env = report.AgentEnvironment("codex", "Codex", self.codex_home, True, True)
+        inventory = report.collect_plugin_inventory(env)
+        current = self.codex_home / "plugins" / "cache" / "local" / "demo-plugin" / "0.1.0" / "skills" / "one" / "SKILL.md"
+        stale = self.codex_home / "plugins" / "cache" / "local" / "demo-plugin" / "0.0.9" / "skills" / "one" / "SKILL.md"
+        disabled = self.codex_home / "plugins" / "cache" / "local" / "disabled-plugin" / "9.9.9" / "skills" / "one" / "SKILL.md"
+        standalone = self.codex_home / "skills" / "sample" / "SKILL.md"
+        filtered = report.filter_configured_plugin_paths([current, stale, disabled, standalone], env, inventory)
+        self.assertIn(current, filtered)
+        self.assertIn(stale, filtered)
+        self.assertNotIn(disabled, filtered)
+        self.assertIn(standalone, filtered)
+        self.assertTrue(report.configured_plugin_state(current, env, inventory))
+        self.assertFalse(report.configured_plugin_state(disabled, env, inventory))
+        self.assertIsNone(report.active_plugin_version_state(current, env, inventory))
+        self.assertIsNone(report.active_plugin_version_state(stale, env, inventory))
+        primary_manifest = self.codex_home / "plugins" / "cache" / "local" / "demo-plugin" / "0.1.0" / ".codex-plugin" / "plugin.json"
+        nested_manifest = self.codex_home / "plugins" / "cache" / "local" / "demo-plugin" / "0.1.0" / "vendor" / ".codex-plugin" / "plugin.json"
+        self.assertTrue(report.is_primary_plugin_manifest(primary_manifest, env, inventory))
+        self.assertFalse(report.is_primary_plugin_manifest(nested_manifest, env, inventory))
+
+    def test_plugin_inventory_reads_config_without_invoking_subprocess_or_codex(self):
+        env = report.AgentEnvironment("codex", "Codex", self.codex_home, True, True)
+        with mock.patch.object(subprocess, "run", side_effect=AssertionError("subprocess must not be invoked")):
+            inventory = report.collect_plugin_inventory(env)
+        self.assertEqual(inventory.status, "enabled-ids-available")
+        self.assertEqual(len(inventory.enabledPlugins), 1)
+        source = SCRIPT.read_text(encoding="utf-8")
+        self.assertNotIn("codex plugin", source)
+        self.assertNotIn("import subprocess", source)
+
+    def test_sources_never_claim_unread_bodies_are_loaded(self):
+        result = self.run_report("sources", "--json")
+        payload = json.loads(result.stdout)
+        manifests = [row for row in payload if row["type"] == "Discovered Plugin Manifests"]
+        self.assertEqual([row["pluginName"] for row in manifests], ["demo-plugin"])
+        bodies = [row for row in payload if row["type"] == "On-demand Skill Bodies"]
+        self.assertGreater(len(bodies), 0)
+        self.assertTrue(all(row["onDemandAvailable"] for row in bodies))
+        self.assertTrue(all(not row["onDemandLoaded"] for row in bodies))
+        self.assertTrue(all(row["loadEvidence"].startswith("bodyReadCount=0") for row in bodies))
 
     def test_mcp_tools_reports_disabled_tool_without_leaking_env(self):
         result = self.run_report("mcp", "--tools", "demo", "--json")

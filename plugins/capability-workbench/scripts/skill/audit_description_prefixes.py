@@ -344,17 +344,94 @@ def audit(
     }
 
 
+def audit_prefix_widths(
+    roots: list[str],
+    *,
+    prefix_widths: list[int],
+    max_description_chars: int,
+    strict: bool,
+) -> dict[str, Any]:
+    """Audit several observed prefix widths without changing single-width output."""
+
+    audits = [
+        audit(
+            roots,
+            prefix_width=prefix_width,
+            max_description_chars=max_description_chars,
+            strict=strict,
+        )
+        for prefix_width in prefix_widths
+    ]
+    first = audits[0]
+    errors = [
+        finding
+        for finding in first["errors"]
+        if finding["code"] != "prefix_collision"
+    ]
+    warnings = [
+        finding
+        for finding in first["warnings"]
+        if finding["code"] != "prefix_collision"
+    ]
+    collisions: list[dict[str, Any]] = []
+
+    for prefix_width, payload in zip(prefix_widths, audits):
+        for collision in payload["collisions"]:
+            collisions.append({"prefix_width": prefix_width, **collision})
+        target = errors if strict else warnings
+        for finding in [*payload["errors"], *payload["warnings"]]:
+            if finding["code"] != "prefix_collision":
+                continue
+            target.append({"prefix_width": prefix_width, **finding})
+
+    summary = {
+        "skill_files": first["summary"]["skill_files"],
+        "parsed_skills": first["summary"]["parsed_skills"],
+        "prefix_widths": len(prefix_widths),
+        "errors": len(errors),
+        "warnings": len(warnings),
+        "generic_lead_ins": first["summary"]["generic_lead_ins"],
+        "prefix_collisions": len(collisions),
+        "overlong_descriptions": first["summary"]["overlong_descriptions"],
+    }
+    return {
+        "schema": SCHEMA,
+        "valid": not errors,
+        "input": {
+            "roots": roots,
+            "prefix_widths": prefix_widths,
+            "max_description_chars": max_description_chars,
+            "strict": strict,
+        },
+        "generic_lead_ins": list(GENERIC_LEAD_INS),
+        "summary": summary,
+        "audits": audits,
+        "collisions": collisions,
+        "errors": errors,
+        "warnings": warnings,
+    }
+
+
 def print_text_report(payload: dict[str, Any]) -> None:
     summary = payload["summary"]
-    print("Skill description prefix audit")
+    prefix_widths = payload["input"].get("prefix_widths")
+    if prefix_widths is None:
+        print("Skill description prefix audit")
+    else:
+        print(
+            "Skill description prefix range audit "
+            f"(widths={','.join(str(width) for width in prefix_widths)})"
+        )
     for finding in [*payload["errors"], *payload["warnings"]]:
         location = finding.get("path")
         if location is None and finding.get("paths"):
             location = ", ".join(finding["paths"])
         suffix = f" ({location})" if location else ""
+        width = finding.get("prefix_width")
+        width_suffix = f" width={width}" if width is not None else ""
         print(
             f"{finding['severity'].upper()} [{finding['code']}] "
-            f"{finding['message']}{suffix}"
+            f"{finding['message']}{width_suffix}{suffix}"
         )
     if not payload["errors"] and not payload["warnings"]:
         print("OK no prefix-resilience findings")
@@ -373,11 +450,22 @@ def build_parser() -> argparse.ArgumentParser:
         nargs="+",
         help="One or more SKILL.md files or directories to scan recursively.",
     )
-    parser.add_argument(
+    width_group = parser.add_mutually_exclusive_group()
+    width_group.add_argument(
         "--prefix-width",
         type=positive_int,
         default=DEFAULT_PREFIX_WIDTH,
         help=f"Normalized prefix width (default: {DEFAULT_PREFIX_WIDTH}).",
+    )
+    width_group.add_argument(
+        "--prefix-widths",
+        type=positive_int,
+        nargs="+",
+        metavar="N",
+        help=(
+            "Audit several normalized prefix widths in one report, for example "
+            "--prefix-widths 19 20 21."
+        ),
     )
     parser.add_argument(
         "--max-description-chars",
@@ -403,12 +491,21 @@ def main(argv: list[str] | None = None) -> int:
         reconfigure(encoding="utf-8")
 
     args = build_parser().parse_args(argv)
-    payload = audit(
-        args.roots,
-        prefix_width=args.prefix_width,
-        max_description_chars=args.max_description_chars,
-        strict=args.strict,
-    )
+    prefix_widths = list(dict.fromkeys(args.prefix_widths or [args.prefix_width]))
+    if len(prefix_widths) == 1:
+        payload = audit(
+            args.roots,
+            prefix_width=prefix_widths[0],
+            max_description_chars=args.max_description_chars,
+            strict=args.strict,
+        )
+    else:
+        payload = audit_prefix_widths(
+            args.roots,
+            prefix_widths=prefix_widths,
+            max_description_chars=args.max_description_chars,
+            strict=args.strict,
+        )
     if args.json:
         print(json.dumps(payload, indent=2, ensure_ascii=False))
     else:

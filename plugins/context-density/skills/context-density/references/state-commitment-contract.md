@@ -165,21 +165,26 @@ with `commitment_digest` and `companions` removed, serialized with sorted keys,
 no insignificant whitespace, and unescaped Unicode.
 
 The guard lexically normalizes the input to an absolute path, opens every
-parent component without following symlinks, and pins the sidecar's parent
-directory while reading the input. It then opens every companion directory and
-leaf relative to that descriptor and never reopens a multi-component pathname.
+parent component without following links, and pins the sidecar's parent
+directory while reading the input. POSIX uses descriptor-relative no-follow
+opens; Windows uses native handle-relative opens with `FILE_OPEN_REPARSE_POINT`
+and rejects every reparse point. It then opens every companion directory and
+leaf relative to that pinned descriptor and never reopens a multi-component
+pathname.
 For every regular-file read it compares identity, size, mode, ownership, link
 count, modification time, and change time before and after the read, so an
 observed same-size in-place mutation also fails closed.
 The input path must therefore use its canonical, symlink-free host spelling;
-resolve trusted host aliases before invocation. Platforms without
+resolve trusted host aliases before invocation. On Windows, an input leaf name
+containing `:` is rejected as reserved alternate-data-stream syntax. Platforms without
 descriptor-relative no-follow traversal reject with exit `1` instead of using
 a pathname fallback.
 
 Every companion:
 
 1. is a unique, safe relative `.md` path below the sidecar directory, with no
-   embedded NUL, frozen-Unicode `C*`, or non-ASCII separator character;
+   embedded NUL, frozen-Unicode `C*`, or non-ASCII separator character, and on
+   Windows has no reserved `:` syntax in any segment;
 2. resolves to a bounded regular file without traversal or symlink escape;
 3. matches the exact SHA-256 of its file bytes; and
 4. contains exactly one marker with the core digest:

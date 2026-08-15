@@ -22,6 +22,8 @@ else:
 
 
 TODO_MARKER = "[TODO:"
+MAX_DEFAULT_PROMPTS = 3
+MAX_DEFAULT_PROMPT_CHARS = 128
 SEMVER_RE = re.compile(
     r"^(0|[1-9]\d*)\."
     r"(0|[1-9]\d*)\."
@@ -269,6 +271,18 @@ def validate_manifest_shape(
             errors.append(
                 f"plugin.json field `interface.{prompt_field}` must be a non-empty array of non-empty strings"
             )
+        else:
+            if len(prompts) > MAX_DEFAULT_PROMPTS:
+                errors.append(
+                    f"plugin.json field `interface.{prompt_field}` must contain at most "
+                    f"{MAX_DEFAULT_PROMPTS} prompts"
+                )
+            for index, prompt in enumerate(prompts):
+                if len(prompt) > MAX_DEFAULT_PROMPT_CHARS:
+                    errors.append(
+                        f"plugin.json field `interface.{prompt_field}[{index}]` must be at most "
+                        f"{MAX_DEFAULT_PROMPT_CHARS} characters"
+                    )
     capabilities = interface.get("capabilities")
     if not isinstance(capabilities, list) or not all(
         isinstance(value, str) and value.strip() for value in capabilities

@@ -1,6 +1,6 @@
 ---
 name: kmp-production-governance
-description: Kotlin Multiplatform build-governance review for convention plugins, version catalogs, repository policy, module APIs, Klibs targets, ABI validation, publishing, production readiness, and adoption risk.
+description: KMP build-governance review for convention plugins, version catalogs, repository policy, module APIs, Klibs targets, ABI validation, publishing, production readiness, and adoption risk.
 ---
 
 # KMP Production Governance

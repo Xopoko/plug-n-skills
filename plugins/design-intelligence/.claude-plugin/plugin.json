@@ -1,6 +1,6 @@
 {
   "name": "design-intelligence",
-  "version": "0.1.4",
+  "version": "0.1.5",
   "description": "Product, UX, and technical visual explanations grounded in evidence: framing, information architecture, interaction, usability/accessibility review, compact diagrams, and design-system governance; excludes Figma, CSS, and framework recipes.",
   "author": {
     "name": "Xopoko"

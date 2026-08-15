@@ -1,6 +1,6 @@
 {
   "name": "engineering-hygiene",
-  "version": "0.1.3",
+  "version": "0.1.4",
   "description": "Engineering hygiene audits changed code, untangles business logic, inspects rendered UI, and provisions missing tools with evidence-first, touched-surface discipline.",
   "author": {
     "name": "Xopoko"
@@ -37,9 +37,8 @@
       "Evidence-first audit reporting with apply-versus-report decision rules"
     ],
     "defaultPrompt": [
-      "Use Engineering Hygiene to sweep these code changes for dead code, stale leftovers, duplication, and safe consolidation before calling the task done.",
-      "Use Engineering Hygiene to untangle the business rules mixed into this UI/IO/platform code without changing behavior.",
-      "Use Engineering Hygiene to audit this screenshot or rendered UI skeptically: verify the requested change and inspect the whole frame for unrelated visual defects.",
+      "Use Engineering Hygiene to sweep code changes for dead code, stale leftovers, duplication, and safe consolidation.",
+      "Use Engineering Hygiene to audit this rendered UI skeptically and inspect the whole frame for unrelated visual defects.",
       "Use Engineering Hygiene to provision the missing tool blocking this task, verify it, and continue the original work end to end."
     ],
     "brandColor": "#B45309",

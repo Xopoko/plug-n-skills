@@ -714,7 +714,6 @@ class CompanionTests(BundleCase):
         self.write_bundle(bundle)
         self.assert_error_code_from_disk("duplicate_companion_target", expected_exit=1)
 
-    @unittest.skipIf(os.name == "nt", "symlink semantics differ on Windows")
     def test_companion_symlink_is_unsafe(self):
         bundle = self.materialize()
         target = self.root / "summary.md"
@@ -725,7 +724,6 @@ class CompanionTests(BundleCase):
         self.write_bundle(bundle)
         self.assert_error_code_from_disk("unsafe_companion_symlink", expected_exit=1)
 
-    @unittest.skipIf(os.name == "nt", "symlink semantics differ on Windows")
     def test_intermediate_companion_symlink_is_unsafe(self):
         bundle = self.materialize(names=["nested/summary.md"])
         nested = self.root / "nested"
@@ -806,6 +804,118 @@ class CompanionTests(BundleCase):
         self.assertEqual(exit_code, 0, payload)
         self.assertTrue(payload["valid"])
 
+    @unittest.skipUnless(os.name == "nt", "Windows handle-relative traversal only")
+    def test_windows_intermediate_swap_before_open_is_rejected(self):
+        self.materialize(names=["nested/summary.md"])
+        nested = self.root / "nested"
+        original = self.root / "nested-original"
+        outside = self.root / "outside"
+        outside.mkdir()
+        (outside / "summary.md").write_bytes((nested / "summary.md").read_bytes())
+        real_open = guard._windows_open_relative_descriptor
+        swapped = False
+
+        def racing_open(parent_descriptor, name, desired_access):
+            nonlocal swapped
+            if name == "nested" and not swapped:
+                nested.rename(original)
+                nested.symlink_to(outside, target_is_directory=True)
+                swapped = True
+            return real_open(parent_descriptor, name, desired_access)
+
+        stdout = io.StringIO()
+        with (
+            patch.object(
+                guard, "_windows_open_relative_descriptor", side_effect=racing_open
+            ),
+            redirect_stdout(stdout),
+        ):
+            exit_code = guard.main(["validate", "--input", str(self.input)])
+        payload = json.loads(stdout.getvalue())
+        self.assertTrue(swapped)
+        self.assertEqual(exit_code, 1, payload)
+        self.assertEqual(payload["error"]["code"], "unsafe_companion_symlink")
+
+    @unittest.skipUnless(os.name == "nt", "Windows handle-relative traversal only")
+    def test_windows_intermediate_swap_after_open_stays_pinned(self):
+        self.materialize(names=["nested/summary.md"])
+        nested = self.root / "nested"
+        original = self.root / "nested-original"
+        outside = self.root / "outside"
+        outside.mkdir()
+        (outside / "summary.md").write_text("outside", encoding="utf-8")
+        real_open = guard._windows_open_relative_descriptor
+        swapped = False
+
+        def racing_open(parent_descriptor, name, desired_access):
+            nonlocal swapped
+            descriptor = real_open(parent_descriptor, name, desired_access)
+            if name == "nested" and not swapped:
+                nested.rename(original)
+                nested.symlink_to(outside, target_is_directory=True)
+                swapped = True
+            return descriptor
+
+        stdout = io.StringIO()
+        with (
+            patch.object(
+                guard, "_windows_open_relative_descriptor", side_effect=racing_open
+            ),
+            redirect_stdout(stdout),
+        ):
+            exit_code = guard.main(["validate", "--input", str(self.input)])
+        payload = json.loads(stdout.getvalue())
+        self.assertTrue(swapped)
+        self.assertEqual(exit_code, 0, payload)
+        self.assertTrue(payload["valid"])
+
+    @unittest.skipUnless(os.name == "nt", "Windows access-mask contract only")
+    def test_windows_regular_leaves_do_not_request_traverse_access(self):
+        self.materialize(names=["nested/summary.md"])
+        real_open = guard._windows_open_relative_descriptor
+        observed = []
+
+        def recording_open(parent_descriptor, name, desired_access):
+            observed.append((name, desired_access))
+            return real_open(parent_descriptor, name, desired_access)
+
+        stdout = io.StringIO()
+        with (
+            patch.object(
+                guard, "_windows_open_relative_descriptor", side_effect=recording_open
+            ),
+            redirect_stdout(stdout),
+        ):
+            exit_code = guard.main(["validate", "--input", str(self.input)])
+        payload = json.loads(stdout.getvalue())
+        self.assertEqual(exit_code, 0, payload)
+        leaf_accesses = [
+            access for name, access in observed if name in {"state.json", "summary.md"}
+        ]
+        self.assertTrue(leaf_accesses)
+        self.assertTrue(
+            all(access == guard._WINDOWS_REGULAR_FILE_ACCESS for access in leaf_accesses)
+        )
+        self.assertTrue(
+            all(not access & guard._WINDOWS_FILE_TRAVERSE for access in leaf_accesses)
+        )
+        directory_accesses = [access for name, access in observed if name == "nested"]
+        self.assertTrue(directory_accesses)
+        self.assertTrue(
+            all(access & guard._WINDOWS_FILE_TRAVERSE for access in directory_accesses)
+        )
+
+    @unittest.skipUnless(os.name == "nt", "NTFS reserved-colon contract only")
+    def test_windows_companion_segments_reject_reserved_colon_syntax(self):
+        for unsafe in ["summary:stream.md", "nested:stream/summary.md"]:
+            with self.subTest(path=unsafe):
+                bundle = self.materialize()
+                bundle["companions"][0]["path"] = unsafe
+                self.write_bundle(bundle)
+                self.assert_error_code_from_disk(
+                    "unsafe_companion_path", expected_exit=1
+                )
+
     def test_same_size_companion_mutation_during_read_is_rejected(self):
         self.materialize(names=["summary.md"])
         target = self.root / "summary.md"
@@ -855,7 +965,25 @@ class CompanionTests(BundleCase):
 
 
 class MalformedInputTests(BundleCase):
-    @unittest.skipIf(os.name == "nt", "symlink semantics differ on Windows")
+    @unittest.skipUnless(os.name == "nt", "NTFS reserved-colon contract only")
+    def test_windows_input_leaf_rejects_reserved_colon_before_open(self):
+        self.materialize(names=["summary.md"])
+        stdout = io.StringIO()
+        with (
+            patch.object(
+                guard,
+                "_open_pinned_directory",
+                side_effect=AssertionError("colon path reached disk traversal"),
+            ),
+            redirect_stdout(stdout),
+        ):
+            exit_code = guard.main(
+                ["validate", "--input", f"{self.input}:state-stream"]
+            )
+        payload = json.loads(stdout.getvalue())
+        self.assertEqual(exit_code, 1, payload)
+        self.assertEqual(payload["error"]["code"], "input_unsafe_path")
+
     def test_input_parent_symlink_is_unsafe(self):
         self.materialize(names=["summary.md"])
         actual = self.root / "actual"

@@ -24,6 +24,11 @@ from datetime import datetime, timezone
 from pathlib import Path, PurePosixPath
 from typing import Any
 
+if os.name == "nt":
+    import ctypes
+    import msvcrt
+    from ctypes import wintypes
+
 STATE_SCHEMA = "context_density.state_commitment.v2"
 VALIDATION_SCHEMA = "context_density.state_commitment_validation.v1"
 ERROR_SCHEMA = "context_density.state_commitment_error.v1"
@@ -37,6 +42,93 @@ MAX_STRING_CHARS = 4096
 MAX_ARRAY_ITEMS = 1024
 MAX_OBJECT_FIELDS = 32
 MAX_NESTING = 16
+
+
+if os.name == "nt":
+    class _WindowsUnicodeString(ctypes.Structure):
+        _fields_ = [
+            ("Length", wintypes.USHORT),
+            ("MaximumLength", wintypes.USHORT),
+            ("Buffer", wintypes.LPWSTR),
+        ]
+
+
+    class _WindowsObjectAttributes(ctypes.Structure):
+        _fields_ = [
+            ("Length", wintypes.ULONG),
+            ("RootDirectory", wintypes.HANDLE),
+            ("ObjectName", ctypes.POINTER(_WindowsUnicodeString)),
+            ("Attributes", wintypes.ULONG),
+            ("SecurityDescriptor", wintypes.LPVOID),
+            ("SecurityQualityOfService", wintypes.LPVOID),
+        ]
+
+
+    class _WindowsIoStatusBlock(ctypes.Structure):
+        _fields_ = [
+            ("Status", ctypes.c_void_p),
+            ("Information", ctypes.c_size_t),
+        ]
+
+
+    class _WindowsFileAttributeTagInfo(ctypes.Structure):
+        _fields_ = [
+            ("FileAttributes", wintypes.DWORD),
+            ("ReparseTag", wintypes.DWORD),
+        ]
+
+
+    _WINDOWS_KERNEL32 = ctypes.WinDLL("kernel32", use_last_error=True)
+    _WINDOWS_NTDLL = ctypes.WinDLL("ntdll", use_last_error=True)
+    _WINDOWS_KERNEL32.CreateFileW.argtypes = [
+        wintypes.LPCWSTR,
+        wintypes.DWORD,
+        wintypes.DWORD,
+        wintypes.LPVOID,
+        wintypes.DWORD,
+        wintypes.DWORD,
+        wintypes.HANDLE,
+    ]
+    _WINDOWS_KERNEL32.CreateFileW.restype = wintypes.HANDLE
+    _WINDOWS_KERNEL32.CloseHandle.argtypes = [wintypes.HANDLE]
+    _WINDOWS_KERNEL32.CloseHandle.restype = wintypes.BOOL
+    _WINDOWS_KERNEL32.GetFileInformationByHandleEx.argtypes = [
+        wintypes.HANDLE,
+        ctypes.c_int,
+        wintypes.LPVOID,
+        wintypes.DWORD,
+    ]
+    _WINDOWS_KERNEL32.GetFileInformationByHandleEx.restype = wintypes.BOOL
+    _WINDOWS_NTDLL.NtOpenFile.argtypes = [
+        ctypes.POINTER(wintypes.HANDLE),
+        wintypes.DWORD,
+        ctypes.POINTER(_WindowsObjectAttributes),
+        ctypes.POINTER(_WindowsIoStatusBlock),
+        wintypes.ULONG,
+        wintypes.ULONG,
+    ]
+    _WINDOWS_NTDLL.NtOpenFile.restype = wintypes.LONG
+    _WINDOWS_NTDLL.RtlNtStatusToDosError.argtypes = [wintypes.LONG]
+    _WINDOWS_NTDLL.RtlNtStatusToDosError.restype = wintypes.ULONG
+
+    _WINDOWS_INVALID_HANDLE = ctypes.c_void_p(-1).value
+    _WINDOWS_FILE_GENERIC_READ = 0x00120089
+    _WINDOWS_FILE_TRAVERSE = 0x00000020
+    _WINDOWS_DIRECTORY_ACCESS = _WINDOWS_FILE_GENERIC_READ | _WINDOWS_FILE_TRAVERSE
+    _WINDOWS_REGULAR_FILE_ACCESS = _WINDOWS_FILE_GENERIC_READ
+    _WINDOWS_SHARE_ALL = 0x00000001 | 0x00000002 | 0x00000004
+    _WINDOWS_OPEN_EXISTING = 3
+    _WINDOWS_FILE_ATTRIBUTE_REPARSE_POINT = 0x00000400
+    _WINDOWS_FILE_FLAG_BACKUP_SEMANTICS = 0x02000000
+    _WINDOWS_FILE_FLAG_OPEN_REPARSE_POINT = 0x00200000
+    _WINDOWS_FILE_OPEN_FOR_BACKUP_INTENT = 0x00004000
+    _WINDOWS_FILE_OPEN_REPARSE_POINT = 0x00200000
+    _WINDOWS_FILE_SYNCHRONOUS_IO_NONALERT = 0x00000020
+    _WINDOWS_OBJ_CASE_INSENSITIVE = 0x00000040
+    _WINDOWS_FILE_ATTRIBUTE_TAG_INFO_CLASS = 9
+    _WINDOWS_SAFE_IO_AVAILABLE = True
+else:
+    _WINDOWS_SAFE_IO_AVAILABLE = False
 
 ID_RE = re.compile(r"^[A-Za-z0-9][A-Za-z0-9._:-]{0,127}$")
 ACTION_RE = re.compile(r"^[a-z][a-z0-9_.:-]{0,127}$")
@@ -259,7 +351,96 @@ def _same_snapshot(left: os.stat_result, right: os.stat_result) -> bool:
     )
 
 
+def _windows_fd_from_handle(handle: int) -> int:
+    """Transfer ownership of a Windows file handle to a CRT descriptor."""
+    try:
+        return msvcrt.open_osfhandle(
+            handle,
+            os.O_RDONLY | getattr(os, "O_BINARY", 0),
+        )
+    except BaseException:
+        _WINDOWS_KERNEL32.CloseHandle(wintypes.HANDLE(handle))
+        raise
+
+
+def _windows_descriptor_is_reparse(descriptor: int) -> bool:
+    info = _WindowsFileAttributeTagInfo()
+    handle = msvcrt.get_osfhandle(descriptor)
+    if not _WINDOWS_KERNEL32.GetFileInformationByHandleEx(
+        wintypes.HANDLE(handle),
+        _WINDOWS_FILE_ATTRIBUTE_TAG_INFO_CLASS,
+        ctypes.byref(info),
+        ctypes.sizeof(info),
+    ):
+        error = ctypes.get_last_error()
+        raise OSError(error, "could not inspect Windows file attributes")
+    return bool(info.FileAttributes & _WINDOWS_FILE_ATTRIBUTE_REPARSE_POINT)
+
+
+def _windows_open_anchor_descriptor(anchor: str) -> int:
+    handle = _WINDOWS_KERNEL32.CreateFileW(
+        anchor,
+        _WINDOWS_DIRECTORY_ACCESS,
+        _WINDOWS_SHARE_ALL,
+        None,
+        _WINDOWS_OPEN_EXISTING,
+        _WINDOWS_FILE_FLAG_BACKUP_SEMANTICS
+        | _WINDOWS_FILE_FLAG_OPEN_REPARSE_POINT,
+        None,
+    )
+    handle_value = int(handle) if handle is not None else 0
+    if handle_value == _WINDOWS_INVALID_HANDLE:
+        error = ctypes.get_last_error()
+        if error in {2, 3}:
+            raise FileNotFoundError(error, "Windows path anchor was not found")
+        raise OSError(error, "Windows path anchor could not be opened")
+    return _windows_fd_from_handle(handle_value)
+
+
+def _windows_open_relative_descriptor(
+    parent_descriptor: int, name: str, desired_access: int
+) -> int:
+    """Atomically open one name relative to a pinned Windows directory handle."""
+    buffer = ctypes.create_unicode_buffer(name)
+    encoded_length = len(name.encode("utf-16-le"))
+    object_name = _WindowsUnicodeString(
+        encoded_length,
+        encoded_length + ctypes.sizeof(ctypes.c_wchar),
+        ctypes.cast(buffer, wintypes.LPWSTR),
+    )
+    attributes = _WindowsObjectAttributes(
+        ctypes.sizeof(_WindowsObjectAttributes),
+        wintypes.HANDLE(msvcrt.get_osfhandle(parent_descriptor)),
+        ctypes.pointer(object_name),
+        _WINDOWS_OBJ_CASE_INSENSITIVE,
+        None,
+        None,
+    )
+    io_status = _WindowsIoStatusBlock()
+    handle = wintypes.HANDLE()
+    status = int(
+        _WINDOWS_NTDLL.NtOpenFile(
+            ctypes.byref(handle),
+            desired_access,
+            ctypes.byref(attributes),
+            ctypes.byref(io_status),
+            _WINDOWS_SHARE_ALL,
+            _WINDOWS_FILE_OPEN_FOR_BACKUP_INTENT
+            | _WINDOWS_FILE_OPEN_REPARSE_POINT
+            | _WINDOWS_FILE_SYNCHRONOUS_IO_NONALERT,
+        )
+    )
+    if status < 0:
+        error = int(_WINDOWS_NTDLL.RtlNtStatusToDosError(status))
+        if error in {2, 3}:
+            raise FileNotFoundError(error, f"Windows path component was not found: {name}")
+        raise OSError(error, f"Windows path component could not be opened: {name}")
+    return _windows_fd_from_handle(int(handle.value))
+
+
 def _safe_relative_io_supported() -> bool:
+    if os.name == "nt":
+        return _WINDOWS_SAFE_IO_AVAILABLE
     return (
         bool(getattr(os, "O_NOFOLLOW", 0))
         and bool(getattr(os, "O_DIRECTORY", 0))
@@ -294,7 +475,10 @@ def _open_pinned_directory(path: Path) -> int:
     if not path.is_absolute() or not path.anchor:
         raise BoundedReadProblem("unsafe_path")
     try:
-        descriptor = os.open(path.anchor, _directory_flags())
+        if os.name == "nt":
+            descriptor = _windows_open_anchor_descriptor(path.anchor)
+        else:
+            descriptor = os.open(path.anchor, _directory_flags())
     except FileNotFoundError:
         raise BoundedReadProblem("missing") from None
     except OSError as exc:
@@ -303,6 +487,8 @@ def _open_pinned_directory(path: Path) -> int:
         raise BoundedReadProblem("unreadable") from None
     try:
         opened = os.fstat(descriptor)
+        if os.name == "nt" and _windows_descriptor_is_reparse(descriptor):
+            raise BoundedReadProblem("unsafe_path")
         if not stat.S_ISDIR(opened.st_mode):
             raise BoundedReadProblem("unsafe_path")
         for part in path.parts[1:]:
@@ -322,6 +508,25 @@ def _open_pinned_directory(path: Path) -> int:
 
 def _open_child_directory(parent_descriptor: int, name: str) -> int:
     """Open and pin one already-validated relative directory component."""
+    if os.name == "nt":
+        try:
+            descriptor = _windows_open_relative_descriptor(
+                parent_descriptor, name, _WINDOWS_DIRECTORY_ACCESS
+            )
+        except FileNotFoundError:
+            raise BoundedReadProblem("missing") from None
+        except OSError:
+            raise BoundedReadProblem("unreadable") from None
+        try:
+            if _windows_descriptor_is_reparse(descriptor):
+                raise BoundedReadProblem("symlink")
+            opened = os.fstat(descriptor)
+            if not stat.S_ISDIR(opened.st_mode):
+                raise BoundedReadProblem("unsafe_path")
+            return descriptor
+        except BaseException:
+            os.close(descriptor)
+            raise
     try:
         before = os.stat(
             name,
@@ -366,6 +571,54 @@ def _read_regular_at(
     max_bytes: int,
 ) -> tuple[bytes, os.stat_result]:
     """Read one regular leaf relative to a pinned parent directory."""
+    if os.name == "nt":
+        try:
+            descriptor = _windows_open_relative_descriptor(
+                parent_descriptor, name, _WINDOWS_REGULAR_FILE_ACCESS
+            )
+        except FileNotFoundError:
+            raise BoundedReadProblem("missing") from None
+        except OSError:
+            raise BoundedReadProblem("unreadable") from None
+        try:
+            if _windows_descriptor_is_reparse(descriptor):
+                raise BoundedReadProblem("symlink")
+            opened = os.fstat(descriptor)
+            if not stat.S_ISREG(opened.st_mode):
+                raise BoundedReadProblem("not_regular")
+            if opened.st_size > max_bytes:
+                raise BoundedReadProblem("too_large")
+            chunks: list[bytes] = []
+            remaining = max_bytes + 1
+            while remaining:
+                chunk = os.read(descriptor, min(65_536, remaining))
+                if not chunk:
+                    break
+                chunks.append(chunk)
+                remaining -= len(chunk)
+            raw = b"".join(chunks)
+            if len(raw) > max_bytes:
+                raise BoundedReadProblem("too_large")
+            after_opened = os.fstat(descriptor)
+            if not _same_snapshot(opened, after_opened):
+                raise BoundedReadProblem("changed")
+            try:
+                after_descriptor = _windows_open_relative_descriptor(
+                    parent_descriptor, name, _WINDOWS_REGULAR_FILE_ACCESS
+                )
+            except OSError:
+                raise BoundedReadProblem("changed") from None
+            try:
+                if _windows_descriptor_is_reparse(after_descriptor):
+                    raise BoundedReadProblem("symlink")
+                after = os.fstat(after_descriptor)
+            finally:
+                os.close(after_descriptor)
+            if not _same_snapshot(after_opened, after):
+                raise BoundedReadProblem("changed")
+            return raw, opened
+        finally:
+            os.close(descriptor)
     try:
         before = os.stat(
             name,
@@ -458,6 +711,12 @@ def _load_input(path_text: str) -> tuple[dict[str, Any], int]:
             "input path must not contain an embedded NUL",
         )
     path = Path(os.path.abspath(path_text))
+    if os.name == "nt" and ":" in path.name:
+        raise InputProblem(
+            "input_unsafe_path",
+            "$",
+            "input file name must not contain Windows reserved colon syntax",
+        )
     base: int | None = None
     try:
         base = _open_pinned_directory(path.parent)
@@ -1586,6 +1845,12 @@ def _safe_companion_parts(path_text: str, path: str) -> tuple[str, ...]:
             "unsafe_companion_path",
             path,
             "companion path must not contain empty, dot, or parent segments",
+        )
+    if os.name == "nt" and any(":" in part for part in relative.parts):
+        raise InputProblem(
+            "unsafe_companion_path",
+            path,
+            "companion path must not contain Windows reserved colon syntax",
         )
     if relative.suffix.lower() != ".md":
         raise InputProblem(
