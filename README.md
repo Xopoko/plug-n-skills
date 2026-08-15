@@ -263,9 +263,9 @@ a prompt or makes visible to a model at runtime.
 | Plugin packs | 17 | - | Local packages plus immutable standalone first-party catalog entries. |
 | Skill entrypoints | 200 | - | `SKILL.md` files catalogued in local source or immutable receipts. |
 | Reference files | 278 | - | Longer ledgers, contracts, scorecards, and source notes. |
-| Script/support files | 97 | - | All regular files below `scripts/`, including helpers, templates, and manifests. |
+| Script/support files | 100 | - | All regular files below `scripts/`, including helpers, templates, and manifests. |
 | Source-relative routing estimate | 200 skills | 13,115 | Skill name, description, and plugin-relative `skills/.../SKILL.md` path; comparable across local and standalone sources. |
-| Published first-party URL locator snapshot | 81 skills | 7,931 | Receipt values that serialize immutable GitHub blob URLs; preserved separately and not added to the source-relative total. |
+| Published first-party URL locator snapshot | 81 skills | 8,175 | Receipt values that serialize immutable GitHub blob URLs; preserved separately and not added to the source-relative total. |
 | Skill body source estimate | 200 skills | 147,830 | Body text after frontmatter; not proof that a host loads it, or when. |
 
 Regenerate the report after skill edits:
@@ -296,7 +296,7 @@ immutable GitHub locator snapshot.
 | `design-intelligence` | 8 | 2 | 1 | 497 | - | 6,468 |
 | `architecture-intelligence` | 9 | 9 | 2 | 544 | - | 8,548 |
 | `spec-driven-development` | 6 | 0 | 2 | 298 | - | 3,401 |
-| `build-swift-apps` | 61 | 89 | 36 | 4,004 | 6,078 | 37,791 |
+| `build-swift-apps` | 61 | 89 | 39 | 4,004 | 6,322 | 37,791 |
 | `kotlin-multiplatform` | 14 | 22 | 2 | 973 | - | 14,769 |
 | `tauri` | 6 | 0 | 1 | 408 | - | 3,472 |
 | `pixijs` | 26 | 64 | 0 | 1,707 | - | 7,967 |
@@ -457,67 +457,67 @@ size. None is a runtime prompt measurement.
 
 | Skill | Source routing | Published URL routing | Body source | Description |
 | --- | ---: | ---: | ---: | --- |
-| `app-icon-studio` | 62 | 96 | 984 | Apple app icons: create, generate, evaluate, export, install, or debug iOS AppIcon.appiconset and macOS .icns assets for small-size clarity. |
-| `apple-dev-research` | 59 | 93 | 503 | Apple developer articles: search Swift, SwiftUI, Xcode, iOS, and macOS community blogs, tutorials, and write-ups, not official docs. |
-| `apple-firmware-inspector` | 72 | 106 | 676 | Apple firmware: inspect and reverse-engineer IPSWs, kernelcaches, dyld shared caches, private headers, entitlements, Mach-O binaries, KEXTs, and security internals with `ipsw`. |
-| `appstore-ads-operator` | 62 | 96 | 843 | Apple Ads campaigns: inspect and manage separate auth, orgs, ad groups, creatives, keywords, reports, and API calls; approve live mutations first. |
-| `appstore-archive-uploader` | 65 | 99 | 843 | App Store IPA/PKG archives: set version/build numbers, archive, export, upload, or publish with `asc xcode` before TestFlight/App Store submission. |
-| `appstore-aso-auditor` | 65 | 99 | 687 | App Store ASO audit: analyze canonical `./metadata` offline after `asc metadata pull`; add Astro MCP keyword gaps and Apple app-tag context when available. |
-| `appstore-build-monitor` | 54 | 88 | 334 | App Store builds: track processing, find latest builds and next numbers, wait on uploads, or safely expire old builds with `asc`. |
-| `appstore-connect-cli` | 65 | 99 | 531 | App Store Connect commands: discover and run generic `asc` CLI auth, schemas, canonical verbs, pagination, output, records, API requests, and timeouts; exclude Apple Ads campaigns. |
-| `appstore-crash-insights` | 57 | 91 | 525 | TestFlight crash reports: triage crashes, beta feedback, hangs, disk writes, launches, and performance diagnostics with `asc`. |
-| `appstore-id-resolver` | 58 | 92 | 356 | App Store Connect IDs: resolve apps, builds, versions, groups, testers, and review submissions from names with deterministic `asc` lookups. |
-| `appstore-metadata-localizer` | 76 | 110 | 425 | App Store listing text: translate and market-adapt descriptions, keywords, What's New, names, subtitles, and privacy text across locales. Excludes non-translation edits, standalone release notes, and IAP/subscription names. |
-| `appstore-metadata-sync` | 74 | 108 | 436 | App Store metadata JSON: edit, validate, push, or sync canonical `./metadata`, plus legacy fastlane migration via `asc migrate`. Excludes translation-first work, standalone release notes, and IAP/subscription names. |
-| `appstore-notary-runner` | 68 | 102 | 528 | macOS Developer ID notarization commands for xcodebuild export, `asc notarization` submit/status/log, and stapling. Excludes packaging-readiness reviews and signing-only diagnosis. |
-| `appstore-pricing-planner` | 67 | 101 | 402 | App Store subscription and IAP pricing by territory with `asc`, including price points, PPP/localized CSV imports, availability, summaries, and schedules; mutating actions require confirmation. |
-| `appstore-record-creator` | 59 | 93 | 570 | App Store Connect New App creation via visible browser automation after bundle-ID registration for the API-less web form; never store cookies or auto-retry Create. |
-| `appstore-release-director` | 68 | 102 | 726 | iOS App Store release orchestration from a local repo through signing, metadata, privacy, screenshots, upload, TestFlight, review submission/resubmission, blocker triage, and release evidence. |
-| `appstore-release-notes-writer` | 70 | 104 | 688 | App Store What's New notes and promotional text from git history, bullets, or prose, with optional localization. Excludes full-listing translation, metadata sync, and subscription/IAP names. |
-| `appstore-release-planner` | 69 | 103 | 722 | App Store release go/no-go planning for readiness, first-submission blockers, sequencing, and stage-versus-submit decisions. Routes execution to focused skills; review commands belong to appstore-review-readiness. |
-| `appstore-revenuecat-sync` | 71 | 105 | 784 | App Store Connect and RevenueCat subscription/IAP reconciliation with `asc` and RevenueCat MCP for catalog bootstrap, drift audits, deterministic product/entitlement/offering/package mapping, and no deletions. |
-| `appstore-review-readiness` | 74 | 108 | 440 | App Store review-readiness execution with current `asc` commands to validate, stage, submit, monitor, cancel, or repair blockers after go/no-go planning. Excludes release strategy; appstore-release-planner owns it. |
-| `appstore-screenshot-pipeline` | 64 | 98 | 1,056 | iOS App Store screenshot automation with xcodebuild/simctl capture, AXe plans, Koubou framing, review artifacts, and `asc` upload. |
-| `appstore-screenshot-studio` | 63 | 97 | 696 | App Store marketing screenshot creation and revision to translate, scrape, crop, and validate `.appstore-screenshots` workspaces. Excludes general image generation. |
-| `appstore-screenshot-validator` | 61 | 95 | 518 | App Store screenshot validation and upload with live `asc` size data and macOS `sips` to resize, strip alpha, and color-convert copies. |
-| `appstore-signing-setup` | 60 | 94 | 646 | App Store signing asset setup with `asc` for bundle IDs, capabilities, certificates, profiles, local install, rotation, and encrypted team sync. |
-| `appstore-subscription-localizer` | 72 | 106 | 402 | App Store subscription localization: create or update localized display names and descriptions for groups, subscriptions, and IAPs with `asc`; exclude app listing metadata, release notes, keywords, screenshots, and pricing. |
-| `appstore-testflight-coordinator` | 55 | 89 | 346 | Coordinate TestFlight beta distribution, groups, testers, and What to Test notes with `asc` for beta rollouts. |
-| `appstore-wall-publisher` | 63 | 97 | 373 | Submit or update Wall of Apps entries in the App-Store-Connect-CLI repository with `asc apps wall submit`; match wall submission, addition, or update requests. |
-| `appstore-workflow-runner` | 66 | 100 | 793 | Manage `.asc/workflow.json` automations; define, validate, run, resume, and audit trusted repo-local release/TestFlight flows and step outputs with `asc workflow`. |
-| `build-swift-apps` | 84 | 118 | 981 | Route broad or ambiguous Swift and Apple-platform work to a focused skill; this router does not implement domain work. Covers iOS, macOS, SwiftUI, Xcode, Simulator, App Store Connect, Tuist, SwiftPM, signing, profiling, and Apple research. |
-| `ios-ettrace-profiler` | 59 | 93 | 1,080 | iOS ETTrace Simulator profiles: capture and interpret symbolicated startup, scrolling, navigation, rendering, CPU hotspots, and before/after evidence. |
-| `ios-intents-architect` | 67 | 101 | 542 | Design and implement iOS App Intents, AppEntity, EntityQuery, and App Shortcuts for Siri, Spotlight, widgets, controls, Shortcuts, and app handoff routes. |
-| `ios-liquid-glass-designer` | 72 | 106 | 452 | Implement, refactor, or review iOS 26+ SwiftUI Liquid Glass with native `glassEffect`, `GlassEffectContainer`, button styles, availability gates, and non-glass fallbacks. |
-| `ios-memgraph-inspector` | 67 | 101 | 624 | iOS memgraph leak analysis: capture, inspect, compare, and prove memory leaks with Apple's `leaks` tool, retain-cycle evidence, and before/after checks. |
-| `ios-rocketsim-operator` | 56 | 90 | 529 | RocketSim iOS Simulator UI: inspect and control accessibility state, gestures, typing, hardware buttons, and CLI automation. |
-| `ios-simulator-browser` | 65 | 99 | 848 | Mirror iOS Simulator runs in the Codex browser for interaction, visible proof, and hot-reloaded SwiftUI previews from importable Swift packages; exclude headless or log-only debugging. |
-| `ios-simulator-debugger` | 73 | 107 | 507 | Debug iOS Simulator apps with XcodeBuildMCP for build, run, launch, UI inspection, interaction, screenshots, and logs; route user-visible mirrors and SwiftUI previews to `ios-simulator-browser`. |
-| `ios-swiftui-architect` | 68 | 102 | 691 | iOS SwiftUI views and components: build or refactor navigation, state ownership, async UI, sheets, previews, and responsive layouts; exclude UIKit-only and macOS work. |
-| `macos-appkit-bridge` | 71 | 105 | 566 | macOS SwiftUI-AppKit bridges: implement NSViewRepresentable, NSViewControllerRepresentable, NSWindow, panels, responder chains, or menus only where pure SwiftUI cannot model the behavior. |
-| `macos-liquid-glass-designer` | 67 | 101 | 593 | macOS SwiftUI Liquid Glass UI: modernize or review system materials, toolbars, search, controls, and custom glass; prefer native structure over hand-built chrome. |
-| `macos-notarization-packager` | 71 | 105 | 384 | macOS distribution artifacts: inspect Developer ID archives, app bundles, hardened runtime, nested signing, and notarization readiness; exclude local signing-only diagnosis and direct `asc notarization` execution. |
-| `macos-runtime-debugger` | 74 | 108 | 974 | macOS app runtimes: build, launch, and debug Xcode or SwiftPM GUI/CLI targets with shell-first workflows; diagnose compiler, linker, startup, log, and telemetry failures; exclude iOS Simulator work. |
-| `macos-signing-inspector` | 64 | 98 | 528 | macOS app signing artifacts: inspect code signatures, entitlements, hardened runtime, sandbox, Gatekeeper, and trust failures; exclude distribution packaging and notarization submission. |
-| `macos-swiftpm-runner` | 73 | 107 | 323 | macOS SwiftPM packages: build, run, and test package-first repositories and executables when `Package.swift` is primary or no Xcode project exists; not for Xcode-only app bundles. |
-| `macos-swiftui-architect` | 74 | 108 | 821 | macOS SwiftUI scenes: build or refactor windows, commands, toolbars, settings, split views, inspectors, menu bar extras, keyboard flows, and desktop layouts; not AppKit-only behavior. |
-| `macos-telemetry-probe` | 61 | 95 | 455 | macOS runtime telemetry: add and verify privacy-safe Logger/OSLog events, log stream filters, and signposts; not crash diagnosis. |
-| `macos-test-diagnoser` | 71 | 105 | 617 | macOS Xcode and SwiftPM tests: run focused scopes and diagnose build, assertion, crash, async-flake, fixture, entitlement, and host-app failures; separate regressions from setup issues. |
-| `macos-view-architect` | 61 | 95 | 500 | macOS SwiftUI view structure: refactor oversized scenes into subviews, explicit roots, scoped state, command/toolbar ownership, and narrow AppKit bridges. |
-| `macos-window-architect` | 69 | 103 | 799 | macOS 15+ SwiftUI windows: customize toolbar/title chrome, drag regions, materials, minimize/restoration, placement, launch behavior, and borderless styles; prefer SwiftUI before NSWindow. |
-| `swiftpm-build-inspector` | 60 | 94 | 536 | Diagnose SwiftPM graph overhead across dependencies, plugins, module variants, branch pins, macros, binary targets, and slow CI or local Xcode builds. |
-| `swiftui-performance-inspector` | 63 | 97 | 543 | Diagnose SwiftUI rendering and update costs from code or profiles when scrolling janks, CPU or memory spikes, views update excessively, layouts thrash, or apps hang. |
-| `swiftui-view-architect` | 60 | 94 | 481 | Refactor oversized SwiftUI view files into stable, dedicated subviews with MV-first data flow, explicit dependencies, extracted actions, and correct Observation usage. |
-| `tuist-flaky-test-stabilizer` | 65 | 99 | 597 | Stabilize flaky Tuist tests identified by test-insights URLs, test case IDs, or inconsistent local runs; covers test and product-code causes. |
-| `tuist-generation-doctor` | 63 | 97 | 672 | Diagnose Tuist generation, build, and launch failures when `tuist generate`, generated Xcode workspaces, or apps fail or diverge from the source project. |
-| `tuist-migration-planner` | 66 | 100 | 620 | Plan Xcode-to-Tuist migrations for hand-maintained projects, including target, setting, and dependency mapping plus generated build, test, signing, and launch parity. |
-| `tuist-workspace-navigator` | 64 | 98 | 543 | Operate Tuist-generated Xcode workspaces with `tuist generate`, focused generation, tags, buildable folders, and post-generation build or test commands. |
-| `xcode-build-baseline` | 58 | 92 | 711 | Benchmark Xcode clean, cached-clean, zero-change, and incremental builds with fixed inputs, timing summaries, and `.build-benchmark/` artifacts. |
-| `xcode-build-strategist` | 61 | 95 | 1,005 | Coordinate end-to-end Xcode build optimization audits with recommend-first, approval-gated fixes, specialist analysis, wall-clock priorities, and re-benchmark proof. |
-| `xcode-build-tuner` | 61 | 95 | 837 | Implement approved Xcode build-speed fixes after strategist approval or explicit requests covering build settings, script phases, Swift compilation, or SwiftPM graphs; re-benchmark results. |
-| `xcode-compile-profiler` | 63 | 97 | 582 | Profile Swift and mixed-language compile bottlenecks from timing summaries, frontend diagnostics, type-check warnings, CompileSwiftSources, and SwiftEmitModule; recommend changes only. |
-| `xcode-project-auditor` | 59 | 93 | 523 | Audit Xcode project and target overhead across schemes, settings, dependencies, run scripts, module maps, and explicit modules; require approval before changes. |
-| `xcode-ui-test-stabilizer` | 75 | 109 | 494 | Build and stabilize Xcode UI end-to-end tests with XCUIApplication/xcodebuild for new or unreliable automation, covering environment setup, focus/input reliability, waits, logs, attachments, and flakiness triage. |
+| `app-icon-studio` | 62 | 100 | 984 | Apple app icons: create, generate, evaluate, export, install, or debug iOS AppIcon.appiconset and macOS .icns assets for small-size clarity. |
+| `apple-dev-research` | 59 | 97 | 503 | Apple developer articles: search Swift, SwiftUI, Xcode, iOS, and macOS community blogs, tutorials, and write-ups, not official docs. |
+| `apple-firmware-inspector` | 72 | 110 | 676 | Apple firmware: inspect and reverse-engineer IPSWs, kernelcaches, dyld shared caches, private headers, entitlements, Mach-O binaries, KEXTs, and security internals with `ipsw`. |
+| `appstore-ads-operator` | 62 | 100 | 843 | Apple Ads campaigns: inspect and manage separate auth, orgs, ad groups, creatives, keywords, reports, and API calls; approve live mutations first. |
+| `appstore-archive-uploader` | 65 | 103 | 843 | App Store IPA/PKG archives: set version/build numbers, archive, export, upload, or publish with `asc xcode` before TestFlight/App Store submission. |
+| `appstore-aso-auditor` | 65 | 103 | 687 | App Store ASO audit: analyze canonical `./metadata` offline after `asc metadata pull`; add Astro MCP keyword gaps and Apple app-tag context when available. |
+| `appstore-build-monitor` | 54 | 92 | 334 | App Store builds: track processing, find latest builds and next numbers, wait on uploads, or safely expire old builds with `asc`. |
+| `appstore-connect-cli` | 65 | 103 | 531 | App Store Connect commands: discover and run generic `asc` CLI auth, schemas, canonical verbs, pagination, output, records, API requests, and timeouts; exclude Apple Ads campaigns. |
+| `appstore-crash-insights` | 57 | 95 | 525 | TestFlight crash reports: triage crashes, beta feedback, hangs, disk writes, launches, and performance diagnostics with `asc`. |
+| `appstore-id-resolver` | 58 | 96 | 356 | App Store Connect IDs: resolve apps, builds, versions, groups, testers, and review submissions from names with deterministic `asc` lookups. |
+| `appstore-metadata-localizer` | 76 | 114 | 425 | App Store listing text: translate and market-adapt descriptions, keywords, What's New, names, subtitles, and privacy text across locales. Excludes non-translation edits, standalone release notes, and IAP/subscription names. |
+| `appstore-metadata-sync` | 74 | 112 | 436 | App Store metadata JSON: edit, validate, push, or sync canonical `./metadata`, plus legacy fastlane migration via `asc migrate`. Excludes translation-first work, standalone release notes, and IAP/subscription names. |
+| `appstore-notary-runner` | 68 | 106 | 528 | macOS Developer ID notarization commands for xcodebuild export, `asc notarization` submit/status/log, and stapling. Excludes packaging-readiness reviews and signing-only diagnosis. |
+| `appstore-pricing-planner` | 67 | 105 | 402 | App Store subscription and IAP pricing by territory with `asc`, including price points, PPP/localized CSV imports, availability, summaries, and schedules; mutating actions require confirmation. |
+| `appstore-record-creator` | 59 | 97 | 570 | App Store Connect New App creation via visible browser automation after bundle-ID registration for the API-less web form; never store cookies or auto-retry Create. |
+| `appstore-release-director` | 68 | 106 | 726 | iOS App Store release orchestration from a local repo through signing, metadata, privacy, screenshots, upload, TestFlight, review submission/resubmission, blocker triage, and release evidence. |
+| `appstore-release-notes-writer` | 70 | 108 | 688 | App Store What's New notes and promotional text from git history, bullets, or prose, with optional localization. Excludes full-listing translation, metadata sync, and subscription/IAP names. |
+| `appstore-release-planner` | 69 | 107 | 722 | App Store release go/no-go planning for readiness, first-submission blockers, sequencing, and stage-versus-submit decisions. Routes execution to focused skills; review commands belong to appstore-review-readiness. |
+| `appstore-revenuecat-sync` | 71 | 109 | 784 | App Store Connect and RevenueCat subscription/IAP reconciliation with `asc` and RevenueCat MCP for catalog bootstrap, drift audits, deterministic product/entitlement/offering/package mapping, and no deletions. |
+| `appstore-review-readiness` | 74 | 112 | 440 | App Store review-readiness execution with current `asc` commands to validate, stage, submit, monitor, cancel, or repair blockers after go/no-go planning. Excludes release strategy; appstore-release-planner owns it. |
+| `appstore-screenshot-pipeline` | 64 | 102 | 1,056 | iOS App Store screenshot automation with xcodebuild/simctl capture, AXe plans, Koubou framing, review artifacts, and `asc` upload. |
+| `appstore-screenshot-studio` | 63 | 101 | 696 | App Store marketing screenshot creation and revision to translate, scrape, crop, and validate `.appstore-screenshots` workspaces. Excludes general image generation. |
+| `appstore-screenshot-validator` | 61 | 99 | 518 | App Store screenshot validation and upload with live `asc` size data and macOS `sips` to resize, strip alpha, and color-convert copies. |
+| `appstore-signing-setup` | 60 | 98 | 646 | App Store signing asset setup with `asc` for bundle IDs, capabilities, certificates, profiles, local install, rotation, and encrypted team sync. |
+| `appstore-subscription-localizer` | 72 | 110 | 402 | App Store subscription localization: create or update localized display names and descriptions for groups, subscriptions, and IAPs with `asc`; exclude app listing metadata, release notes, keywords, screenshots, and pricing. |
+| `appstore-testflight-coordinator` | 55 | 93 | 346 | Coordinate TestFlight beta distribution, groups, testers, and What to Test notes with `asc` for beta rollouts. |
+| `appstore-wall-publisher` | 63 | 101 | 373 | Submit or update Wall of Apps entries in the App-Store-Connect-CLI repository with `asc apps wall submit`; match wall submission, addition, or update requests. |
+| `appstore-workflow-runner` | 66 | 104 | 793 | Manage `.asc/workflow.json` automations; define, validate, run, resume, and audit trusted repo-local release/TestFlight flows and step outputs with `asc workflow`. |
+| `build-swift-apps` | 84 | 122 | 981 | Route broad or ambiguous Swift and Apple-platform work to a focused skill; this router does not implement domain work. Covers iOS, macOS, SwiftUI, Xcode, Simulator, App Store Connect, Tuist, SwiftPM, signing, profiling, and Apple research. |
+| `ios-ettrace-profiler` | 59 | 97 | 1,080 | iOS ETTrace Simulator profiles: capture and interpret symbolicated startup, scrolling, navigation, rendering, CPU hotspots, and before/after evidence. |
+| `ios-intents-architect` | 67 | 105 | 542 | Design and implement iOS App Intents, AppEntity, EntityQuery, and App Shortcuts for Siri, Spotlight, widgets, controls, Shortcuts, and app handoff routes. |
+| `ios-liquid-glass-designer` | 72 | 110 | 452 | Implement, refactor, or review iOS 26+ SwiftUI Liquid Glass with native `glassEffect`, `GlassEffectContainer`, button styles, availability gates, and non-glass fallbacks. |
+| `ios-memgraph-inspector` | 67 | 105 | 624 | iOS memgraph leak analysis: capture, inspect, compare, and prove memory leaks with Apple's `leaks` tool, retain-cycle evidence, and before/after checks. |
+| `ios-rocketsim-operator` | 56 | 94 | 529 | RocketSim iOS Simulator UI: inspect and control accessibility state, gestures, typing, hardware buttons, and CLI automation. |
+| `ios-simulator-browser` | 65 | 103 | 848 | Mirror iOS Simulator runs in the Codex browser for interaction, visible proof, and hot-reloaded SwiftUI previews from importable Swift packages; exclude headless or log-only debugging. |
+| `ios-simulator-debugger` | 73 | 111 | 507 | Debug iOS Simulator apps with XcodeBuildMCP for build, run, launch, UI inspection, interaction, screenshots, and logs; route user-visible mirrors and SwiftUI previews to `ios-simulator-browser`. |
+| `ios-swiftui-architect` | 68 | 106 | 691 | iOS SwiftUI views and components: build or refactor navigation, state ownership, async UI, sheets, previews, and responsive layouts; exclude UIKit-only and macOS work. |
+| `macos-appkit-bridge` | 71 | 109 | 566 | macOS SwiftUI-AppKit bridges: implement NSViewRepresentable, NSViewControllerRepresentable, NSWindow, panels, responder chains, or menus only where pure SwiftUI cannot model the behavior. |
+| `macos-liquid-glass-designer` | 67 | 105 | 593 | macOS SwiftUI Liquid Glass UI: modernize or review system materials, toolbars, search, controls, and custom glass; prefer native structure over hand-built chrome. |
+| `macos-notarization-packager` | 71 | 109 | 384 | macOS distribution artifacts: inspect Developer ID archives, app bundles, hardened runtime, nested signing, and notarization readiness; exclude local signing-only diagnosis and direct `asc notarization` execution. |
+| `macos-runtime-debugger` | 74 | 112 | 974 | macOS app runtimes: build, launch, and debug Xcode or SwiftPM GUI/CLI targets with shell-first workflows; diagnose compiler, linker, startup, log, and telemetry failures; exclude iOS Simulator work. |
+| `macos-signing-inspector` | 64 | 102 | 528 | macOS app signing artifacts: inspect code signatures, entitlements, hardened runtime, sandbox, Gatekeeper, and trust failures; exclude distribution packaging and notarization submission. |
+| `macos-swiftpm-runner` | 73 | 111 | 323 | macOS SwiftPM packages: build, run, and test package-first repositories and executables when `Package.swift` is primary or no Xcode project exists; not for Xcode-only app bundles. |
+| `macos-swiftui-architect` | 74 | 112 | 821 | macOS SwiftUI scenes: build or refactor windows, commands, toolbars, settings, split views, inspectors, menu bar extras, keyboard flows, and desktop layouts; not AppKit-only behavior. |
+| `macos-telemetry-probe` | 61 | 99 | 455 | macOS runtime telemetry: add and verify privacy-safe Logger/OSLog events, log stream filters, and signposts; not crash diagnosis. |
+| `macos-test-diagnoser` | 71 | 109 | 617 | macOS Xcode and SwiftPM tests: run focused scopes and diagnose build, assertion, crash, async-flake, fixture, entitlement, and host-app failures; separate regressions from setup issues. |
+| `macos-view-architect` | 61 | 99 | 500 | macOS SwiftUI view structure: refactor oversized scenes into subviews, explicit roots, scoped state, command/toolbar ownership, and narrow AppKit bridges. |
+| `macos-window-architect` | 69 | 107 | 799 | macOS 15+ SwiftUI windows: customize toolbar/title chrome, drag regions, materials, minimize/restoration, placement, launch behavior, and borderless styles; prefer SwiftUI before NSWindow. |
+| `swiftpm-build-inspector` | 60 | 98 | 536 | Diagnose SwiftPM graph overhead across dependencies, plugins, module variants, branch pins, macros, binary targets, and slow CI or local Xcode builds. |
+| `swiftui-performance-inspector` | 63 | 101 | 543 | Diagnose SwiftUI rendering and update costs from code or profiles when scrolling janks, CPU or memory spikes, views update excessively, layouts thrash, or apps hang. |
+| `swiftui-view-architect` | 60 | 98 | 481 | Refactor oversized SwiftUI view files into stable, dedicated subviews with MV-first data flow, explicit dependencies, extracted actions, and correct Observation usage. |
+| `tuist-flaky-test-stabilizer` | 65 | 103 | 597 | Stabilize flaky Tuist tests identified by test-insights URLs, test case IDs, or inconsistent local runs; covers test and product-code causes. |
+| `tuist-generation-doctor` | 63 | 101 | 672 | Diagnose Tuist generation, build, and launch failures when `tuist generate`, generated Xcode workspaces, or apps fail or diverge from the source project. |
+| `tuist-migration-planner` | 66 | 104 | 620 | Plan Xcode-to-Tuist migrations for hand-maintained projects, including target, setting, and dependency mapping plus generated build, test, signing, and launch parity. |
+| `tuist-workspace-navigator` | 64 | 102 | 543 | Operate Tuist-generated Xcode workspaces with `tuist generate`, focused generation, tags, buildable folders, and post-generation build or test commands. |
+| `xcode-build-baseline` | 58 | 96 | 711 | Benchmark Xcode clean, cached-clean, zero-change, and incremental builds with fixed inputs, timing summaries, and `.build-benchmark/` artifacts. |
+| `xcode-build-strategist` | 61 | 99 | 1,005 | Coordinate end-to-end Xcode build optimization audits with recommend-first, approval-gated fixes, specialist analysis, wall-clock priorities, and re-benchmark proof. |
+| `xcode-build-tuner` | 61 | 99 | 837 | Implement approved Xcode build-speed fixes after strategist approval or explicit requests covering build settings, script phases, Swift compilation, or SwiftPM graphs; re-benchmark results. |
+| `xcode-compile-profiler` | 63 | 101 | 582 | Profile Swift and mixed-language compile bottlenecks from timing summaries, frontend diagnostics, type-check warnings, CompileSwiftSources, and SwiftEmitModule; recommend changes only. |
+| `xcode-project-auditor` | 59 | 97 | 523 | Audit Xcode project and target overhead across schemes, settings, dependencies, run scripts, module maps, and explicit modules; require approval before changes. |
+| `xcode-ui-test-stabilizer` | 75 | 113 | 494 | Build and stabilize Xcode UI end-to-end tests with XCUIApplication/xcodebuild for new or unreliable automation, covering environment setup, focus/input reliability, waits, logs, attachments, and flakiness triage. |
 
 #### `kotlin-multiplatform`
 
