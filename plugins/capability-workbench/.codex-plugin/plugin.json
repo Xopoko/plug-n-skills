@@ -1,6 +1,6 @@
 {
   "name": "capability-workbench",
-  "version": "0.6.7",
+  "version": "0.6.9",
   "description": "Artifact-first agent capability engineering for skills, plugins, guidance, and trigger contracts: frame behavior gaps, evaluate baselines and candidates, author validated changes, govern portfolios, and activate explicitly. Use Agent Harness for runtime and harness-level evaluation.",
   "author": {
     "name": "Xopoko"
@@ -51,17 +51,9 @@
       "Context-density and prompt-contract audits"
     ],
     "defaultPrompt": [
-      "Use Capability Workbench to turn an observed agent behavior gap into the right validated skill, plugin, guidance, trigger, evaluation, or portfolio change.",
-      "Use Capability Workbench to perform broad external-first discovery and synthesize a well-vetted agent skill or plugin on the selected source surface, activating it only when requested.",
-      "Use Capability Workbench to audit a skill/plugin portfolio across plugins and decide whether capabilities should be kept, split, merged, moved, deleted, routed, moved to references, extracted into shared mechanics, or extracted into scripts.",
-      "Use Capability Workbench to create, refresh, audit, or migrate AGENTS.md, CLAUDE.md, and Cursor rule files for coding agents.",
-      "Use Capability Workbench to design or debug skill names and descriptions so the host agent loads the right SKILL.md.",
-      "Use Capability Workbench to compare how Codex, Claude-family snapshots, OpenClaw, Hermes Agent, OpenCode, and Qwen Code expose skill catalogs and load selected bodies.",
-      "Use Capability Workbench to validate a broad audit claim against an exact declared item-by-dimension evidence matrix.",
-      "Use Capability Workbench to compare a candidate skill, plugin, or guidance change against a baseline with realistic cases, deterministic assertions, repeated trials, and an adoption decision.",
-      "Use Capability Workbench to repair a stale skill, script, plugin, or MCP contract that contradicted live behavior during work.",
-      "Use Capability Workbench to generate a coherent imagegen-backed icon for a new marketplace-backed plugin and wire it into the plugin manifest.",
-      "Use Capability Workbench to validate and install an agent marketplace plugin so it is visible globally in the host agent."
+      "Use Capability Workbench to turn an agent behavior gap into a validated skill, plugin, guidance, trigger, or evaluation.",
+      "Use Capability Workbench to audit a skill/plugin portfolio and decide what to keep, split, merge, move, route, or delete.",
+      "Use Capability Workbench to repair a stale capability contract contradicted by live behavior."
     ],
     "brandColor": "#0F766E",
     "composerIcon": "./assets/icon.png",

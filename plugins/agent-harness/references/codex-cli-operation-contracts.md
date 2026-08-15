@@ -82,3 +82,7 @@ Do not commit:
 
 Use placeholders such as `/path/to/project`, `$PROJECT`, `$CODEX_HOME`,
 `CODEX_CLI`, and environment variable names without values.
+
+## Existing Task Versus Fresh Render
+
+For "what did this existing task see?", the task's exact rollout evidence outranks a new `codex debug prompt-input` render. That command builds a standalone diagnostic request, not a live-task parity oracle, and can take a different provider or plugin-admission path from Desktop or app-server. Bind runtime origin, generation, and admission inputs before comparing catalogs. A fresh render may also initialize or refresh runtime caches, so do not infer exact historical visibility from it alone.

@@ -262,10 +262,10 @@ instructions.
 | --- | ---: | ---: | --- |
 | Plugin packs | 17 | - | Local packages plus immutable standalone first-party catalog entries. |
 | Skill entrypoints | 200 | - | `SKILL.md` files exposed through plugin metadata. |
-| Reference files | 278 | - | Longer ledgers, contracts, scorecards, and source notes. |
+| Reference files | 279 | - | Longer ledgers, contracts, scorecards, and source notes. |
 | Helper and validator scripts | 97 | - | Deterministic plugin-local helpers. |
-| Startup metadata | 200 skills | 17,075 | Skill name, description, and file pointer for routing. |
-| On-demand skill bodies | 200 skills | 147,571 | Instruction bodies after frontmatter, loaded only when selected. |
+| Startup metadata | 200 skills | 17,055 | Skill name, description, and file pointer for routing. |
+| On-demand skill bodies | 200 skills | 146,278 | Instruction bodies after frontmatter, loaded only when selected. |
 
 Regenerate the report after skill edits:
 
@@ -282,9 +282,9 @@ Token columns are `startup metadata / on-demand body`.
 
 | Plugin | Skills | Refs | Scripts | Startup | Body |
 | --- | ---: | ---: | ---: | ---: | ---: |
-| `agent-harness` | 19 | 19 | 7 | 1,451 | 21,143 |
-| `capability-workbench` | 11 | 17 | 25 | 807 | 15,583 |
-| `context-density` | 1 | 9 | 8 | 70 | 2,806 |
+| `agent-harness` | 19 | 19 | 7 | 1,451 | 20,968 |
+| `capability-workbench` | 11 | 18 | 25 | 807 | 14,383 |
+| `context-density` | 1 | 9 | 8 | 70 | 2,888 |
 | `i-have-adhd` | 1 | 1 | 0 | 80 | 588 |
 | `git-workflows` | 5 | 10 | 6 | 416 | 7,339 |
 | `engineering-hygiene` | 4 | 3 | 0 | 319 | 3,239 |
@@ -294,7 +294,7 @@ Token columns are `startup metadata / on-demand body`.
 | `architecture-intelligence` | 9 | 9 | 2 | 598 | 8,548 |
 | `spec-driven-development` | 6 | 0 | 2 | 328 | 3,401 |
 | `build-swift-apps` | 61 | 90 | 36 | 6,558 | 36,239 |
-| `kotlin-multiplatform` | 14 | 22 | 2 | 1,105 | 14,769 |
+| `kotlin-multiplatform` | 14 | 22 | 2 | 1,085 | 14,769 |
 | `tauri` | 6 | 0 | 1 | 438 | 3,472 |
 | `pixijs` | 26 | 64 | 0 | 1,837 | 7,967 |
 | `game-design-intelligence` | 6 | 2 | 1 | 452 | 2,916 |
@@ -332,20 +332,20 @@ Token cells are shown as `startup/body`.
 | --- | ---: | --- |
 | `agent-harness` | 75/657 | Agent runtimes and human credential handoff: route harnesses, Codex/Claude operations, 1Password or native prompts, sessions, deferred completion, and scheduler proof. Excludes capability authoring and generic app architecture. |
 | `agent-harness-engineering` | 80/1,495 | Design agent harnesses for typed loops, runtime reconfiguration, provider/tool/module hot swap, state, policy, cancellation, recovery, and delegation. Excludes prompt-only, generic architecture, vendor CLI/config, and evaluation-only work. |
-| `agent-harness-evaluation` | 74/1,569 | Evaluate agent harness reliability through replay, restart, cancellation, runtime reconfiguration, concurrent generations, rollback, context pressure, and release gates. Excludes generic tests, surveys, and prompt/model-only benchmarks. |
+| `agent-harness-evaluation` | 74/1,617 | Evaluate agent harness reliability through replay, restart, cancellation, runtime reconfiguration, concurrent generations, rollback, context pressure, and release gates. Excludes generic tests, surveys, and prompt/model-only benchmarks. |
 | `claude-agent-worktrees` | 84/756 | Claude Code sessions coordinate background agents, `claude agents --json`, dispatched-session defaults, worktrees, tmux/iTerm panes, resume/continue/from-pr/fork-session, names and IDs, remote control, and cloud ultrareview runs. |
 | `claude-code` | 69/791 | Claude Code CLI routes local inspection, interactive or print-mode automation, plugin and MCP lifecycle, diagnostics, hooks/settings, background agents, worktrees, sessions, remote control, and ultrareview. |
 | `claude-doctor-debugger` | 83/740 | Claude Code diagnostics isolate install, update, auth, configuration health, broken customizations, safe/bare modes, debug logs, auto-mode, keychain/API-key boundaries, IDE/Chrome integration, doctor warnings, and setup-token failures. |
 | `claude-hooks-settings` | 78/708 | Claude Code settings and hooks are created, audited, or debugged across CLAUDE.md/rules loading, custom agents, tool permissions, output styles, workflows, setting sources, safe/bare modes, and plugin customizations. |
 | `claude-plugin-mcp-manager` | 78/838 | Claude Code plugins and MCP servers are managed across marketplaces, validation, token cost, install/update/remove/prune, session-only sources, MCP approvals, strict config, transports, headers, OAuth, and lifecycle failures. |
 | `claude-print-automation` | 79/840 | Claude Code print-mode runs are prepared or debugged with `claude --print`, text/JSON/stream-json I/O, JSON Schema, budgets, fallback models, no persistence, prompt suggestions, and trusted-directory CI. |
-| `codex-cli` | 71/1,187 | Route Codex CLI operations across skill-catalog diagnostics, CLI inspection, exec/review automation, deferred completion, task supervision, plugin/MCP management, doctor/debug, rollout forensics, and app environments. |
+| `codex-cli` | 71/912 | Route Codex CLI operations across skill-catalog diagnostics, CLI inspection, exec/review automation, deferred completion, task supervision, plugin/MCP management, doctor/debug, rollout forensics, and app environments. |
 | `codex-deferred-completion` | 62/1,031 | Complete long-running executable work through an existing atomic JSON terminal receipt, avoiding repeated native-session or remote-status polling and wasted model turns. |
-| `codex-doctor-debugger` | 88/1,149 | Diagnose current Codex CLI health and model-visible skill catalogs: metadata truncation/omission, install, config, auth, sandbox, prompt, app-server, remote-control, and runtime failures. For what an existing task saw, use codex-log-reader. |
+| `codex-doctor-debugger` | 88/1,180 | Diagnose current Codex CLI health and model-visible skill catalogs: metadata truncation/omission, install, config, auth, sandbox, prompt, app-server, remote-control, and runtime failures. For what an existing task saw, use codex-log-reader. |
 | `codex-environments` | 72/995 | Manage Codex app project environments and actions in `.codex/environments/environment.toml`, including Run/Test/Preview buttons, startup commands, launchers, environment variables, and repeatable local commands. |
 | `codex-exec-automation` | 78/1,038 | Automate non-interactive Codex CLI runs with `codex exec`, resume, review, JSONL events, output schemas, last-message files, cwd/profile/config, sandbox/approval modes, and CI. |
 | `codex-log-reader` | 73/1,279 | Inspect Codex rollout JSONL by CODEX_THREAD_ID, cwd, query, issue, project, lineage, malformed or large logs, permission concerns, and "what happened in this task?" forensics. |
-| `codex-plugin-mcp-manager` | 69/1,060 | Manage Codex plugins, local marketplaces, cache visibility, and MCP server list/get/add/remove/login/logout, bearer-token environment bindings, and plugin/MCP installation failures. |
+| `codex-plugin-mcp-manager` | 69/1,081 | Manage Codex plugins, local marketplaces, cache visibility, and MCP server list/get/add/remove/login/logout, bearer-token environment bindings, and plugin/MCP installation failures. |
 | `codex-thread-supervisor` | 87/2,803 | Supervise live Codex tasks by ID only on an explicit user monitor/supervise request, using cursor waits, attention/completion gates, bounded claims, checkpoints, and authorized handoffs. Excludes rollout forensics, current-turn subagents, and external jobs. |
 | `credential-handoff` | 73/1,049 | Credential prompts and 1Password CLI: route task-scoped secrets from a human or vault into a target process without exposing values to model context, chat, logs, arguments, or files. Excludes account administration. |
 | `scheduled-automation-runtime` | 78/1,158 | Local scheduler jobs need proof when launchd, systemd, cron, or Windows Task Scheduler differ from manual runs or lack runtime proof. Not for vendor CLI command construction, architecture inventory, cloud schedulers, or job business logic. |
@@ -360,7 +360,7 @@ Token cells are shown as `startup/body`.
 | `capability-portfolio-architect` | 76/947 | Reshape skill/plugin portfolios when routing overlaps, capabilities duplicate or disappear, or split/merge/move/delete/router/reference/script boundaries need decisions. Use capability-auditor for single-artifact quality. |
 | `capability-reality-repair` | 73/930 | Repair stale or false skill/script/plugin/MCP contracts when commands, schemas, paths, outputs, dependencies, install state, connector guidance, validators, or docs disagree with live reality. |
 | `capability-synthesizer` | 68/2,437 | Synthesize or strengthen well-vetted agent skills/plugins from broad public sources and local or user-provided candidates, with evidence-backed comparison and adoption/rejection. |
-| `capability-workbench` | 77/2,568 | Route artifact-first agent capability work: frame behavior gaps; choose, evaluate, author, validate, govern, and explicitly activate skill, plugin, guidance, or trigger artifacts. Use Agent Harness for runtime and harness-level evaluation. |
+| `capability-workbench` | 77/1,368 | Route artifact-first agent capability work: frame behavior gaps; choose, evaluate, author, validate, govern, and explicitly activate skill, plugin, guidance, or trigger artifacts. Use Agent Harness for runtime and harness-level evaluation. |
 | `plugin-factory` | 68/1,650 | Build or update marketplace-backed agent plugins with manifests, skill bundles, local marketplace entries, packaging, validation, optional install/cache gates, runtime-discovery status, and Codex deeplinks. |
 | `skill-factory` | 72/1,547 | Create or refactor portable agent skills across SKILL.md bodies, progressive disclosure, scripts/references/assets, packaging, and validation. For name/description-only routing work, use skill-trigger-metadata first. |
 | `skill-installer-vetter` | 72/936 | Find, compare, vet, install, or update agent skills from catalogs, GitHub, local folders, or user references with provenance, safety, dependency, capability, and destination checks. |
@@ -370,7 +370,7 @@ Token cells are shown as `startup/body`.
 
 | Skill | Tokens | Description |
 | --- | ---: | --- |
-| `context-density` | 70/2,806 | Agent context audits measure token cost, provenance, compression, typed-state drift, trigger overlap, and prompt/output contracts across AGENTS.md, prompts, skills, plugins, MCP/tool schemas, current-state artifacts, and agent handoffs. |
+| `context-density` | 70/2,888 | Agent context audits measure token cost, provenance, compression, typed-state drift, trigger overlap, and prompt/output contracts across AGENTS.md, prompts, skills, plugins, MCP/tool schemas, current-state artifacts, and agent handoffs. |
 
 #### `i-have-adhd`
 
@@ -518,20 +518,20 @@ Token cells are shown as `startup/body`.
 
 | Skill | Tokens | Description |
 | --- | ---: | --- |
-| `kmp-architecture` | 68/932 | Kotlin Multiplatform architecture design for module boundaries, source-set hierarchies, shared logic versus UI, platform APIs, interop seams, and cross-platform library fit. |
+| `kmp-architecture` | 66/932 | KMP architecture design for module boundaries, source-set hierarchies, shared logic versus UI, platform APIs, interop seams, and cross-platform library fit. |
 | `kmp-compose-ui` | 68/1,242 | Compose Multiplatform UI implementation and repair across state, navigation, external-URI effects, resources, platform entry points, previews, accessibility, performance, and UI testing. |
 | `kmp-data-layer` | 81/2,178 | KMP data-layer design/review for repositories, source-of-truth, migrations, DTO/domain mapping, offline sync, storage/errors, shared/coalesced work, cancellation and admission races, causal receipts, threading, and API exposure. |
-| `kmp-ecosystem-selection` | 81/400 | Kotlin Multiplatform ecosystem selection for libraries/tools spanning persistence, networking, DI, navigation, logging, observability, testing, code quality, resources, images, docs, payments, and templates without imposing one stack. |
-| `kmp-gradle-doctor` | 80/1,904 | Kotlin Multiplatform Gradle diagnosis and repair for source sets, dependency failures including private dependency resolution or consumption failures, Android targets, Compose, KGP/AGP, tests, static analysis, and CI. |
+| `kmp-ecosystem-selection` | 79/400 | KMP ecosystem selection for libraries/tools spanning persistence, networking, DI, navigation, logging, observability, testing, code quality, resources, images, docs, payments, and templates without imposing one stack. |
+| `kmp-gradle-doctor` | 78/1,904 | KMP Gradle diagnosis and repair for source sets, dependency failures including private dependency resolution or consumption failures, Android targets, Compose, KGP/AGP, tests, static analysis, and CI. |
 | `kmp-interop-bridges` | 90/581 | KMP platform-bridge design/review for source-set placement, expect/actual, entry-point wiring, cinterop, Swift API readiness, SKIE, KMP-NativeCoroutines, KDoctor, XCFrameworks, and SwiftPM export. |
-| `kmp-migration-release` | 87/1,032 | Kotlin Multiplatform migration and release execution for AGP 9 Android-KMP adoption, monolithic composeApp splits, CocoaPods-to-SwiftPM dependency-import moves, cinterop, iOS frameworks, CI, publishing, and app-store readiness. |
-| `kmp-performance-observability` | 77/461 | Kotlin Multiplatform performance and observability diagnosis across Gradle build time, Kotlin/Native memory/GC, Compose jank, binary size, startup, runtime logging, and release-mode verification. |
-| `kmp-production-governance` | 76/681 | Kotlin Multiplatform build-governance review for convention plugins, version catalogs, repository policy, module APIs, Klibs targets, ABI validation, publishing, production readiness, and adoption risk. |
-| `kmp-production-readiness` | 74/416 | Kotlin Multiplatform production-readiness audits with scorecards, release blockers, risk ownership, and deferred checks across architecture, build, testing, interop, security, performance, and publishing. |
-| `kmp-publishing-ci` | 78/510 | Kotlin Multiplatform CI and publishing design for Maven publications, Gradle metadata, ABI validation, XCFrameworks, SwiftPM export, KMMBridge, artifact hosting, signing boundaries, and app release gates. |
-| `kmp-security-privacy` | 75/326 | Kotlin Multiplatform security and privacy review for secure storage, token handling, Ktor auth, TLS and pinning, log redaction, runtime protection, platform APIs, and commonMain boundaries. |
+| `kmp-migration-release` | 85/1,032 | KMP migration and release execution for AGP 9 Android-KMP adoption, monolithic composeApp splits, CocoaPods-to-SwiftPM dependency-import moves, cinterop, iOS frameworks, CI, publishing, and app-store readiness. |
+| `kmp-performance-observability` | 75/461 | KMP performance and observability diagnosis across Gradle build time, Kotlin/Native memory/GC, Compose jank, binary size, startup, runtime logging, and release-mode verification. |
+| `kmp-production-governance` | 74/681 | KMP build-governance review for convention plugins, version catalogs, repository policy, module APIs, Klibs targets, ABI validation, publishing, production readiness, and adoption risk. |
+| `kmp-production-readiness` | 72/416 | KMP production-readiness audits with scorecards, release blockers, risk ownership, and deferred checks across architecture, build, testing, interop, security, performance, and publishing. |
+| `kmp-publishing-ci` | 76/510 | KMP CI and publishing design for Maven publications, Gradle metadata, ABI validation, XCFrameworks, SwiftPM export, KMMBridge, artifact hosting, signing boundaries, and app release gates. |
+| `kmp-security-privacy` | 73/326 | KMP security and privacy review for secure storage, token handling, Ktor auth, TLS and pinning, log redaction, runtime protection, platform APIs, and commonMain boundaries. |
 | `kmp-testing-quality` | 81/2,366 | KMP testing covers diagnosing KMP test failures, especially DI fixture or container missing bindings, plus commonTest, kotlin.test, platform/Compose UI and screenshot tests, test doubles, refactor safety, review gates, and regressions. |
-| `kotlin-multiplatform` | 89/1,740 | Kotlin Multiplatform routing and execution across architecture, Gradle/private dependencies, Compose UI, Android-KMP migration, iOS interop, CocoaPods/SwiftPM dependency-import moves, testing, performance, security, CI, publishing, and production readiness. |
+| `kotlin-multiplatform` | 87/1,740 | KMP routing and execution across architecture, Gradle/private dependencies, Compose UI, Android-KMP migration, iOS interop, CocoaPods/SwiftPM dependency-import moves, testing, performance, security, CI, publishing, and production readiness. |
 
 #### `tauri`
 

@@ -1,6 +1,6 @@
 ---
 name: kmp-performance-observability
-description: Kotlin Multiplatform performance and observability diagnosis across Gradle build time, Kotlin/Native memory/GC, Compose jank, binary size, startup, runtime logging, and release-mode verification.
+description: KMP performance and observability diagnosis across Gradle build time, Kotlin/Native memory/GC, Compose jank, binary size, startup, runtime logging, and release-mode verification.
 ---
 
 # KMP Performance And Observability

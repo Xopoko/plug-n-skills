@@ -151,6 +151,30 @@ def test_validate_plugin() -> None:
         )
         manifest["interface"]["defaultPrompt"] = ["Use the fixture."]
 
+        manifest["interface"]["defaultPrompt"] = [
+            "Use one.",
+            "Use two.",
+            "Use three.",
+            "Use four.",
+        ]
+        (plugin / ".codex-plugin" / "plugin.json").write_text(json.dumps(manifest))
+        result = run([script, str(plugin)])
+        check(
+            "validate_plugin: more than three default prompts fail",
+            result.returncode != 0 and "at most 3 prompts" in result.stdout,
+            result.stdout + result.stderr,
+        )
+
+        manifest["interface"]["defaultPrompt"] = ["x" * 129]
+        (plugin / ".codex-plugin" / "plugin.json").write_text(json.dumps(manifest))
+        result = run([script, str(plugin)])
+        check(
+            "validate_plugin: overlong default prompt fails",
+            result.returncode != 0 and "at most 128 characters" in result.stdout,
+            result.stdout + result.stderr,
+        )
+        manifest["interface"]["defaultPrompt"] = ["Use the fixture."]
+
         (plugin / "assets").mkdir()
         write_test_png(plugin / "assets" / "icon.png")
         manifest["interface"]["composerIcon"] = "assets/icon.png"
@@ -588,6 +612,71 @@ def test_description_prefix_audit() -> None:
             mixed_roots.stdout + mixed_roots.stderr,
         )
 
+        width_range = run(
+            [
+                script,
+                str(first / "SKILL.md"),
+                str(second),
+                "--prefix-widths",
+                "19",
+                "20",
+                "21",
+                "--max-description-chars",
+                "500",
+                "--json",
+            ]
+        )
+        range_payload = json.loads(width_range.stdout)
+        range_audits = {
+            audit["input"]["prefix_width"]: audit
+            for audit in range_payload["audits"]
+        }
+        check(
+            "description_prefix_audit: reviews an observed prefix-width range",
+            width_range.returncode == 0
+            and range_payload["valid"] is True
+            and range_payload["input"]["prefix_widths"] == [19, 20, 21]
+            and set(range_audits) == {19, 20, 21}
+            and all(
+                audit["summary"]["prefix_collisions"] == 1
+                for audit in range_audits.values()
+            )
+            and {collision["prefix_width"] for collision in range_payload["collisions"]}
+            == {19, 20, 21}
+            and range_payload["summary"]["prefix_collisions"] == 3,
+            width_range.stdout + width_range.stderr,
+        )
+
+        strict_range = run(
+            [
+                script,
+                str(first / "SKILL.md"),
+                str(second),
+                "--prefix-widths",
+                "19",
+                "20",
+                "21",
+                "--max-description-chars",
+                "500",
+                "--strict",
+                "--json",
+            ]
+        )
+        strict_range_payload = json.loads(strict_range.stdout)
+        check(
+            "description_prefix_audit: strict enforces every requested width",
+            strict_range.returncode != 0
+            and strict_range_payload["valid"] is False
+            and strict_range_payload["summary"]["errors"] == 3
+            and {
+                finding["prefix_width"]
+                for finding in strict_range_payload["errors"]
+                if finding["code"] == "prefix_collision"
+            }
+            == {19, 20, 21},
+            strict_range.stdout + strict_range.stderr,
+        )
+
         strict = run([script, str(root), "--strict", "--json"])
         strict_payload = json.loads(strict.stdout)
         strict_codes = {finding["code"] for finding in strict_payload["errors"]}
@@ -888,8 +977,8 @@ def test_proportional_install_scope_contract() -> None:
         )
     ]
     check(
-        "install scope contract: plugin manifests are version 0.6.7",
-        all(manifest.get("version") == "0.6.7" for manifest in manifests),
+        "install scope contract: plugin manifests are version 0.6.9",
+        all(manifest.get("version") == "0.6.9" for manifest in manifests),
         repr([manifest.get("version") for manifest in manifests]),
     )
 

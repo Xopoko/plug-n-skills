@@ -1,6 +1,6 @@
 {
   "name": "game-design-intelligence",
-  "version": "0.1.4",
+  "version": "0.1.5",
   "description": "Game design judgment grounded in evidence: core loops, gameplay systems, progression/economy/balance, motivation/retention, onboarding/difficulty, and multiplayer/live-service health; excludes engines, graphics, assets, and code.",
   "author": {
     "name": "Xopoko"
@@ -39,9 +39,9 @@
       "Live-service content cadence, seasons, events, and late-game health review"
     ],
     "defaultPrompt": [
-      "Use Game Design Intelligence to critique this game's core loop, progression, rewards, difficulty, motivation, retention, multiplayer dynamics, and content cadence.",
-      "Use Game Design Intelligence to design a source-backed gameplay systems brief without engine, graphics, asset, or programming details.",
-      "Use Game Design Intelligence to review this economy, reward, and live-service plan for balance, player agency, fatigue, and commercial scalability."
+      "Use Game Design Intelligence to critique this game's core loop, progression, difficulty, motivation, retention, and multiplayer.",
+      "Use Game Design Intelligence to design a source-backed gameplay systems brief without engine or implementation details.",
+      "Use Game Design Intelligence to review this economy and live-service plan for balance, agency, fatigue, and scalability."
     ],
     "brandColor": "#7C2D12",
     "composerIcon": "./assets/icon.png",

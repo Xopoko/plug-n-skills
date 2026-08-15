@@ -100,7 +100,7 @@ the command. Reference environment variable names only.
 
 - Plugin appears in a manifest but not in Codex: check marketplace list, config source path, cache path, and `--check-only`.
 - Plugin validates but does not trigger: inspect skill frontmatter names/descriptions and run the host discovery path when available.
-- Plugin is installed/enabled but absent from one task: inventory proves a discovery input, not model-visible inclusion. Inspect that rollout, compare it with a fresh version-bound prompt render, and route budget interpretation to `codex-doctor-debugger` before changing state.
+- Plugin is installed/enabled but absent from one task: inventory proves a discovery input, not model-visible inclusion. Inspect that rollout; use a fresh version-bound prompt render only as a separate diagnostic, never as parity evidence unless the runtime origin, generation, and provider/plugin-admission inputs match. Route budget interpretation to `codex-doctor-debugger` before changing state.
 - Changing the 2 percent renderer constant, allocation order, warning threshold, or omission algorithm is a custom Codex build, not a plugin-management operation.
 - MCP server fails to start: use `codex mcp get <name>`, verify command path, environment variable names, and server stdout/stderr outside secret-bearing output.
 - HTTP MCP auth fails: confirm the env var name exists without printing its value.

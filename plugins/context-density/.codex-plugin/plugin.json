@@ -1,6 +1,6 @@
 {
   "name": "context-density",
-  "version": "0.4.5",
+  "version": "0.4.9",
   "description": "Agent context audits measure token cost, validate prompt/output contracts and typed state, test compression, and route structural skill or plugin overlap to Capability Workbench.",
   "author": {
     "name": "Xopoko"
@@ -39,10 +39,8 @@
     ],
     "defaultPrompt": [
       "Use Context Density to audit this skill, prompt, or AGENTS.md for token cost, duplication, and prompt-contract risk.",
-      "Use Context Density to refactor this skill/plugin for lower hot-path token cost while preserving behavior, and route structural portfolio decisions to Capability Workbench.",
-      "Use Context Density to check long-context placement, retrieval provenance, cache-prefix economics, and compression quality before replacing raw context.",
-      "Use Context Density to validate current identities, review and executable-proof state, authority, stop scope, and companion snapshot drift from a typed state commitment.",
-      "Use Context Density to review this LLM workflow for explicit JSON/schema/tool-call contracts and brittle prose parsing."
+      "Use Context Density to check long-context placement, retrieval provenance, cache-prefix economics, and compression quality.",
+      "Use Context Density to validate typed identities, authority, stop scope, proof state, and companion snapshot drift."
     ],
     "brandColor": "#2563EB",
     "composerIcon": "./assets/icon.png",

@@ -128,10 +128,11 @@ wording patterns (judgment input; blocking only with `--fail-on-advisory`).
 `duplication_clusters` ranks token-weighted duplicate blocks across files;
 `description_overlap.py` ranks skill-description pairs competing for routing.
 
-Use the bundled runtime reporter when the question is about the local agent's
-startup context, installed skills, MCP config, plugin manifests, ranked raw
-context sources, exportable reports, or latest session token usage. It
-auto-detects the installed agent; pass `--agent` to pick one explicitly:
+Use the bundled reporter when the question is about the local agent's
+discovered skill corpus, evidence-backed startup visibility, MCP config, active
+plugin configuration and discovered manifests, ranked raw context sources,
+exportable reports, or latest session token usage. It auto-detects the
+installed agent; pass `--agent` to pick one explicitly:
 
 ```bash
 python3 "$PLUGIN_ROOT/skills/context-density/scripts/agent_context_report.py" agents --json
@@ -145,7 +146,12 @@ python3 "$PLUGIN_ROOT/skills/context-density/scripts/agent_context_report.py" ex
 ```
 
 The reporter is read-only and exposes a CLI-compatible reporting surface for
-local file diagnostics. It estimates context from files on disk and does not
+local file diagnostics. For Codex it reads explicit enabled plugin IDs from
+`$AGENT_HOME/config.toml`; it never invokes a plugin CLI or other subprocess.
+Configuration does not prove an active cache version, runtime activation, or
+model visibility, so those remain unverified without separate evidence. Disk
+inventory is reported as discovered metadata and on-demand body corpus, never
+as model-visible startup or loaded bodies without evidence. It does not
 introspect live MCP tool schemas or mutate host-agent config.
 
 ## Output

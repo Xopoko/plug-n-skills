@@ -22,6 +22,7 @@ for:
 S = (
   harness source and configuration,
   active runtime generation and candidate-generation manifest,
+  runtime origin and catalog/tool admission inputs,
   model identity and model parameters,
   provider endpoint, API revision, and capability adapter,
   system prompts, context builder, retrieval, and memory state,
@@ -33,6 +34,11 @@ S = (
   seeds, sampling controls, scheduling policy, and evaluation runner
 )
 ```
+
+A standalone prompt diagnostic belongs to a different tuple unless its runtime
+origin, generation, and admission inputs match the evaluated task. It cannot
+substitute for the task's recorded catalog or for independently captured tool
+schemas.
 
 Record unavailable or mutable components as such. If one component changes,
 the tuple changes. Comparisons may still be useful, but do not call them the

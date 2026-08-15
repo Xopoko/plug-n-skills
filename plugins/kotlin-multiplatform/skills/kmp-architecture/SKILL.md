@@ -1,6 +1,6 @@
 ---
 name: kmp-architecture
-description: Kotlin Multiplatform architecture design for module boundaries, source-set hierarchies, shared logic versus UI, platform APIs, interop seams, and cross-platform library fit.
+description: KMP architecture design for module boundaries, source-set hierarchies, shared logic versus UI, platform APIs, interop seams, and cross-platform library fit.
 ---
 
 # KMP Architecture

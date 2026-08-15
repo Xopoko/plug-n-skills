@@ -1,9 +1,9 @@
 #!/usr/bin/env python3
-"""Read-only agent runtime context diagnostics.
+"""Read-only agent context inventory diagnostics.
 
-This script is a portable runtime-context reporter for local files and
-installed agent surfaces, without depending on a machine-local binary or Codex
-app-server internals.
+This script is a portable context-inventory reporter for local files and
+installed agent surfaces. It reads supported local config and disk evidence
+without invoking host-agent plugin commands or Codex app-server internals.
 
 Supported commands:
   agents, brief/status, sources, skills, skill NAME, mcp, mcp --tools SERVER,
@@ -14,6 +14,8 @@ Supported common options:
   --usage, --no-usage, --no-introspect-mcp, --limit N, --json, --ndjson.
 
 The script reads local files only and never mutates host-agent configuration.
+Disk discovery is not model-visible startup evidence, and skill body size is
+not body-read evidence.
 MCP reports are config-only unless a future public schema-introspection surface
 is added.
 """
@@ -37,6 +39,7 @@ from token_count import count_text, load_encoder, read_text
 DEFAULT_ENCODING = "o200k_base"
 SECTION_RE = re.compile(r"^\s*\[([^\]]+)\]\s*$")
 CODEX_MCP_SECTION_RE = re.compile(r"^mcp_servers\.([A-Za-z0-9_-]+)(?:\.(env))?$")
+CODEX_PLUGIN_SECTION_RE = re.compile(r'^plugins\."([^"]+)"$')
 SENSITIVE_KEY_RE = re.compile(
     r"\b(?:api[_-]?key|token|secret|password|credential|bearer|auth|private[_-]?key)\b",
     re.IGNORECASE,
@@ -45,17 +48,17 @@ SENSITIVE_KEY_RE = re.compile(
 
 SOURCE_TYPE_BASE_RUNTIME = "Base Runtime"
 SOURCE_TYPE_USER_CONFIG = "User Instructions / Config"
-SOURCE_TYPE_SKILLS_METADATA = "Skills Metadata"
-SOURCE_TYPE_LOADED_SKILL_BODIES = "Loaded Skill Bodies"
-SOURCE_TYPE_MCP_TOOL_SCHEMAS = "MCP Tool Schemas"
-SOURCE_TYPE_PLUGINS = "Plugins"
+SOURCE_TYPE_SKILLS_METADATA = "Discovered Skill Metadata"
+SOURCE_TYPE_ON_DEMAND_SKILL_BODIES = "On-demand Skill Bodies"
+SOURCE_TYPE_MCP_TOOL_SCHEMAS = "MCP Config Sections"
+SOURCE_TYPE_PLUGINS = "Discovered Plugin Manifests"
 SOURCE_TYPE_MEMORY_PROJECT_CONTEXT = "Memory / Project Context"
 
 SOURCE_TYPE_ORDER = [
     SOURCE_TYPE_BASE_RUNTIME,
     SOURCE_TYPE_USER_CONFIG,
     SOURCE_TYPE_SKILLS_METADATA,
-    SOURCE_TYPE_LOADED_SKILL_BODIES,
+    SOURCE_TYPE_ON_DEMAND_SKILL_BODIES,
     SOURCE_TYPE_MCP_TOOL_SCHEMAS,
     SOURCE_TYPE_PLUGINS,
     SOURCE_TYPE_MEMORY_PROJECT_CONTEXT,
@@ -69,6 +72,15 @@ class AgentEnvironment:
     home: Path
     installed: bool
     active: bool = False
+
+
+@dataclass(frozen=True)
+class PluginInventory:
+    status: str
+    source: str
+    enabledPlugins: frozenset[tuple[str, str]]
+    detail: str = ""
+    exactVersions: frozenset[tuple[str, str, str]] = frozenset()
 
 
 @dataclass(frozen=True)
@@ -88,6 +100,10 @@ class SkillEntry:
     disabled: bool
     source: str
     description: str
+    onDemandAvailable: bool = True
+    configuredEnabledPlugin: bool | None = None
+    activePluginVersion: bool | None = None
+    bodyLoadEvidence: str = "not-observed"
 
 
 @dataclass(frozen=True)
@@ -99,6 +115,8 @@ class SourceEntry:
     startupLoaded: bool
     onDemandLoaded: bool
     path: str
+    onDemandAvailable: bool = False
+    loadEvidence: str = "disk-discovery"
     serverName: str | None = None
     pluginName: str | None = None
     skillName: str | None = None
@@ -342,6 +360,85 @@ def resolve_agent(args: argparse.Namespace) -> AgentEnvironment:
     )
 
 
+def normalize_plugin_key(marketplace: str, name: str) -> tuple[str, str]:
+    return (marketplace.casefold(), name.casefold())
+
+
+def normalize_plugin_identity(marketplace: str, name: str, version: str) -> tuple[str, str, str]:
+    return (*normalize_plugin_key(marketplace, name), version.casefold())
+
+
+def parse_configured_plugin_id(value: str) -> tuple[str, str] | None:
+    if "@" not in value:
+        return None
+    name, marketplace = value.rsplit("@", 1)
+    if not name or not marketplace:
+        return None
+    return normalize_plugin_key(marketplace, name)
+
+
+def parse_codex_enabled_plugins(path: Path) -> tuple[frozenset[tuple[str, str]], int, int]:
+    enabled: set[tuple[str, str]] = set()
+    section_count = 0
+    ambiguous_count = 0
+    for section, _start_line, lines in read_toml_sections(path):
+        match = CODEX_PLUGIN_SECTION_RE.match(section)
+        if not match:
+            continue
+        section_count += 1
+        identity = parse_configured_plugin_id(match.group(1))
+        explicit_enabled: bool | None = None
+        for raw_line in lines[1:]:
+            line = strip_toml_comment(raw_line).strip()
+            if "=" not in line:
+                continue
+            key, value = [part.strip() for part in line.split("=", 1)]
+            if key != "enabled":
+                continue
+            lowered = value.casefold()
+            if lowered == "true":
+                explicit_enabled = True
+            elif lowered == "false":
+                explicit_enabled = False
+            else:
+                explicit_enabled = None
+            break
+        if identity is None or explicit_enabled is None:
+            ambiguous_count += 1
+        elif explicit_enabled:
+            enabled.add(identity)
+    return frozenset(enabled), section_count, ambiguous_count
+
+
+def collect_plugin_inventory(env: AgentEnvironment) -> PluginInventory:
+    if env.id != "codex":
+        return PluginInventory("not-applicable", "none", frozenset(), "Codex inventory is not applicable")
+    config_path = env.home / "config.toml"
+    if not config_path.is_file():
+        return PluginInventory(
+            "unavailable",
+            "$AGENT_HOME/config.toml",
+            frozenset(),
+            "plugin config not found; enabled IDs and exact versions unverified",
+        )
+    enabled, section_count, ambiguous_count = parse_codex_enabled_plugins(config_path)
+    if section_count == 0:
+        return PluginInventory(
+            "unavailable",
+            "$AGENT_HOME/config.toml [plugins]",
+            frozenset(),
+            "no supported plugin sections found; enabled IDs and exact versions unverified",
+        )
+    status = "enabled-ids-available" if ambiguous_count == 0 else "enabled-ids-partial"
+    detail = (
+        f"{len(enabled)} explicitly enabled plugin IDs from config; "
+        "runtime activation, exact versions, and model visibility unverified"
+    )
+    if ambiguous_count:
+        detail += f"; {ambiguous_count} plugin section(s) ambiguous"
+    return PluginInventory(status, "$AGENT_HOME/config.toml [plugins]", enabled, detail)
+
+
 def project_path(args: argparse.Namespace) -> Path | None:
     raw = getattr(args, "project", None)
     if raw is None:
@@ -432,12 +529,84 @@ def memory_files(env: AgentEnvironment, project: Path | None) -> list[Path]:
     return [path for path in files if path.is_file()]
 
 
-def skill_files(env: AgentEnvironment, project: Path | None) -> list[Path]:
+def plugin_cache_identity(path: Path, cache_root: Path) -> tuple[str, str, str] | None:
+    try:
+        relative = path.absolute().relative_to(cache_root.absolute())
+    except Exception:
+        return None
+    if len(relative.parts) < 3:
+        return None
+    return normalize_plugin_identity(relative.parts[0], relative.parts[1], relative.parts[2])
+
+
+def configured_plugin_state(path: Path, env: AgentEnvironment, inventory: PluginInventory) -> bool | None:
+    identity = plugin_cache_identity(path, env.home / "plugins" / "cache")
+    if identity is None or inventory.status not in {"enabled-ids-available", "enabled-ids-partial"}:
+        return None
+    plugin_key = identity[:2]
+    if plugin_key in inventory.enabledPlugins:
+        return True
+    if inventory.status == "enabled-ids-available":
+        return False
+    return None
+
+
+def active_plugin_version_state(path: Path, env: AgentEnvironment, inventory: PluginInventory) -> bool | None:
+    identity = plugin_cache_identity(path, env.home / "plugins" / "cache")
+    configured = configured_plugin_state(path, env, inventory)
+    if identity is None or configured is None:
+        return None
+    if configured is False:
+        return False
+    exact_for_plugin = any(version[:2] == identity[:2] for version in inventory.exactVersions)
+    if not exact_for_plugin:
+        return None
+    return identity in inventory.exactVersions
+
+
+def filter_configured_plugin_paths(paths: Iterable[Path], env: AgentEnvironment, inventory: PluginInventory) -> list[Path]:
+    filtered: list[Path] = []
+    seen: set[Path] = set()
+    for path in paths:
+        active = active_plugin_version_state(path, env, inventory)
+        if active is False:
+            continue
+        try:
+            identity = path.resolve()
+        except Exception:
+            identity = path
+        if identity in seen:
+            continue
+        seen.add(identity)
+        filtered.append(path)
+    return filtered
+
+
+def is_primary_plugin_manifest(path: Path, env: AgentEnvironment, inventory: PluginInventory) -> bool:
+    cache_root = env.home / "plugins" / "cache"
+    identity = plugin_cache_identity(path, cache_root)
+    if identity is None:
+        return True
+    if configured_plugin_state(path, env, inventory) is False:
+        return False
+    try:
+        relative = path.absolute().relative_to(cache_root.absolute())
+    except Exception:
+        return False
+    return relative.parts[3:] == (".codex-plugin", "plugin.json")
+
+
+def skill_files(
+    env: AgentEnvironment,
+    project: Path | None,
+    inventory: PluginInventory | None = None,
+) -> list[Path]:
+    inventory = inventory or PluginInventory("unavailable", "none", frozenset(), "inventory not supplied")
     found: set[Path] = set()
     for root in skill_roots(env, project):
         if root.is_dir():
             found.update(root.rglob("SKILL.md"))
-    return sorted(path for path in found if path.is_file())
+    return sorted(filter_configured_plugin_paths((path for path in found if path.is_file()), env, inventory))
 
 
 def plugin_name_for_skill(path: Path) -> str | None:
@@ -471,9 +640,15 @@ def skill_source(path: Path, env: AgentEnvironment) -> str:
         return "project-or-shared-skill"
 
 
-def collect_skills(env: AgentEnvironment, project: Path | None, encoder: Any) -> list[SkillEntry]:
+def collect_skills(
+    env: AgentEnvironment,
+    project: Path | None,
+    encoder: Any,
+    inventory: PluginInventory | None = None,
+) -> list[SkillEntry]:
+    inventory = inventory or PluginInventory("unavailable", "none", frozenset(), "inventory not supplied")
     result: list[SkillEntry] = []
-    for path in skill_files(env, project):
+    for path in skill_files(env, project, inventory):
         text = read_text(path)
         if text is None:
             continue
@@ -492,8 +667,8 @@ def collect_skills(env: AgentEnvironment, project: Path | None, encoder: Any) ->
                 bodyTokens=body_tokens,
                 totalTokens=metadata_tokens + body_tokens,
                 disabledTokens=0,
-                startupLoaded=True,
-                onDemandLoaded=True,
+                startupLoaded=False,
+                onDemandLoaded=False,
                 bodyReadCount=0,
                 bodySessionCount=0,
                 referenceReadCount=0,
@@ -502,6 +677,10 @@ def collect_skills(env: AgentEnvironment, project: Path | None, encoder: Any) ->
                 disabled=False,
                 source=skill_source(path, env),
                 description=description,
+                onDemandAvailable=True,
+                configuredEnabledPlugin=configured_plugin_state(path, env, inventory),
+                activePluginVersion=active_plugin_version_state(path, env, inventory),
+                bodyLoadEvidence="not-observed",
             )
         )
     result.sort(key=lambda item: (-item.totalTokens, item.name))
@@ -521,7 +700,7 @@ def collect_config_sources(env: AgentEnvironment, project: Path | None, encoder:
                 type=SOURCE_TYPE_USER_CONFIG,
                 tokens=count_text(sanitized, encoder),
                 disabledTokens=0,
-                startupLoaded=True,
+                startupLoaded=False,
                 onDemandLoaded=False,
                 path=display_path(path, env.home, project),
                 lines=count_lines(text),
@@ -542,7 +721,7 @@ def collect_memory_sources(env: AgentEnvironment, project: Path | None, encoder:
                 type=SOURCE_TYPE_MEMORY_PROJECT_CONTEXT,
                 tokens=count_text(text, encoder),
                 disabledTokens=0,
-                startupLoaded=True,
+                startupLoaded=False,
                 onDemandLoaded=False,
                 path=display_path(path, env.home, project),
                 lines=count_lines(text),
@@ -551,31 +730,51 @@ def collect_memory_sources(env: AgentEnvironment, project: Path | None, encoder:
     return rows
 
 
-def collect_plugin_sources(env: AgentEnvironment, project: Path | None, encoder: Any) -> list[SourceEntry]:
+def collect_plugin_sources(
+    env: AgentEnvironment,
+    project: Path | None,
+    encoder: Any,
+    inventory: PluginInventory | None = None,
+) -> list[SourceEntry]:
+    inventory = inventory or PluginInventory("unavailable", "none", frozenset(), "inventory not supplied")
     rows: list[SourceEntry] = []
     marker = "/.claude-plugin/" if env.id == "claude" else "/.codex-plugin/"
     for root in plugin_manifest_roots(env, project):
         if not root.is_dir():
             continue
-        for path in sorted(iter_files_named(root, "plugin.json")):
+        paths = [
+            path
+            for path in filter_configured_plugin_paths(iter_files_named(root, "plugin.json"), env, inventory)
+            if is_primary_plugin_manifest(path, env, inventory)
+        ]
+        for path in sorted(paths):
             normalized = path.as_posix()
             if marker not in normalized:
                 continue
             text = read_text(path)
             if text is None:
                 continue
-            plugin = path.parent.parent.name
+            plugin = plugin_name_for_skill(path) or path.parent.parent.name
             rows.append(
                 SourceEntry(
                     source=plugin,
                     type=SOURCE_TYPE_PLUGINS,
                     tokens=count_text(text, encoder),
                     disabledTokens=0,
-                    startupLoaded=True,
+                    startupLoaded=False,
                     onDemandLoaded=False,
                     path=display_path(path, env.home, project),
                     pluginName=plugin,
                     lines=count_lines(text),
+                    loadEvidence=(
+                        inventory.source
+                        if active_plugin_version_state(path, env, inventory) is True
+                        else (
+                            "enabled plugin ID from config; exact version and model visibility unverified"
+                            if configured_plugin_state(path, env, inventory) is True
+                            else "disk-discovery; enabled plugin ID, exact version, and model visibility unverified"
+                        )
+                    ),
                 )
             )
     return rows
@@ -843,22 +1042,33 @@ def sources_from_skills(skills: list[SkillEntry]) -> list[SourceEntry]:
                 type=SOURCE_TYPE_SKILLS_METADATA,
                 tokens=skill.metadataTokens,
                 disabledTokens=0,
-                startupLoaded=True,
+                startupLoaded=False,
                 onDemandLoaded=False,
                 path=skill.path,
                 skillName=skill.name,
+                loadEvidence=(
+                    "active plugin inventory; model visibility unobserved"
+                    if skill.activePluginVersion is True
+                    else (
+                        "enabled plugin ID from config; exact version and model visibility unverified"
+                        if skill.configuredEnabledPlugin is True
+                        else "disk-discovery; model visibility unobserved"
+                    )
+                ),
             )
         )
         rows.append(
             SourceEntry(
                 source=skill.name,
-                type=SOURCE_TYPE_LOADED_SKILL_BODIES,
+                type=SOURCE_TYPE_ON_DEMAND_SKILL_BODIES,
                 tokens=skill.bodyTokens,
                 disabledTokens=0,
                 startupLoaded=False,
-                onDemandLoaded=True,
+                onDemandLoaded=skill.onDemandLoaded,
                 path=skill.path,
                 skillName=skill.name,
+                onDemandAvailable=True,
+                loadEvidence=f"bodyReadCount={skill.bodyReadCount}; bodySessionCount={skill.bodySessionCount}",
             )
         )
     return rows
@@ -871,7 +1081,7 @@ def sources_from_mcp(servers: list[McpServerEntry]) -> list[SourceEntry]:
             type=SOURCE_TYPE_MCP_TOOL_SCHEMAS,
             tokens=server.schemaTokens,
             disabledTokens=server.disabledTokens,
-            startupLoaded=True,
+            startupLoaded=False,
             onDemandLoaded=False,
             path=server.configPath or "",
             serverName=server.name,
@@ -882,11 +1092,19 @@ def sources_from_mcp(servers: list[McpServerEntry]) -> list[SourceEntry]:
     ]
 
 
-def collect_sources(env: AgentEnvironment, project: Path | None, encoder: Any, skills: list[SkillEntry], mcp: list[McpServerEntry]) -> list[SourceEntry]:
+def collect_sources(
+    env: AgentEnvironment,
+    project: Path | None,
+    encoder: Any,
+    skills: list[SkillEntry],
+    mcp: list[McpServerEntry],
+    inventory: PluginInventory | None = None,
+) -> list[SourceEntry]:
+    inventory = inventory or PluginInventory("unavailable", "none", frozenset(), "inventory not supplied")
     rows: list[SourceEntry] = []
     rows.extend(collect_config_sources(env, project, encoder))
     rows.extend(collect_memory_sources(env, project, encoder))
-    rows.extend(collect_plugin_sources(env, project, encoder))
+    rows.extend(collect_plugin_sources(env, project, encoder, inventory))
     rows.extend(sources_from_skills(skills))
     rows.extend(sources_from_mcp(mcp))
     rows.sort(key=lambda item: (-item.tokens, item.source))
@@ -1027,9 +1245,10 @@ def build_snapshot(args: argparse.Namespace) -> dict[str, Any]:
     encoder, mode = load_encoder(args.encoding)
     env = resolve_agent(args)
     project = project_path(args)
-    skills = collect_skills(env, project, encoder)
+    plugin_inventory = collect_plugin_inventory(env)
+    skills = collect_skills(env, project, encoder, plugin_inventory)
     mcp = collect_mcp(env, project, encoder)
-    sources = collect_sources(env, project, encoder, skills, mcp)
+    sources = collect_sources(env, project, encoder, skills, mcp, plugin_inventory)
     session = latest_session(env, project) if getattr(args, "usage", False) else None
     return {
         "encoder": encoder,
@@ -1040,6 +1259,7 @@ def build_snapshot(args: argparse.Namespace) -> dict[str, Any]:
         "mcp": mcp,
         "sources": sources,
         "session": session,
+        "pluginInventory": plugin_inventory,
     }
 
 
@@ -1054,6 +1274,9 @@ def limit_items(items: list[Any], limit: int | None) -> list[Any]:
 def brief_payload(snapshot: dict[str, Any]) -> dict[str, Any]:
     sources: list[SourceEntry] = snapshot["sources"]
     session: SessionSummary | None = snapshot["session"]
+    plugin_inventory: PluginInventory = snapshot.get("pluginInventory") or PluginInventory(
+        "unavailable", "none", frozenset(), "inventory not supplied"
+    )
     categories = []
     for source_type in SOURCE_TYPE_ORDER:
         rows = [row for row in sources if row.type == source_type]
@@ -1064,14 +1287,53 @@ def brief_payload(snapshot: dict[str, Any]) -> dict[str, Any]:
                 "type": source_type,
                 "tokens": sum(row.tokens for row in rows),
                 "disabledTokens": sum(row.disabledTokens for row in rows),
+                "modelVisibleTokens": sum(row.tokens for row in rows if row.startupLoaded),
+                "onDemandAvailableTokens": sum(row.tokens for row in rows if row.onDemandAvailable),
+                "observedLoadedTokens": sum(row.tokens for row in rows if row.onDemandLoaded),
                 "rows": len(rows),
             }
         )
     latest = session.latestUsage if session else None
     cumulative = session.cumulativeUsage if session else None
+    startup_rows = [row for row in sources if row.startupLoaded]
+    body_rows = [row for row in sources if row.type == SOURCE_TYPE_ON_DEMAND_SKILL_BODIES]
+    metadata_rows = [row for row in sources if row.type == SOURCE_TYPE_SKILLS_METADATA]
+    plugin_rows = [row for row in sources if row.type == SOURCE_TYPE_PLUGINS]
+    startup_tokens = sum(row.tokens for row in startup_rows) if startup_rows else None
+    on_demand_corpus_tokens = sum(row.tokens for row in body_rows if row.onDemandAvailable)
+    enabled_plugin_count = (
+        len(plugin_inventory.enabledPlugins) if plugin_inventory.status == "enabled-ids-available" else None
+    )
+    exact_plugin_keys = {identity[:2] for identity in plugin_inventory.exactVersions}
+    plugin_version_status = (
+        "verified"
+        if enabled_plugin_count is not None
+        and plugin_inventory.enabledPlugins
+        and exact_plugin_keys == set(plugin_inventory.enabledPlugins)
+        else (
+            "unverified"
+            if plugin_inventory.status in {"enabled-ids-available", "enabled-ids-partial"}
+            else "unavailable"
+        )
+    )
     return {
-        "startupTokens": sum(row.tokens for row in sources if row.startupLoaded),
-        "onDemandTokens": sum(row.tokens for row in sources if row.onDemandLoaded),
+        "startupTokens": startup_tokens,
+        "modelVisibleStartupTokens": startup_tokens,
+        "startupTokenEvidence": "observed" if startup_rows else "unavailable; disk inventory is not prompt evidence",
+        "discoveredMetadataTokens": sum(row.tokens for row in metadata_rows),
+        "discoveredPluginManifestTokens": sum(row.tokens for row in plugin_rows),
+        "onDemandTokens": on_demand_corpus_tokens,
+        "onDemandCorpusTokens": on_demand_corpus_tokens,
+        "loadedBodyTokens": sum(row.tokens for row in body_rows if row.onDemandLoaded),
+        "discoveredSkillCount": len(snapshot["skills"]),
+        "enabledPluginCount": enabled_plugin_count,
+        "activePluginCount": None,
+        "activePluginCountEvidence": "unverified; enabled config is not runtime activation evidence",
+        "pluginInventoryStatus": plugin_inventory.status,
+        "pluginInventorySource": plugin_inventory.source,
+        "pluginInventoryDetail": plugin_inventory.detail,
+        "pluginVersionStatus": plugin_version_status,
+        "pluginModelVisibilityStatus": "unverified",
         "disabledTokens": sum(row.disabledTokens for row in sources),
         "rowCount": len(sources),
         "disabledRowCount": len([row for row in sources if row.disabledTokens > 0]),
@@ -1110,8 +1372,15 @@ def command_brief(args: argparse.Namespace) -> int:
     rows = [[item["type"], f"{item['tokens']:,}", str(item["rows"])] for item in payload["categories"]]
     print(f"{snapshot['env'].name} context report")
     print(f"mode: {snapshot['mode']}" + (f" ({args.encoding})" if snapshot["mode"] == "exact" else " (approx)"))
-    print(f"startup tokens: {payload['startupTokens']:,}")
-    print(f"on-demand tokens: {payload['onDemandTokens']:,}")
+    if payload["startupTokens"] is None:
+        print("model-visible startup tokens: unavailable (disk inventory is not prompt evidence)")
+    else:
+        print(f"model-visible startup tokens: {payload['startupTokens']:,}")
+    print(f"discovered skill metadata tokens: {payload['discoveredMetadataTokens']:,}")
+    print(f"on-demand body corpus tokens: {payload['onDemandCorpusTokens']:,}")
+    print(f"observed loaded body tokens: {payload['loadedBodyTokens']:,}")
+    if payload["enabledPluginCount"] is not None:
+        print(f"configured enabled Codex plugins: {payload['enabledPluginCount']:,} (versions unverified)")
     if payload["latestInputTokens"] is not None:
         print(f"latest input tokens: {payload['latestInputTokens']:,}")
     print()
@@ -1138,6 +1407,8 @@ def source_payload(row: SourceEntry) -> dict[str, Any]:
         "disabledTokens": row.disabledTokens,
         "startupLoaded": row.startupLoaded,
         "onDemandLoaded": row.onDemandLoaded,
+        "onDemandAvailable": row.onDemandAvailable,
+        "loadEvidence": row.loadEvidence,
         "path": row.path,
         "serverName": row.serverName,
         "pluginName": row.pluginName,
@@ -1233,11 +1504,17 @@ def command_export(args: argparse.Namespace) -> int:
         for row in rows:
             writer.writerow(row)
         return 0
-    lines = ["| Type | Source | Tokens | Startup | On-demand | Path |", "| --- | --- | ---: | --- | --- | --- |"]
+    lines = [
+        "| Type | Source | Tokens | Model-visible | On-demand available | Observed loaded | Evidence | Path |",
+        "| --- | --- | ---: | --- | --- | --- | --- | --- |",
+    ]
     for row in rows:
         lines.append(
             f"| {row['type']} | `{row['source']}` | {row['tokens']:,} | "
-            f"{'yes' if row['startupLoaded'] else 'no'} | {'yes' if row['onDemandLoaded'] else 'no'} | `{row['path']}` |"
+            f"{'yes' if row['startupLoaded'] else 'no'} | "
+            f"{'yes' if row['onDemandAvailable'] else 'no'} | "
+            f"{'yes' if row['onDemandLoaded'] else 'no'} | "
+            f"{row['loadEvidence']} | `{row['path']}` |"
         )
     print("\n".join(lines))
     return 0

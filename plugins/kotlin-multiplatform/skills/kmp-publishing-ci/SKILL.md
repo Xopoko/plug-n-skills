@@ -1,6 +1,6 @@
 ---
 name: kmp-publishing-ci
-description: Kotlin Multiplatform CI and publishing design for Maven publications, Gradle metadata, ABI validation, XCFrameworks, SwiftPM export, KMMBridge, artifact hosting, signing boundaries, and app release gates.
+description: KMP CI and publishing design for Maven publications, Gradle metadata, ABI validation, XCFrameworks, SwiftPM export, KMMBridge, artifact hosting, signing boundaries, and app release gates.
 ---
 
 # KMP Publishing And CI

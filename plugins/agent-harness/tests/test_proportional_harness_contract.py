@@ -71,6 +71,24 @@ class ProportionalHarnessContractTests(unittest.TestCase):
         self.assertIn("direct oracle", reference)
         self.assertIn("bounded incident or sampled ablation inline", skill)
 
+    def test_prompt_diagnostics_do_not_claim_cross_runtime_parity(self) -> None:
+        cli = normalized("skills/codex-cli/SKILL.md")
+        doctor = normalized("skills/codex-doctor-debugger/SKILL.md")
+        manager = normalized("skills/codex-plugin-mcp-manager/SKILL.md")
+        evaluation = normalized("skills/agent-harness-evaluation/SKILL.md")
+        evaluation_reference = normalized("references/agent-harness-evaluation.md")
+        catalog_reference = normalized("references/skill-metadata-catalog-budget.md")
+
+        self.assertIn("standalone diagnostic request", cli)
+        self.assertIn("not a live-task parity oracle", cli)
+        self.assertIn("standalone diagnostic, not a live-task parity oracle", doctor)
+        self.assertIn("only as a separate diagnostic", manager)
+        self.assertIn("runtime origin, generation", manager)
+        self.assertIn("does not prove the exact prompt, skill catalog", evaluation)
+        self.assertIn("independently captured tool schemas", evaluation_reference)
+        self.assertIn("cross-path observation rather than a causal ablation", catalog_reference)
+        self.assertIn("token sum of removed entries is not recurring savings", catalog_reference)
+
     def test_async_delegation_and_audit_costs_are_bounded(self) -> None:
         contracts = normalized("references/agent-harness-contracts.md")
         patterns = normalized("references/agent-harness-patterns.md")

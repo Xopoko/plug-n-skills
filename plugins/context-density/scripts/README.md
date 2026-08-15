@@ -13,10 +13,11 @@ Bundled helpers:
 - `state_commitment_guard.py`: fail-closed validation for typed current
   identities, disjoint declared review/proof origin IDs, authority and stop
   scope, source provenance, and exact companion snapshots.
-- `agent_context_report.py`: CLI-compatible, read-only runtime context report
-  for Codex and Claude Code: installed skills, plugin manifests, project
-  instructions, MCP config sections, ranked sources, exports, and latest session
-  token usage when available.
+- `agent_context_report.py`: CLI-compatible, read-only context inventory for
+  Codex and Claude Code: discovered skills, configured-plugin filtering,
+  evidence-bound startup/body-load labels, project instructions, MCP config
+  sections, ranked sources, exports, and latest session token usage when
+  available.
 - `description_overlap.py`: rank skill-description pairs competing for routing
   by token overlap.
 - `compression_invariants.py`: deterministic original-vs-compressed invariant

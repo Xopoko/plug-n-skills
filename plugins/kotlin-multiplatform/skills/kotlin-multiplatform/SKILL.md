@@ -1,6 +1,6 @@
 ---
 name: kotlin-multiplatform
-description: Kotlin Multiplatform routing and execution across architecture, Gradle/private dependencies, Compose UI, Android-KMP migration, iOS interop, CocoaPods/SwiftPM dependency-import moves, testing, performance, security, CI, publishing, and production readiness.
+description: KMP routing and execution across architecture, Gradle/private dependencies, Compose UI, Android-KMP migration, iOS interop, CocoaPods/SwiftPM dependency-import moves, testing, performance, security, CI, publishing, and production readiness.
 ---
 
 # Kotlin Multiplatform Router
