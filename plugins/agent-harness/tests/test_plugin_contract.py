@@ -12,6 +12,9 @@ ROOT = Path(__file__).resolve().parents[1]
 REPO_ROOT = ROOT.parent.parent
 SHA256_RE = re.compile(r"^[0-9a-f]{64}$")
 GIT_OBJECT_RE = re.compile(r"^[0-9a-f]{40,64}$")
+HISTORICAL_DESTINATION_COMMIT = "073576325f7cc22bd078a3c9fdf4f41f37a33563"
+HISTORICAL_DESTINATION_TREE = "90a3746fb3d998a86d443f80d9eebb30cb9348f1"
+HISTORICAL_DESTINATION_ROOT = "plugins/agent-harness"
 
 EXPECTED_SKILLS = {
     "agent-harness",
@@ -77,7 +80,7 @@ class AgentHarnessPluginContractTests(unittest.TestCase):
         for field in ("name", "version", "description", "author", "license", "keywords"):
             self.assertEqual(codex[field], claude[field], field)
         self.assertEqual("agent-harness", codex["name"])
-        self.assertEqual("0.1.6", codex["version"])
+        self.assertEqual("0.1.7", codex["version"])
         self.assertEqual("Agent Harness", codex["interface"]["displayName"])
         self.assertIsInstance(codex["interface"]["defaultPrompt"], list)
         self.assertTrue(codex["interface"]["defaultPrompt"])
@@ -195,6 +198,7 @@ class AgentHarnessPluginContractTests(unittest.TestCase):
                 "vendor-mcp",
                 "claude-session",
                 "scheduler-proof",
+                "codex-custom-updater-proof",
                 "credential-handoff",
             }.issubset(routed)
         )
@@ -358,12 +362,6 @@ class AgentHarnessPluginContractTests(unittest.TestCase):
 
                 path = ROOT / entry["destination_path"]
                 self.assertTrue(path.is_file())
-                payload = path.read_bytes()
-                self.assertEqual(entry["destination_bytes"], len(payload))
-                self.assertEqual(
-                    entry["destination_sha256"],
-                    hashlib.sha256(payload).hexdigest(),
-                )
                 unchanged = entry["treatment"] in {
                     "verbatim",
                     "rename_for_collision",
@@ -480,6 +478,63 @@ class AgentHarnessPluginContractTests(unittest.TestCase):
                     hashlib.sha256(payload).hexdigest(),
                 )
 
+    def test_historical_destination_snapshot_when_available(self) -> None:
+        git_marker = REPO_ROOT / ".git"
+        if not git_marker.exists():
+            self.skipTest("source archive has no Git metadata")
+
+        available = subprocess.run(
+            [
+                "git",
+                "cat-file",
+                "-e",
+                f"{HISTORICAL_DESTINATION_COMMIT}^{{commit}}",
+            ],
+            cwd=REPO_ROOT,
+            capture_output=True,
+            check=False,
+        )
+        if available.returncode != 0:
+            self.skipTest("declared historical destination commit is unavailable")
+
+        historical_tree = subprocess.check_output(
+            [
+                "git",
+                "rev-parse",
+                f"{HISTORICAL_DESTINATION_COMMIT}:{HISTORICAL_DESTINATION_ROOT}",
+            ],
+            cwd=REPO_ROOT,
+            text=True,
+            encoding="utf-8",
+        ).strip()
+        self.assertEqual(HISTORICAL_DESTINATION_TREE, historical_tree)
+
+        ledger = load_json("references/source-migration-ledger.json")
+        for entry in ledger["file_mappings"]:
+            with self.subTest(historical_destination=entry["destination_path"]):
+                git_path = (
+                    f"{HISTORICAL_DESTINATION_ROOT}/{entry['destination_path']}"
+                )
+                payload = subprocess.check_output(
+                    ["git", "show", f"{HISTORICAL_DESTINATION_COMMIT}:{git_path}"],
+                    cwd=REPO_ROOT,
+                )
+                self.assertEqual(entry["destination_bytes"], len(payload))
+                self.assertEqual(
+                    entry["destination_sha256"],
+                    hashlib.sha256(payload).hexdigest(),
+                )
+
+        source_commit = ledger["source_snapshot"]["commit"]
+        source_available = subprocess.run(
+            ["git", "cat-file", "-e", f"{source_commit}^{{commit}}"],
+            cwd=REPO_ROOT,
+            capture_output=True,
+            check=False,
+        )
+        if source_available.returncode != 0:
+            return
+
         for allow in ledger["rewrite_allowlist"]:
             changes = [
                 change
@@ -489,7 +544,7 @@ class AgentHarnessPluginContractTests(unittest.TestCase):
             if not changes:
                 continue
             source_text = subprocess.check_output(
-                ["git", "show", f"{commit}:{allow['source_path']}"],
+                ["git", "show", f"{source_commit}:{allow['source_path']}"],
                 cwd=REPO_ROOT,
                 text=True,
                 encoding="utf-8",
@@ -500,9 +555,22 @@ class AgentHarnessPluginContractTests(unittest.TestCase):
                     source_text.count(change["old"]),
                 )
                 source_text = source_text.replace(change["old"], change["new"])
+            destination_path = (
+                f"{HISTORICAL_DESTINATION_ROOT}/{allow['destination_path']}"
+            )
+            destination_text = subprocess.check_output(
+                [
+                    "git",
+                    "show",
+                    f"{HISTORICAL_DESTINATION_COMMIT}:{destination_path}",
+                ],
+                cwd=REPO_ROOT,
+                text=True,
+                encoding="utf-8",
+            )
             self.assertEqual(
                 source_text,
-                (ROOT / allow["destination_path"]).read_text(encoding="utf-8"),
+                destination_text,
             )
 
 

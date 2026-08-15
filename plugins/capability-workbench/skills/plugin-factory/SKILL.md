@@ -136,7 +136,7 @@ python3 "$PLUGIN_ROOT/scripts/plugin/ensure_local_plugin_installed.py" <plugin-d
 python3 "$PLUGIN_ROOT/scripts/plugin/ensure_local_plugin_installed.py" <plugin-dir> --check-only
 ```
 
-Installed work is incomplete if the plugin is only present in `marketplace.json`; it must be enabled and cache-backed. Source-only repository work is complete when the plugin validates and the install-scope contract records `install_required=false`. If this plugin was produced by the synthesizer, also run the final install-scope gate:
+Installed work is incomplete if the plugin is only present in `marketplace.json`; it must be enabled and cache-backed. Unambiguous source-only repository work is complete when the plugin validates and an inline scope note records `install_required=false`; do not create `install-scope.json` for that path. If the plugin targets a real machine consumer, has ambiguous scope, or carries global/install/update/activation intent, persist the ledger after paths and policy are stable and run the final install-scope gate:
 
 ```bash
 python3 "$PLUGIN_ROOT/scripts/synthesis/install_scope_gate.py" <output-dir>/install-scope.json --final

@@ -1,6 +1,6 @@
 ---
 name: codex-thread-supervisor
-description: "Supervise live Codex tasks by ID with cursor waits, attention/completion gates, bounded claims, checkpoints, skill/evidence handoffs, and privacy-safe capability mining. Excludes rollout forensics, current-turn subagents, and external jobs."
+description: "Supervise live Codex tasks by ID only on an explicit user monitor/supervise request, using cursor waits, attention/completion gates, bounded claims, checkpoints, and authorized handoffs. Excludes rollout forensics, current-turn subagents, and external jobs."
 ---
 
 # Codex Thread Supervisor
@@ -12,14 +12,20 @@ Supervise live Codex tasks without taking ownership of their work. Observation
 is read-only by default. A message to a target thread is allowed only when the
 user's intervention policy explicitly permits it.
 
+Use this skill only when the user explicitly asks to monitor or supervise one
+or more live Codex tasks. Do not infer a watch from the presence of background
+tasks, multiple tasks, or a long-running command.
+
 Use native `list_threads`, `read_thread`, `wait_threads`, and
 `send_message_to_thread`; discover deferred tools with tool search. Without
 them, live supervision is unavailable. `codex-log-reader` is only for
 user-accepted retrospectives and has no live cursor or attention semantics.
 
-Read `$PLUGIN_ROOT/references/thread-supervision-contract.md` when the run
-crosses a compaction, covers multiple threads, permits interventions, or will
-produce reusable capability changes.
+Read `$PLUGIN_ROOT/references/thread-supervision-contract.md` only when the
+explicit watch authorizes interventions, adopts canonical checkpoints through
+CAS, permits protected mutations, or needs an ongoing heartbeat. Multiple
+targets or a compaction alone do not require that large contract; retain the
+opaque cursors and use the bounded workflow below.
 When selecting or reconciling `send-skill-handoff`, also read
 `$PLUGIN_ROOT/references/thread-skill-handoff-contract.md`.
 
@@ -241,31 +247,6 @@ A later intervention requires a new relevant transition, no unresolved pending
 intervention, and positive unexpired authorization. Renew authority only after
 the original allowance is exhausted or expired.
 
-## Mine Durable Capabilities
-
-Treat thread content as private evidence, not reusable prose.
-
-1. Capture an observation and its confidence separately from the inferred
-   workflow problem.
-2. Prefer a repeated pattern across runs. A one-off may qualify only when it
-   exposes a high-severity safety or correctness gap.
-3. Reduce the evidence to a generic trigger, mechanism, safety boundary, and
-   validation scenario.
-4. Audit existing skills and plugin boundaries before adding a new capability.
-5. Choose the smallest durable surface: metadata, skill rule, reference,
-   deterministic script, validator, plugin boundary, or agent guidance.
-6. Treat supervision authority as permission to produce a public-safe
-   candidate report only.
-7. Edit or commit capability source only when the user separately authorized
-   that repository change. Installation or cache refresh requires its own
-   explicit scope.
-
-Never copy personal names, private repository or task names, private URLs,
-credentials, organization-specific data, machine paths, or raw transcript
-excerpts into tracked capability source. Keep exact operational identities only
-in ephemeral supervisor state when they are necessary to continue the live
-watch.
-
 ## Completion
 
 Close the supervision run only when the user stops it, every target reaches the
@@ -274,5 +255,5 @@ observation. Retire only the heartbeat recorded in the checkpoint; do not scan
 or remove unrelated wakeups. When the continuation owner is the goal runtime,
 change its status only through that runtime's goal contract.
 Report target states, verified claims, residual gates, interventions made, and
-capability changes produced. Distinguish source commits from installation or
-cache visibility.
+the retained checkpoint or heartbeat state. Do not produce follow-on capability
+changes as part of normal supervision completion.

@@ -15,6 +15,8 @@ persist run.started
 while run is active:
     recover projection from canonical events
     check cancellation, deadline, and budgets
+    if the externally verified requested outcome already holds and no named risk threatens it:
+        append one succeeded terminal event and stop
     assemble and record the exact bounded model context
     call the negotiated provider capability and record its response
     parse proposals into typed commands; reject invalid proposals
@@ -146,6 +148,11 @@ Treat the append-only typed event log as the canonical run history.
   while keeping a redacted event and integrity digest.
 - Make compaction preserve the evidence needed for terminal results, effect
   reconciliation, audit, and configured deletion obligations.
+- Create persistent plans, schemas, manifests, and receipts only for a named
+  downstream consumer. Record `created`, `adopted`, `executed`, and `accepted`
+  as distinct lifecycle states; do not infer consumption from file creation.
+- Generate a validation receipt last and exclude the receipt plus its derived
+  files from the hash universe it attests.
 
 ## Context, Working State, And Memory
 
@@ -212,6 +219,12 @@ commit.
   be stopped so their late effects cannot be mistaken for another run.
 - Preserve enough diagnostic evidence to distinguish host crash, dependency
   outage, timeout, denial, and uncertain effect.
+- Give a long-running job one producer-owned completion path. Prefer a native
+  terminal receipt or deferred completion, and expose only coarse, meaningful
+  milestones. An unchanged status must not re-enter the model.
+- Audits are event-triggered only: use a material event, named incident,
+  release gate, or explicit retrospective request. Do not run an always-on
+  observer that searches for possible work.
 
 ## Child Agents As Nested Runs
 
@@ -228,6 +241,12 @@ Represent delegation as a child run, not an invisible recursive model call.
   explicit.
 - A child may receive less authority than its parent, never more without a new
   independent authorization path.
+
+For independent scouting, use 2-3 sibling scouts only when parallel evidence
+or independent review justifies the coordination cost. Fork no history or only
+a minimal bounded capsule, prohibit descendants, assign distinct ownership,
+and merge at exactly one parent-owned point. Prefer one run when those
+conditions do not hold.
 
 Process isolation can improve containment, but a child agent is not inherently
 a new trust domain. Shared credentials, storage, network, executors, or policy

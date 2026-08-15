@@ -1,4 +1,4 @@
 interface:
   display_name: "Agent Harness"
   short_description: "Route agent harness and Codex/Claude runtime work"
-  default_prompt: "Route this harness or Codex/Claude runtime request to the narrowest leaf skill. Use harness engineering for control-plane design, harness evaluation for empirical evidence, vendor skills for exact CLI/hooks/MCP/session work, and scheduled-automation-runtime for local scheduler proof. Exclude skill/plugin authoring and generic app architecture."
+  default_prompt: "Route this harness or Codex/Claude runtime request to the narrowest leaf skill. Start with direct checks or the smallest sample, create persistent artifacts only for a named downstream consumer, and stop when the externally verifiable requested outcome succeeds unless a named risk threatens it. Use vendor skills for exact CLI/hooks/MCP/session work and scheduled-automation-runtime for local scheduler proof. Exclude skill/plugin authoring and generic app architecture."

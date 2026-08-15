@@ -5,10 +5,18 @@ against a baseline, or gate a release. Evaluation is outcome-neutral: use the
 same discipline for code changes, research artifacts, business workflows,
 browser tasks, messages, records, schedules, and device operations.
 
+Work sampled-first. Start with the cheapest representative scenario slice and
+direct oracle that can falsify the claim. Persist plans, manifests, schemas,
+and run receipts only for a repeated campaign, release gate, or durable
+independent review with a named consumer and acceptance action. Report a
+bounded incident or sampled ablation inline when no durable consumer exists.
+Keep `created`, `adopted`, `executed`, and `accepted` as separate states.
+
 ## Version The Complete System Tuple
 
 A result belongs to the whole system, not to a model or harness name alone.
-Persist an immutable manifest or digest for:
+For a warranted persistent evaluation, record an immutable manifest or digest
+for:
 
 ```text
 S = (
@@ -209,6 +217,14 @@ run's history. A detailed trace cannot establish population reliability.
 Changing an evaluator must create a new judgement linked to the old result, not
 rewrite the run. Keep secrets and unnecessary model internals out of all three
 surfaces.
+
+In retrospective trace analysis, duplicate status polls are leads to inspect,
+not independent work or failures. Deduplicate mirrored records across
+compaction boundaries by stable event identity or a documented fingerprint.
+Cumulative token counters copied into several snapshots are not unique tokens
+and are not billed-token evidence; use provider billing or usage receipts for a
+billing claim. Audits are event-triggered only: use a named event, incident, or
+explicit review request, never an always-on observer.
 
 ## Release Gates
 

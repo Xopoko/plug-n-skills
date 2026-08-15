@@ -809,6 +809,91 @@ def test_install_scope_gate() -> None:
         check("install_scope_gate: unknown scope fails", result.returncode != 0, result.stdout)
 
 
+def test_proportional_install_scope_contract() -> None:
+    router = (
+        PLUGIN_ROOT / "skills" / "capability-workbench" / "SKILL.md"
+    ).read_text(encoding="utf-8")
+    synthesizer = (
+        PLUGIN_ROOT / "skills" / "capability-synthesizer" / "SKILL.md"
+    ).read_text(encoding="utf-8")
+    install_reference = (PLUGIN_ROOT / "references" / "install-scope.md").read_text(
+        encoding="utf-8"
+    )
+    synthesis_reference = (
+        PLUGIN_ROOT / "references" / "synthesis-contract.md"
+    ).read_text(encoding="utf-8")
+    plugin_factory = (
+        PLUGIN_ROOT / "skills" / "plugin-factory" / "SKILL.md"
+    ).read_text(encoding="utf-8")
+    skill_factory = (
+        PLUGIN_ROOT / "skills" / "skill-factory" / "SKILL.md"
+    ).read_text(encoding="utf-8")
+
+    optional_contract = (router, synthesizer, install_reference, synthesis_reference)
+    check(
+        "install scope contract: unambiguous repo-local source-only path omits ledger",
+        all("short inline scope note" in text for text in optional_contract)
+        and all(
+            "do not create `install-scope.json`" in text.lower()
+            or "with no `install-scope.json`" in text.lower()
+            for text in optional_contract
+        ),
+        "\n\n".join(optional_contract),
+    )
+
+    required_contract = (router, synthesizer, install_reference, synthesis_reference)
+    check(
+        "install scope contract: ambiguous activation and machine-consumer paths require ledger",
+        all("scope is ambiguous" in text for text in required_contract)
+        and all("global/install/update/activation intent" in text for text in required_contract)
+        and all("real machine consumer" in text for text in required_contract),
+        "\n\n".join(required_contract),
+    )
+    check(
+        "install scope contract: required ledger waits for stable paths and keeps final gate",
+        all(
+            "paths and policy are stable" in text
+            for text in (router, synthesizer, plugin_factory, skill_factory)
+        )
+        and all(
+            "install_scope_gate.py" in text and "--final" in text
+            for text in required_contract
+        ),
+        "\n\n".join((*required_contract, plugin_factory, skill_factory)),
+    )
+    check(
+        "install scope contract: source-only exemption does not relax external discovery",
+        "create and validate the external-discovery ledger before editing" in synthesizer
+        and "does not waive the external-discovery ledger" in synthesis_reference,
+        synthesizer + "\n" + synthesis_reference,
+    )
+
+    forbidden_eager_contract = (
+        "Validate the delivery surface and install requirement with the install-scope gate before implementation",
+        "Before editing the target, create `<output-dir>/install-scope.json`",
+        "create installation-scope and external-discovery ledgers before editing",
+    )
+    combined = "\n".join((*required_contract, plugin_factory, skill_factory))
+    check(
+        "install scope contract: unconditional pre-edit ledger language stays removed",
+        not any(fragment in combined for fragment in forbidden_eager_contract),
+        combined,
+    )
+
+    manifests = [
+        json.loads((PLUGIN_ROOT / manifest).read_text(encoding="utf-8"))
+        for manifest in (
+            ".codex-plugin/plugin.json",
+            ".claude-plugin/plugin.json",
+        )
+    ]
+    check(
+        "install scope contract: plugin manifests are version 0.6.7",
+        all(manifest.get("version") == "0.6.7" for manifest in manifests),
+        repr([manifest.get("version") for manifest in manifests]),
+    )
+
+
 def test_external_discovery_gate() -> None:
     script = str(SCRIPTS / "synthesis" / "external_discovery_gate.py")
 
@@ -2227,6 +2312,78 @@ def test_capability_evaluation() -> None:
         )
 
 
+def test_capability_reality_repair_priority() -> None:
+    skill = (
+        PLUGIN_ROOT / "skills" / "capability-reality-repair" / "SKILL.md"
+    ).read_text(encoding="utf-8")
+    router = (
+        PLUGIN_ROOT / "skills" / "capability-workbench" / "SKILL.md"
+    ).read_text(encoding="utf-8")
+    metadata = (
+        PLUGIN_ROOT
+        / "skills"
+        / "capability-reality-repair"
+        / "agents"
+        / "openai.yaml"
+    ).read_text(encoding="utf-8")
+    reference = (PLUGIN_ROOT / "references" / "reality-repair.md").read_text(
+        encoding="utf-8"
+    )
+
+    required_skill_contract = (
+        "The user's requested outcome remains primary.",
+        "blocks or materially distorts that outcome",
+        "bounded, authorized, and testable",
+        "Do not count capability maintenance as progress on the original task.",
+        "Do not spawn a repair agent from suspicion alone.",
+    )
+    forbidden_eager_contract = (
+        "Repair is urgent.",
+        "interrupt the normal route",
+        "fix it in the same turn before finalizing the original task",
+    )
+
+    check(
+        "capability reality repair: user outcome and bounded repair stay explicit",
+        all(fragment in skill for fragment in required_skill_contract),
+        skill,
+    )
+    combined = "\n".join((skill, router, metadata, reference))
+    check(
+        "capability reality repair: unconditional interruption stays removed",
+        not any(fragment in combined for fragment in forbidden_eager_contract),
+        combined,
+    )
+    check(
+        "capability reality repair: router, metadata, and reference preserve the gate",
+        all(
+            fragment in router
+            for fragment in (
+                "while keeping the user's outcome primary",
+                "bounded, authorized, and testable",
+                "precise repair handoff",
+            )
+        )
+        and all(
+            fragment in metadata
+            for fragment in (
+                "keep the user's outcome primary",
+                "bounded, authorized, testable",
+                "precise repair handoff",
+            )
+        )
+        and all(
+            fragment in reference
+            for fragment in (
+                "Keep the user's requested outcome primary.",
+                "bounded, authorized, and testable",
+                "Do not count a repair handoff as progress on the original task.",
+            )
+        ),
+        combined,
+    )
+
+
 def main() -> int:
     for test in (
         test_validate_plugin,
@@ -2237,6 +2394,7 @@ def main() -> int:
         test_description_prefix_audit,
         test_skill_catalog_runtime_comparison_reference,
         test_install_scope_gate,
+        test_proportional_install_scope_contract,
         test_external_discovery_gate,
         test_evidence_coverage_gate,
         test_portfolio_audit,
@@ -2248,6 +2406,7 @@ def main() -> int:
         test_audit_skill_candidate,
         test_audit_skill_candidate_tier2,
         test_capability_evaluation,
+        test_capability_reality_repair_priority,
     ):
         test()
     print(f"\n{PASSES} passed, {len(FAILURES)} failed")

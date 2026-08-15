@@ -1,4 +1,4 @@
 interface:
   display_name: "Agent Harness Engineering"
   short_description: "Design reliable LLM agent runtime harnesses"
-  default_prompt: "Use Agent Harness Engineering when runtime or control-loop work is the real problem, even if buried inside a coding, research, browser, support, or service-agent request. Design a vendor-neutral typed control harness and validate its artifact; do not use this for prompt-only work, evaluation-only work, generic app architecture, or exact Codex or Claude commands."
+  default_prompt: "Use Agent Harness Engineering for an explicit runtime or control-plane design, revision, diagnosis, or fix. For bounded work, use an inline checklist and direct tests; create and validate a design artifact only for a new harness, material control-plane revision, or durable release/handoff with a named consumer. Stop after the externally verifiable requested outcome succeeds unless a named risk threatens it."

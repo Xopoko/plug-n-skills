@@ -11,6 +11,12 @@ Build a vendor-neutral control plane around an LLM. The harness, not generated t
 
 Read `$PLUGIN_ROOT/references/agent-harness-contracts.md` for the artifact and runtime contracts. Read `$PLUGIN_ROOT/references/agent-harness-patterns.md` before selecting control, persistence, or delegation mechanisms. Use `$PLUGIN_ROOT/references/agent-harness-landscape.md` only for build-versus-adopt or provider/runtime comparisons.
 
+Choose the evidence surface before producing durable harness paperwork. A
+bounded diagnosis or fix may use an inline checklist plus direct tests. Create
+a versioned design artifact only for a new harness, a material control-plane
+revision, or a durable release or handoff claim with a named downstream
+consumer.
+
 ## Non-Negotiable Boundaries
 
 - Model output is an untrusted proposal, never authority to mutate state or invoke a side effect.
@@ -24,7 +30,7 @@ Read `$PLUGIN_ROOT/references/agent-harness-contracts.md` for the artifact and r
 
 ## Engineering Workflow
 
-1. **Bind the outcome.** State the workload, desired outcome, falsifiable design hypothesis, cheapest discriminator, stop condition, non-goals, trust boundaries, and side effects. Cover the real workload; do not assume a coding agent.
+1. **Bind the outcome.** State the workload, desired outcome, falsifiable design hypothesis, cheapest discriminator, stop condition, non-goals, trust boundaries, side effects, and intended evidence consumer. Cover the real workload; do not assume a coding agent.
 2. **Define typed contracts.** Specify state, event envelope, commands, effects, tool results, errors, approval records, checkpoints, and terminal outcomes. Give every durable event an identity and schema version.
 3. **Make the loop explicit.** Design a deterministic spine such as `observe -> normalize -> decide -> authorize -> execute -> record -> transition -> stop or recover`. Keep nondeterminism inside recorded provider and tool results; make transition logic replayable.
 4. **Separate provider capabilities.** Model tool calling, structured output, streaming, usage accounting, cancellation, parallel calls, and provider-specific limits as negotiated capabilities. Define unsupported and degraded paths rather than silently changing semantics.
@@ -35,6 +41,11 @@ Read `$PLUGIN_ROOT/references/agent-harness-contracts.md` for the artifact and r
 9. **Justify delegation.** If subagents exist, define their task contracts, authority ceilings, budgets, result schemas, cancellation propagation, merge policy, and parent accountability. Otherwise record why a single loop is sufficient.
 10. **Plan observability and verification.** Emit typed, correlatable events for decisions, policy outcomes, effects, checkpoints, budgets, cancellation, recovery, and generation changes. Redact secrets while preserving causal evidence. Hand empirical claims and release gates to `agent-harness-evaluation`.
 
+After direct external verification shows that the requested outcome is met,
+latch terminal success and stop. Continue only for a named unresolved risk that
+threatens the outcome. Productization, automation, generalization, or release
+work needs renewed scope.
+
 ## Adjacent Routes
 
 - Use `architecture-intelligence` for broader application boundaries, dependency direction, runtime topology, or conformance beyond the harness.
@@ -44,9 +55,13 @@ Read `$PLUGIN_ROOT/references/agent-harness-contracts.md` for the artifact and r
 - Use `capability-synthesizer` for broad external-first discovery and synthesis of reusable skills, plugins, or public implementations.
 - Use `agent-harness-evaluation` for benchmarks, replay, regression diagnosis, or release evidence after a harness boundary exists.
 
-## Design Artifact And Gate
+## Conditional Design Artifact And Gate
 
-Produce one artifact with `schema: agent_harness.design.v1` as defined in `$PLUGIN_ROOT/references/agent-harness-contracts.md`. Keep field details in that contract; the artifact must make the following reviewable without relying on prose elsewhere:
+When the artifact gate above is satisfied, produce one artifact with `schema:
+agent_harness.design.v1` as defined in
+`$PLUGIN_ROOT/references/agent-harness-contracts.md`. Name the downstream
+consumer and its acceptance action. Keep field details in that contract; the
+artifact must make the following reviewable without relying on prose elsewhere:
 
 - workload and outcome contract, non-goals, trust boundaries, and side effects;
 - typed states, events, control loop, invariants, and terminal conditions;
@@ -59,7 +74,7 @@ Produce one artifact with `schema: agent_harness.design.v1` as defined in `$PLUG
 - delegation decision and, when used, child authority and merge contracts;
 - validation scenarios, unresolved risks, and handoff claims for evaluation.
 
-Validate the final artifact:
+Validate a warranted final artifact:
 
 ```bash
 python3 "$PLUGIN_ROOT/scripts/harness/validate_harness_artifact.py" <artifact-path> --json

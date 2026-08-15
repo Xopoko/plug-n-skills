@@ -38,6 +38,19 @@ engineering for runtime-control design; use harness evaluation for empirical
 behavior claims; and use scheduler proof only for the operating-system-owned
 launch boundary.
 
+## Proportional Output And Terminal Gate
+
+Keep the requested user outcome separate from harness tax. Start with direct
+checks or the smallest representative sample. Create a persistent plan, schema,
+manifest, or receipt only when a named downstream consumer will adopt, execute,
+or accept it; artifact creation alone is not progress.
+
+Latch terminal success when the externally verifiable requested outcome is
+achieved. Stop unless a named unresolved risk threatens that outcome. A later
+request to productize, automate, generalize, or release the work requires
+renewed scope. Do not create an always-on observer to discover possible future
+work.
+
 ## Exclusions
 
 - Use Capability Workbench for skill or plugin authoring, synthesis, portfolio

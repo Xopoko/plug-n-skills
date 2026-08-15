@@ -14,9 +14,11 @@ Prefer editing these surfaces, in order:
 
 If a cache copy must be edited, keep searching for the upstream source and state the limitation. If multiple artifacts repeat the same false claim, update all reachable copies that the agent may load.
 
-## Deferral
+## Priority And Deferral
 
-Defer only when the canonical source is missing, read-only, externally owned, requires destructive migration, or conflicts with a higher explicit safety or production deadline.
+Keep the user's requested outcome primary. Repair in the same turn only when a confirmed capability defect blocks or materially distorts that outcome and the canonical fix is bounded, authorized, and testable. Otherwise finish or safely checkpoint the original task before starting capability maintenance.
+
+Also defer when the canonical source is missing, read-only, externally owned, requires destructive migration, or needs broader authority than the current task provides.
 
 When deferring, record:
 
@@ -25,6 +27,12 @@ When deferring, record:
 - source that needs editing;
 - patch plan;
 - validator or smoke test that should pass afterward.
+
+Do not count a repair handoff as progress on the original task. Keep it small enough that another task can verify the contradiction and start from the named canonical source without rereading the full transcript.
+
+## Bounded Delegation
+
+Use a repair subagent only after the exact false claim, contradictory evidence, canonical source, allowed files, and validation target are explicit. Give it no authority to redesign adjacent capabilities, edit the target product, install or publish artifacts, or broaden the repair. The parent reviews the result and resumes or completes the original task.
 
 ## Examples
 

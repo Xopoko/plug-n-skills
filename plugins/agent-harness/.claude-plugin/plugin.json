@@ -1,6 +1,6 @@
 {
   "name": "agent-harness",
-  "version": "0.1.6",
+  "version": "0.1.7",
   "description": "Agent harness runtime-reconfiguration design and evaluation plus Codex and Claude runtime operations, secret-safe human credential handoff, 1Password, sessions, deferred completion, and scheduler proof.",
   "author": {
     "name": "Xopoko"

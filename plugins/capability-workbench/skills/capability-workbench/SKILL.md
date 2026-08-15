@@ -54,21 +54,23 @@ prompt/rollout evidence, and omission analysis, use the `codex-cli` skill in
 
 If context-density work or an audit shows overlap, cross-plugin responsibility duplication, missing boundaries, overloaded skills, stale skills, or repeated deterministic procedures hidden in prose, route through `capability-portfolio-architect` before editing. Token reduction is a signal, not a substitute for a structural decision ledger.
 
-If a capability artifact contradicts live behavior while any workflow is running, interrupt the normal route with `capability-reality-repair`, fix the stale source, validate it, then resume the original workflow.
+If live work proves that a capability artifact contradicts reality, route the exact evidence through `capability-reality-repair` while keeping the user's outcome primary. Repair now only when the confirmed defect blocks or materially distorts that outcome and the fix is bounded, authorized, and testable; otherwise preserve a precise repair handoff and continue the original workflow.
 
 ## Bind Target And Scope
 
-Bind the primary target and delivery surface before editing. If the user names a skill or plugin with `$...` or `@...`, that named capability is the thing to create, synthesize, strengthen, install, or package. Decide where the source artifact should live from the latest user message, repo instructions, and workspace shape; a current plugin/skill source repository can be the target surface when the request is to create or improve artifacts there. Do not install, cache-refresh, or write global agent state unless the user asks for installed/global use or the selected lifecycle step explicitly requires activation proof.
+Bind the primary target and make an early delivery-surface decision before editing. If the user names a skill or plugin with `$...` or `@...`, that named capability is the thing to create, synthesize, strengthen, install, or package. Decide where the source artifact should live from the latest user message, repo instructions, and workspace shape; a current plugin/skill source repository can be the target surface when the request is to create or improve artifacts there. Do not install, cache-refresh, or write global agent state unless the user asks for installed/global use or the selected lifecycle step explicitly requires activation proof.
+
+Keep the install-scope record proportional. For an unambiguous repo-local, source-only request with `install_required=false`, write a short inline scope note and do not create `install-scope.json`. A machine-readable install-scope ledger is required when scope is ambiguous, the request has global/install/update/activation intent, or the workflow targets a real machine consumer such as an agent home, marketplace, cache, or machine configuration. Persist the required ledger after destination paths and policy are stable, close to activation or final delivery; validate it before any activation and finalize it at delivery.
 
 ## Minimum Workflow
 
 1. Write a compact target contract: primary target, named skill/plugin targets, capability, intended user, mode, delivery surface, install requirement, core workflows, non-goals, must-keep capabilities, safety boundaries, and validation scenarios. Schema, scoring rubric, and applicability gates: `$PLUGIN_ROOT/references/synthesis-contract.md`.
-2. Validate the delivery surface and install requirement with the install-scope gate before implementation; keep `install_required=false` unless the user asked for activation. Surface rules and commands: `$PLUGIN_ROOT/references/install-scope.md`.
+2. Select the delivery surface early and keep `install_required=false` unless the user asked for activation. Use an inline scope note for the unambiguous repo-local source-only path; otherwise persist and validate the install-scope ledger once target paths and policy are stable. Surface rules and commands: `$PLUGIN_ROOT/references/install-scope.md`.
 3. For synthesis, augmentation, plugin-pack, or marketplace capability work, default discovery to `external-broad`, create and validate the external-discovery ledger, and search public sources before local ones. Source families, search waves, and stop conditions: `$PLUGIN_ROOT/references/external-discovery.md`. Inventory local surfaces as supplementary candidates with `python3 "$PLUGIN_ROOT/scripts/capability_inventory.py" --query "<topic>" --json`.
-4. Lightweight lane: when the change is confined to one existing skill's text or metadata — no new scripts, no new capability claims, no installation — skip the JSON ledgers; run `quick_validate.py` and record a one-line scope note in the final report instead.
+4. Lightweight lane: when the change is confined to one existing skill's text or metadata — no new scripts, no new capability claims, no installation — skip the JSON ledgers; run `quick_validate.py` and record a one-line scope note in the final report instead. Separately, any unambiguous repo-local source-only workflow may omit only the install-scope ledger; external-discovery and other ledgers keep their normal applicability.
 5. Execute through the routed sibling skill, adopting only mechanisms that improve quality, reliability, safety, flexibility, controllability, validation, or developer usability: candidate audits and distillation in `capability-synthesizer`, structural decisions in `capability-portfolio-architect`, trigger metadata in `skill-trigger-metadata`, packaging and icon generation in `plugin-factory` (`$PLUGIN_ROOT/references/plugin-icon-system.md`), and controlled candidate-versus-baseline evidence in `capability-evaluation`. For local skill/plugin QA, use structured quality-review evidence per `$PLUGIN_ROOT/references/quality-review-adoption.md`.
 6. Before compacting or distilling capability evidence, preserve commitments per `$PLUGIN_ROOT/references/context-density.md`: must-keep workflows, trigger semantics, safety boundaries, install scope, provenance, validation proof, and recovery pointers to source records.
-7. Report what was adopted, adapted, rejected, deferred, tested, the validated delivery surface, whether anything was installed, and where the user can inspect or use it.
+7. Report what was adopted, adapted, rejected, deferred, tested, the selected delivery surface, any required install-scope validation, whether anything was installed, and where the user can inspect or use it.
 
 ## Hard Boundaries
 
@@ -114,11 +116,13 @@ This proves installed cache state, not runtime discovery. Probe the current
 host/session discovery surface only when that lifecycle step is in scope;
 otherwise report `runtime discovery: not checked`.
 
-For complete synthesis outputs, run:
+When a synthesis output requires an install-scope ledger, run the final gate near delivery:
 
 ```bash
 python3 "$PLUGIN_ROOT/scripts/synthesis/install_scope_gate.py" <output-dir>/install-scope.json --final
 ```
+
+For the unambiguous repo-local source-only path, report the inline scope note instead and do not invent a ledger solely to satisfy this completion gate.
 
 When Workbench scripts, gates, or validators change, run the bundled smoke tests:
 

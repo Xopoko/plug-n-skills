@@ -1,4 +1,4 @@
 interface:
   display_name: "Agent Harness Evaluation"
   short_description: "Evaluate agent harness reliability and release gates"
-  default_prompt: "Use Agent Harness Evaluation when a benchmark, replay, regression diagnosis, or release gate must test harness behavior, even if buried inside a broader rollout request. Build and validate an evaluation artifact; do not use this for scholarly surveys, generic unit tests, prompt-only benchmarks, or designing the harness without an empirical evaluation deliverable."
+  default_prompt: "Use Agent Harness Evaluation for an explicit harness benchmark, replay, incident diagnosis, ablation, or release gate. Work sampled-first and report bounded incidents or sampled ablations inline; build validated evaluation artifacts only for a repeated campaign, release gate, or durable independent review with a named consumer. Stop after the externally verifiable requested outcome succeeds unless a named risk threatens it."

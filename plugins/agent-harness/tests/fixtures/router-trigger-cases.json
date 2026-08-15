@@ -65,6 +65,11 @@
       "expected_leaf": "scheduled-automation-runtime"
     },
     {
+      "id": "codex-custom-updater-proof",
+      "prompt": "Codex starts normally; inspect the updater that owns channel eligibility and prove whether its scheduled check ran.",
+      "expected_leaf": "scheduled-automation-runtime"
+    },
+    {
       "id": "credential-handoff",
       "prompt": "Open a protected native prompt so I can enter a password or let 1Password inject it without the value entering the agent transcript.",
       "expected_leaf": "credential-handoff"

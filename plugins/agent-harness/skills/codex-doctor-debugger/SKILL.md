@@ -12,6 +12,12 @@ config, auth, runtime health, feature flags, sandbox denials, debug model
 catalog, app-server transports, remote-control daemon, remote connection errors,
 or local environment inconsistencies.
 
+If Codex starts normally, update-channel eligibility and freshness of a custom
+scheduled updater are outside this diagnostic lane. Inspect the updater that
+owns channel selection and use `scheduled-automation-runtime` to prove what its
+OS schedule actually ran. Return here only when Codex launch or runtime health
+itself is failing.
+
 ## Inspect First
 
 Start with cheap, non-mutating commands:

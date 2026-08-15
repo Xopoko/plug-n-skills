@@ -40,7 +40,7 @@ Before editing the target, create `<output-dir>/external-discovery-ledger.json` 
 
 ## Install Scope Gate
 
-Record one installation scope before implementation:
+Select one installation scope before implementation:
 
 | Scope | Default? | Criteria |
 | --- | --- | --- |
@@ -49,7 +49,11 @@ Record one installation scope before implementation:
 | `workspace-snapshot` | no | Only for partial synthesis, reference drafts, or explicit no-install output. |
 | `reference-only` | no | Use when sources are unsafe/thin/uninspectable or the user only wants analysis. |
 
-Before editing the target, create `<output-dir>/install-scope.json` and validate it with `$PLUGIN_ROOT/scripts/synthesis/install_scope_gate.py`. Before claiming a complete result, validate the same file with `--final`.
+Use a short inline scope note, with no `install-scope.json`, when all of these are true: the selected surface is unambiguously `repo-local`, delivery is source-only, and `install_required=false`. Record the repository-selection evidence and that activation was not requested.
+
+A machine-readable install-scope ledger is required when scope is ambiguous, the request has global/install/update/activation intent, or the result targets a real machine consumer such as an agent home, marketplace, cache, or machine configuration. Persist the ledger after destination paths and applicable policy are stable, close to activation or final delivery. Validate it with `$PLUGIN_ROOT/scripts/synthesis/install_scope_gate.py` before activation and validate the same file with `--final` before claiming complete delivery.
+
+The inline path replaces only the install-scope ledger. It does not waive the external-discovery ledger or any other synthesis output whose applicability criteria are met.
 
 For `repo-local`, include `local_request_evidence` from the latest user message, repo instructions, or workspace profile. Dirty worktree state, plugin mentions, or target-specific context are not valid local-scope evidence by themselves.
 
@@ -64,6 +68,8 @@ The output directory may hold reports, ledgers, candidate audits, and temporary 
 ## Lightweight Lane
 
 For edits confined to one existing skill's text or metadata — no new scripts, no new capability claims, no installation — the JSON ledgers are not required. Run `python3 "$PLUGIN_ROOT/scripts/skill/quick_validate.py" <skill-dir>` and record a one-line scope note in the final report. Any new script, new skill, new trigger surface, installation, or synthesis claim leaves the lightweight lane and requires the full gates.
+
+Outside that lightweight lane, an unambiguous repo-local source-only workflow with `install_required=false` may still use the inline install-scope note. Only the install-scope ledger is omitted; external discovery and the remaining synthesis contract are unchanged.
 
 ## External-Broad Stop Condition
 
@@ -146,7 +152,7 @@ If the mapping is only "better wording" or "interesting background", mark it `de
 - `safety-vetting-report.md`: files reviewed, dependencies, observed behavior, risk classification, verdicts.
 - `capability-matrix.md`: mechanism comparison and scores.
 - `distillation-plan.md`: adopted/adapted/rejected/deferred components and final architecture.
-- `install-scope.json`: validated target surface and final delivery/install state.
+- `install-scope.json` when the ledger conditions apply; otherwise an inline repo-local source-only scope note in `synthesis-changelog.md` or the final handoff.
 - `synthesis-changelog.md`: final decisions, validation commands, residual tradeoffs.
 
 For plugin outputs, add plugin validation and install/cache proof only when

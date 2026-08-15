@@ -264,8 +264,8 @@ instructions.
 | Skill entrypoints | 200 | - | `SKILL.md` files exposed through plugin metadata. |
 | Reference files | 278 | - | Longer ledgers, contracts, scorecards, and source notes. |
 | Helper and validator scripts | 97 | - | Deterministic plugin-local helpers. |
-| Startup metadata | 200 skills | 17,071 | Skill name, description, and file pointer for routing. |
-| On-demand skill bodies | 200 skills | 146,537 | Instruction bodies after frontmatter, loaded only when selected. |
+| Startup metadata | 200 skills | 17,075 | Skill name, description, and file pointer for routing. |
+| On-demand skill bodies | 200 skills | 147,571 | Instruction bodies after frontmatter, loaded only when selected. |
 
 Regenerate the report after skill edits:
 
@@ -282,8 +282,8 @@ Token columns are `startup metadata / on-demand body`.
 
 | Plugin | Skills | Refs | Scripts | Startup | Body |
 | --- | ---: | ---: | ---: | ---: | ---: |
-| `agent-harness` | 19 | 19 | 7 | 1,447 | 20,753 |
-| `capability-workbench` | 11 | 17 | 25 | 807 | 14,939 |
+| `agent-harness` | 19 | 19 | 7 | 1,451 | 21,143 |
+| `capability-workbench` | 11 | 17 | 25 | 807 | 15,583 |
 | `context-density` | 1 | 9 | 8 | 70 | 2,806 |
 | `i-have-adhd` | 1 | 1 | 0 | 80 | 588 |
 | `git-workflows` | 5 | 10 | 6 | 416 | 7,339 |
@@ -330,23 +330,23 @@ Token cells are shown as `startup/body`.
 
 | Skill | Tokens | Description |
 | --- | ---: | --- |
-| `agent-harness` | 75/532 | Agent runtimes and human credential handoff: route harnesses, Codex/Claude operations, 1Password or native prompts, sessions, deferred completion, and scheduler proof. Excludes capability authoring and generic app architecture. |
-| `agent-harness-engineering` | 80/1,358 | Design agent harnesses for typed loops, runtime reconfiguration, provider/tool/module hot swap, state, policy, cancellation, recovery, and delegation. Excludes prompt-only, generic architecture, vendor CLI/config, and evaluation-only work. |
-| `agent-harness-evaluation` | 74/1,411 | Evaluate agent harness reliability through replay, restart, cancellation, runtime reconfiguration, concurrent generations, rollback, context pressure, and release gates. Excludes generic tests, surveys, and prompt/model-only benchmarks. |
+| `agent-harness` | 75/657 | Agent runtimes and human credential handoff: route harnesses, Codex/Claude operations, 1Password or native prompts, sessions, deferred completion, and scheduler proof. Excludes capability authoring and generic app architecture. |
+| `agent-harness-engineering` | 80/1,495 | Design agent harnesses for typed loops, runtime reconfiguration, provider/tool/module hot swap, state, policy, cancellation, recovery, and delegation. Excludes prompt-only, generic architecture, vendor CLI/config, and evaluation-only work. |
+| `agent-harness-evaluation` | 74/1,569 | Evaluate agent harness reliability through replay, restart, cancellation, runtime reconfiguration, concurrent generations, rollback, context pressure, and release gates. Excludes generic tests, surveys, and prompt/model-only benchmarks. |
 | `claude-agent-worktrees` | 84/756 | Claude Code sessions coordinate background agents, `claude agents --json`, dispatched-session defaults, worktrees, tmux/iTerm panes, resume/continue/from-pr/fork-session, names and IDs, remote control, and cloud ultrareview runs. |
 | `claude-code` | 69/791 | Claude Code CLI routes local inspection, interactive or print-mode automation, plugin and MCP lifecycle, diagnostics, hooks/settings, background agents, worktrees, sessions, remote control, and ultrareview. |
 | `claude-doctor-debugger` | 83/740 | Claude Code diagnostics isolate install, update, auth, configuration health, broken customizations, safe/bare modes, debug logs, auto-mode, keychain/API-key boundaries, IDE/Chrome integration, doctor warnings, and setup-token failures. |
 | `claude-hooks-settings` | 78/708 | Claude Code settings and hooks are created, audited, or debugged across CLAUDE.md/rules loading, custom agents, tool permissions, output styles, workflows, setting sources, safe/bare modes, and plugin customizations. |
 | `claude-plugin-mcp-manager` | 78/838 | Claude Code plugins and MCP servers are managed across marketplaces, validation, token cost, install/update/remove/prune, session-only sources, MCP approvals, strict config, transports, headers, OAuth, and lifecycle failures. |
 | `claude-print-automation` | 79/840 | Claude Code print-mode runs are prepared or debugged with `claude --print`, text/JSON/stream-json I/O, JSON Schema, budgets, fallback models, no persistence, prompt suggestions, and trusted-directory CI. |
-| `codex-cli` | 71/1,131 | Route Codex CLI operations across skill-catalog diagnostics, CLI inspection, exec/review automation, deferred completion, task supervision, plugin/MCP management, doctor/debug, rollout forensics, and app environments. |
+| `codex-cli` | 71/1,187 | Route Codex CLI operations across skill-catalog diagnostics, CLI inspection, exec/review automation, deferred completion, task supervision, plugin/MCP management, doctor/debug, rollout forensics, and app environments. |
 | `codex-deferred-completion` | 62/1,031 | Complete long-running executable work through an existing atomic JSON terminal receipt, avoiding repeated native-session or remote-status polling and wasted model turns. |
-| `codex-doctor-debugger` | 88/1,084 | Diagnose current Codex CLI health and model-visible skill catalogs: metadata truncation/omission, install, config, auth, sandbox, prompt, app-server, remote-control, and runtime failures. For what an existing task saw, use codex-log-reader. |
+| `codex-doctor-debugger` | 88/1,149 | Diagnose current Codex CLI health and model-visible skill catalogs: metadata truncation/omission, install, config, auth, sandbox, prompt, app-server, remote-control, and runtime failures. For what an existing task saw, use codex-log-reader. |
 | `codex-environments` | 72/995 | Manage Codex app project environments and actions in `.codex/environments/environment.toml`, including Run/Test/Preview buttons, startup commands, launchers, environment variables, and repeatable local commands. |
 | `codex-exec-automation` | 78/1,038 | Automate non-interactive Codex CLI runs with `codex exec`, resume, review, JSONL events, output schemas, last-message files, cwd/profile/config, sandbox/approval modes, and CI. |
 | `codex-log-reader` | 73/1,279 | Inspect Codex rollout JSONL by CODEX_THREAD_ID, cwd, query, issue, project, lineage, malformed or large logs, permission concerns, and "what happened in this task?" forensics. |
 | `codex-plugin-mcp-manager` | 69/1,060 | Manage Codex plugins, local marketplaces, cache visibility, and MCP server list/get/add/remove/login/logout, bearer-token environment bindings, and plugin/MCP installation failures. |
-| `codex-thread-supervisor` | 83/2,954 | Supervise live Codex tasks by ID with cursor waits, attention/completion gates, bounded claims, checkpoints, skill/evidence handoffs, and privacy-safe capability mining. Excludes rollout forensics, current-turn subagents, and external jobs. |
+| `codex-thread-supervisor` | 87/2,803 | Supervise live Codex tasks by ID only on an explicit user monitor/supervise request, using cursor waits, attention/completion gates, bounded claims, checkpoints, and authorized handoffs. Excludes rollout forensics, current-turn subagents, and external jobs. |
 | `credential-handoff` | 73/1,049 | Credential prompts and 1Password CLI: route task-scoped secrets from a human or vault into a target process without exposing values to model context, chat, logs, arguments, or files. Excludes account administration. |
 | `scheduled-automation-runtime` | 78/1,158 | Local scheduler jobs need proof when launchd, systemd, cron, or Windows Task Scheduler differ from manual runs or lack runtime proof. Not for vendor CLI command construction, architecture inventory, cloud schedulers, or job business logic. |
 
@@ -358,11 +358,11 @@ Token cells are shown as `startup/body`.
 | `capability-auditor` | 74/1,770 | Audit capability artifacts for static safety, evidence coverage, duplication, context cost, prompt contracts, dependencies, and install risk. Use capability-evaluation for behavioral baselines and portfolio architect for structural change. |
 | `capability-evaluation` | 74/807 | Evaluate skill, plugin, agent-guidance, or trigger-metadata artifacts against an explicit baseline and representative behavior cases, producing evidence and an adoption decision. Excludes harness reliability and static source/safety audits. |
 | `capability-portfolio-architect` | 76/947 | Reshape skill/plugin portfolios when routing overlaps, capabilities duplicate or disappear, or split/merge/move/delete/router/reference/script boundaries need decisions. Use capability-auditor for single-artifact quality. |
-| `capability-reality-repair` | 73/836 | Repair stale or false skill/script/plugin/MCP contracts when commands, schemas, paths, outputs, dependencies, install state, connector guidance, validators, or docs disagree with live reality. |
-| `capability-synthesizer` | 68/2,270 | Synthesize or strengthen well-vetted agent skills/plugins from broad public sources and local or user-provided candidates, with evidence-backed comparison and adoption/rejection. |
-| `capability-workbench` | 77/2,312 | Route artifact-first agent capability work: frame behavior gaps; choose, evaluate, author, validate, govern, and explicitly activate skill, plugin, guidance, or trigger artifacts. Use Agent Harness for runtime and harness-level evaluation. |
-| `plugin-factory` | 68/1,614 | Build or update marketplace-backed agent plugins with manifests, skill bundles, local marketplace entries, packaging, validation, optional install/cache gates, runtime-discovery status, and Codex deeplinks. |
-| `skill-factory` | 72/1,456 | Create or refactor portable agent skills across SKILL.md bodies, progressive disclosure, scripts/references/assets, packaging, and validation. For name/description-only routing work, use skill-trigger-metadata first. |
+| `capability-reality-repair` | 73/930 | Repair stale or false skill/script/plugin/MCP contracts when commands, schemas, paths, outputs, dependencies, install state, connector guidance, validators, or docs disagree with live reality. |
+| `capability-synthesizer` | 68/2,437 | Synthesize or strengthen well-vetted agent skills/plugins from broad public sources and local or user-provided candidates, with evidence-backed comparison and adoption/rejection. |
+| `capability-workbench` | 77/2,568 | Route artifact-first agent capability work: frame behavior gaps; choose, evaluate, author, validate, govern, and explicitly activate skill, plugin, guidance, or trigger artifacts. Use Agent Harness for runtime and harness-level evaluation. |
+| `plugin-factory` | 68/1,650 | Build or update marketplace-backed agent plugins with manifests, skill bundles, local marketplace entries, packaging, validation, optional install/cache gates, runtime-discovery status, and Codex deeplinks. |
+| `skill-factory` | 72/1,547 | Create or refactor portable agent skills across SKILL.md bodies, progressive disclosure, scripts/references/assets, packaging, and validation. For name/description-only routing work, use skill-trigger-metadata first. |
 | `skill-installer-vetter` | 72/936 | Find, compare, vet, install, or update agent skills from catalogs, GitHub, local folders, or user references with provenance, safety, dependency, capability, and destination checks. |
 | `skill-trigger-metadata` | 74/1,313 | Optimize skill names/descriptions for reliable routing under catalog truncation, omission, and cross-runtime pressure. For instruction, resource, packaging, or installation changes, continue with skill-factory or plugin-factory. |
 

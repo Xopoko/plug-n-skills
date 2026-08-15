@@ -29,7 +29,7 @@ Choose the destination deliberately:
 
 - installed personal skill: agent's global skills dir — Codex: `$HOME/.agents/skills/<skill-name>`, Claude: `${CLAUDE_HOME:-$HOME/.claude}/skills/<skill-name>`, Cursor: `${CURSOR_HOME:-$HOME/.cursor}/skills/<skill-name>`; detect the active agent with `$PLUGIN_ROOT/scripts/agent_target.py`
 - plugin-contained skill: `<plugin-root>/skills/<skill-name>` when the user requested a plugin/plugin pack or the current repository is a plugin source tree
-- repo-local skill: when the user, repo instructions, or workspace profile selects the current/named repository as the source surface; record the evidence in `install-scope.json`
+- repo-local skill: when the user, repo instructions, or workspace profile selects the current/named repository as the source surface; for unambiguous source-only work with `install_required=false`, record the evidence in a short inline scope note and do not create `install-scope.json`
 - synthesis snapshot: `<output-dir>/synthesized-skill` only for reference-only drafts, failed/partial synthesis, or an explicit no-install request
 
 Keep names lowercase, hyphenated, and under 64 characters.
@@ -116,6 +116,8 @@ python3 "$PLUGIN_ROOT/scripts/synthesis/install_scope_gate.py" <output-dir>/inst
 ```
 
 For lightweight edits confined to one existing skill's text or metadata — no new scripts, no installation, no new capability claims — `quick_validate.py` plus a one-line scope note in the report replaces the ledgers.
+
+For other unambiguous repo-local source-only skill work with `install_required=false`, the inline scope note replaces only the install-scope ledger. Ambiguous scope, global/install/update/activation intent, or a real machine consumer requires the ledger after target paths and policy are stable; validate it before activation and with `--final` at delivery.
 
 ## Report
 

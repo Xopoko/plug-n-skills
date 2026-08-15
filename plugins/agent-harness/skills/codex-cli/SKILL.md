@@ -38,9 +38,10 @@ runtime arguments instead.
 - Long-running executables with an existing producer-native atomic JSON terminal receipt that would otherwise require repeated process or remote-status polling: use `codex-deferred-completion`.
 - Installed plugin marketplaces, plugin add/list/remove, local marketplace refresh, MCP server list/get/add/remove/login/logout: use `codex-plugin-mcp-manager`.
 - Installation health, config/auth/runtime issues, feature flags, sandbox denials, debug models, model-visible skill catalog budgets, shortened/omitted skill metadata, app-server, remote control, or experimental server transports: use `codex-doctor-debugger`.
-- Live Codex task or thread watching by ID, including cursor-based transition waits, canonical checkpoint adoption guardrails, completion or attention gates, claims in the actively supervised task, narrowly authorized skill handoffs or evidence corrections, or capability mining from that live watch: use `codex-thread-supervisor`.
+- When the user explicitly asks to monitor or supervise a live Codex task by ID, including cursor-based transition waits, canonical checkpoint adoption guardrails, completion or attention gates, claims in the actively supervised task, or narrowly authorized skill handoffs or evidence corrections: use `codex-thread-supervisor`.
 - CODEX_THREAD_ID lookup, rollout JSONL, "what happened in that Codex thread", the skill catalog recorded for an existing task, malformed logs, huge logs, or safe redacted session summaries: use `codex-log-reader`.
 - `.codex/environments/environment.toml`, Codex app Run/Test/Preview actions, startup commands, long-running dev servers, or repeatable local project actions: use `codex-environments`.
+- If Codex starts normally and the question is update-channel eligibility or a custom scheduled updater's freshness, inspect the updater that owns channel selection and use `scheduled-automation-runtime` for native scheduler proof; do not route that adjacent problem to `codex-doctor-debugger`.
 
 If several apply, start with health/surface inspection, then choose the narrow
 workflow skill. For a failing non-interactive run, inspect the command with

@@ -10,11 +10,11 @@ description: >-
 
 Bundled commands use `$PLUGIN_ROOT` (`$env:PLUGIN_ROOT` in PowerShell; same path suffix) for the plugin root. Set it once: use the host's plugin-root variable when defined (Claude Code: `PLUGIN_ROOT="$CLAUDE_PLUGIN_ROOT"`), otherwise the absolute path of this skill folder's `../..`.
 
-Treat a false skill, plugin, script, or MCP contract as an urgent capability defect. The target is not to work around the bad instruction once; the target is to repair the source that made the agent wrong so the same failure does not recur.
+Treat a false skill, plugin, script, or MCP contract as a capability defect. The target is not to work around the bad instruction once; the target is to repair the source that made the agent wrong so the same failure does not recur, while keeping the user's requested outcome primary.
 
 ## Trigger
 
-Use this immediately when current work exposes a mismatch between a capability artifact and reality:
+Use this when current work produces direct evidence of a mismatch between a capability artifact and reality:
 
 - A `SKILL.md`, reference, `agents/openai.yaml`, plugin manifest, MCP schema, tool description, or connector instruction names a false command, flag, field, path, dependency, output shape, install state, auth flow, API contract, or workflow.
 - A bundled script, validator, installer, generator, CLI wrapper, or helper gives false guidance, crashes on its documented input, parses the wrong output, uses a stale schema, or succeeds while checking the wrong thing.
@@ -26,11 +26,11 @@ Do not trigger on ordinary target-project bugs, third-party outages, missing use
 
 ## Priority Rule
 
-Repair is urgent. If the discrepancy is confirmed and the source is writable, fix it in the same turn before finalizing the original task.
+The user's requested outcome remains primary.
 
-Only defer when the canonical source cannot be found, the source is read-only or externally owned, the repair would require destructive migration, or the original task has a higher explicit safety or production deadline.
+Repair in the same turn only when a confirmed capability defect blocks or materially distorts that outcome and the canonical fix is bounded, authorized, and testable. Do not count capability maintenance as progress on the original task.
 
-If deferred, leave a concrete patch plan and exact evidence needed.
+Otherwise finish or safely checkpoint the original task, preserve the exact contradiction, and leave a precise repair handoff. Also defer when the canonical source cannot be found, the source is read-only or externally owned, or the repair would require destructive migration or broader authority.
 
 ## Repair Loop
 
@@ -48,6 +48,7 @@ If deferred, leave a concrete patch plan and exact evidence needed.
 - Do not create broad rewrites when a focused contract update and regression check solve the problem.
 - Do not install unknown third-party code or run opaque candidate scripts just to compare behavior.
 - Do not silently ignore a capability defect because the original user request was about something else.
+- Do not spawn a repair agent from suspicion alone. Delegate only after the false claim, contradictory evidence, canonical source, allowed scope, and validation target are explicit.
 
 ## Done
 
@@ -57,5 +58,7 @@ The repair is complete only when:
 - the live behavior or authoritative proof is recorded in work notes or final response;
 - the relevant validator, script test, smoke command, install/cache check, or runtime-discovery probe passed or the blocker is explicit;
 - the original task can continue without relying on the stale contract.
+
+A deferred repair is not complete. Report its exact evidence, source, smallest patch, and validation target without presenting maintenance as progress on the original task.
 
 Use `$PLUGIN_ROOT/references/reality-repair.md` for source-selection order, repair examples, and defer/rollback details.

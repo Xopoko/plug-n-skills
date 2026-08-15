@@ -43,14 +43,11 @@ Use `$PLUGIN_ROOT/references/install-scope.md` to choose the source/edit surface
 
 For target binding, a named skill/plugin is the primary target by default. A current plugin/skill source repository may be the edit target when the request, repo instructions, or workspace profile indicate that capability artifacts should be authored there.
 
+Choose the delivery surface early. If the request is unambiguously repo-local and source-only with `install_required=false`, the target contract plus a short inline scope note is sufficient; do not create `install-scope.json`. This exemption applies only to the install-scope ledger and does not relax external-discovery or other synthesis gates.
+
 ## Hard Gate
 
-For `new-skill`, `augment-existing`, and `plugin-pack` synthesis, create installation-scope and external-discovery ledgers before editing the target skill/plugin:
-
-```bash
-python3 "$PLUGIN_ROOT/scripts/synthesis/install_scope_gate.py" --template > <output-dir>/install-scope.json
-python3 "$PLUGIN_ROOT/scripts/synthesis/install_scope_gate.py" <output-dir>/install-scope.json
-```
+For `new-skill`, `augment-existing`, and `plugin-pack` synthesis, create and validate the external-discovery ledger before editing the target skill/plugin:
 
 ```bash
 python3 "$PLUGIN_ROOT/scripts/synthesis/external_discovery_gate.py" --template > <output-dir>/external-discovery-ledger.json
@@ -59,7 +56,14 @@ python3 "$PLUGIN_ROOT/scripts/synthesis/external_discovery_gate.py" <output-dir>
 
 Do not call the result complete unless the gate validates `status=complete`, `breadth=external-broad`, and `stop_condition=diminishing_returns`. If the gate is partial or skipped, the final answer and reports must say `external_discovery_partial` or `local_only`, and must not claim broad validation.
 
-Do not call an output complete until `install-scope.json` validates the selected delivery surface and `install_scope_gate.py --final` passes. Use `repo-local` for source artifacts in a selected repository and `install_required=false` unless the user asked for activation. Use `global-agent` when the requested result is an installed personal/global capability or no repository source surface is selected; detect the active agent (Codex, Claude, or Cursor) with `$PLUGIN_ROOT/scripts/agent_target.py`.
+An install-scope ledger is required when scope is ambiguous, the request has global/install/update/activation intent, or the result targets a real machine consumer such as an agent home, marketplace, cache, or machine configuration. Once destination paths and policy are stable, persist and validate it before activation or final delivery:
+
+```bash
+python3 "$PLUGIN_ROOT/scripts/synthesis/install_scope_gate.py" --template > <output-dir>/install-scope.json
+python3 "$PLUGIN_ROOT/scripts/synthesis/install_scope_gate.py" <output-dir>/install-scope.json
+```
+
+When the ledger is required, do not call an output complete until `install_scope_gate.py --final` passes. Use `repo-local` for source artifacts in a selected repository and `install_required=false` unless the user asked for activation. Use `global-agent` when the requested result is an installed personal/global capability or no repository source surface is selected; detect the active agent (Codex, Claude, or Cursor) with `$PLUGIN_ROOT/scripts/agent_target.py`.
 
 Official docs lookup, Context7 docs, or one search query is not enough. It can be one source family, but ready-made public skills/plugins/MCP servers/community implementations still need discovery unless blocked.
 
@@ -136,7 +140,7 @@ If no output directory is provided, write reports and ledgers to `./skill-synthe
 - `safety-vetting-report.md`
 - `capability-matrix.md`
 - `distillation-plan.md`
-- `install-scope.json`
+- `install-scope.json` when the ledger is required; otherwise a short inline repo-local source-only scope note in `synthesis-changelog.md`
 - final skill/plugin/MCP capability path on the selected delivery surface, plus installed/cache-equivalence proof only when `install_required=true` and a separate runtime-discovery state
 - `synthesis-changelog.md`
 
@@ -154,8 +158,8 @@ Before finalizing:
 6. Confirm external mechanisms have an applicability mapping or are explicitly deferred.
 7. Search final artifacts for TODOs, duplicated logic, unsafe examples, and stale mode statements.
 8. Confirm external discovery reached diminishing returns or mark the output partial.
-9. Confirm the final artifact is delivered to the validated surface and installed only when `install_required=true`.
-10. Run `python3 "$PLUGIN_ROOT/scripts/synthesis/install_scope_gate.py" <output-dir>/install-scope.json --final`.
+9. Confirm the final artifact is delivered to the selected surface and installed only when `install_required=true`.
+10. When the install-scope ledger is required, run `python3 "$PLUGIN_ROOT/scripts/synthesis/install_scope_gate.py" <output-dir>/install-scope.json --final`; otherwise confirm the inline repo-local source-only scope note is present.
 11. Run skill validators and resource tests.
 12. If adoption depends on changed agent behavior rather than artifact structure, hand the frozen candidate, baseline, cases, and decision rule to `capability-evaluation`; do not promote static validation into behavioral proof.
 13. For plugin-pack mode, run plugin manifest validation and install/cache checks with `plugin-factory`; keep runtime discovery separate.

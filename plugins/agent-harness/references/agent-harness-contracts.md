@@ -31,15 +31,27 @@ record, a device action, or another verifiable result.
 | oracle | Procedure that judges post-state, artifacts, or required and forbidden behavior. |
 | evidence claim | Assertion paired with its scope, evidence grade, source pointers, and known limits. |
 
-## Required Artifacts
+## Consumer-Driven Artifacts
 
-Every implementation or material revision should produce three separately
-versioned artifacts. A diagram or README may explain them, but does not replace
-their machine-readable fields.
+Persistent plans, schemas, manifests, and receipts are control surfaces, not
+default work products. Create them only when a named downstream consumer will
+use them for a new harness, material control-plane revision, repeated campaign,
+release gate, or durable independent handoff or review. A bounded diagnosis,
+fix, incident, or sampled ablation may instead use an inline checklist and
+direct tests or oracles.
+
+The owning release, handoff, or review record names the consumer and acceptance
+action, using fields already allowed by the artifact schema or a separate
+invoking record. Do not add undeclared fields to a closed schema. Track
+`created`, `adopted`, `executed`, and `accepted` separately: creation proves
+none of the later lifecycle states.
 
 ### Design artifact
 
 Suggested schema: `agent_harness.design.v1`.
+
+Use it only for a new harness, a material control-plane revision, or a durable
+release or handoff claim with a real consumer.
 
 Record at least:
 
@@ -67,6 +79,10 @@ swap.
 
 Suggested schema: `agent_harness.evaluation_plan.v1`.
 
+Use it only for a repeated evaluation campaign, release gate, or durable
+independent review with a real consumer. Keep a bounded incident or sampled
+ablation inline when no durable consumer exists.
+
 Record at least:
 
 - the complete versioned system tuple, not only the model name;
@@ -82,6 +98,9 @@ Record at least:
 
 Suggested schema: `agent_harness.run_result.v1`.
 
+Persist it only when it is consumed by a warranted evaluation plan, release
+gate, or durable independent review.
+
 Record at least:
 
 - `run_id`, optional `parent_run_id`, scenario ID, and system-tuple digest;
@@ -96,6 +115,10 @@ Record at least:
 
 Do not overwrite a completed result to improve an outcome. Append a superseding
 evaluation or create a new run and preserve the relationship.
+
+Generate any validation receipt after every artifact in its input set is
+stable. The receipt and any receipt-derived files are excluded from the hash
+universe the receipt attests; otherwise its own digest is recursive or stale.
 
 ## Validator-Facing Shapes
 
@@ -314,6 +337,12 @@ not a terminal outcome.
 The terminal event must identify unresolved side effects. After it is committed,
 the harness must reject new intents for that run. A recovery process may append
 diagnostic or audit facts but must not silently change the terminal outcome.
+
+Keep the user outcome separate from harness tax. Once independent external
+evidence satisfies the requested outcome, latch `succeeded` and stop unless a
+named unresolved risk threatens that outcome. Productization, automation,
+generalization, or release work requires renewed scope. Do not keep an
+always-on observer running to discover possible follow-on work.
 
 ## Trust, Authority, And Side Effects
 
