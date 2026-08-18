@@ -41,11 +41,19 @@ SKIP_DIRS = {".git", "__pycache__", "node_modules", ".build", "dist", "build"}
 
 
 def load_encoder(name: str):
+    """Return an exact encoder, or fall back to approximation with a stated reason."""
     try:
         import tiktoken  # type: ignore
-
+    except ImportError:
+        return None, "approx"
+    try:
         return tiktoken.get_encoding(name), "exact"
-    except Exception:
+    except Exception as exc:  # noqa: BLE001 - tiktoken raises library-specific errors.
+        print(
+            f"warning: tiktoken encoding {name!r} unavailable, "
+            f"falling back to approximate counts: {exc}",
+            file=sys.stderr,
+        )
         return None, "approx"
 
 
@@ -72,10 +80,10 @@ def read_text(path: Path) -> str | None:
     except UnicodeDecodeError:
         try:
             return path.read_text(encoding="utf-8", errors="replace")
-        except Exception as exc:
+        except OSError as exc:
             print(f"warning: skipped unreadable file {path}: {exc}", file=sys.stderr)
             return None
-    except Exception as exc:
+    except OSError as exc:
         print(f"warning: skipped unreadable file {path}: {exc}", file=sys.stderr)
         return None
 

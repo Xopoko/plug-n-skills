@@ -240,7 +240,7 @@ def display_path(path: Path | str, env_home: Path, project: Path | None) -> str:
         try:
             rel = raw.resolve().relative_to(root.expanduser().resolve())
             return str(Path(prefix) / rel)
-        except Exception:
+        except (OSError, ValueError):
             continue
     return str(path)
 
@@ -250,7 +250,7 @@ def abbreviate_home(path: Path | str) -> str:
     try:
         rel = raw.resolve().relative_to(Path.home().resolve())
         return str(Path("~") / rel)
-    except Exception:
+    except (OSError, ValueError):
         return str(path)
 
 
@@ -532,7 +532,7 @@ def memory_files(env: AgentEnvironment, project: Path | None) -> list[Path]:
 def plugin_cache_identity(path: Path, cache_root: Path) -> tuple[str, str, str] | None:
     try:
         relative = path.absolute().relative_to(cache_root.absolute())
-    except Exception:
+    except (OSError, ValueError):
         return None
     if len(relative.parts) < 3:
         return None
@@ -573,7 +573,7 @@ def filter_configured_plugin_paths(paths: Iterable[Path], env: AgentEnvironment,
             continue
         try:
             identity = path.resolve()
-        except Exception:
+        except OSError:
             identity = path
         if identity in seen:
             continue
@@ -591,7 +591,7 @@ def is_primary_plugin_manifest(path: Path, env: AgentEnvironment, inventory: Plu
         return False
     try:
         relative = path.absolute().relative_to(cache_root.absolute())
-    except Exception:
+    except (OSError, ValueError):
         return False
     return relative.parts[3:] == (".codex-plugin", "plugin.json")
 
@@ -616,7 +616,7 @@ def plugin_name_for_skill(path: Path) -> str | None:
     try:
         cache_index = parts.index("cache")
         return parts[cache_index + 2]
-    except Exception:
+    except (IndexError, ValueError):
         return None
 
 
@@ -626,17 +626,17 @@ def skill_source(path: Path, env: AgentEnvironment) -> str:
         try:
             cache_index = parts.index("cache")
             return f"plugin:{parts[cache_index + 1]}/{parts[cache_index + 2]}"
-        except Exception:
+        except (IndexError, ValueError):
             return "plugin-cache"
     try:
         path.resolve().relative_to((env.home / "skills" / ".system").resolve())
         return "system-skill"
-    except Exception:
+    except (OSError, ValueError):
         pass
     try:
         path.resolve().relative_to((env.home / "skills").resolve())
         return "user-skill"
-    except Exception:
+    except (OSError, ValueError):
         return "project-or-shared-skill"
 
 
@@ -952,7 +952,7 @@ def parse_claude_mcp_json(path: Path, env: AgentEnvironment, project: Path | Non
         return []
     try:
         data = json.loads(text)
-    except Exception:
+    except ValueError:
         return []
     servers = data.get("mcpServers") or data.get("mcp_servers") or {}
     if not isinstance(servers, dict):
@@ -1185,14 +1185,14 @@ def parse_codex_session(path: Path) -> SessionSummary | None:
     calls = 0
     try:
         lines = path.read_text(encoding="utf-8", errors="replace").splitlines()
-    except Exception:
+    except OSError:
         return None
     for raw in lines:
         if not raw.strip():
             continue
         try:
             obj = json.loads(raw)
-        except Exception:
+        except ValueError:
             continue
         payload = obj.get("payload") if isinstance(obj.get("payload"), dict) else {}
         if obj.get("type") == "session_meta":
@@ -1220,14 +1220,14 @@ def parse_claude_session(path: Path) -> SessionSummary | None:
     calls = 0
     try:
         lines = path.read_text(encoding="utf-8", errors="replace").splitlines()
-    except Exception:
+    except OSError:
         return None
     for raw in lines:
         if not raw.strip():
             continue
         try:
             obj = json.loads(raw)
-        except Exception:
+        except ValueError:
             continue
         if session_id is None and isinstance(obj.get("sessionId"), str):
             session_id = obj["sessionId"]
