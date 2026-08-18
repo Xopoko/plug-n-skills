@@ -411,9 +411,9 @@ def _parse_github_response(raw_response: Any, url: str) -> dict[str, Any]:
         try:
             payload = json.loads(
                 raw_response,
-                object_pairs_hook=_reject_duplicate_json_keys,
+                object_pairs_hook=lockfile_json.object_pairs,
             )
-        except (json.JSONDecodeError, ValidationError) as exc:
+        except (json.JSONDecodeError, lockfile_json.StrictJsonError) as exc:
             raise SourceVerificationError(
                 f"GitHub returned invalid JSON metadata for {url}: {exc}"
             ) from exc

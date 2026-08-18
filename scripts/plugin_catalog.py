@@ -322,8 +322,8 @@ def generate_receipt(root: Path | str, name: str, source: Path | str) -> Path:
     for path, key in ((".codex-plugin/plugin.json", "codexSha256"), (".claude-plugin/plugin.json", "claudeSha256")):
         if hashlib.sha256(blob(path)).hexdigest() != plugin["manifest"][key]:
             raise SourceError(f"{name}: {key} mismatch")
-    codex = json.loads(blob(".codex-plugin/plugin.json").decode("utf-8"), object_pairs_hook=_pairs)
-    claude = json.loads(blob(".claude-plugin/plugin.json").decode("utf-8"), object_pairs_hook=_pairs)
+    codex = json.loads(blob(".codex-plugin/plugin.json").decode("utf-8"), object_pairs_hook=lockfile_json.object_pairs)
+    claude = json.loads(blob(".claude-plugin/plugin.json").decode("utf-8"), object_pairs_hook=lockfile_json.object_pairs)
     for label, manifest in (("Codex", codex), ("Claude", claude)):
         if manifest.get("name") != name or manifest.get("version") != plugin["manifest"]["version"] or manifest.get("license") != "MIT":
             raise SourceError(f"{name}: {label} manifest identity mismatch")
