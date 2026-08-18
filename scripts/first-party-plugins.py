@@ -9,6 +9,7 @@ import sys
 from pathlib import Path
 
 import plugin_catalog as catalog
+from plugin_registry import repo_root
 
 
 def parser() -> argparse.ArgumentParser:
@@ -28,7 +29,7 @@ def parser() -> argparse.ArgumentParser:
 
 def main(argv: list[str] | None = None) -> int:
     args = parser().parse_args(argv)
-    root = getattr(args, "root", Path(__file__).resolve().parents[1])
+    root = getattr(args, "root", repo_root())
     try:
         payload = None if args.command == "receipt" else catalog.validate_catalog(root)
         if args.command == "validate": print(f"first-party catalog valid: {len(payload['publishers'])} publishers, {len(payload['plugins'])} plugins")

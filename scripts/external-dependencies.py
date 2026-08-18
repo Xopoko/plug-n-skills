@@ -15,6 +15,10 @@ from typing import Any, Callable, Mapping, Sequence
 from urllib.error import HTTPError, URLError
 from urllib.request import Request, urlopen
 
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+import lockfile_json  # noqa: E402
+from plugin_registry import repo_root  # noqa: E402
+
 
 LOCKFILE_NAME = "external-dependencies.lock.json"
 REPORT_PREFIX = ("docs", "external-dependencies")
@@ -45,12 +49,9 @@ RECEIPT_KEYS = {
     "reportSha256",
 }
 
-KEBAB_CASE_RE = re.compile(r"^[a-z][a-z0-9]*(?:-[a-z0-9]+)*$")
-SHA_RE = re.compile(r"^[0-9a-f]{40}$")
-GITHUB_REPOSITORY_RE = re.compile(
-    r"^[A-Za-z0-9](?:[A-Za-z0-9-]{0,37}[A-Za-z0-9])?/"
-    r"[A-Za-z0-9](?:[A-Za-z0-9._-]{0,98}[A-Za-z0-9])?$"
-)
+KEBAB_CASE_RE = lockfile_json.KEBAB_CASE_RE
+SHA_RE = lockfile_json.SHA1_RE
+GITHUB_REPOSITORY_RE = lockfile_json.GITHUB_REPOSITORY_RE
 SPDXISH_RE = re.compile(
     r"^[A-Za-z0-9][A-Za-z0-9.+-]*"
     r"(?: (?:AND|OR|WITH) [A-Za-z0-9][A-Za-z0-9.+-]*)*$"
@@ -72,10 +73,6 @@ class ValidationError(ValueError):
 
 class SourceVerificationError(RuntimeError):
     """Raised when pinned GitHub source identity cannot be proven."""
-
-
-def repo_root() -> Path:
-    return Path(__file__).resolve().parents[1]
 
 
 def _fail(location: str, message: str) -> None:
@@ -131,30 +128,11 @@ def _path_under_root(root: Path, relative: PurePosixPath) -> Path:
     return root.joinpath(*relative.parts)
 
 
-def _reject_duplicate_json_keys(pairs: list[tuple[str, Any]]) -> dict[str, Any]:
-    result: dict[str, Any] = {}
-    for key, value in pairs:
-        if key in result:
-            raise ValidationError(f"JSON object: duplicate key {key!r}")
-        result[key] = value
-    return result
-
-
 def _load_json(path: Path, location: str) -> dict[str, Any]:
-    if not path.is_file():
-        raise ValidationError(f"{location}: does not exist or is not a file: {path}")
     try:
-        text = path.read_text(encoding="utf-8")
-        payload = json.loads(text, object_pairs_hook=_reject_duplicate_json_keys)
-    except ValidationError:
-        raise
-    except (OSError, UnicodeError, json.JSONDecodeError) as exc:
-        raise ValidationError(
-            f"{location}: cannot read valid nonblank UTF-8 JSON from {path}: {exc}"
-        ) from exc
-    if not isinstance(payload, dict):
-        raise ValidationError(f"{location}: must contain a JSON object")
-    return payload
+        return lockfile_json.load_object(path, location, require_file=True)
+    except lockfile_json.StrictJsonError as exc:
+        raise ValidationError(str(exc)) from exc
 
 
 def _validate_source(value: Any, location: str) -> tuple[str, str, str, str]:

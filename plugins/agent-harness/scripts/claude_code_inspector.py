@@ -5,12 +5,19 @@ from __future__ import annotations
 
 import argparse
 import json
-import os
 import re
-import shutil
-import subprocess
+import sys
 from pathlib import Path
 from typing import Any
+
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+from cli_inspection import (  # noqa: E402
+    clip,
+    parse_commands,
+    parse_options,
+    resolve_executable,
+    run_cli,
+)
 
 
 DEFAULT_COMMANDS = [
@@ -53,97 +60,15 @@ MUTATING_COMMANDS = {
     "ultrareview",
 }
 
-
-def clip(text: str, max_chars: int = 2000) -> str:
-    normalized = re.sub(r"\s+", " ", text).strip()
-    if len(normalized) > max_chars:
-        return normalized[: max_chars - 3].rstrip() + "..."
-    return normalized
+COMMAND_ENTRY_RE = re.compile(r"^  ([A-Za-z][A-Za-z0-9-]*(?:\|[A-Za-z0-9-]+)?)(?:\s|$)")
 
 
 def resolve_claude(explicit: str | None) -> str:
-    candidates = [
-        explicit,
-        os.environ.get("CLAUDE_CLI"),
-        shutil.which("claude"),
-    ]
-    for raw in candidates:
-        if not raw:
-            continue
-        path = Path(raw).expanduser()
-        if path.exists():
-            return str(path)
-        if os.sep not in raw and shutil.which(raw):
-            return str(shutil.which(raw))
-    raise SystemExit("claude executable not found; pass --claude or set CLAUDE_CLI")
+    return resolve_executable(explicit, program="claude", env_var="CLAUDE_CLI", flag="--claude")
 
 
 def run_claude(claude: str, args: list[str], timeout: float) -> dict[str, Any]:
-    command = [claude, *args]
-    try:
-        completed = subprocess.run(
-            command,
-            text=True,
-            stdout=subprocess.PIPE,
-            stderr=subprocess.PIPE,
-            timeout=timeout,
-            check=False,
-        )
-    except subprocess.TimeoutExpired as exc:
-        return {
-            "command": command,
-            "ok": False,
-            "returncode": None,
-            "stdout": clip(exc.stdout or ""),
-            "stderr": "timeout",
-        }
-    except OSError as exc:
-        return {
-            "command": command,
-            "ok": False,
-            "returncode": None,
-            "stdout": "",
-            "stderr": str(exc),
-        }
-    return {
-        "command": command,
-        "ok": completed.returncode == 0,
-        "returncode": completed.returncode,
-        "stdout": completed.stdout,
-        "stderr": completed.stderr,
-    }
-
-
-def parse_commands(help_text: str) -> list[str]:
-    commands: list[str] = []
-    in_commands = False
-    for line in help_text.splitlines():
-        if line.strip() == "Commands:":
-            in_commands = True
-            continue
-        if in_commands:
-            stripped = line.strip()
-            if not stripped:
-                continue
-            if stripped == "Options:":
-                break
-            if stripped.endswith(":"):
-                continue
-            match = re.match(r"^  ([A-Za-z][A-Za-z0-9-]*(?:\|[A-Za-z0-9-]+)?)(?:\s|$)", line)
-            if match:
-                commands.append(match.group(1))
-    return commands
-
-
-def parse_options(help_text: str) -> list[str]:
-    options: set[str] = set()
-    for line in help_text.splitlines():
-        for match in re.finditer(r"(?<![\w-])--[A-Za-z0-9][A-Za-z0-9-]*", line):
-            options.add(match.group(0))
-        short = re.match(r"\s*(-[A-Za-z]),", line)
-        if short:
-            options.add(short.group(1))
-    return sorted(options)
+    return run_cli(claude, args, timeout)
 
 
 def parse_choices(help_text: str, option: str) -> list[str]:
@@ -170,7 +95,7 @@ def parse_choices(help_text: str, option: str) -> list[str]:
 
 def summarize_help(help_text: str) -> dict[str, Any]:
     options = parse_options(help_text)
-    commands = parse_commands(help_text)
+    commands = parse_commands(help_text, COMMAND_ENTRY_RE, stop_on_blank=False)
     dangerous = [flag for flag in DANGEROUS_FLAGS if flag in help_text]
     permission_modes = parse_choices(help_text, "--permission-mode")
     output_formats = parse_choices(help_text, "--output-format")

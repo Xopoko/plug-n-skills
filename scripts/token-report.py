@@ -13,6 +13,7 @@ from typing import Any
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 import plugin_catalog  # noqa: E402
+from plugin_registry import repo_root  # noqa: E402
 
 
 ENCODING_NAME = "o200k_base"
@@ -39,10 +40,6 @@ class PluginReport:
     source_routing_tokens: int
     published_url_routing_tokens: int | None
     body_tokens: int
-
-
-def repo_root() -> Path:
-    return Path(__file__).resolve().parents[1]
 
 
 def load_encoder() -> Any:

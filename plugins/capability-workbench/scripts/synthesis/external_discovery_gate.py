@@ -9,6 +9,14 @@ import sys
 from pathlib import Path
 from typing import Any
 
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+from ledger_gate import (  # noqa: E402
+    check_schema,
+    emit_result,
+    load_json,
+    non_empty_list,
+)
+
 
 SCHEMA = "capability.external_discovery.v1"
 DEPRECATED_SCHEMAS = {"codex.external_discovery.v1"}
@@ -41,29 +49,11 @@ TEMPLATE = {
 }
 
 
-def load_json(path: Path) -> dict[str, Any]:
-    try:
-        data = json.loads(path.read_text(encoding="utf-8"))
-    except Exception as exc:
-        raise SystemExit(f"invalid_json:{path}:{exc}") from exc
-    if not isinstance(data, dict):
-        raise SystemExit("ledger_must_be_object")
-    return data
-
-
-def non_empty_list(value: Any) -> bool:
-    return isinstance(value, list) and any(value)
-
-
 def validate(data: dict[str, Any]) -> tuple[list[str], list[str]]:
     errors: list[str] = []
     warnings: list[str] = []
 
-    schema = data.get("schema")
-    if schema in DEPRECATED_SCHEMAS:
-        warnings.append(f"schema_{schema}_is_deprecated_use_{SCHEMA}")
-    elif schema != SCHEMA:
-        errors.append(f"schema_must_be_{SCHEMA}")
+    check_schema(data, SCHEMA, DEPRECATED_SCHEMAS, errors, warnings)
 
     breadth = data.get("breadth")
     status = data.get("status")
@@ -148,11 +138,7 @@ def main() -> int:
         "breadth": data.get("breadth"),
         "stop_condition": data.get("stop_condition"),
     }
-    if args.json:
-        print(json.dumps(result, indent=2, ensure_ascii=False))
-    else:
-        print(json.dumps(result, ensure_ascii=False))
-    return 0 if not errors else 1
+    return emit_result(result, indent=args.json)
 
 
 if __name__ == "__main__":

@@ -263,7 +263,7 @@ a prompt or makes visible to a model at runtime.
 | Plugin packs | 17 | - | Local packages plus immutable standalone first-party catalog entries. |
 | Skill entrypoints | 200 | - | `SKILL.md` files catalogued in local source or immutable receipts. |
 | Reference files | 278 | - | Longer ledgers, contracts, scorecards, and source notes. |
-| Script/support files | 100 | - | All regular files below `scripts/`, including helpers, templates, and manifests. |
+| Script/support files | 102 | - | All regular files below `scripts/`, including helpers, templates, and manifests. |
 | Source-relative routing estimate | 200 skills | 13,115 | Skill name, description, and plugin-relative `skills/.../SKILL.md` path; comparable across local and standalone sources. |
 | Published first-party URL locator snapshot | 81 skills | 8,175 | Receipt values that serialize immutable GitHub blob URLs; preserved separately and not added to the source-relative total. |
 | Skill body source estimate | 200 skills | 147,830 | Body text after frontmatter; not proof that a host loads it, or when. |
@@ -285,8 +285,8 @@ immutable GitHub locator snapshot.
 
 | Plugin | Skills | Refs | Script/support files | Source routing | Published URL routing | Body source |
 | --- | ---: | ---: | ---: | ---: | ---: | ---: |
-| `agent-harness` | 19 | 19 | 7 | 1,337 | - | 20,968 |
-| `capability-workbench` | 11 | 18 | 25 | 730 | - | 14,383 |
+| `agent-harness` | 19 | 19 | 8 | 1,337 | - | 20,968 |
+| `capability-workbench` | 11 | 18 | 26 | 730 | - | 14,383 |
 | `context-density` | 1 | 9 | 8 | 66 | - | 2,888 |
 | `i-have-adhd` | 1 | 1 | 0 | 73 | - | 588 |
 | `git-workflows` | 5 | 10 | 6 | 391 | - | 7,339 |
