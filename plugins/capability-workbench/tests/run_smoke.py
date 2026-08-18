@@ -1987,6 +1987,98 @@ def test_install_skill_default_dest() -> None:
         )
 
 
+def _load_module(name: str, path: Path):
+    spec = importlib.util.spec_from_file_location(name, path)
+    assert spec is not None and spec.loader is not None
+    module = importlib.util.module_from_spec(spec)
+    sys.modules[name] = module
+    spec.loader.exec_module(module)
+    return module
+
+
+def test_github_request_hardening() -> None:
+    """github_utils only talks HTTPS to allowlisted GitHub hosts."""
+    install_dir = SCRIPTS / "install"
+    sys.path.insert(0, str(install_dir))
+    try:
+        github_utils = _load_module("github_utils", install_dir / "github_utils.py")
+    finally:
+        sys.path.remove(str(install_dir))
+
+    for url in (
+        "http://api.github.com/repos/o/r",
+        "https://api.github.com.evil.test/repos/o/r",
+        "https://user:pass@api.github.com/repos/o/r",
+        "file:///etc/passwd",
+    ):
+        try:
+            github_utils.assert_allowlisted_url(url)
+            rejected = False
+        except github_utils.GitHubRequestError:
+            rejected = True
+        check(f"github_utils: rejects {url}", rejected)
+
+    github_utils.assert_allowlisted_url("https://codeload.github.com/o/r/zip/main")
+    check("github_utils: accepts codeload HTTPS", True)
+
+    contents_url = github_utils.github_api_contents_url(
+        "owner/repo", "skills/.curated", "main"
+    )
+    check(
+        "github_utils: builds contents URL",
+        contents_url
+        == "https://api.github.com/repos/owner/repo/contents/skills/.curated?ref=main",
+        contents_url,
+    )
+
+    for repo, path in (("owner/../../orgs", "skills"), ("owner/repo", "a/../../b")):
+        try:
+            github_utils.github_api_contents_url(repo, path, "main")
+            rejected = False
+        except github_utils.GitHubRequestError:
+            rejected = True
+        check(f"github_utils: rejects traversal in {repo} {path}", rejected)
+
+    for value in ("--upload-pack=touch", "..", "main;rm"):
+        try:
+            github_utils.validate_path_segment(value, "ref")
+            rejected = False
+        except github_utils.GitHubRequestError:
+            rejected = True
+        check(f"github_utils: rejects unsafe segment {value!r}", rejected)
+
+    redirect_handler = github_utils._AllowlistedRedirectHandler()
+    try:
+        redirect_handler.redirect_request(
+            None, None, 302, "Found", {}, "https://evil.test/steal"
+        )
+        rejected = False
+    except github_utils.GitHubRequestError:
+        rejected = True
+    check("github_utils: blocks off-GitHub redirect", rejected)
+
+
+def test_install_skill_argument_hardening() -> None:
+    """install-skill-from-github rejects option-like refs and unsafe paths."""
+    install_dir = SCRIPTS / "install"
+    sys.path.insert(0, str(install_dir))
+    try:
+        module = _load_module("isg_hardening", install_dir / "install-skill-from-github.py")
+    finally:
+        sys.path.remove(str(install_dir))
+
+    for argv in (
+        ["--repo", "owner/repo", "--path", "skills/one", "--ref=--upload-pack=touch"],
+        ["--repo", "owner/repo", "--path=--output=touch"],
+        ["--repo", "owner/repo", "--path", "../../etc"],
+        ["--url", "https://evil.test/owner/repo", "--path", "skills/one"],
+    ):
+        check(
+            f"install-skill-from-github: rejects {' '.join(argv)}",
+            module.main(argv) == 1,
+        )
+
+
 def test_codex_cli_plugin_cache_locator() -> None:
     plugin_dir = SCRIPTS / "plugin"
     snippet = (
@@ -2490,6 +2582,8 @@ def main() -> int:
         test_capability_inventory,
         test_agent_target,
         test_install_skill_default_dest,
+        test_github_request_hardening,
+        test_install_skill_argument_hardening,
         test_codex_cli_plugin_cache_locator,
         test_immutable_cache_publication,
         test_audit_skill_candidate,

@@ -19,7 +19,7 @@ import urllib.error
 import urllib.parse
 import zipfile
 
-from github_utils import github_request
+from github_utils import GitHubRequestError, github_request, validate_path_segment
 
 _SCRIPT_PATH = Path(__file__).resolve()
 for _agent_target in (
@@ -85,14 +85,15 @@ def _parse_github_url(url: str, default_ref: str) -> tuple[str, str, str, str | 
     parts = [p for p in parsed.path.split("/") if p]
     if len(parts) < 2:
         raise InstallError("Invalid GitHub URL.")
-    owner, repo = parts[0], parts[1]
+    owner = validate_path_segment(parts[0], "repository owner")
+    repo = validate_path_segment(parts[1], "repository name")
     ref = default_ref
     subpath = ""
     if len(parts) > 2:
         if parts[2] in ("tree", "blob"):
             if len(parts) < 4:
                 raise InstallError("GitHub URL missing ref or path.")
-            ref = parts[3]
+            ref = validate_path_segment(parts[3], "ref")
             subpath = "/".join(parts[4:])
         else:
             subpath = "/".join(parts[2:])
@@ -100,7 +101,11 @@ def _parse_github_url(url: str, default_ref: str) -> tuple[str, str, str, str | 
 
 
 def _download_repo_zip(owner: str, repo: str, ref: str, dest_dir: str) -> str:
-    zip_url = f"https://codeload.github.com/{owner}/{repo}/zip/{ref}"
+    quoted = [
+        urllib.parse.quote(segment, safe="")
+        for segment in (owner, repo, ref)
+    ]
+    zip_url = "https://codeload.github.com/{}/{}/zip/{}".format(*quoted)
     zip_path = os.path.join(dest_dir, "repo.zip")
     try:
         payload = _request(zip_url)
@@ -137,6 +142,8 @@ def _safe_extract_zip(zip_file: zipfile.ZipFile, dest_dir: str) -> None:
 def _validate_relative_path(path: str) -> None:
     if os.path.isabs(path) or os.path.normpath(path).startswith(".."):
         raise InstallError("Skill path must be a relative path inside the repo.")
+    if path.startswith("-"):
+        raise InstallError("Skill path must not start with '-'.")
 
 
 def _validate_skill_name(name: str) -> None:
@@ -148,6 +155,9 @@ def _validate_skill_name(name: str) -> None:
 
 
 def _git_sparse_checkout(repo_url: str, ref: str, paths: list[str], dest_dir: str) -> str:
+    validate_path_segment(ref, "ref")
+    for path in paths:
+        _validate_relative_path(path)
     repo_dir = os.path.join(dest_dir, "repo")
     clone_cmd = [
         "git",
@@ -178,17 +188,21 @@ def _git_sparse_checkout(repo_url: str, ref: str, paths: list[str], dest_dir: st
                 repo_dir,
             ]
         )
-    _run_git(["git", "-C", repo_dir, "sparse-checkout", "set", *paths])
-    _run_git(["git", "-C", repo_dir, "checkout", ref])
+    _run_git(["git", "-C", repo_dir, "sparse-checkout", "set", "--", *paths])
+    _run_git(["git", "-C", repo_dir, "checkout", ref, "--"])
     return repo_dir
 
 
 def _validate_skill(path: str) -> None:
-    if not os.path.isdir(path):
+    if os.path.islink(path) or not os.path.isdir(path):
         raise InstallError(f"Skill path not found: {path}")
     skill_md = os.path.join(path, "SKILL.md")
     if not os.path.isfile(skill_md):
         raise InstallError("SKILL.md not found in selected skill directory.")
+    for root, directories, files in os.walk(path):
+        for entry in (*directories, *files):
+            if os.path.islink(os.path.join(root, entry)):
+                raise InstallError("Skill directory must not contain symlinks.")
 
 
 def _copy_skill(src: str, dest_dir: str) -> None:
@@ -255,9 +269,9 @@ def _resolve_source(args: Args) -> Source:
         raise InstallError("Missing --path for --repo.")
     paths = list(args.path)
     return Source(
-        owner=repo_parts[0],
-        repo=repo_parts[1],
-        ref=args.ref,
+        owner=validate_path_segment(repo_parts[0], "repository owner"),
+        repo=validate_path_segment(repo_parts[1], "repository name"),
+        ref=validate_path_segment(args.ref, "ref"),
         paths=paths,
     )
 
@@ -326,7 +340,7 @@ def main(argv: list[str]) -> int:
         for skill_name, dest_dir in installed:
             print(f"Installed {skill_name} to {dest_dir}")
         return 0
-    except InstallError as exc:
+    except (GitHubRequestError, InstallError) as exc:
         print(f"Error: {exc}", file=sys.stderr)
         return 1
 
