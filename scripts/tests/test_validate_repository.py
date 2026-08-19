@@ -275,10 +275,15 @@ class ScanFilesTests(TempRootTestCase):
 
         self.assertEqual([], validate_repository.scan_files(self.root))
 
-    def test_undecodable_text_extension_is_skipped(self):
+    def test_undecodable_text_extension_is_reported(self):
         (self.root / "broken.md").write_bytes(b"\xff\xfe\x00binary")
 
-        self.assertEqual([], validate_repository.scan_files(self.root))
+        errors = validate_repository.scan_files(self.root)
+
+        self.assertTrue(
+            any("broken.md: text source must be valid UTF-8" in error for error in errors),
+            errors,
+        )
 
     def test_each_content_policy_is_reported(self):
         cases = {
