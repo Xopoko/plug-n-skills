@@ -15,6 +15,7 @@ import sys
 import tempfile
 import threading
 import time
+import traceback
 import uuid
 from dataclasses import dataclass, field
 from datetime import datetime, timedelta, timezone
@@ -370,6 +371,16 @@ def send(message: dict[str, Any]) -> None:
     with OUTPUT_LOCK:
         sys.stdout.write(encoded + "\n")
         sys.stdout.flush()
+
+
+def log_internal_error(context: str) -> None:
+    """Report an unexpected exception on stderr without leaking it into the protocol."""
+    try:
+        sys.stderr.write(f"{SERVER_NAME}: internal error while {context}\n")
+        sys.stderr.write(traceback.format_exc())
+        sys.stderr.flush()
+    except OSError:
+        pass
 
 
 def send_result(request_id: Any, result: dict[str, Any]) -> None:
@@ -970,6 +981,7 @@ def process_tool_call(
     except (ToolInputError, NativeCompletionContractError) as exc:
         send_error(request_id, JSONRPC_INVALID_PARAMS, str(exc))
     except Exception:
+        log_internal_error(f"handling tools/call request {request_id!r}")
         send_error(
             request_id, JSONRPC_INTERNAL_ERROR, "internal completion server error"
         )
@@ -1061,6 +1073,7 @@ def handle_message(message: dict[str, Any]) -> None:
         try:
             thread.start()
         except Exception:
+            log_internal_error(f"starting a worker for request {request_id!r}")
             with WORKER_THREADS_LOCK:
                 WORKER_THREADS.discard(thread)
             with CANCELLATIONS_LOCK:

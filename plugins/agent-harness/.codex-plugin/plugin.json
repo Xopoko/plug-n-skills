@@ -1,7 +1,7 @@
 {
   "name": "agent-harness",
-  "version": "0.1.9",
-  "description": "Agent harness runtime-reconfiguration design and evaluation plus Codex and Claude runtime operations, secret-safe human credential handoff, 1Password, sessions, deferred completion, and scheduler proof.",
+  "version": "0.1.12",
+  "description": "Agent harness design and evaluation plus Codex and Claude runtime operations, cross-task corpora, secret-safe credential handoff, sessions, deferred completion, and scheduler proof.",
   "author": {
     "name": "Xopoko"
   },
@@ -21,6 +21,7 @@
     "hooks",
     "mcp",
     "runtime-reconfiguration",
+    "retrospective",
     "scheduler",
     "sessions"
   ],
@@ -29,14 +30,14 @@
   "interface": {
     "displayName": "Agent Harness",
     "shortDescription": "Build, evaluate, operate, and prove agent runtimes.",
-    "longDescription": "Design and evaluate reliable LLM agent harnesses, including contracts and evidence gates for versioned runtime reconfiguration and rollback; operate Codex CLI and Claude Code; hand task-scoped credentials from a human or 1Password directly to target processes without returning secret values to the model; manage plugins, MCP servers, hooks, settings, sessions, worktrees, and environments; inspect rollout evidence; use producer-native deferred completion; and prove local operating-system scheduler runs.",
+    "longDescription": "Design and evaluate reliable LLM agent harnesses, including contracts and evidence gates for versioned runtime reconfiguration and rollback; operate Codex CLI and Claude Code; build privacy-safe cross-task Codex corpora; hand task-scoped credentials from a human or 1Password directly to target processes without returning secret values to the model; manage plugins, MCP servers, hooks, settings, sessions, worktrees, and environments; inspect rollout evidence; use producer-native deferred completion; and prove local operating-system scheduler runs.",
     "developerName": "Xopoko",
     "category": "Coding",
     "websiteURL": "https://github.com/Xopoko/plug-n-skills",
     "capabilities": [
       "Vendor-neutral agent harness design with typed control, runtime-generation and reconfiguration contracts, state, policy, recovery, cancellation, and delegation",
       "Harness evaluation, replay, mixed-generation fault injection, rollback evidence, failure attribution, reliability analysis, and release gates",
-      "Codex CLI inspection, exec and review automation, diagnostics, environments, plugins, MCP, task supervision, and rollout forensics",
+      "Codex CLI inspection, exec and review automation, diagnostics, environments, plugins, MCP, task supervision, rollout forensics, and bounded cross-task corpora",
       "Claude Code inspection, print automation, diagnostics, hooks, settings, agents, worktrees, sessions, plugins, and MCP",
       "Secret-safe operator and 1Password credential handoff through native prompts and bounded receipts",
       "Producer-native deferred completion receipts through a bundled MCP server",

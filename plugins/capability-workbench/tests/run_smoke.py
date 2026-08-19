@@ -977,8 +977,8 @@ def test_proportional_install_scope_contract() -> None:
         )
     ]
     check(
-        "install scope contract: plugin manifests are version 0.6.9",
-        all(manifest.get("version") == "0.6.9" for manifest in manifests),
+        "install scope contract: plugin manifests are version 0.6.12",
+        all(manifest.get("version") == "0.6.12" for manifest in manifests),
         repr([manifest.get("version") for manifest in manifests]),
     )
 
@@ -1930,6 +1930,83 @@ def test_capability_inventory() -> None:
             )
 
 
+def test_capability_inventory_diagnostics() -> None:
+    script = str(SCRIPTS / "capability_inventory.py")
+    with tempfile.TemporaryDirectory() as tmp:
+        root = Path(tmp)
+        plugin_root = root / "plugins"
+        broken = plugin_root / "broken-manifest" / ".codex-plugin"
+        broken.mkdir(parents=True)
+        broken_manifest = broken / "plugin.json"
+        broken_manifest.write_text("{not json", encoding="utf-8")
+        listy = plugin_root / "list-manifest" / ".claude-plugin"
+        listy.mkdir(parents=True)
+        list_manifest = listy / "plugin.json"
+        list_manifest.write_text("[]", encoding="utf-8")
+        recursive = plugin_root / "recursive-manifest" / ".codex-plugin"
+        recursive.mkdir(parents=True)
+        recursive_manifest = recursive / "plugin.json"
+        recursive_manifest.write_text(
+            "[" * 2000 + "0" + "]" * 2000,
+            encoding="utf-8",
+        )
+        marketplace = root / "marketplace.json"
+        marketplace.write_text(json.dumps({"name": "fixture", "plugins": {}}), encoding="utf-8")
+        result = run(
+            [
+                script,
+                "--plugin-root",
+                str(plugin_root),
+                "--marketplace",
+                str(marketplace),
+                "--json",
+            ],
+            env=NEUTRAL_HOMES,
+        )
+        check(
+            "capability_inventory: reports diagnostics without failing",
+            result.returncode == 0,
+            result.stderr,
+        )
+        if result.returncode != 0:
+            return
+        payload = json.loads(result.stdout)
+        skipped = {(item["path"], item["reason"]) for item in payload["skipped_inputs"]}
+        check(
+            "capability_inventory: records invalid plugin manifests",
+            (str(broken_manifest), "invalid-json") in skipped
+            and (str(list_manifest), "invalid-json") in skipped
+            and (str(recursive_manifest), "invalid-json") in skipped,
+            str(sorted(skipped)),
+        )
+        check(
+            "capability_inventory: records invalid marketplace payloads",
+            (str(marketplace), "invalid-marketplace") in skipped,
+            str(sorted(skipped)),
+        )
+        check(
+            "capability_inventory: counts skipped inputs",
+            payload["counts"]["skipped_inputs"] == len(payload["skipped_inputs"]) == 4,
+            str(payload["counts"]),
+        )
+        check(
+            "capability_inventory: warns about skipped inputs on stderr",
+            result.stderr.count("warning: skipped ") == 4,
+            result.stderr,
+        )
+        clean = run(
+            [script, "--plugin-root", str(plugin_root / "missing"), "--json"],
+            env=NEUTRAL_HOMES,
+        )
+        check(
+            "capability_inventory: stays quiet without skipped inputs",
+            clean.returncode == 0
+            and json.loads(clean.stdout)["skipped_inputs"] == []
+            and "warning:" not in clean.stderr,
+            clean.stderr,
+        )
+
+
 def test_agent_target() -> None:
     script = str(SCRIPTS / "agent_target.py")
     for agent, marker in (
@@ -1984,6 +2061,162 @@ def test_install_skill_default_dest() -> None:
             f"install-skill-from-github: default dest follows {agent}",
             result.returncode == 0 and path_ends_with(result.stdout.strip(), *marker),
             result.stdout + result.stderr,
+        )
+
+
+def _load_module(name: str, path: Path):
+    spec = importlib.util.spec_from_file_location(name, path)
+    assert spec is not None and spec.loader is not None
+    module = importlib.util.module_from_spec(spec)
+    sys.modules[name] = module
+    spec.loader.exec_module(module)
+    return module
+
+
+def test_github_request_hardening() -> None:
+    """github_utils only talks HTTPS to allowlisted GitHub hosts."""
+    install_dir = SCRIPTS / "install"
+    sys.path.insert(0, str(install_dir))
+    try:
+        github_utils = _load_module("github_utils", install_dir / "github_utils.py")
+    finally:
+        sys.path.remove(str(install_dir))
+
+    for url in (
+        "http://api.github.com/repos/o/r",
+        "https://api.github.com.evil.test/repos/o/r",
+        "https://user:pass@api.github.com/repos/o/r",
+        "file:///etc/passwd",
+    ):
+        try:
+            github_utils.assert_allowlisted_url(url)
+            rejected = False
+        except github_utils.GitHubRequestError:
+            rejected = True
+        check(f"github_utils: rejects {url}", rejected)
+
+    github_utils.assert_allowlisted_url("https://codeload.github.com/o/r/zip/main")
+    check("github_utils: accepts codeload HTTPS", True)
+
+    contents_url = github_utils.github_api_contents_url(
+        "owner/repo", "skills/.curated", "main"
+    )
+    check(
+        "github_utils: builds contents URL",
+        contents_url
+        == "https://api.github.com/repos/owner/repo/contents/skills/.curated?ref=main",
+        contents_url,
+    )
+
+    rich_contents_url = github_utils.github_api_contents_url(
+        "owner/repo", "skills/Data Science/\u65e5\u672c\u8a9e", "release/v1.2.3"
+    )
+    check(
+        "github_utils: preserves slash refs and quotes normal path text",
+        rich_contents_url
+        == (
+            "https://api.github.com/repos/owner/repo/contents/"
+            "skills/Data%20Science/%E6%97%A5%E6%9C%AC%E8%AA%9E"
+            "?ref=release%2Fv1.2.3"
+        ),
+        rich_contents_url,
+    )
+
+    try:
+        github_utils.validate_git_ref("feature/slash-ref")
+        github_utils.validate_relative_repo_path("..foo/Unicode \u6280\u80fd", "path")
+        accepted_normal_inputs = True
+    except github_utils.GitHubRequestError:
+        accepted_normal_inputs = False
+    check(
+        "github_utils: accepts slash refs, dot-prefixed names, spaces, and Unicode",
+        accepted_normal_inputs,
+    )
+
+    for repo, path in (("owner/../../orgs", "skills"), ("owner/repo", "a/../../b")):
+        try:
+            github_utils.github_api_contents_url(repo, path, "main")
+            rejected = False
+        except github_utils.GitHubRequestError:
+            rejected = True
+        check(f"github_utils: rejects traversal in {repo} {path}", rejected)
+
+    for value in ("--upload-pack=touch", "..", "feature/../main", "main;rm"):
+        try:
+            github_utils.validate_git_ref(value)
+            rejected = False
+        except github_utils.GitHubRequestError:
+            rejected = True
+        check(f"github_utils: rejects unsafe ref {value!r}", rejected)
+
+    for value in (
+        "-option/skill",
+        "../skill",
+        "skills/../secret",
+        "/skills/one",
+        "C:/outside",
+    ):
+        try:
+            github_utils.validate_relative_repo_path(value, "path")
+            rejected = False
+        except github_utils.GitHubRequestError:
+            rejected = True
+        check(f"github_utils: rejects unsafe repo path {value!r}", rejected)
+
+    redirect_handler = github_utils._AllowlistedRedirectHandler()
+    try:
+        redirect_handler.redirect_request(
+            None, None, 302, "Found", {}, "https://evil.test/steal"
+        )
+        rejected = False
+    except github_utils.GitHubRequestError:
+        rejected = True
+    check("github_utils: blocks off-GitHub redirect", rejected)
+
+
+def test_install_skill_argument_hardening() -> None:
+    """install-skill-from-github rejects option-like refs and unsafe paths."""
+    install_dir = SCRIPTS / "install"
+    sys.path.insert(0, str(install_dir))
+    try:
+        module = _load_module("isg_hardening", install_dir / "install-skill-from-github.py")
+    finally:
+        sys.path.remove(str(install_dir))
+
+    accepted_source = module._resolve_source(
+        module.Args(
+            repo="owner/repo",
+            path=["..foo/Unicode \u6280\u80fd"],
+            ref="feature/slash-ref",
+        )
+    )
+    commands: list[list[str]] = []
+    with mock.patch.object(module, "_run_git", side_effect=commands.append):
+        module._git_sparse_checkout(
+            "https://github.com/owner/repo.git",
+            accepted_source.ref,
+            accepted_source.paths,
+            "fixture-destination",
+        )
+    check(
+        "install-skill-from-github: preserves slash refs and normal repo paths",
+        accepted_source.ref == "feature/slash-ref"
+        and accepted_source.paths == ["..foo/Unicode \u6280\u80fd"]
+        and commands[0][commands[0].index("--branch") + 1] == "feature/slash-ref"
+        and commands[-2][-2:] == ["--", "..foo/Unicode \u6280\u80fd"]
+        and commands[-1][-2:] == ["feature/slash-ref", "--"],
+        repr(commands),
+    )
+
+    for argv in (
+        ["--repo", "owner/repo", "--path", "skills/one", "--ref=--upload-pack=touch"],
+        ["--repo", "owner/repo", "--path=--output=touch"],
+        ["--repo", "owner/repo", "--path", "../../etc"],
+        ["--url", "https://evil.test/owner/repo", "--path", "skills/one"],
+    ):
+        check(
+            f"install-skill-from-github: rejects {' '.join(argv)}",
+            module.main(argv) == 1,
         )
 
 
@@ -2488,8 +2721,11 @@ def main() -> int:
         test_evidence_coverage_gate,
         test_portfolio_audit,
         test_capability_inventory,
+        test_capability_inventory_diagnostics,
         test_agent_target,
         test_install_skill_default_dest,
+        test_github_request_hardening,
+        test_install_skill_argument_hardening,
         test_codex_cli_plugin_cache_locator,
         test_immutable_cache_publication,
         test_audit_skill_candidate,

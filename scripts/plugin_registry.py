@@ -16,6 +16,7 @@ from typing import Iterable, Sequence
 
 LOCAL_PLUGIN_NAMES = [
     "agent-harness",
+    "windows-host-operations",
     "capability-workbench",
     "context-density",
     "i-have-adhd",

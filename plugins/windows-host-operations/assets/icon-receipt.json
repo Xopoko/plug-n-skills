@@ -1,0 +1,24 @@
+{
+  "schema": "windows_host_operations.icon_receipt.v1",
+  "generated_by": "built-in image_gen",
+  "generator_model_version_receipt": null,
+  "receipt_note": "The built-in generator did not expose a model or version receipt.",
+  "machine_local_generation_path_committed": false,
+  "postprocessing": "A second built-in edit supplied the required full-bleed opaque background; Pillow then performed only deterministic LANCZOS normalization from 1254x1254 RGB to 1024x1024 RGB.",
+  "selected_asset": {
+    "path": "assets/icon.png",
+    "sha256": "c50c8e84ba8f8e9f06eed006fc5ba9b0e5128d2724aa3ef0bb98bc327415a20f",
+    "bytes": 1010145,
+    "width": 1024,
+    "height": 1024,
+    "color_mode": "RGB"
+  },
+  "manual_review": {
+    "reviewed_at": "2026-08-19",
+    "semantic_recognition_16_24_32_64": "passed; desktop tower and embedded gauge remain identifiable",
+    "silhouette_cohesion": "passed; one stable tower mass with the gauge subordinate",
+    "portfolio_collision": "passed; distinct from monitor-cursor and settings-gear metaphors",
+    "brand_and_license": "passed; generic original metaphor with no Microsoft mark or trade dress",
+    "text_watermark_private_identifier": "none observed"
+  }
+}

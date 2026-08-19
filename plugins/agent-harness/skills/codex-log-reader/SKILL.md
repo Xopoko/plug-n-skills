@@ -11,6 +11,10 @@ Use this skill to find the smallest useful slice of Codex logs before opening
 raw JSONL. Session logs are useful evidence, but they can contain user prompts,
 tool I/O, environment fragments, URLs, and secrets.
 
+If the question spans the newest `N` tasks, repeated behavior across sessions,
+or a capability-gap corpus, use `codex-task-corpus` instead of repeatedly
+running single-rollout searches. Return here only for bounded per-task evidence.
+
 For deeper log locations, JSONL shape, manual `jq` fallbacks, and safety rules,
 read `$PLUGIN_ROOT/references/log-reader-safety.md`.
 

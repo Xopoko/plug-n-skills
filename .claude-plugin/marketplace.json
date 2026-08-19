@@ -11,7 +11,12 @@
     {
       "name": "agent-harness",
       "source": "./plugins/agent-harness",
-      "description": "Agent harness runtime-reconfiguration design and evaluation plus Codex and Claude runtime operations, secret-safe human credential handoff, 1Password, sessions, deferred completion, and scheduler proof."
+      "description": "Agent harness design and evaluation plus Codex and Claude runtime operations, cross-task corpora, secret-safe credential handoff, sessions, deferred completion, and scheduler proof."
+    },
+    {
+      "name": "windows-host-operations",
+      "source": "./plugins/windows-host-operations",
+      "description": "Windows host diagnosis and controlled repair across effective settings, startup and removal surfaces, and device stacks with rollback and functional proof."
     },
     {
       "name": "capability-workbench",

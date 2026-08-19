@@ -32,6 +32,11 @@
       "expected_leaf": "codex-log-reader"
     },
     {
+      "id": "codex-task-corpus",
+      "prompt": "Audit the newest 150 Codex tasks for recurring work and produce a privacy-safe capability-gap corpus.",
+      "expected_leaf": "codex-task-corpus"
+    },
+    {
       "id": "deferred-completion",
       "prompt": "Await one producer-native terminal receipt without repeated model polling.",
       "expected_leaf": "codex-deferred-completion"

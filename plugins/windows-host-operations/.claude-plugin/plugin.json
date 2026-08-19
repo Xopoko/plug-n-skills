@@ -1,0 +1,19 @@
+{
+  "name": "windows-host-operations",
+  "version": "0.1.0",
+  "description": "Windows host diagnosis and controlled repair across effective settings, startup and removal surfaces, and device stacks with rollback and functional proof.",
+  "author": {
+    "name": "Xopoko"
+  },
+  "license": "MIT",
+  "keywords": [
+    "devices",
+    "diagnostics",
+    "drivers",
+    "powershell",
+    "services",
+    "startup",
+    "uninstall",
+    "windows"
+  ]
+}

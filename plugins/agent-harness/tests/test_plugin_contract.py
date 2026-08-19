@@ -33,6 +33,7 @@ EXPECTED_SKILLS = {
     "codex-exec-automation",
     "codex-log-reader",
     "codex-plugin-mcp-manager",
+    "codex-task-corpus",
     "codex-thread-supervisor",
     "credential-handoff",
     "scheduled-automation-runtime",
@@ -80,7 +81,7 @@ class AgentHarnessPluginContractTests(unittest.TestCase):
         for field in ("name", "version", "description", "author", "license", "keywords"):
             self.assertEqual(codex[field], claude[field], field)
         self.assertEqual("agent-harness", codex["name"])
-        self.assertEqual("0.1.9", codex["version"])
+        self.assertEqual("0.1.12", codex["version"])
         self.assertEqual("Agent Harness", codex["interface"]["displayName"])
         self.assertIsInstance(codex["interface"]["defaultPrompt"], list)
         self.assertTrue(codex["interface"]["defaultPrompt"])
@@ -192,6 +193,7 @@ class AgentHarnessPluginContractTests(unittest.TestCase):
                 "harness-reconfiguration-release-gate",
                 "codex-exec",
                 "codex-rollout",
+                "codex-task-corpus",
                 "deferred-completion",
                 "claude-print",
                 "claude-hooks",

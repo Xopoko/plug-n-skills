@@ -201,7 +201,7 @@ def parse_simple_yaml_mapping(text: str) -> dict[str, Any]:
 def load_yaml_mapping(text: str, label: str) -> dict[str, Any]:
     try:
         import yaml  # type: ignore
-    except Exception:
+    except ImportError:
         payload = parse_simple_yaml_mapping(text)
     else:
         try:
