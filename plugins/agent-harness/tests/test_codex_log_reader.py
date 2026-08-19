@@ -317,6 +317,19 @@ class CodexLogReaderTests(unittest.TestCase):
     def tearDown(self):
         self.tmp.cleanup()
 
+    def test_iter_session_paths_tolerates_disappearing_rollout_during_sort(self):
+        real_stat = Path.stat
+
+        def flaky_stat(path, *args, **kwargs):
+            if path == self.rollout:
+                raise FileNotFoundError(path)
+            return real_stat(path, *args, **kwargs)
+
+        with mock.patch.object(Path, "stat", autospec=True, side_effect=flaky_stat):
+            paths = reader.iter_session_paths(self.home)
+
+        self.assertIn(self.rollout, paths)
+
     def run_cli(self, argv):
         out = io.StringIO()
         full_argv = [argv[0], "--codex-home", str(self.home), *argv[1:]]

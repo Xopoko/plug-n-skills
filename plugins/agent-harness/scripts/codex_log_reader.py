@@ -389,15 +389,25 @@ def size_mb(path: Path) -> float:
         return 0.0
 
 
+def _mtime_or_zero(path: Path) -> float:
+    try:
+        return path.stat().st_mtime
+    except OSError:
+        return 0.0
+
+
 def iter_session_paths(home: Path, include_archived: bool = True) -> list[Path]:
     roots = [home / "sessions"]
     if include_archived:
         roots.append(home / "archived_sessions")
     paths: list[Path] = []
     for root in roots:
-        if root.exists():
-            paths.extend(root.rglob("rollout-*.jsonl"))
-    return sorted(paths, key=lambda p: p.stat().st_mtime if p.exists() else 0, reverse=True)
+        try:
+            if root.exists():
+                paths.extend(root.rglob("rollout-*.jsonl"))
+        except OSError:
+            continue
+    return sorted(paths, key=_mtime_or_zero, reverse=True)
 
 
 def iter_records(path: Path) -> Iterable[tuple[int, dict[str, Any] | None, str | None, str]]:
@@ -960,7 +970,7 @@ def filtered_paths(args: argparse.Namespace) -> list[Path]:
     since_days = getattr(args, "since_days", None)
     if since_days is not None:
         cutoff = _dt.datetime.now().timestamp() - since_days * 86400
-        paths = [p for p in paths if p.stat().st_mtime >= cutoff]
+        paths = [p for p in paths if _mtime_or_zero(p) >= cutoff]
     return paths[: getattr(args, "scan_limit", len(paths))]
 
 
