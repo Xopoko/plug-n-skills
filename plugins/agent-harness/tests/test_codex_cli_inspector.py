@@ -132,17 +132,30 @@ class CodexCliInspectorTests(unittest.TestCase):
         commands = inspector.parse_commands("Commands:\n  exec    Run Codex\n")
         self.assertEqual(["exec"], commands)
 
-    def test_timeout_bytes_are_decoded_without_raising(self):
+    def test_timeout_bytes_follow_the_subprocess_text_policy(self):
         timeout = subprocess.TimeoutExpired(
             ["codex", "--help"],
             0.01,
-            output=b"partial\xff output\n",
+            output=b"caf\xe9 output\n",
         )
-        with mock.patch.object(shared.subprocess, "run", side_effect=timeout):
+        with (
+            mock.patch.object(shared, "CLI_TEXT_ENCODING", "cp1252"),
+            mock.patch.object(shared.subprocess, "run", side_effect=timeout) as run,
+        ):
             result = inspector.run_codex("codex", ["--help"], 0.01)
 
+        run.assert_called_once_with(
+            ["codex", "--help"],
+            text=True,
+            encoding="cp1252",
+            errors=shared.CLI_TEXT_ERRORS,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+            timeout=0.01,
+            check=False,
+        )
         self.assertFalse(result["ok"])
-        self.assertEqual("partial\ufffd output", result["stdout"])
+        self.assertEqual("caf\xe9 output", result["stdout"])
         self.assertEqual("timeout", result["stderr"])
 
 

@@ -10,6 +10,7 @@ out of help text. Tool-specific vocabulary stays in the inspector.
 
 from __future__ import annotations
 
+import locale
 import os
 import re
 import shutil
@@ -20,6 +21,8 @@ from typing import Any
 
 OPTION_RE = re.compile(r"(?<![\w-])--[A-Za-z0-9][A-Za-z0-9-]*")
 SHORT_OPTION_RE = re.compile(r"\s*(-[A-Za-z]),")
+CLI_TEXT_ENCODING = locale.getpreferredencoding(False)
+CLI_TEXT_ERRORS = "replace"
 
 
 def clip(text: str, max_chars: int = 2000) -> str:
@@ -31,7 +34,7 @@ def clip(text: str, max_chars: int = 2000) -> str:
 
 def _as_text(value: str | bytes | None) -> str:
     if isinstance(value, bytes):
-        return value.decode("utf-8", errors="replace")
+        return value.decode(CLI_TEXT_ENCODING, errors=CLI_TEXT_ERRORS)
     return value or ""
 
 
@@ -53,6 +56,8 @@ def run_cli(executable: str, args: list[str], timeout: float) -> dict[str, Any]:
         completed = subprocess.run(
             command,
             text=True,
+            encoding=CLI_TEXT_ENCODING,
+            errors=CLI_TEXT_ERRORS,
             stdout=subprocess.PIPE,
             stderr=subprocess.PIPE,
             timeout=timeout,
