@@ -2122,12 +2122,19 @@ def test_install_skill_argument_hardening() -> None:
             "fixture-destination",
         )
     check(
-        "install-skill-from-github: preserves slash refs and normal repo paths",
+        "install-skill-from-github: preserves slash refs and uses plain checkout",
         accepted_source.ref == "feature/slash-ref"
         and accepted_source.paths == ["..foo/Unicode \u6280\u80fd"]
         and commands[0][commands[0].index("--branch") + 1] == "feature/slash-ref"
         and commands[-2][-2:] == ["--", "..foo/Unicode \u6280\u80fd"]
-        and commands[-1][-2:] == ["feature/slash-ref", "--"],
+        and commands[-1]
+        == [
+            "git",
+            "-C",
+            os.path.join("fixture-destination", "repo"),
+            "checkout",
+            "feature/slash-ref",
+        ],
         repr(commands),
     )
 
