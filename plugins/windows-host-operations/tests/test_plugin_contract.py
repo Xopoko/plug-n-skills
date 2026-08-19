@@ -115,6 +115,11 @@ class WindowsHostOperationsContractTests(unittest.TestCase):
         self.assertIn("NOT_PROBED", script)
         self.assertIn("mutation_performed = $false", script)
         self.assertIn("raw_device_identifiers_included = $false", script)
+        self.assertRegex(
+            script,
+            r"(?s)function Get-TextSha256\s*\{.*?"
+            r"if\s*\(\$null -eq \$Value\)\s*\{\s*return \$null\s*\}",
+        )
         self.assertIn("$presentProbeSucceeded = $false", script)
         self.assertIn(
             "Add-Coverage -Surface 'pnp_present_only' -State COVERED", script
@@ -163,6 +168,28 @@ class WindowsHostOperationsContractTests(unittest.TestCase):
         command = (
             "$ErrorActionPreference='Stop'; "
             f"[ScriptBlock]::Create((Get-Content -Raw -LiteralPath '{script}')) | Out-Null"
+        )
+        completed = subprocess.run(
+            ["powershell.exe", "-NoProfile", "-Command", command],
+            capture_output=True,
+            text=True,
+            encoding="utf-8",
+            errors="replace",
+            check=False,
+        )
+        self.assertEqual(0, completed.returncode, completed.stderr or completed.stdout)
+
+    @unittest.skipUnless(os.name == "nt", "PowerShell runtime probe is Windows-only")
+    def test_powershell_hash_preserves_null_and_empty_string(self) -> None:
+        script = ROOT / "scripts" / "Get-WindowsHostEvidence.ps1"
+        empty_hash = hashlib.sha256(b"").hexdigest()
+        command = (
+            "$tokens=$null; $errors=$null; "
+            f"$ast=[System.Management.Automation.Language.Parser]::ParseFile('{script}', [ref]$tokens, [ref]$errors); "
+            "$function=$ast.Find({param($node) $node -is [System.Management.Automation.Language.FunctionDefinitionAst] -and $node.Name -eq 'Get-TextSha256'}, $true); "
+            "Invoke-Expression $function.Extent.Text; "
+            "if ($null -ne (Get-TextSha256 $null)) { throw 'null was hashed' }; "
+            f"if ((Get-TextSha256 '') -ne '{empty_hash}') {{ throw 'empty string hash changed' }}"
         )
         completed = subprocess.run(
             ["powershell.exe", "-NoProfile", "-Command", command],

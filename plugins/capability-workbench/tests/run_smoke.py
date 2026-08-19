@@ -2145,6 +2145,17 @@ def test_github_request_hardening() -> None:
         accepted_normal_inputs,
     )
 
+    try:
+        github_utils.validate_repository_component("owner\ninjected", "owner")
+        safe_control_error = False
+    except github_utils.GitHubRequestError as exc:
+        message = str(exc)
+        safe_control_error = "\n" not in message and "injected" not in message
+    check(
+        "github_utils: control-character errors do not echo raw input",
+        safe_control_error,
+    )
+
     for repo, path in (("owner/../../orgs", "skills"), ("owner/repo", "a/../../b")):
         try:
             github_utils.github_api_contents_url(repo, path, "main")
@@ -2236,6 +2247,30 @@ def test_install_skill_argument_hardening() -> None:
             ref="feature/slash-ref",
         )
     )
+    explicit_default_port = module._parse_github_url(
+        "https://github.com:443/owner/repo/tree/release/v1", "main"
+    )
+    check(
+        "install-skill-from-github: accepts explicit default HTTPS port",
+        explicit_default_port == ("owner", "repo", "release", "v1"),
+        repr(explicit_default_port),
+    )
+
+    for unsafe_url in (
+        "http://github.com/owner/repo",
+        "https://user:pass@github.com/owner/repo",
+        "https://github.com:444/owner/repo",
+    ):
+        try:
+            module._parse_github_url(unsafe_url, "main")
+            rejected = False
+        except module.InstallError:
+            rejected = True
+        check(
+            f"install-skill-from-github: rejects unsafe URL {unsafe_url}",
+            rejected,
+        )
+
     commands: list[list[str]] = []
     with mock.patch.object(module, "_run_git", side_effect=commands.append):
         module._git_sparse_checkout(
