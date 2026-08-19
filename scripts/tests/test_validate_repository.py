@@ -12,10 +12,11 @@ from unittest import mock
 ROOT = Path(__file__).resolve().parents[2]
 SCRIPT = ROOT / "scripts" / "validate-repository.py"
 
-SPEC = importlib.util.spec_from_file_location("validate_repository", SCRIPT)
-assert SPEC and SPEC.loader
-validate_repository = importlib.util.module_from_spec(SPEC)
-SPEC.loader.exec_module(validate_repository)
+with mock.patch.object(sys, "path", sys.path.copy()):
+    SPEC = importlib.util.spec_from_file_location("validate_repository", SCRIPT)
+    assert SPEC and SPEC.loader
+    validate_repository = importlib.util.module_from_spec(SPEC)
+    SPEC.loader.exec_module(validate_repository)
 
 # Forbidden-content probes are assembled from fragments so this test file stays
 # clean for the scanner it exercises.

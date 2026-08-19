@@ -11,10 +11,11 @@ from unittest import mock
 ROOT = Path(__file__).resolve().parents[2]
 INSTALLER_PATH = ROOT / "scripts" / "install-cursor-skills.py"
 
-spec = importlib.util.spec_from_file_location("install_cursor_skills", INSTALLER_PATH)
-install_cursor_skills = importlib.util.module_from_spec(spec)
-assert spec.loader is not None
-spec.loader.exec_module(install_cursor_skills)
+with mock.patch.object(sys, "path", sys.path.copy()):
+    spec = importlib.util.spec_from_file_location("install_cursor_skills", INSTALLER_PATH)
+    install_cursor_skills = importlib.util.module_from_spec(spec)
+    assert spec.loader is not None
+    spec.loader.exec_module(install_cursor_skills)
 
 
 class CursorInstallerTest(unittest.TestCase):
