@@ -25,7 +25,7 @@ INVALID_REF_CHARACTERS = frozenset(" ~^:?*[\\;")
 
 
 class GitHubRequestError(ValueError):
-    """The requested URL is not an allowlisted HTTPS GitHub endpoint."""
+    """A GitHub URL or repository component violates the request policy."""
 
 
 def _allowlisted_https_origin(url: str) -> tuple[str, str, int]:
