@@ -365,6 +365,28 @@ class CodexLogReaderTests(unittest.TestCase):
         self.assertEqual({}, value)
         self.assertEqual(["invalid-json:invalid-utf8.json"], errors)
 
+    def test_privacy_findings_flag_common_absolute_private_paths(self):
+        for absolute_path in (
+            "/private/var/folders/session.json",
+            "/var/lib/private-state.json",
+            "/root/.config/private-state.json",
+            "/Volumes/Private/private-state.json",
+        ):
+            with self.subTest(path=absolute_path):
+                findings = reader._privacy_findings(
+                    "fixture.json", {"observation": absolute_path}
+                )
+                self.assertIn(
+                    "absolute-path-indicator:fixture.json:observation", findings
+                )
+
+        self.assertEqual(
+            [],
+            reader._privacy_findings(
+                "fixture.json", {"observation": "relative/private-state.json"}
+            ),
+        )
+
     def run_cli(self, argv):
         out = io.StringIO()
         full_argv = [argv[0], "--codex-home", str(self.home), *argv[1:]]

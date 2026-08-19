@@ -21,6 +21,7 @@ import zipfile
 
 from github_utils import (
     GitHubRequestError,
+    assert_allowlisted_url,
     github_request,
     validate_git_ref,
     validate_relative_repo_path,
@@ -85,8 +86,12 @@ def _request(url: str) -> bytes:
 
 
 def _parse_github_url(url: str, default_ref: str) -> tuple[str, str, str, str | None]:
+    try:
+        assert_allowlisted_url(url)
+    except GitHubRequestError as exc:
+        raise InstallError("Only allowlisted HTTPS GitHub URLs are supported.") from exc
     parsed = urllib.parse.urlparse(url)
-    if parsed.netloc != "github.com":
+    if (parsed.hostname or "").casefold() != "github.com":
         raise InstallError("Only GitHub URLs are supported for download mode.")
     parts = [p for p in parsed.path.split("/") if p]
     if len(parts) < 2:
