@@ -25,6 +25,22 @@ CORPUS_TASK_SCHEMA = "agent_harness.codex_task_index.v1"
 CORPUS_CODING_SCHEMA = "agent_harness.codex_task_coding.v1"
 CORPUS_CLUSTER_SCHEMA = "agent_harness.codex_task_cluster.v1"
 CORPUS_HANDOFF_SCHEMA = "agent_harness.codex_task_workbench_handoff.v1"
+CORPUS_HANDOFF_STRING_FIELDS = (
+    "affected_artifact_at_task_time",
+    "current_artifact_state",
+    "proposed_owner",
+    "proposed_artifact_type",
+    "hypothesis",
+    "cheapest_discriminator",
+    "uncertainty",
+    "residual_tradeoff",
+)
+CORPUS_HANDOFF_LIST_FIELDS = (
+    "evidence_pointers",
+    "validation_scenarios",
+    "regression_scenarios",
+    "safety_notes",
+)
 CORPUS_FILENAMES = (
     "corpus-manifest.json",
     "task-index.jsonl",
@@ -1054,7 +1070,17 @@ def _read_corpus_metadata(path: Path, home: Path) -> dict[str, Any]:
 
 
 def _normalized_path_hint(value: str) -> str:
-    return value.replace("\\", "/").rstrip("/").casefold()
+    normalized = value.replace("\\", "/").casefold()
+    return normalized if normalized == "/" else normalized.rstrip("/")
+
+
+def _path_is_within_scope(value: str, scope: str) -> bool:
+    actual = _normalized_path_hint(value)
+    expected = _normalized_path_hint(scope)
+    if not actual or not expected:
+        return False
+    prefix = expected if expected.endswith("/") else f"{expected}/"
+    return actual == expected or actual.startswith(prefix)
 
 
 def _json_bytes(value: Any) -> bytes:
@@ -1096,7 +1122,7 @@ def cmd_corpus(args: argparse.Namespace) -> int:
     current_id = os.environ.get("CODEX_THREAD_ID", "").strip()
     if current_id and not args.include_current:
         excluded_ids.add(current_id.lower())
-    cwd_hint = _normalized_path_hint(args.cwd) if args.cwd else ""
+    cwd_hint = args.cwd
 
     counts: collections.Counter[str] = collections.Counter()
     eligible: list[dict[str, Any]] = []
@@ -1127,10 +1153,8 @@ def cmd_corpus(args: argparse.Namespace) -> int:
             counts["internal_subagent"] += 1
             continue
         if cwd_hint:
-            actual_cwd = _normalized_path_hint(str(metadata.pop("cwd_for_filter", "")))
-            if not actual_cwd or (
-                cwd_hint not in actual_cwd and actual_cwd not in cwd_hint
-            ):
+            actual_cwd = str(metadata.pop("cwd_for_filter", ""))
+            if not _path_is_within_scope(actual_cwd, cwd_hint):
                 counts["cwd_mismatch"] += 1
                 continue
         else:
@@ -1202,7 +1226,11 @@ def cmd_corpus(args: argparse.Namespace) -> int:
     handoff_bytes = _json_bytes(handoff)
     manifest = {
         "schema": CORPUS_SCHEMA,
-        "created_at": _utc_iso_from_epoch(_dt.datetime.now().timestamp()),
+        "created_at": (
+            _dt.datetime.now(tz=_dt.timezone.utc)
+            .isoformat(timespec="seconds")
+            .replace("+00:00", "Z")
+        ),
         "cutoff": cutoff.isoformat(timespec="seconds").replace("+00:00", "Z"),
         "selection": {
             "requested_count": args.count,
@@ -1442,6 +1470,9 @@ def cmd_corpus_check(args: argparse.Namespace) -> int:
 
     cluster_ids: set[str] = set()
     candidate_cluster_ids: set[str] = set()
+    coding_by_id = {
+        str(item.get("task_id") or ""): item for item in coding_rows
+    }
     for row in cluster_rows:
         cluster_id = str(row.get("cluster_id") or "")
         if not cluster_id or cluster_id in cluster_ids:
@@ -1464,12 +1495,24 @@ def cmd_corpus_check(args: argparse.Namespace) -> int:
         decision = str(row.get("decision") or "")
         if decision in {"candidate", "proposed", "adopted"}:
             candidate_cluster_ids.add(cluster_id)
-            coding_by_id = {
-                str(item.get("task_id") or ""): item for item in coding_rows
-            }
+            complete_independent_rows: list[dict[str, Any]] = []
+            for task_id in independent_ids:
+                coding_row = coding_by_id.get(task_id, {})
+                if coding_row.get("review_status") != "complete":
+                    errors.append(
+                        f"cluster:{cluster_id}:independent-task-not-complete"
+                    )
+                    continue
+                receipt = coding_row.get("eof_receipt")
+                if not isinstance(receipt, dict) or receipt.get("complete") is not True:
+                    errors.append(
+                        f"cluster:{cluster_id}:independent-task-missing-eof-receipt"
+                    )
+                    continue
+                complete_independent_rows.append(coding_row)
             independence_groups = [
-                str(coding_by_id.get(task_id, {}).get("independence_group") or "")
-                for task_id in independent_ids
+                str(item.get("independence_group") or "")
+                for item in complete_independent_rows
             ]
             if not all(independence_groups):
                 errors.append(f"cluster:{cluster_id}:missing-independence-group")
@@ -1477,7 +1520,7 @@ def cmd_corpus_check(args: argparse.Namespace) -> int:
                 errors.append(f"cluster:{cluster_id}:duplicate-independence-group")
             direct_contradiction = row.get("exception") == "direct_capability_contradiction"
             minimum = 1 if direct_contradiction else args.min_independent
-            if len(independent_ids) < minimum:
+            if len(complete_independent_rows) < minimum:
                 errors.append(f"cluster:{cluster_id}:below-independent-threshold")
             for required in (
                 "classification",
@@ -1494,15 +1537,42 @@ def cmd_corpus_check(args: argparse.Namespace) -> int:
         authorization.get(key) is not False for key in ("edit_source", "install", "publish")
     ):
         errors.append("handoff:authorization-must-remain-false")
+    raw_handoff_candidates = handoff.get("candidate_gaps")
+    if not isinstance(raw_handoff_candidates, list):
+        errors.append("handoff:candidate-gaps-must-be-list")
+        handoff_candidates: list[dict[str, Any]] = []
+    else:
+        handoff_candidates = []
+        for item in raw_handoff_candidates:
+            if not isinstance(item, dict):
+                errors.append("handoff:candidate-must-be-object")
+                continue
+            handoff_candidates.append(item)
     handoff_cluster_ids = {
-        str(item.get("cluster_id") or "")
-        for item in handoff.get("candidate_gaps") or []
-        if isinstance(item, dict)
+        str(item.get("cluster_id") or "") for item in handoff_candidates
     }
+    if len(handoff_cluster_ids) != len(handoff_candidates):
+        errors.append("handoff:missing-or-duplicate-cluster-id")
     if not handoff_cluster_ids.issubset(candidate_cluster_ids):
         errors.append("handoff:unknown-or-noncandidate-cluster")
     if args.final and candidate_cluster_ids != handoff_cluster_ids:
         errors.append("handoff:candidate-coverage")
+    if args.final:
+        if handoff.get("status") != "ready_for_review":
+            errors.append("handoff:status-not-ready-for-review")
+        for item in handoff_candidates:
+            cluster_id = str(item.get("cluster_id") or "unknown")
+            for field in CORPUS_HANDOFF_STRING_FIELDS:
+                if not isinstance(item.get(field), str) or not item[field].strip():
+                    errors.append(f"handoff:{cluster_id}:missing-{field}")
+            for field in CORPUS_HANDOFF_LIST_FIELDS:
+                values = item.get(field)
+                if (
+                    not isinstance(values, list)
+                    or not values
+                    or any(not isinstance(value, str) or not value.strip() for value in values)
+                ):
+                    errors.append(f"handoff:{cluster_id}:invalid-{field}")
 
     for name, value in (
         ("corpus-manifest.json", manifest),

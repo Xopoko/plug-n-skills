@@ -129,6 +129,26 @@ candidate cluster and adds:
 - validation and regression scenarios;
 - safety notes, uncertainty, and residual tradeoff.
 
+Use these exact fields so `corpus-check --final` can validate the handoff:
+
+```json
+{
+  "cluster_id": "repeated-gap-id",
+  "affected_artifact_at_task_time": "owner and version, or none",
+  "current_artifact_state": "verified current owner and behavior",
+  "proposed_owner": "natural capability owner",
+  "proposed_artifact_type": "skill, plugin, guidance, or harness",
+  "hypothesis": "falsifiable expected improvement",
+  "cheapest_discriminator": "smallest test that can reject the proposal",
+  "evidence_pointers": ["task id plus bounded ledger location"],
+  "validation_scenarios": ["positive held-out scenario"],
+  "regression_scenarios": ["near-miss or existing-owner scenario"],
+  "safety_notes": ["authority and privacy boundary"],
+  "uncertainty": "what the evidence does not establish",
+  "residual_tradeoff": "remaining cost or limitation"
+}
+```
+
 The following values remain `false` in this evidence package:
 
 ```json
