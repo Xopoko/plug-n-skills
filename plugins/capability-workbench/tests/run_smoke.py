@@ -978,8 +978,8 @@ def test_proportional_install_scope_contract() -> None:
         )
     ]
     check(
-        "install scope contract: plugin manifests are version 0.6.10",
-        all(manifest.get("version") == "0.6.10" for manifest in manifests),
+        "install scope contract: plugin manifests are version 0.6.11",
+        all(manifest.get("version") == "0.6.11" for manifest in manifests),
         repr([manifest.get("version") for manifest in manifests]),
     )
 
@@ -1931,6 +1931,88 @@ def test_capability_inventory() -> None:
             )
 
 
+def test_capability_inventory_diagnostics() -> None:
+    script = str(SCRIPTS / "capability_inventory.py")
+    with tempfile.TemporaryDirectory() as tmp:
+        root = Path(tmp)
+        plugin_root = root / "plugins"
+        broken = plugin_root / "broken-manifest" / ".codex-plugin"
+        broken.mkdir(parents=True)
+        broken_manifest = broken / "plugin.json"
+        broken_manifest.write_text("{not json", encoding="utf-8")
+        listy = plugin_root / "list-manifest" / ".claude-plugin"
+        listy.mkdir(parents=True)
+        list_manifest = listy / "plugin.json"
+        list_manifest.write_text("[]", encoding="utf-8")
+        recursive = plugin_root / "recursive-manifest" / ".codex-plugin"
+        recursive.mkdir(parents=True)
+        recursive_manifest = recursive / "plugin.json"
+        recursive_manifest.write_text(
+            "[" * 2000 + "0" + "]" * 2000,
+            encoding="utf-8",
+        )
+        marketplace = root / "marketplace.json"
+        marketplace.write_text(json.dumps({"name": "fixture", "plugins": {}}), encoding="utf-8")
+        empty_marketplace = root / "empty-marketplace.json"
+        empty_marketplace.write_text("{}", encoding="utf-8")
+        result = run(
+            [
+                script,
+                "--plugin-root",
+                str(plugin_root),
+                "--marketplace",
+                str(marketplace),
+                "--marketplace",
+                str(empty_marketplace),
+                "--json",
+            ],
+            env=NEUTRAL_HOMES,
+        )
+        check(
+            "capability_inventory: reports diagnostics without failing",
+            result.returncode == 0,
+            result.stderr,
+        )
+        if result.returncode != 0:
+            return
+        payload = json.loads(result.stdout)
+        skipped = {(item["path"], item["reason"]) for item in payload["skipped_inputs"]}
+        check(
+            "capability_inventory: records invalid plugin manifests",
+            (str(broken_manifest), "invalid-json") in skipped
+            and (str(list_manifest), "invalid-json") in skipped
+            and (str(recursive_manifest), "invalid-json") in skipped,
+            str(sorted(skipped)),
+        )
+        check(
+            "capability_inventory: records invalid marketplace payloads",
+            (str(marketplace), "invalid-marketplace") in skipped
+            and (str(empty_marketplace), "invalid-marketplace") in skipped,
+            str(sorted(skipped)),
+        )
+        check(
+            "capability_inventory: counts skipped inputs",
+            payload["counts"]["skipped_inputs"] == len(payload["skipped_inputs"]) == 5,
+            str(payload["counts"]),
+        )
+        check(
+            "capability_inventory: warns about skipped inputs on stderr",
+            result.stderr.count("warning: skipped ") == 5,
+            result.stderr,
+        )
+        clean = run(
+            [script, "--plugin-root", str(plugin_root / "missing"), "--json"],
+            env=NEUTRAL_HOMES,
+        )
+        check(
+            "capability_inventory: stays quiet without skipped inputs",
+            clean.returncode == 0
+            and json.loads(clean.stdout)["skipped_inputs"] == []
+            and "warning:" not in clean.stderr,
+            clean.stderr,
+        )
+
+
 def test_agent_target() -> None:
     script = str(SCRIPTS / "agent_target.py")
     for agent, marker in (
@@ -2727,6 +2809,7 @@ def main() -> int:
         test_evidence_coverage_gate,
         test_portfolio_audit,
         test_capability_inventory,
+        test_capability_inventory_diagnostics,
         test_agent_target,
         test_install_skill_default_dest,
         test_github_request_hardening,

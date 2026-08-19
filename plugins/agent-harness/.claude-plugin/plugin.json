@@ -1,6 +1,6 @@
 {
   "name": "agent-harness",
-  "version": "0.1.11",
+  "version": "0.1.12",
   "description": "Agent harness design and evaluation plus Codex and Claude runtime operations, cross-task corpora, secret-safe credential handoff, sessions, deferred completion, and scheduler proof.",
   "author": {
     "name": "Xopoko"

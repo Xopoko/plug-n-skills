@@ -7,6 +7,7 @@ import argparse
 import json
 import os
 import re
+import sys
 from pathlib import Path
 from typing import Any
 
@@ -55,18 +56,53 @@ def expand_template(raw: str) -> Path:
     return Path(os.path.expandvars(os.path.expanduser(raw)))
 
 
-def read_json(path: Path) -> dict[str, Any] | None:
+class Diagnostics:
+    """Collect skipped-input reasons so an inventory never under-reports silently."""
+
+    def __init__(self) -> None:
+        self.entries: list[dict[str, str]] = []
+        self._seen: set[tuple[str, str, str]] = set()
+
+    def record(self, path: Path | str, reason: str, detail: str) -> None:
+        key = (str(path), reason, detail)
+        if key in self._seen:
+            return
+        self._seen.add(key)
+        self.entries.append({"path": str(path), "reason": reason, "detail": detail})
+
+    def as_list(self) -> list[dict[str, str]]:
+        return sorted(
+            self.entries,
+            key=lambda item: (item["path"], item["reason"], item["detail"]),
+        )
+
+
+def read_json(path: Path, diagnostics: Diagnostics | None = None) -> dict[str, Any] | None:
     try:
         payload = json.loads(path.read_text(encoding="utf-8"))
-    except Exception:
+    except OSError as exc:
+        if diagnostics is not None:
+            diagnostics.record(path, "unreadable-json", str(exc))
         return None
-    return payload if isinstance(payload, dict) else None
+    except (RecursionError, UnicodeDecodeError, ValueError) as exc:
+        if diagnostics is not None:
+            diagnostics.record(path, "invalid-json", str(exc))
+        return None
+    if not isinstance(payload, dict):
+        if diagnostics is not None:
+            diagnostics.record(
+                path, "invalid-json", "top-level JSON value is not an object"
+            )
+        return None
+    return payload
 
 
-def read_frontmatter(path: Path) -> dict[str, str]:
+def read_frontmatter(path: Path, diagnostics: Diagnostics | None = None) -> dict[str, str]:
     try:
         text = path.read_text(encoding="utf-8", errors="replace")
-    except Exception:
+    except OSError as exc:
+        if diagnostics is not None:
+            diagnostics.record(path, "unreadable-skill", str(exc))
         return {}
     if not text.startswith("---"):
         return {}
@@ -147,23 +183,29 @@ def path_is_within_without_symlinks(path: Path, root: Path) -> bool:
     return True
 
 
-def readable_directories(root: Path) -> list[Path]:
+def readable_directories(root: Path, diagnostics: Diagnostics | None = None) -> list[Path]:
     try:
         entries = list(root.iterdir())
-    except OSError:
+    except OSError as exc:
+        if diagnostics is not None:
+            diagnostics.record(root, "unreadable-directory", str(exc))
         return []
     directories: list[Path] = []
     for path in entries:
         try:
             if path.is_symlink() or not path.is_dir():
                 continue
-        except OSError:
+        except OSError as exc:
+            if diagnostics is not None:
+                diagnostics.record(path, "unreadable-directory-entry", str(exc))
             continue
         directories.append(path)
     return directories
 
 
-def direct_plugin_manifests(plugin_root: Path) -> list[Path]:
+def direct_plugin_manifests(
+    plugin_root: Path, diagnostics: Diagnostics | None = None
+) -> list[Path]:
     manifests: list[Path] = []
     for manifest_dir in PLUGIN_MANIFEST_NAMES:
         manifest_parent = plugin_root / manifest_dir
@@ -179,15 +221,19 @@ def direct_plugin_manifests(plugin_root: Path) -> list[Path]:
                 )
             ):
                 continue
-        except OSError:
+        except OSError as exc:
+            if diagnostics is not None:
+                diagnostics.record(manifest, "unreadable-manifest", str(exc))
             continue
         manifests.append(manifest)
     return manifests
 
 
-def preferred_cache_manifest(plugin_root: Path) -> Path | None:
-    for manifest in direct_plugin_manifests(plugin_root):
-        data = read_json(manifest)
+def preferred_cache_manifest(
+    plugin_root: Path, diagnostics: Diagnostics | None = None
+) -> Path | None:
+    for manifest in direct_plugin_manifests(plugin_root, diagnostics):
+        data = read_json(manifest, diagnostics)
         if (
             data is not None
             and all(
@@ -220,13 +266,15 @@ def lexical_path_is_within(path: Path, root: Path) -> bool:
     return True
 
 
-def cache_plugin_candidates(plugin_dir: Path) -> list[tuple[tuple[Any, ...], Path]]:
+def cache_plugin_candidates(
+    plugin_dir: Path, diagnostics: Diagnostics | None = None
+) -> list[tuple[tuple[Any, ...], Path]]:
     candidates: dict[Path, tuple[Any, ...]] = {}
-    for candidate in readable_directories(plugin_dir):
-        manifest = preferred_cache_manifest(candidate)
+    for candidate in readable_directories(plugin_dir, diagnostics):
+        manifest = preferred_cache_manifest(candidate, diagnostics)
         if manifest is None:
             continue
-        data = read_json(manifest)
+        data = read_json(manifest, diagnostics)
         if data is None:
             continue
         directory_key = semver_sort_key(candidate.name)
@@ -237,17 +285,19 @@ def cache_plugin_candidates(plugin_dir: Path) -> list[tuple[tuple[Any, ...], Pat
     return [(key, path) for path, key in candidates.items()]
 
 
-def latest_cache_version_roots(root: Path) -> list[Path]:
+def latest_cache_version_roots(
+    root: Path, diagnostics: Diagnostics | None = None
+) -> list[Path]:
     """Select one current candidate per source/plugin without deleting siblings."""
     selected: list[Path] = []
     if not root.is_dir() or root.is_symlink():
         return selected
-    for source_dir in sorted(readable_directories(root)):
-        for plugin_dir in sorted(readable_directories(source_dir)):
-            if preferred_cache_manifest(plugin_dir) is not None:
+    for source_dir in sorted(readable_directories(root, diagnostics)):
+        for plugin_dir in sorted(readable_directories(source_dir, diagnostics)):
+            if preferred_cache_manifest(plugin_dir, diagnostics) is not None:
                 selected.append(plugin_dir)
                 continue
-            candidates = cache_plugin_candidates(plugin_dir)
+            candidates = cache_plugin_candidates(plugin_dir, diagnostics)
             if candidates:
                 highest_key = max(key for key, _ in candidates)
                 highest = [
@@ -260,7 +310,11 @@ def latest_cache_version_roots(root: Path) -> list[Path]:
     return selected
 
 
-def inventory_skills(roots: list[Path], query: str | None) -> list[dict[str, Any]]:
+def inventory_skills(
+    roots: list[Path],
+    query: str | None,
+    diagnostics: Diagnostics | None = None,
+) -> list[dict[str, Any]]:
     rows: list[dict[str, Any]] = []
     seen: set[Path] = set()
     for root in roots:
@@ -270,7 +324,7 @@ def inventory_skills(roots: list[Path], query: str | None) -> list[dict[str, Any
             if skill_md in seen:
                 continue
             seen.add(skill_md)
-            meta = read_frontmatter(skill_md)
+            meta = read_frontmatter(skill_md, diagnostics)
             row = {
                 "name": meta.get("name") or skill_md.parent.name,
                 "description": meta.get("description", ""),
@@ -288,6 +342,7 @@ def inventory_plugins(
     query: str | None,
     *,
     versioned_cache_roots: set[Path] | None = None,
+    diagnostics: Diagnostics | None = None,
 ) -> list[dict[str, Any]]:
     rows: list[dict[str, Any]] = []
     seen: set[Path] = set()
@@ -305,8 +360,8 @@ def inventory_plugins(
         if root in cache_roots:
             manifests = [
                 manifest
-                for scan_root in latest_cache_version_roots(root)
-                for manifest in [preferred_cache_manifest(scan_root)]
+                for scan_root in latest_cache_version_roots(root, diagnostics)
+                for manifest in [preferred_cache_manifest(scan_root, diagnostics)]
                 if manifest is not None
             ]
         else:
@@ -326,7 +381,7 @@ def inventory_plugins(
                 continue
             seen.add(manifest)
             seen_plugins.add(manifest.parent.parent)
-            data = read_json(manifest)
+            data = read_json(manifest, diagnostics)
             if data is None:
                 continue
             interface = data.get("interface") if isinstance(data.get("interface"), dict) else {}
@@ -345,17 +400,33 @@ def inventory_plugins(
     return rows
 
 
-def inventory_marketplaces(paths: list[Path], query: str | None) -> list[dict[str, Any]]:
+def inventory_marketplaces(
+    paths: list[Path],
+    query: str | None,
+    diagnostics: Diagnostics | None = None,
+) -> list[dict[str, Any]]:
     rows: list[dict[str, Any]] = []
     for path in paths:
-        data = read_json(path)
-        if not data:
+        if not path.exists():
+            continue
+        data = read_json(path, diagnostics)
+        if data is None:
             continue
         plugins = data.get("plugins")
         if not isinstance(plugins, list):
+            if diagnostics is not None:
+                diagnostics.record(
+                    path, "invalid-marketplace", "'plugins' is not a JSON array"
+                )
             continue
         for entry in plugins:
             if not isinstance(entry, dict):
+                if diagnostics is not None:
+                    diagnostics.record(
+                        path,
+                        "invalid-marketplace",
+                        "'plugins' contains a non-object entry",
+                    )
                 continue
             source = entry.get("source") if isinstance(entry.get("source"), dict) else {}
             policy = entry.get("policy") if isinstance(entry.get("policy"), dict) else {}
@@ -392,25 +463,38 @@ def main() -> int:
     }
     marketplace_paths = [expand_template(p) for p in DEFAULT_MARKETPLACES + args.marketplace]
 
+    diagnostics = Diagnostics()
     payload = {
         "schema": "capability.inventory.v1",
         "query": args.query,
         "skill_roots": [str(p) for p in skill_roots],
         "plugin_roots": [str(p) for p in plugin_roots],
         "marketplace_paths": [str(p) for p in marketplace_paths],
-        "skills": inventory_skills(skill_roots, args.query),
+        "skills": inventory_skills(skill_roots, args.query, diagnostics),
         "plugins": inventory_plugins(
             plugin_roots,
             args.query,
             versioned_cache_roots=codex_cache_roots,
+            diagnostics=diagnostics,
         ),
-        "marketplace_entries": inventory_marketplaces(marketplace_paths, args.query),
+        "marketplace_entries": inventory_marketplaces(
+            marketplace_paths, args.query, diagnostics
+        ),
     }
+    payload["skipped_inputs"] = diagnostics.as_list()
     payload["counts"] = {
         "skills": len(payload["skills"]),
         "plugins": len(payload["plugins"]),
         "marketplace_entries": len(payload["marketplace_entries"]),
+        "skipped_inputs": len(payload["skipped_inputs"]),
     }
+
+    for skipped in payload["skipped_inputs"]:
+        print(
+            f"warning: skipped {skipped['path']} ({skipped['reason']}): "
+            f"{skipped['detail']}",
+            file=sys.stderr,
+        )
 
     if args.json:
         print(json.dumps(payload, indent=2, ensure_ascii=False))
