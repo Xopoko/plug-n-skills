@@ -267,7 +267,7 @@ a prompt or makes visible to a model at runtime.
 | Script/support files | 101 | - | All regular files below `scripts/`, including helpers, templates, and manifests. |
 | Source-relative routing estimate | 205 skills | 13,467 | Skill name, description, and plugin-relative `skills/.../SKILL.md` path; comparable across local and standalone sources. |
 | Published first-party URL locator snapshot | 81 skills | 8,175 | Receipt values that serialize immutable GitHub blob URLs; preserved separately and not added to the source-relative total. |
-| Skill body source estimate | 205 skills | 151,694 | Body text after frontmatter; not proof that a host loads it, or when. |
+| Skill body source estimate | 205 skills | 151,712 | Body text after frontmatter; not proof that a host loads it, or when. |
 
 Regenerate the report after skill edits:
 
@@ -287,7 +287,7 @@ immutable GitHub locator snapshot.
 | Plugin | Skills | Refs | Script/support files | Source routing | Published URL routing | Body source |
 | --- | ---: | ---: | ---: | ---: | ---: | ---: |
 | `agent-harness` | 20 | 20 | 7 | 1,405 | - | 22,108 |
-| `windows-host-operations` | 4 | 2 | 1 | 284 | - | 2,724 |
+| `windows-host-operations` | 4 | 2 | 1 | 284 | - | 2,742 |
 | `capability-workbench` | 11 | 18 | 25 | 730 | - | 14,383 |
 | `context-density` | 1 | 9 | 8 | 66 | - | 2,888 |
 | `i-have-adhd` | 1 | 1 | 0 | 73 | - | 588 |
@@ -366,7 +366,7 @@ size. None is a runtime prompt measurement.
 | `windows-device-diagnostics` | 71 | - | 577 | Diagnose exact Windows peripherals across present/remembered identity, driver stack, endpoint/queue/role, transport, vendor software, and live function. Excludes wildcard or class-wide disable, driver-store deletion, and firmware update. |
 | `windows-effective-settings` | 70 | - | 636 | Diagnose Windows settings that do not stick or take effect across capability, support, scope, policy, service, consent, power, vendor, firmware, cache, runtime, and observed behavior. Excludes generic registry tweaking and firmware writes. |
 | `windows-host-operations` | 67 | - | 858 | Windows host operations: route effective settings and policy precedence, startup/removal persistence, and device-stack diagnosis. Requires exact targets, reversible actions, and functional proof; excludes broad repair and non-Windows hosts. |
-| `windows-startup-and-removal` | 76 | - | 653 | Diagnose and reconcile exact Windows apps across processes, services, tasks, startup entries, packages, locks, data, update helpers, and residue. Prefer disable-before-delete, explicit data choices, rollback, and per-surface absence proof. |
+| `windows-startup-and-removal` | 76 | - | 671 | Diagnose and reconcile exact Windows apps across processes, services, tasks, startup entries, packages, locks, data, update helpers, and residue. Prefer disable-before-delete, explicit data choices, rollback, and per-surface absence proof. |
 
 #### `capability-workbench`
 

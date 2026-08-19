@@ -303,8 +303,11 @@ function Get-DeviceEvidence {
     if (Get-CommandAvailability 'Get-PnpDevice') {
         $pnp = Invoke-ReadOnlyProbe -Surface 'pnp_devices' -Action {
             $presentIds = @{}
+            $presentProbeSucceeded = $false
             try {
                 Get-PnpDevice -PresentOnly -ErrorAction Stop | ForEach-Object { $presentIds[$_.InstanceId] = $true }
+                $presentProbeSucceeded = $true
+                Add-Coverage -Surface 'pnp_present_only' -State COVERED
             }
             catch {
                 Add-Coverage -Surface 'pnp_present_only' -State UNKNOWN -Reason ('probe-failed-' + $_.Exception.GetType().Name)
@@ -312,11 +315,17 @@ function Get-DeviceEvidence {
             Get-PnpDevice |
                 Where-Object { Test-TargetMatch @($_.FriendlyName, $_.Class, $_.InstanceId) } |
                 ForEach-Object {
+                    $present = if ($presentProbeSucceeded) {
+                        [bool] $presentIds.ContainsKey([string] $_.InstanceId)
+                    }
+                    else {
+                        $null
+                    }
                     [pscustomobject][ordered]@{
                         friendly_name = $_.FriendlyName
                         class = $_.Class
                         status = $_.Status
-                        present = [bool] $presentIds[$_.InstanceId]
+                        present = $present
                         instance_id_sha256 = Get-TextSha256 $_.InstanceId
                     }
                 }

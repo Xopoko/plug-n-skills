@@ -115,6 +115,15 @@ class WindowsHostOperationsContractTests(unittest.TestCase):
         self.assertIn("NOT_PROBED", script)
         self.assertIn("mutation_performed = $false", script)
         self.assertIn("raw_device_identifiers_included = $false", script)
+        self.assertIn("$presentProbeSucceeded = $false", script)
+        self.assertIn(
+            "Add-Coverage -Surface 'pnp_present_only' -State COVERED", script
+        )
+        self.assertIn("present = $present", script)
+        self.assertRegex(
+            script,
+            r"(?s)\$present\s*=\s*if\s*\(\$presentProbeSucceeded\).*?else\s*\{\s*\$null",
+        )
         self.assertNotIn("Win32_Product", script)
         for command in (
             "Remove-Item",

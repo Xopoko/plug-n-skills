@@ -33,9 +33,10 @@ powershell.exe -NoProfile -File `
   -Area StartupRemoval -Target "Exact Product Name"
 ```
 
-It intentionally hashes command data and identifiers unless an explicit local
-diagnostic needs them. It does not prove complete absence from every advanced
-surface; the coverage array names what was and was not probed.
+It intentionally hashes path-like command data and selected identifiers, while
+retaining matching display labels such as service, task, and package names.
+Keep the receipt private and local. It does not prove complete absence from
+every advanced surface; the coverage array names what was and was not probed.
 
 ## Controlled Change
 
