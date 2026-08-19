@@ -59,8 +59,10 @@ one row per task id.
 Required state:
 
 - `review_status`: `pending`, `complete`, or `skipped`;
-- `eof_receipt`: for `complete`, a typed object with `complete=true`, method,
-  pages or active-range boundary, and terminal cursor or local line receipt;
+- `eof_receipt`: for `complete`, a typed object with `complete=true`, a
+  non-empty `method`, either positive integer `pages` or an `active_range`
+  object with non-empty `start` and `end`, and either non-empty
+  `terminal_cursor` or positive integer `terminal_line`;
 - `skip_reason`: required for `skipped`;
 - `outcome`, observation types, observations, and counterevidence;
 - friction, workaround, existing-owner, classification, evidence-strength,
