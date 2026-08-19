@@ -20,6 +20,58 @@ from pathlib import Path
 from typing import Any, Iterable
 
 
+CORPUS_SCHEMA = "agent_harness.codex_task_corpus.v1"
+CORPUS_TASK_SCHEMA = "agent_harness.codex_task_index.v1"
+CORPUS_CODING_SCHEMA = "agent_harness.codex_task_coding.v1"
+CORPUS_CLUSTER_SCHEMA = "agent_harness.codex_task_cluster.v1"
+CORPUS_HANDOFF_SCHEMA = "agent_harness.codex_task_workbench_handoff.v1"
+CORPUS_HANDOFF_STRING_FIELDS = (
+    "affected_artifact_at_task_time",
+    "current_artifact_state",
+    "proposed_owner",
+    "proposed_artifact_type",
+    "hypothesis",
+    "cheapest_discriminator",
+    "uncertainty",
+    "residual_tradeoff",
+)
+CORPUS_HANDOFF_LIST_FIELDS = (
+    "evidence_pointers",
+    "validation_scenarios",
+    "regression_scenarios",
+    "safety_notes",
+)
+CORPUS_FILENAMES = (
+    "corpus-manifest.json",
+    "task-index.jsonl",
+    "coding-ledger.jsonl",
+    "cluster-ledger.jsonl",
+    "workbench-handoff.json",
+)
+CORPUS_SOURCE_KINDS = {
+    "app",
+    "app-server",
+    "chatgpt",
+    "cli",
+    "codex",
+    "desktop",
+    "exec",
+    "responses-api",
+    "unknown",
+    "vscode",
+}
+CORPUS_CLASSIFICATIONS = {
+    "context_or_budget",
+    "harness_or_runtime",
+    "incorrect_or_brittle_procedure",
+    "missing_capability",
+    "not_a_capability_gap",
+    "reference_or_knowledge",
+    "tool_or_permission",
+    "trigger_or_retrieval",
+}
+CORPUS_EVIDENCE_STRENGTHS = {"none", "weak", "moderate", "strong"}
+CORPUS_PRIVACY_SENSITIVITIES = {"low", "medium", "high"}
 UUID_RE = re.compile(
     r"[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}"
 )
@@ -912,6 +964,656 @@ def filtered_paths(args: argparse.Namespace) -> list[Path]:
     return paths[: getattr(args, "scan_limit", len(paths))]
 
 
+def _utc_iso_from_epoch(value: float) -> str:
+    return (
+        _dt.datetime.fromtimestamp(value, tz=_dt.timezone.utc)
+        .isoformat(timespec="seconds")
+        .replace("+00:00", "Z")
+    )
+
+
+def _parse_corpus_cutoff(value: str | None) -> _dt.datetime:
+    if not value:
+        return _dt.datetime.now(tz=_dt.timezone.utc)
+    parsed = _parse_timestamp(value)
+    if parsed is None:
+        raise SystemExit("--cutoff must be an ISO-8601 timestamp")
+    if parsed.tzinfo is None:
+        raise SystemExit("--cutoff must include a timezone, for example 2026-08-19T06:00:00Z")
+    return parsed.astimezone(_dt.timezone.utc)
+
+
+def _relative_rollout_ref(path: Path, home: Path) -> str:
+    try:
+        return path.resolve().relative_to(home.resolve()).as_posix()
+    except (OSError, ValueError):
+        return path.name
+
+
+def _read_corpus_metadata(path: Path, home: Path) -> dict[str, Any]:
+    """Read only the leading session metadata needed for corpus selection."""
+
+    try:
+        stat_result = path.stat()
+    except OSError as exc:
+        return {"error": f"stat:{type(exc).__name__}"}
+
+    malformed_prefix = 0
+    try:
+        with path.open("r", encoding="utf-8", errors="replace") as handle:
+            for line_no, raw_line in enumerate(handle, 1):
+                if line_no > 100:
+                    break
+                try:
+                    obj = json.loads(raw_line)
+                except json.JSONDecodeError:
+                    malformed_prefix += 1
+                    continue
+                if not isinstance(obj, dict) or obj.get("type") != "session_meta":
+                    continue
+                pl = payload(obj)
+                thread_id = str(
+                    pl.get("id") or pl.get("session_id") or thread_id_from_path(path)
+                )
+                if not UUID_RE.fullmatch(thread_id):
+                    return {"error": "session-meta-missing-valid-thread-id"}
+                source = pl.get("source")
+                internal_subagent = isinstance(source, dict) and isinstance(
+                    source.get("subagent"), dict
+                )
+                spawn = _thread_spawn(pl)
+                parent = (
+                    pl.get("parent_thread_id")
+                    or pl.get("forked_from_id")
+                    or spawn.get("parent_thread_id")
+                )
+                if internal_subagent:
+                    source_kind = "subagent"
+                elif isinstance(source, str) and source.strip():
+                    normalized_source = source.strip().lower().replace("_", "-")
+                    source_kind = (
+                        normalized_source
+                        if normalized_source in CORPUS_SOURCE_KINDS
+                        else "other"
+                    )
+                elif source is None:
+                    source_kind = "unknown"
+                else:
+                    source_kind = "structured"
+                parent_text = str(parent) if parent else ""
+                rollout_ref = _relative_rollout_ref(path, home)
+                return {
+                    "task_id": thread_id,
+                    "rollout_ref": rollout_ref,
+                    "source_kind": source_kind,
+                    "task_kind": "internal_subagent"
+                    if internal_subagent
+                    else ("fork" if parent else "root"),
+                    "parent_thread_id": (
+                        parent_text if UUID_RE.fullmatch(parent_text) else None
+                    ),
+                    "created_at": str(obj.get("timestamp") or ""),
+                    "updated_at": _utc_iso_from_epoch(stat_result.st_mtime),
+                    "updated_epoch": stat_result.st_mtime,
+                    "archived": rollout_ref.startswith("archived_sessions/"),
+                    "size_bytes": stat_result.st_size,
+                    "session_meta_line": line_no,
+                    "session_meta_sha256": hashlib.sha256(
+                        raw_line.encode("utf-8", errors="replace")
+                    ).hexdigest(),
+                    "cwd_for_filter": str(pl.get("cwd") or ""),
+                    "malformed_prefix_lines": malformed_prefix,
+                }
+    except OSError as exc:
+        return {"error": f"read:{type(exc).__name__}"}
+    return {"error": "session-meta-not-found-in-first-100-lines"}
+
+
+def _normalized_path_hint(value: str) -> str:
+    normalized = value.replace("\\", "/").casefold()
+    return normalized if normalized == "/" else normalized.rstrip("/")
+
+
+def _path_is_within_scope(value: str, scope: str) -> bool:
+    actual = _normalized_path_hint(value)
+    expected = _normalized_path_hint(scope)
+    if not actual or not expected:
+        return False
+    prefix = expected if expected.endswith("/") else f"{expected}/"
+    return actual == expected or actual.startswith(prefix)
+
+
+def _json_bytes(value: Any) -> bytes:
+    return (json.dumps(value, ensure_ascii=False, indent=2) + "\n").encode("utf-8")
+
+
+def _jsonl_bytes(rows: Iterable[dict[str, Any]]) -> bytes:
+    return b"".join(
+        (json.dumps(row, ensure_ascii=False, separators=(",", ":")) + "\n").encode(
+            "utf-8"
+        )
+        for row in rows
+    )
+
+
+def _write_corpus_file(path: Path, payload_bytes: bytes) -> None:
+    path.parent.mkdir(parents=True, exist_ok=True)
+    temporary = path.with_name(f".{path.name}.tmp-{os.getpid()}")
+    temporary.write_bytes(payload_bytes)
+    temporary.replace(path)
+
+
+def _corpus_output_paths(output_dir: Path) -> dict[str, Path]:
+    return {name: output_dir / name for name in CORPUS_FILENAMES}
+
+
+def cmd_corpus(args: argparse.Namespace) -> int:
+    if args.count < 1 or args.count > 1000:
+        raise SystemExit("--count must be between 1 and 1000")
+    if args.scan_limit < 1:
+        raise SystemExit("--scan-limit must be at least 1")
+
+    home = codex_home(args)
+    cutoff = _parse_corpus_cutoff(args.cutoff)
+    cutoff_epoch = cutoff.timestamp()
+    paths = iter_session_paths(home, include_archived=not args.no_archived)
+    scanned_paths = paths[: args.scan_limit]
+    excluded_ids = {value.lower() for value in args.exclude_thread_id}
+    current_id = os.environ.get("CODEX_THREAD_ID", "").strip()
+    if current_id and not args.include_current:
+        excluded_ids.add(current_id.lower())
+    cwd_hint = args.cwd
+
+    counts: collections.Counter[str] = collections.Counter()
+    eligible: list[dict[str, Any]] = []
+    seen_ids: set[str] = set()
+    for path in scanned_paths:
+        try:
+            updated_epoch = path.stat().st_mtime
+        except OSError:
+            counts["unreadable"] += 1
+            continue
+        if updated_epoch > cutoff_epoch:
+            counts["after_cutoff"] += 1
+            continue
+        metadata = _read_corpus_metadata(path, home)
+        if metadata.get("error"):
+            counts["unclassified"] += 1
+            continue
+        task_id = str(metadata["task_id"])
+        normalized_id = task_id.lower()
+        if normalized_id in seen_ids:
+            counts["duplicate_task_id"] += 1
+            continue
+        seen_ids.add(normalized_id)
+        if normalized_id in excluded_ids:
+            counts["explicit_or_current"] += 1
+            continue
+        if metadata["task_kind"] == "internal_subagent" and not args.include_subagents:
+            counts["internal_subagent"] += 1
+            continue
+        if cwd_hint:
+            actual_cwd = str(metadata.pop("cwd_for_filter", ""))
+            if not _path_is_within_scope(actual_cwd, cwd_hint):
+                counts["cwd_mismatch"] += 1
+                continue
+        else:
+            metadata.pop("cwd_for_filter", None)
+        eligible.append(metadata)
+
+    eligible.sort(
+        key=lambda row: (float(row["updated_epoch"]), str(row["task_id"])),
+        reverse=True,
+    )
+    selected = eligible[: args.count]
+    if len(selected) < args.count and not args.allow_partial:
+        raise SystemExit(
+            "eligible task count is smaller than --count "
+            f"({len(selected)} < {args.count}); increase --scan-limit, relax filters, "
+            "or pass --allow-partial"
+        )
+
+    output_dir = Path(args.output_dir).expanduser().resolve()
+    output_paths = _corpus_output_paths(output_dir)
+    collisions = [path for path in output_paths.values() if path.exists()]
+    if collisions and not args.overwrite:
+        names = ", ".join(path.name for path in collisions)
+        raise SystemExit(f"corpus output already exists ({names}); pass --overwrite to replace it")
+
+    task_rows: list[dict[str, Any]] = []
+    coding_rows: list[dict[str, Any]] = []
+    for row in selected:
+        clean = {key: value for key, value in row.items() if key != "updated_epoch"}
+        task_rows.append({"schema": CORPUS_TASK_SCHEMA, **clean})
+        coding_rows.append(
+            {
+                "schema": CORPUS_CODING_SCHEMA,
+                "task_id": clean["task_id"],
+                "review_status": "pending",
+                "eof_receipt": None,
+                "outcome": "",
+                "observation_types": [],
+                "observations": [],
+                "counterevidence": [],
+                "frictions": [],
+                "workarounds": [],
+                "existing_owners": [],
+                "classification": "",
+                "evidence_strength": "none",
+                "privacy_sensitivity": "unknown",
+                "independence_group": clean["task_id"],
+                "cluster_ids": [],
+                "recovery_pointers": [
+                    {"rollout_ref": clean["rollout_ref"], "scope": "active"}
+                ],
+            }
+        )
+
+    task_index_bytes = _jsonl_bytes(task_rows)
+    coding_ledger_bytes = _jsonl_bytes(coding_rows)
+    cluster_ledger_bytes = b""
+    handoff = {
+        "schema": CORPUS_HANDOFF_SCHEMA,
+        "status": "not_ready",
+        "source_manifest": "corpus-manifest.json",
+        "candidate_gaps": [],
+        "authorization": {
+            "edit_source": False,
+            "install": False,
+            "publish": False,
+        },
+    }
+    handoff_bytes = _json_bytes(handoff)
+    manifest = {
+        "schema": CORPUS_SCHEMA,
+        "created_at": (
+            _dt.datetime.now(tz=_dt.timezone.utc)
+            .isoformat(timespec="seconds")
+            .replace("+00:00", "Z")
+        ),
+        "cutoff": cutoff.isoformat(timespec="seconds").replace("+00:00", "Z"),
+        "selection": {
+            "requested_count": args.count,
+            "selected_count": len(selected),
+            "complete": len(selected) == args.count,
+            "order": "rollout_mtime_desc_then_task_id_desc",
+            "scan_limit": args.scan_limit,
+            "scanned_paths": len(scanned_paths),
+            "available_paths": len(paths),
+            "scan_limit_reached": len(paths) > len(scanned_paths),
+        },
+        "filters": {
+            "include_archived": not args.no_archived,
+            "include_internal_subagents": args.include_subagents,
+            "include_current_thread": args.include_current,
+            "cwd_filter_applied": bool(args.cwd),
+            "explicit_exclusion_count": len(args.exclude_thread_id),
+        },
+        "exclusions": dict(sorted(counts.items())),
+        "coverage": {
+            "newest_selected_at": task_rows[0]["updated_at"] if task_rows else None,
+            "oldest_selected_at": task_rows[-1]["updated_at"] if task_rows else None,
+            "reviewed_count": 0,
+            "pending_count": len(task_rows),
+        },
+        "immutable_artifacts": {
+            "task-index.jsonl": {
+                "sha256": hashlib.sha256(task_index_bytes).hexdigest(),
+                "rows": len(task_rows),
+            }
+        },
+        "mutable_artifacts": [
+            "coding-ledger.jsonl",
+            "cluster-ledger.jsonl",
+            "workbench-handoff.json",
+        ],
+        "privacy": {
+            "message_content_included": False,
+            "cwd_values_included": False,
+            "rollout_refs": "relative_to_codex_home",
+            "raw_rollouts_modified": False,
+        },
+    }
+
+    _write_corpus_file(output_paths["task-index.jsonl"], task_index_bytes)
+    _write_corpus_file(output_paths["coding-ledger.jsonl"], coding_ledger_bytes)
+    _write_corpus_file(output_paths["cluster-ledger.jsonl"], cluster_ledger_bytes)
+    _write_corpus_file(output_paths["workbench-handoff.json"], handoff_bytes)
+    _write_corpus_file(output_paths["corpus-manifest.json"], _json_bytes(manifest))
+
+    summary = {
+        "output_dir": str(output_dir),
+        "requested_count": args.count,
+        "selected_count": len(selected),
+        "cutoff": manifest["cutoff"],
+        "complete": manifest["selection"]["complete"],
+        "exclusions": manifest["exclusions"],
+    }
+    if args.json:
+        print(json.dumps(summary, ensure_ascii=False, indent=2))
+    else:
+        print(f"Codex task corpus: {len(selected)}/{args.count} selected")
+        print(f"cutoff: {summary['cutoff']}")
+        print(f"output: {output_dir}")
+        print("raw message content: not copied")
+    return 0
+
+
+def _load_jsonl(path: Path, errors: list[str]) -> list[dict[str, Any]]:
+    rows: list[dict[str, Any]] = []
+    if not path.is_file():
+        errors.append(f"missing:{path.name}")
+        return rows
+    with path.open("r", encoding="utf-8", errors="replace") as handle:
+        for line_no, line in enumerate(handle, 1):
+            if not line.strip():
+                continue
+            try:
+                value = json.loads(line)
+            except json.JSONDecodeError:
+                errors.append(f"invalid-json:{path.name}:{line_no}")
+                continue
+            if not isinstance(value, dict):
+                errors.append(f"not-object:{path.name}:{line_no}")
+                continue
+            rows.append(value)
+    return rows
+
+
+def _load_json_object(path: Path, errors: list[str]) -> dict[str, Any]:
+    if not path.is_file():
+        errors.append(f"missing:{path.name}")
+        return {}
+    try:
+        value = json.loads(path.read_text(encoding="utf-8"))
+    except (OSError, json.JSONDecodeError):
+        errors.append(f"invalid-json:{path.name}")
+        return {}
+    if not isinstance(value, dict):
+        errors.append(f"not-object:{path.name}")
+        return {}
+    return value
+
+
+def _walk_json(value: Any, prefix: str = "") -> Iterable[tuple[str, Any]]:
+    if isinstance(value, dict):
+        for key, child in value.items():
+            child_prefix = f"{prefix}.{key}" if prefix else str(key)
+            yield child_prefix, child
+            yield from _walk_json(child, child_prefix)
+    elif isinstance(value, list):
+        for index, child in enumerate(value):
+            child_prefix = f"{prefix}[{index}]"
+            yield child_prefix, child
+            yield from _walk_json(child, child_prefix)
+
+
+def _privacy_findings(name: str, value: Any) -> list[str]:
+    findings: list[str] = []
+    forbidden_keys = {
+        "raw_prompt",
+        "raw_message",
+        "raw_excerpt",
+        "raw_command",
+        "tool_output",
+        "email_body",
+        "password",
+        "secret",
+        "access_token",
+        "refresh_token",
+        "private_key",
+    }
+    email_re = re.compile(r"(?i)\b[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}\b")
+    private_path_re = re.compile(r"(?i)(?:\b[A-Z]:[\\/]|/(?:home|Users)/)[^\s\"']+")
+    secret_assignment_re = re.compile(
+        rf"(?i)\b(?:{SENSITIVE_KEY_PATTERN})\b\s*[:=]\s*(?!\[REDACTED\])\S+"
+    )
+    for pointer, child in _walk_json(value):
+        key = pointer.rsplit(".", 1)[-1].split("[", 1)[0].casefold()
+        if key in forbidden_keys:
+            findings.append(f"forbidden-field:{name}:{pointer}")
+        if not isinstance(child, str):
+            continue
+        if email_re.search(child):
+            findings.append(f"email-indicator:{name}:{pointer}")
+        if private_path_re.search(child):
+            findings.append(f"absolute-path-indicator:{name}:{pointer}")
+        if secret_assignment_re.search(child) or PRIVATE_KEY_MARKER_RE.search(child):
+            findings.append(f"secret-indicator:{name}:{pointer}")
+    return findings
+
+
+def cmd_corpus_check(args: argparse.Namespace) -> int:
+    corpus_dir = Path(args.corpus_dir).expanduser().resolve()
+    errors: list[str] = []
+    warnings: list[str] = []
+    if args.min_independent < 1:
+        errors.append("argument:min-independent-must-be-positive")
+    paths = _corpus_output_paths(corpus_dir)
+    manifest = _load_json_object(paths["corpus-manifest.json"], errors)
+    task_rows = _load_jsonl(paths["task-index.jsonl"], errors)
+    coding_rows = _load_jsonl(paths["coding-ledger.jsonl"], errors)
+    cluster_rows = _load_jsonl(paths["cluster-ledger.jsonl"], errors)
+    handoff = _load_json_object(paths["workbench-handoff.json"], errors)
+
+    if manifest.get("schema") != CORPUS_SCHEMA:
+        errors.append("schema:corpus-manifest.json")
+    if any(row.get("schema") != CORPUS_TASK_SCHEMA for row in task_rows):
+        errors.append("schema:task-index.jsonl")
+    if any(row.get("schema") != CORPUS_CODING_SCHEMA for row in coding_rows):
+        errors.append("schema:coding-ledger.jsonl")
+    if any(row.get("schema") != CORPUS_CLUSTER_SCHEMA for row in cluster_rows):
+        errors.append("schema:cluster-ledger.jsonl")
+    if handoff.get("schema") != CORPUS_HANDOFF_SCHEMA:
+        errors.append("schema:workbench-handoff.json")
+
+    task_ids = [str(row.get("task_id") or "") for row in task_rows]
+    coding_ids = [str(row.get("task_id") or "") for row in coding_rows]
+    if not all(UUID_RE.fullmatch(value) for value in task_ids):
+        errors.append("task-index:invalid-task-id")
+    if any(
+        row.get("parent_thread_id") is not None
+        and not UUID_RE.fullmatch(str(row.get("parent_thread_id")))
+        for row in task_rows
+    ):
+        errors.append("task-index:invalid-parent-thread-id")
+    if len(set(task_ids)) != len(task_ids):
+        errors.append("task-index:duplicate-task-id")
+    selected_count = manifest.get("selection", {}).get("selected_count")
+    if selected_count != len(task_rows):
+        errors.append("coverage:selected-count-mismatch")
+    declared_hash = (
+        manifest.get("immutable_artifacts", {})
+        .get("task-index.jsonl", {})
+        .get("sha256")
+    )
+    if paths["task-index.jsonl"].is_file():
+        actual_hash = hashlib.sha256(paths["task-index.jsonl"].read_bytes()).hexdigest()
+        if declared_hash != actual_hash:
+            errors.append("integrity:task-index-sha256")
+    if set(coding_ids) != set(task_ids) or len(coding_ids) != len(task_ids):
+        errors.append("coverage:coding-ledger-task-set")
+
+    valid_statuses = {"pending", "complete", "skipped"}
+    pending = 0
+    completed = 0
+    skipped = 0
+    for row in coding_rows:
+        task_id = str(row.get("task_id") or "")
+        status = row.get("review_status")
+        if status not in valid_statuses:
+            errors.append(f"coding:{task_id}:invalid-review-status")
+            continue
+        if status == "pending":
+            pending += 1
+            if args.final:
+                errors.append(f"coding:{task_id}:pending-in-final")
+        elif status == "complete":
+            completed += 1
+            receipt = row.get("eof_receipt")
+            if not isinstance(receipt, dict) or receipt.get("complete") is not True:
+                errors.append(f"coding:{task_id}:missing-eof-receipt")
+            if not str(row.get("outcome") or "").strip():
+                errors.append(f"coding:{task_id}:missing-outcome")
+            if row.get("classification") not in CORPUS_CLASSIFICATIONS:
+                errors.append(f"coding:{task_id}:invalid-classification")
+            if row.get("evidence_strength") not in CORPUS_EVIDENCE_STRENGTHS:
+                errors.append(f"coding:{task_id}:invalid-evidence-strength")
+            if row.get("privacy_sensitivity") not in CORPUS_PRIVACY_SENSITIVITIES:
+                errors.append(f"coding:{task_id}:invalid-privacy-sensitivity")
+            if not str(row.get("independence_group") or "").strip():
+                errors.append(f"coding:{task_id}:missing-independence-group")
+        else:
+            skipped += 1
+            if not str(row.get("skip_reason") or "").strip():
+                errors.append(f"coding:{task_id}:missing-skip-reason")
+
+    cluster_ids: set[str] = set()
+    candidate_cluster_ids: set[str] = set()
+    coding_by_id = {
+        str(item.get("task_id") or ""): item for item in coding_rows
+    }
+    for row in cluster_rows:
+        cluster_id = str(row.get("cluster_id") or "")
+        if not cluster_id or cluster_id in cluster_ids:
+            errors.append("cluster:missing-or-duplicate-id")
+            continue
+        cluster_ids.add(cluster_id)
+        member_ids = [str(value) for value in row.get("task_ids") or []]
+        independent_ids = [str(value) for value in row.get("independent_task_ids") or []]
+        if not set(member_ids).issubset(set(task_ids)):
+            errors.append(f"cluster:{cluster_id}:unknown-task-id")
+        if not set(independent_ids).issubset(set(member_ids)):
+            errors.append(f"cluster:{cluster_id}:independent-not-member")
+        if len(set(independent_ids)) != len(independent_ids):
+            errors.append(f"cluster:{cluster_id}:duplicate-independent-task")
+        if row.get("independent_count") != len(independent_ids):
+            errors.append(f"cluster:{cluster_id}:independent-count-mismatch")
+        cluster_classification = row.get("classification")
+        if cluster_classification and cluster_classification not in CORPUS_CLASSIFICATIONS:
+            errors.append(f"cluster:{cluster_id}:invalid-classification")
+        decision = str(row.get("decision") or "")
+        if decision in {"candidate", "proposed", "adopted"}:
+            candidate_cluster_ids.add(cluster_id)
+            complete_independent_rows: list[dict[str, Any]] = []
+            for task_id in independent_ids:
+                coding_row = coding_by_id.get(task_id, {})
+                if coding_row.get("review_status") != "complete":
+                    errors.append(
+                        f"cluster:{cluster_id}:independent-task-not-complete"
+                    )
+                    continue
+                receipt = coding_row.get("eof_receipt")
+                if not isinstance(receipt, dict) or receipt.get("complete") is not True:
+                    errors.append(
+                        f"cluster:{cluster_id}:independent-task-missing-eof-receipt"
+                    )
+                    continue
+                complete_independent_rows.append(coding_row)
+            independence_groups = [
+                str(item.get("independence_group") or "")
+                for item in complete_independent_rows
+            ]
+            if not all(independence_groups):
+                errors.append(f"cluster:{cluster_id}:missing-independence-group")
+            elif len(set(independence_groups)) != len(independence_groups):
+                errors.append(f"cluster:{cluster_id}:duplicate-independence-group")
+            direct_contradiction = row.get("exception") == "direct_capability_contradiction"
+            minimum = 1 if direct_contradiction else args.min_independent
+            if len(complete_independent_rows) < minimum:
+                errors.append(f"cluster:{cluster_id}:below-independent-threshold")
+            for required in (
+                "classification",
+                "inference",
+                "counterevidence",
+                "existing_owner_assessment",
+                "cheapest_discriminator",
+            ):
+                if not row.get(required):
+                    errors.append(f"cluster:{cluster_id}:missing-{required}")
+
+    authorization = handoff.get("authorization")
+    if not isinstance(authorization, dict) or any(
+        authorization.get(key) is not False for key in ("edit_source", "install", "publish")
+    ):
+        errors.append("handoff:authorization-must-remain-false")
+    raw_handoff_candidates = handoff.get("candidate_gaps")
+    if not isinstance(raw_handoff_candidates, list):
+        errors.append("handoff:candidate-gaps-must-be-list")
+        handoff_candidates: list[dict[str, Any]] = []
+    else:
+        handoff_candidates = []
+        for item in raw_handoff_candidates:
+            if not isinstance(item, dict):
+                errors.append("handoff:candidate-must-be-object")
+                continue
+            handoff_candidates.append(item)
+    handoff_cluster_ids = {
+        str(item.get("cluster_id") or "") for item in handoff_candidates
+    }
+    if len(handoff_cluster_ids) != len(handoff_candidates):
+        errors.append("handoff:missing-or-duplicate-cluster-id")
+    if not handoff_cluster_ids.issubset(candidate_cluster_ids):
+        errors.append("handoff:unknown-or-noncandidate-cluster")
+    if args.final and candidate_cluster_ids != handoff_cluster_ids:
+        errors.append("handoff:candidate-coverage")
+    if args.final:
+        if handoff.get("status") != "ready_for_review":
+            errors.append("handoff:status-not-ready-for-review")
+        for item in handoff_candidates:
+            cluster_id = str(item.get("cluster_id") or "unknown")
+            for field in CORPUS_HANDOFF_STRING_FIELDS:
+                if not isinstance(item.get(field), str) or not item[field].strip():
+                    errors.append(f"handoff:{cluster_id}:missing-{field}")
+            for field in CORPUS_HANDOFF_LIST_FIELDS:
+                values = item.get(field)
+                if (
+                    not isinstance(values, list)
+                    or not values
+                    or any(not isinstance(value, str) or not value.strip() for value in values)
+                ):
+                    errors.append(f"handoff:{cluster_id}:invalid-{field}")
+
+    for name, value in (
+        ("corpus-manifest.json", manifest),
+        ("task-index.jsonl", task_rows),
+        ("coding-ledger.jsonl", coding_rows),
+        ("cluster-ledger.jsonl", cluster_rows),
+        ("workbench-handoff.json", handoff),
+    ):
+        errors.extend(_privacy_findings(name, value))
+
+    if manifest.get("selection", {}).get("scan_limit_reached"):
+        warnings.append("selection:scan-limit-reached")
+    if skipped:
+        warnings.append(f"coverage:skipped={skipped}")
+    report = {
+        "valid": not errors,
+        "final": args.final,
+        "tasks": len(task_rows),
+        "completed": completed,
+        "pending": pending,
+        "skipped": skipped,
+        "clusters": len(cluster_rows),
+        "candidate_clusters": len(candidate_cluster_ids),
+        "errors": sorted(set(errors)),
+        "warnings": sorted(set(warnings)),
+    }
+    if args.json:
+        print(json.dumps(report, ensure_ascii=False, indent=2))
+    else:
+        status = "valid" if report["valid"] else "invalid"
+        print(
+            f"Codex task corpus: {status}; tasks={len(task_rows)} "
+            f"complete={completed} pending={pending} skipped={skipped}"
+        )
+        for error in report["errors"]:
+            print(f"ERROR {error}")
+        for warning in report["warnings"]:
+            print(f"WARN {warning}")
+    return 0 if not errors else 1
+
+
 def cmd_find(args: argparse.Namespace) -> int:
     home = codex_home(args)
     if args.thread_id:
@@ -1589,9 +2291,13 @@ def cmd_doctor(args: argparse.Namespace) -> int:
 
 
 def add_common(parser: argparse.ArgumentParser) -> None:
+    add_home_json(parser)
+    parser.add_argument("--max-chars", type=int, default=220, help="Max characters per snippet")
+
+
+def add_home_json(parser: argparse.ArgumentParser) -> None:
     parser.add_argument("--codex-home", help="Override CODEX_HOME / ~/.codex")
     parser.add_argument("--json", action="store_true", help="Emit JSON instead of compact text")
-    parser.add_argument("--max-chars", type=int, default=220, help="Max characters per snippet")
 
 
 def add_scan_common(parser: argparse.ArgumentParser) -> None:
@@ -1622,6 +2328,42 @@ def build_parser() -> argparse.ArgumentParser:
     p_find.add_argument("--cwd", default="", help="Prefer sessions whose cwd matches this path")
     p_find.add_argument("--limit", type=int, default=12)
     p_find.set_defaults(func=cmd_find)
+
+    p_corpus = sub.add_parser(
+        "corpus", help="Freeze a bounded metadata-only cross-task corpus"
+    )
+    add_home_json(p_corpus)
+    p_corpus.add_argument("--count", type=int, required=True, help="Newest eligible task count")
+    p_corpus.add_argument("--output-dir", required=True, help="Directory for corpus ledgers")
+    p_corpus.add_argument("--cutoff", help="Immutable ISO-8601 cutoff; defaults to now")
+    p_corpus.add_argument("--scan-limit", type=int, default=5000)
+    p_corpus.add_argument("--no-archived", action="store_true")
+    p_corpus.add_argument("--cwd", default="", help="Optional project-path filter; not emitted")
+    p_corpus.add_argument(
+        "--exclude-thread-id", action="append", default=[], help="Task ID to exclude; repeatable"
+    )
+    p_corpus.add_argument(
+        "--include-current", action="store_true", help="Do not exclude CODEX_THREAD_ID"
+    )
+    p_corpus.add_argument(
+        "--include-subagents", action="store_true", help="Include internal subagent rollouts"
+    )
+    p_corpus.add_argument(
+        "--allow-partial", action="store_true", help="Write fewer tasks when exact count is unavailable"
+    )
+    p_corpus.add_argument(
+        "--overwrite", action="store_true", help="Replace only the five known corpus files"
+    )
+    p_corpus.set_defaults(func=cmd_corpus)
+
+    p_corpus_check = sub.add_parser(
+        "corpus-check", help="Validate corpus coverage, privacy, and candidate thresholds"
+    )
+    p_corpus_check.add_argument("corpus_dir")
+    p_corpus_check.add_argument("--json", action="store_true")
+    p_corpus_check.add_argument("--final", action="store_true")
+    p_corpus_check.add_argument("--min-independent", type=int, default=3)
+    p_corpus_check.set_defaults(func=cmd_corpus_check)
 
     p_brief = sub.add_parser("brief", help="Summarize one rollout without raw output")
     add_common(p_brief)

@@ -12,7 +12,7 @@ architecture-intelligence.
 
 ## Skills
 
-The plugin exposes 19 skills: one portfolio router and 18 narrow leaves.
+The plugin exposes 20 skills: one portfolio router and 19 narrow leaves.
 
 ### Portfolio and harness
 
@@ -32,6 +32,7 @@ The plugin exposes 19 skills: one portfolio router and 18 narrow leaves.
 - `codex-plugin-mcp-manager`
 - `codex-doctor-debugger`
 - `codex-log-reader`
+- `codex-task-corpus`
 - `codex-environments`
 
 ### Claude Code
@@ -64,6 +65,7 @@ the harness artifact validator, and the Codex deferred-completion MCP server.
 python3 scripts/codex_cli_inspector.py --json
 python3 scripts/claude_code_inspector.py --json
 python3 scripts/codex_log_reader.py --help
+python3 scripts/codex_log_reader.py corpus-check --help
 python3 scripts/codex_skill_catalog_audit.py --help
 python3 scripts/validate_thread_skill_handoff.py --help
 python3 scripts/credential_handoff.py --help

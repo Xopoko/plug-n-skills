@@ -13,6 +13,7 @@ ROOT = Path(__file__).resolve().parents[2]
 CATALOG_WEBSITE_URL = "https://github.com/Xopoko/plug-n-skills"
 LOCAL_PLUGINS = [
     "agent-harness",
+    "windows-host-operations",
     "capability-workbench",
     "context-density",
     "i-have-adhd",
@@ -32,6 +33,7 @@ CATALOG = plugin_catalog.validate_catalog(ROOT)
 FIRST_PARTY = {item["name"]: item for item in CATALOG["plugins"]}
 PLUGINS = [
     "agent-harness",
+    "windows-host-operations",
     "capability-workbench",
     "context-density",
     "i-have-adhd",
@@ -439,7 +441,7 @@ class RepoStructureTest(unittest.TestCase):
         rows = assignments["PLUGIN_LAYOUT_ROWS"]
         summaries = assignments["PLUGIN_SUMMARIES"]
         flattened = [name for row in rows for name in row]
-        self.assertEqual([6, 5, 6], [len(row) for row in rows])
+        self.assertEqual([6, 6, 6], [len(row) for row in rows])
         self.assertEqual(PLUGINS, flattened)
         self.assertEqual(set(PLUGINS), set(summaries))
 
