@@ -244,12 +244,13 @@ function Get-StartupRemovalEvidence {
 
     $packages = Invoke-ReadOnlyProbe -Surface 'classic_uninstall_registry' -Action {
         $roots = @(
-            [pscustomobject]@{ path = 'HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall\*'; scope = 'machine'; architecture = 'native' },
-            [pscustomobject]@{ path = 'HKLM:\SOFTWARE\WOW6432Node\Microsoft\Windows\CurrentVersion\Uninstall\*'; scope = 'machine'; architecture = 'x86' },
-            [pscustomobject]@{ path = 'HKCU:\SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall\*'; scope = 'user'; architecture = 'current' }
+            [pscustomobject]@{ path = 'HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall'; scope = 'machine'; architecture = 'native' },
+            [pscustomobject]@{ path = 'HKLM:\SOFTWARE\WOW6432Node\Microsoft\Windows\CurrentVersion\Uninstall'; scope = 'machine'; architecture = 'x86' },
+            [pscustomobject]@{ path = 'HKCU:\SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall'; scope = 'user'; architecture = 'current' }
         )
         foreach ($root in $roots) {
-            Get-ItemProperty -Path $root.path -ErrorAction SilentlyContinue |
+            if (-not (Test-Path -LiteralPath $root.path -ErrorAction Stop)) { continue }
+            Get-ItemProperty -Path "$($root.path)\*" -ErrorAction Stop |
                 Where-Object { Test-TargetMatch @($_.DisplayName, $_.Publisher, $_.PSChildName) } |
                 ForEach-Object {
                     [pscustomobject][ordered]@{
