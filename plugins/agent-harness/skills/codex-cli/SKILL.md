@@ -1,6 +1,6 @@
 ---
 name: codex-cli
-description: Route Codex CLI operations across skill-catalog diagnostics, CLI inspection, exec/review automation, deferred completion, task supervision, plugin/MCP management, doctor/debug, rollout forensics, and app environments.
+description: Route Codex CLI operations across diagnostics, exec/review automation, deferred completion, task supervision, plugin/MCP management, rollout forensics, cross-task corpora, and app environments.
 ---
 
 # Codex CLI Router
@@ -33,6 +33,7 @@ Do not commit personal absolute paths. Use `CODEX_CLI`, `PATH`, `$CODEX_HOME`, o
 - Install/config/auth/runtime health, features, sandbox denials, debug models, skill-catalog budgets/omissions, app-server, remote control, or experimental transports: `codex-doctor-debugger`.
 - Explicit live-task-by-ID monitoring/supervision, transition waits, checkpoint adoption, completion/attention gates, or narrowly authorized handoffs/corrections: `codex-thread-supervisor`.
 - CODEX_THREAD_ID lookup, rollout JSONL, existing-task history/catalog, malformed or huge logs, or redacted summaries: `codex-log-reader`.
+- Last-N Codex task selection, cross-session context or behavior audits, recurring-work retrospectives, or typed capability-gap evidence: `codex-task-corpus`.
 - Environment TOML, app Run/Test/Preview, startup commands, dev servers, or repeatable project actions: `codex-environments`.
 - If Codex starts normally and the question is update-channel eligibility or a custom scheduled updater's freshness, inspect the updater that owns channel selection and use `scheduled-automation-runtime` for native scheduler proof; do not route that adjacent problem to `codex-doctor-debugger`.
 
