@@ -28,23 +28,45 @@ class GitHubRequestError(ValueError):
     """The requested URL is not an allowlisted HTTPS GitHub endpoint."""
 
 
+def _allowlisted_https_origin(url: str) -> tuple[str, str, int]:
+    """Return a normalized origin after enforcing the GitHub URL policy."""
+
+    parsed = urllib.parse.urlparse(url)
+    host = parsed.hostname
+    if parsed.username or parsed.password:
+        raise GitHubRequestError("GitHub URLs must not embed credentials")
+    if parsed.scheme.casefold() != "https" or not host:
+        raise GitHubRequestError("not an allowlisted HTTPS GitHub endpoint")
+    normalized_host = host.casefold()
+    if normalized_host not in ALLOWED_HOSTS:
+        raise GitHubRequestError("not an allowlisted HTTPS GitHub endpoint")
+    try:
+        port = parsed.port
+    except ValueError as exc:
+        raise GitHubRequestError("GitHub URL has an invalid port") from exc
+    if port not in (None, 443):
+        raise GitHubRequestError("GitHub URLs must use the default HTTPS port")
+    return ("https", normalized_host, 443)
+
+
 class _AllowlistedRedirectHandler(urllib.request.HTTPRedirectHandler):
-    """Refuse redirects that would send credentials off GitHub."""
+    """Block off-GitHub redirects and strip credentials across GitHub origins."""
 
     def redirect_request(
         self, req: Any, fp: Any, code: int, msg: str, headers: Any, newurl: str
     ) -> Any:
-        assert_allowlisted_url(newurl)
-        return super().redirect_request(req, fp, code, msg, headers, newurl)
+        target_origin = _allowlisted_https_origin(newurl)
+        redirected = super().redirect_request(req, fp, code, msg, headers, newurl)
+        if (
+            redirected is not None
+            and _allowlisted_https_origin(req.full_url) != target_origin
+        ):
+            redirected.remove_header("Authorization")
+        return redirected
 
 
 def assert_allowlisted_url(url: str) -> None:
-    parsed = urllib.parse.urlparse(url)
-    host = parsed.hostname
-    if parsed.scheme != "https" or not host or host.casefold() not in ALLOWED_HOSTS:
-        raise GitHubRequestError(f"not an allowlisted HTTPS GitHub endpoint: {url}")
-    if parsed.username or parsed.password:
-        raise GitHubRequestError("GitHub URLs must not embed credentials")
+    _allowlisted_https_origin(url)
 
 
 def validate_repository_component(value: str, label: str) -> str:

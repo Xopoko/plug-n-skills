@@ -18,6 +18,7 @@ import struct
 import subprocess
 import sys
 import tempfile
+import urllib.request
 import zlib
 from pathlib import Path
 from unittest import mock
@@ -2009,6 +2010,8 @@ def test_github_request_hardening() -> None:
         "http://api.github.com/repos/o/r",
         "https://api.github.com.evil.test/repos/o/r",
         "https://user:pass@api.github.com/repos/o/r",
+        "https://api.github.com:444/repos/o/r",
+        "https://api.github.com:not-a-port/repos/o/r",
         "file:///etc/passwd",
     ):
         try:
@@ -2095,6 +2098,40 @@ def test_github_request_hardening() -> None:
     except github_utils.GitHubRequestError:
         rejected = True
     check("github_utils: blocks off-GitHub redirect", rejected)
+
+    authenticated_request = urllib.request.Request(
+        "https://api.github.com/repos/o/r",
+        headers={"Authorization": "token fixture", "User-Agent": "fixture"},
+    )
+    cross_host_redirect = redirect_handler.redirect_request(
+        authenticated_request,
+        None,
+        302,
+        "Found",
+        {},
+        "https://codeload.github.com/o/r/zip/main",
+    )
+    check(
+        "github_utils: strips authorization from cross-host redirects",
+        cross_host_redirect is not None
+        and cross_host_redirect.get_header("Authorization") is None,
+        repr(cross_host_redirect.headers if cross_host_redirect else None),
+    )
+
+    same_host_redirect = redirect_handler.redirect_request(
+        authenticated_request,
+        None,
+        302,
+        "Found",
+        {},
+        "https://api.github.com/repos/o/r?page=2",
+    )
+    check(
+        "github_utils: retains authorization for same-origin redirects",
+        same_host_redirect is not None
+        and same_host_redirect.get_header("Authorization") == "token fixture",
+        repr(same_host_redirect.headers if same_host_redirect else None),
+    )
 
 
 def test_install_skill_argument_hardening() -> None:
