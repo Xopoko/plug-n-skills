@@ -1,0 +1,41 @@
+{
+  "name": "windows-host-operations",
+  "version": "0.1.0",
+  "description": "Windows host diagnosis and controlled repair across effective settings, startup and removal surfaces, and device stacks with rollback and functional proof.",
+  "author": {
+    "name": "Xopoko"
+  },
+  "repository": "https://github.com/Xopoko/plug-n-skills/tree/main/plugins/windows-host-operations",
+  "license": "MIT",
+  "keywords": [
+    "devices",
+    "diagnostics",
+    "drivers",
+    "powershell",
+    "services",
+    "startup",
+    "uninstall",
+    "windows"
+  ],
+  "skills": "./skills/",
+  "interface": {
+    "displayName": "Windows Host Operations",
+    "shortDescription": "Diagnose and safely reconcile effective Windows state.",
+    "longDescription": "Diagnose Windows symptoms across policy, services, power, startup, packages, processes, devices, drivers, endpoints, queues, and vendor layers; bind exact targets, capture read-only baselines, prefer reversible changes, preserve rollback, and prove the user-visible effect instead of trusting a changed value alone.",
+    "developerName": "Xopoko",
+    "category": "Productivity",
+    "websiteURL": "https://github.com/Xopoko/plug-n-skills",
+    "capabilities": [
+      "Effective-setting diagnosis across capability, configuration, policy, service, power, vendor, firmware, runtime, and observed-effect layers",
+      "Exact-target startup, persistence, application-removal, lock, and residue reconciliation",
+      "Device, driver, endpoint, queue, transport, role, and vendor-software diagnosis with functional verification",
+      "Read-only typed evidence capture with UNKNOWN coverage, before-and-after receipts, rollback state, and pending refresh, logoff, or reboot"
+    ],
+    "defaultPrompt": [
+      "Diagnose this Windows issue from a read-only baseline, identify the effective owner, and require functional proof."
+    ],
+    "brandColor": "#0F766E",
+    "composerIcon": "./assets/icon.png",
+    "logo": "./assets/icon.png"
+  }
+}
