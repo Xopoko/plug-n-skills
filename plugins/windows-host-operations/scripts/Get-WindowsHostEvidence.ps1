@@ -30,6 +30,7 @@ $script:Coverage = @()
 function Get-TextSha256 {
     param([AllowNull()][object] $Value)
 
+    if ($null -eq $Value) { return $null }
     $text = [string] $Value
     $bytes = [System.Text.Encoding]::UTF8.GetBytes($text)
     $algorithm = [System.Security.Cryptography.SHA256]::Create()

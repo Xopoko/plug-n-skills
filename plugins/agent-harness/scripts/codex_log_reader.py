@@ -1386,7 +1386,10 @@ def _privacy_findings(name: str, value: Any) -> list[str]:
         "private_key",
     }
     email_re = re.compile(r"(?i)\b[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}\b")
-    private_path_re = re.compile(r"(?i)(?:\b[A-Z]:[\\/]|/(?:home|Users)/)[^\s\"']+")
+    private_path_re = re.compile(
+        r"(?i)(?:\b[A-Z]:[\\/]|/(?:home|Users|private|var|tmp|root|Volumes|mnt|media)/)"
+        r"[^\s\"']+"
+    )
     secret_assignment_re = re.compile(
         rf"(?i)\b(?:{SENSITIVE_KEY_PATTERN})\b\s*[:=]\s*(?!\[REDACTED\])\S+"
     )
