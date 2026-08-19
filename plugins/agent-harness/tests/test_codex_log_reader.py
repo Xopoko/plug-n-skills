@@ -355,6 +355,16 @@ class CodexLogReaderTests(unittest.TestCase):
 
         self.assertEqual("rollout-outside-codex-home", metadata["error"])
 
+    def test_load_json_object_reports_non_utf8_input(self):
+        path = Path(self.tmp.name) / "invalid-utf8.json"
+        path.write_bytes(b"\xff")
+        errors = []
+
+        value = reader._load_json_object(path, errors)
+
+        self.assertEqual({}, value)
+        self.assertEqual(["invalid-json:invalid-utf8.json"], errors)
+
     def run_cli(self, argv):
         out = io.StringIO()
         full_argv = [argv[0], "--codex-home", str(self.home), *argv[1:]]
