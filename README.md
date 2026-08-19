@@ -182,7 +182,8 @@ replaced to match the repository source, and repeated runs converge.
 
 | Plugin | Use it for |
 | --- | --- |
-| `agent-harness` | Agent harness runtime-reconfiguration design and evaluation; Codex and Claude Code operations, secret-safe operator/1Password credential handoff, automation, diagnostics, MCP, hooks, sessions, deferred completion, and local scheduler proof. |
+| `agent-harness` | Agent harness design and evaluation; Codex and Claude Code operations, bounded cross-task corpora, secret-safe credential handoff, automation, diagnostics, MCP, hooks, sessions, deferred completion, and local scheduler proof. |
+| `windows-host-operations` | Effective Windows setting and policy diagnosis, startup/removal persistence, and device-stack troubleshooting with exact targets, rollback, and functional proof. |
 | `capability-workbench` | Agent capability engineering: frame behavior gaps, author skills/plugins/guidance, validate them against evidence and behavioral baselines, evolve portfolios, and activate vetted artifacts explicitly. |
 | `context-density` | Context design, long-context placement, typed state and companion-drift validation, research-backed acceptance gates, prompt contracts, skill compression, structural handoff, and validation reporting. |
 | `i-have-adhd` | Explicit per-request focus formatting for short numbered steps, visible progress, concrete time estimates, calm recovery, and one next action. |
@@ -260,13 +261,13 @@ a prompt or makes visible to a model at runtime.
 
 | Metric | Count | Tokens | Notes |
 | --- | ---: | ---: | --- |
-| Plugin packs | 17 | - | Local packages plus immutable standalone first-party catalog entries. |
-| Skill entrypoints | 200 | - | `SKILL.md` files catalogued in local source or immutable receipts. |
-| Reference files | 278 | - | Longer ledgers, contracts, scorecards, and source notes. |
-| Script/support files | 100 | - | All regular files below `scripts/`, including helpers, templates, and manifests. |
-| Source-relative routing estimate | 200 skills | 13,115 | Skill name, description, and plugin-relative `skills/.../SKILL.md` path; comparable across local and standalone sources. |
+| Plugin packs | 18 | - | Local packages plus immutable standalone first-party catalog entries. |
+| Skill entrypoints | 205 | - | `SKILL.md` files catalogued in local source or immutable receipts. |
+| Reference files | 281 | - | Longer ledgers, contracts, scorecards, and source notes. |
+| Script/support files | 101 | - | All regular files below `scripts/`, including helpers, templates, and manifests. |
+| Source-relative routing estimate | 205 skills | 13,467 | Skill name, description, and plugin-relative `skills/.../SKILL.md` path; comparable across local and standalone sources. |
 | Published first-party URL locator snapshot | 81 skills | 8,175 | Receipt values that serialize immutable GitHub blob URLs; preserved separately and not added to the source-relative total. |
-| Skill body source estimate | 200 skills | 147,830 | Body text after frontmatter; not proof that a host loads it, or when. |
+| Skill body source estimate | 205 skills | 151,712 | Body text after frontmatter; not proof that a host loads it, or when. |
 
 Regenerate the report after skill edits:
 
@@ -285,7 +286,8 @@ immutable GitHub locator snapshot.
 
 | Plugin | Skills | Refs | Script/support files | Source routing | Published URL routing | Body source |
 | --- | ---: | ---: | ---: | ---: | ---: | ---: |
-| `agent-harness` | 19 | 19 | 7 | 1,337 | - | 20,968 |
+| `agent-harness` | 20 | 20 | 7 | 1,405 | - | 22,108 |
+| `windows-host-operations` | 4 | 2 | 1 | 284 | - | 2,742 |
 | `capability-workbench` | 11 | 18 | 25 | 730 | - | 14,383 |
 | `context-density` | 1 | 9 | 8 | 66 | - | 2,888 |
 | `i-have-adhd` | 1 | 1 | 0 | 73 | - | 588 |
@@ -307,7 +309,8 @@ immutable GitHub locator snapshot.
 
 | Plugin | Description |
 | --- | --- |
-| `agent-harness` | Agent harness runtime-reconfiguration design and evaluation plus Codex and Claude runtime operations, secret-safe human credential handoff, 1Password, sessions, deferred completion, and scheduler proof. |
+| `agent-harness` | Agent harness design and evaluation plus Codex and Claude runtime operations, cross-task corpora, secret-safe credential handoff, sessions, deferred completion, and scheduler proof. |
+| `windows-host-operations` | Windows host diagnosis and controlled repair across effective settings, startup and removal surfaces, and device stacks with rollback and functional proof. |
 | `capability-workbench` | Artifact-first agent capability engineering for skills, plugins, guidance, and trigger contracts: frame behavior gaps, evaluate baselines and candidates, author validated changes, govern portfolios, and activate explicitly. Use Agent Harness for runtime and harness-level evaluation. |
 | `context-density` | Agent context audits measure token cost, validate prompt/output contracts and typed state, test compression, and route structural skill or plugin overlap to Capability Workbench. |
 | `i-have-adhd` | Explicit opt-in focus formatting turns the current response into short numbered steps, visible progress, concrete time boxes, calm recovery, and one next action. |
@@ -344,16 +347,26 @@ size. None is a runtime prompt measurement.
 | `claude-hooks-settings` | 72 | - | 708 | Claude Code settings and hooks are created, audited, or debugged across CLAUDE.md/rules loading, custom agents, tool permissions, output styles, workflows, setting sources, safe/bare modes, and plugin customizations. |
 | `claude-plugin-mcp-manager` | 72 | - | 838 | Claude Code plugins and MCP servers are managed across marketplaces, validation, token cost, install/update/remove/prune, session-only sources, MCP approvals, strict config, transports, headers, OAuth, and lifecycle failures. |
 | `claude-print-automation` | 73 | - | 840 | Claude Code print-mode runs are prepared or debugged with `claude --print`, text/JSON/stream-json I/O, JSON Schema, budgets, fallback models, no persistence, prompt suggestions, and trusted-directory CI. |
-| `codex-cli` | 65 | - | 912 | Route Codex CLI operations across skill-catalog diagnostics, CLI inspection, exec/review automation, deferred completion, task supervision, plugin/MCP management, doctor/debug, rollout forensics, and app environments. |
+| `codex-cli` | 61 | - | 945 | Route Codex CLI operations across diagnostics, exec/review automation, deferred completion, task supervision, plugin/MCP management, rollout forensics, cross-task corpora, and app environments. |
 | `codex-deferred-completion` | 56 | - | 1,031 | Complete long-running executable work through an existing atomic JSON terminal receipt, avoiding repeated native-session or remote-status polling and wasted model turns. |
 | `codex-doctor-debugger` | 82 | - | 1,180 | Diagnose current Codex CLI health and model-visible skill catalogs: metadata truncation/omission, install, config, auth, sandbox, prompt, app-server, remote-control, and runtime failures. For what an existing task saw, use codex-log-reader. |
 | `codex-environments` | 66 | - | 995 | Manage Codex app project environments and actions in `.codex/environments/environment.toml`, including Run/Test/Preview buttons, startup commands, launchers, environment variables, and repeatable local commands. |
 | `codex-exec-automation` | 72 | - | 1,038 | Automate non-interactive Codex CLI runs with `codex exec`, resume, review, JSONL events, output schemas, last-message files, cwd/profile/config, sandbox/approval modes, and CI. |
-| `codex-log-reader` | 67 | - | 1,279 | Inspect Codex rollout JSONL by CODEX_THREAD_ID, cwd, query, issue, project, lineage, malformed or large logs, permission concerns, and "what happened in this task?" forensics. |
+| `codex-log-reader` | 67 | - | 1,328 | Inspect Codex rollout JSONL by CODEX_THREAD_ID, cwd, query, issue, project, lineage, malformed or large logs, permission concerns, and "what happened in this task?" forensics. |
 | `codex-plugin-mcp-manager` | 63 | - | 1,081 | Manage Codex plugins, local marketplaces, cache visibility, and MCP server list/get/add/remove/login/logout, bearer-token environment bindings, and plugin/MCP installation failures. |
+| `codex-task-corpus` | 72 | - | 1,058 | Build bounded cross-session Codex task corpora for last-N chat audits, recurring-work retrospectives, context recovery, and capability-gap evidence. Excludes single-rollout forensics, live supervision, and automatic skill edits. |
 | `codex-thread-supervisor` | 81 | - | 2,803 | Supervise live Codex tasks by ID only on an explicit user monitor/supervise request, using cursor waits, attention/completion gates, bounded claims, checkpoints, and authorized handoffs. Excludes rollout forensics, current-turn subagents, and external jobs. |
 | `credential-handoff` | 67 | - | 1,049 | Credential prompts and 1Password CLI: route task-scoped secrets from a human or vault into a target process without exposing values to model context, chat, logs, arguments, or files. Excludes account administration. |
 | `scheduled-automation-runtime` | 72 | - | 1,158 | Local scheduler jobs need proof when launchd, systemd, cron, or Windows Task Scheduler differ from manual runs or lack runtime proof. Not for vendor CLI command construction, architecture inventory, cloud schedulers, or job business logic. |
+
+#### `windows-host-operations`
+
+| Skill | Source routing | Published URL routing | Body source | Description |
+| --- | ---: | ---: | ---: | --- |
+| `windows-device-diagnostics` | 71 | - | 577 | Diagnose exact Windows peripherals across present/remembered identity, driver stack, endpoint/queue/role, transport, vendor software, and live function. Excludes wildcard or class-wide disable, driver-store deletion, and firmware update. |
+| `windows-effective-settings` | 70 | - | 636 | Diagnose Windows settings that do not stick or take effect across capability, support, scope, policy, service, consent, power, vendor, firmware, cache, runtime, and observed behavior. Excludes generic registry tweaking and firmware writes. |
+| `windows-host-operations` | 67 | - | 858 | Windows host operations: route effective settings and policy precedence, startup/removal persistence, and device-stack diagnosis. Requires exact targets, reversible actions, and functional proof; excludes broad repair and non-Windows hosts. |
+| `windows-startup-and-removal` | 76 | - | 671 | Diagnose and reconcile exact Windows apps across processes, services, tasks, startup entries, packages, locks, data, update helpers, and residue. Prefer disable-before-delete, explicit data choices, rollback, and per-surface absence proof. |
 
 #### `capability-workbench`
 

@@ -9,7 +9,11 @@ import sys
 import urllib.error
 from pathlib import Path
 
-from github_utils import github_api_contents_url, github_request
+from github_utils import (
+    GitHubRequestError,
+    github_api_contents_url,
+    github_request,
+)
 
 _SCRIPT_PATH = Path(__file__).resolve()
 for _agent_target in (
@@ -105,7 +109,7 @@ def main(argv: list[str]) -> int:
                 suffix = " (already installed)" if name in installed else ""
                 print(f"{idx}. {name}{suffix}")
         return 0
-    except ListError as exc:
+    except (GitHubRequestError, ListError) as exc:
         print(f"Error: {exc}", file=sys.stderr)
         return 1
 
