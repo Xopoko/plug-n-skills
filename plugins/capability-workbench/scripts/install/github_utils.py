@@ -74,8 +74,10 @@ def validate_repository_component(value: str, label: str) -> str:
 
     if not value:
         raise GitHubRequestError(f"{label} must not be empty")
+    if any(ord(character) < 32 or ord(character) == 127 for character in value):
+        raise GitHubRequestError(f"{label} contains control characters")
     if not set(value) <= REPOSITORY_COMPONENT_CHARACTERS:
-        raise GitHubRequestError(f"{label} contains unsupported characters: {value}")
+        raise GitHubRequestError(f"{label} contains unsupported characters")
     if value in (".", ".."):
         raise GitHubRequestError(f"{label} must not be a relative path segment")
     return value
