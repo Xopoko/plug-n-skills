@@ -136,6 +136,27 @@ class WindowsHostOperationsContractTests(unittest.TestCase):
         ):
             self.assertNotRegex(script, rf"(?im)^\s*{re.escape(command)}\b")
 
+    def test_classic_uninstall_probe_does_not_hide_registry_failures(self) -> None:
+        script = (ROOT / "scripts" / "Get-WindowsHostEvidence.ps1").read_text(
+            encoding="utf-8"
+        )
+        match = re.search(
+            r"(?s)\$packages\s*=\s*Invoke-ReadOnlyProbe\s+"
+            r"-Surface\s+'classic_uninstall_registry'\s+-Action\s*\{(.*?)\n\s*\}\n\n\s*\$appx",
+            script,
+        )
+        self.assertIsNotNone(match)
+        probe = match.group(1)
+        self.assertNotIn("-ErrorAction SilentlyContinue", probe)
+        self.assertIn(
+            "Test-Path -LiteralPath $root.path -ErrorAction Stop",
+            probe,
+        )
+        self.assertIn(
+            'Get-ItemProperty -Path "$($root.path)\\*" -ErrorAction Stop',
+            probe,
+        )
+
     @unittest.skipUnless(os.name == "nt", "PowerShell syntax probe is Windows-only")
     def test_powershell_helper_parses(self) -> None:
         script = ROOT / "scripts" / "Get-WindowsHostEvidence.ps1"
