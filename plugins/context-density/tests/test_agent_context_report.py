@@ -206,6 +206,46 @@ class CodexContextReportTests(unittest.TestCase):
         export = self.run_report("export", "markdown")
         self.assertIn("| Type | Source | Tokens |", export.stdout)
 
+    def test_resolve_runtime_errors_use_existing_path_fallbacks(self):
+        env = report.AgentEnvironment("codex", "Codex", self.codex_home, True, True)
+        inventory = report.PluginInventory(
+            "unavailable", "none", frozenset(), "test inventory"
+        )
+        path = self.project / "looping-symlink"
+
+        with mock.patch.object(
+            Path, "resolve", side_effect=RuntimeError("symlink loop")
+        ):
+            self.assertEqual(
+                report.display_path(path, self.codex_home, self.project), str(path)
+            )
+            self.assertEqual(report.abbreviate_home(path), str(path))
+            self.assertEqual(
+                report.filter_configured_plugin_paths([path], env, inventory), [path]
+            )
+            self.assertEqual(
+                report.skill_source(path, env), "project-or-shared-skill"
+            )
+
+    def test_json_parsers_skip_recursion_errors(self):
+        config = self.project / ".mcp.json"
+        config.write_text("{}", encoding="utf-8")
+        session = self.project / "session.jsonl"
+        session.write_text("{}\n", encoding="utf-8")
+        env = report.AgentEnvironment("claude", "Claude", self.codex_home, True, True)
+
+        with mock.patch.object(
+            report.json, "loads", side_effect=RecursionError("nested JSON")
+        ):
+            self.assertEqual(
+                report.parse_claude_mcp_json(
+                    config, env, self.project, None
+                ),
+                [],
+            )
+            self.assertIsNone(report.parse_codex_session(session))
+            self.assertIsNone(report.parse_claude_session(session))
+
 
 if __name__ == "__main__":
     unittest.main()

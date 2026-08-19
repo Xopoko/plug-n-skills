@@ -240,7 +240,7 @@ def display_path(path: Path | str, env_home: Path, project: Path | None) -> str:
         try:
             rel = raw.resolve().relative_to(root.expanduser().resolve())
             return str(Path(prefix) / rel)
-        except (OSError, ValueError):
+        except (OSError, RuntimeError, ValueError):
             continue
     return str(path)
 
@@ -250,7 +250,7 @@ def abbreviate_home(path: Path | str) -> str:
     try:
         rel = raw.resolve().relative_to(Path.home().resolve())
         return str(Path("~") / rel)
-    except (OSError, ValueError):
+    except (OSError, RuntimeError, ValueError):
         return str(path)
 
 
@@ -573,7 +573,7 @@ def filter_configured_plugin_paths(paths: Iterable[Path], env: AgentEnvironment,
             continue
         try:
             identity = path.resolve()
-        except OSError:
+        except (OSError, RuntimeError):
             identity = path
         if identity in seen:
             continue
@@ -631,12 +631,12 @@ def skill_source(path: Path, env: AgentEnvironment) -> str:
     try:
         path.resolve().relative_to((env.home / "skills" / ".system").resolve())
         return "system-skill"
-    except (OSError, ValueError):
+    except (OSError, RuntimeError, ValueError):
         pass
     try:
         path.resolve().relative_to((env.home / "skills").resolve())
         return "user-skill"
-    except (OSError, ValueError):
+    except (OSError, RuntimeError, ValueError):
         return "project-or-shared-skill"
 
 
@@ -952,7 +952,7 @@ def parse_claude_mcp_json(path: Path, env: AgentEnvironment, project: Path | Non
         return []
     try:
         data = json.loads(text)
-    except ValueError:
+    except (RecursionError, ValueError):
         return []
     servers = data.get("mcpServers") or data.get("mcp_servers") or {}
     if not isinstance(servers, dict):
@@ -1192,7 +1192,7 @@ def parse_codex_session(path: Path) -> SessionSummary | None:
             continue
         try:
             obj = json.loads(raw)
-        except ValueError:
+        except (RecursionError, ValueError):
             continue
         payload = obj.get("payload") if isinstance(obj.get("payload"), dict) else {}
         if obj.get("type") == "session_meta":
@@ -1227,7 +1227,7 @@ def parse_claude_session(path: Path) -> SessionSummary | None:
             continue
         try:
             obj = json.loads(raw)
-        except ValueError:
+        except (RecursionError, ValueError):
             continue
         if session_id is None and isinstance(obj.get("sessionId"), str):
             session_id = obj["sessionId"]

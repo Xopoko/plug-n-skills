@@ -84,7 +84,7 @@ def read_json(path: Path, diagnostics: Diagnostics | None = None) -> dict[str, A
         if diagnostics is not None:
             diagnostics.record(path, "unreadable-json", str(exc))
         return None
-    except (UnicodeDecodeError, ValueError) as exc:
+    except (RecursionError, UnicodeDecodeError, ValueError) as exc:
         if diagnostics is not None:
             diagnostics.record(path, "invalid-json", str(exc))
         return None

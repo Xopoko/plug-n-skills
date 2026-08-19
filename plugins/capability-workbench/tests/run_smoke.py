@@ -1943,6 +1943,13 @@ def test_capability_inventory_diagnostics() -> None:
         listy.mkdir(parents=True)
         list_manifest = listy / "plugin.json"
         list_manifest.write_text("[]", encoding="utf-8")
+        recursive = plugin_root / "recursive-manifest" / ".codex-plugin"
+        recursive.mkdir(parents=True)
+        recursive_manifest = recursive / "plugin.json"
+        recursive_manifest.write_text(
+            "[" * 2000 + "0" + "]" * 2000,
+            encoding="utf-8",
+        )
         marketplace = root / "marketplace.json"
         marketplace.write_text(json.dumps({"name": "fixture", "plugins": {}}), encoding="utf-8")
         result = run(
@@ -1968,7 +1975,8 @@ def test_capability_inventory_diagnostics() -> None:
         check(
             "capability_inventory: records invalid plugin manifests",
             (str(broken_manifest), "invalid-json") in skipped
-            and (str(list_manifest), "invalid-json") in skipped,
+            and (str(list_manifest), "invalid-json") in skipped
+            and (str(recursive_manifest), "invalid-json") in skipped,
             str(sorted(skipped)),
         )
         check(
@@ -1978,12 +1986,12 @@ def test_capability_inventory_diagnostics() -> None:
         )
         check(
             "capability_inventory: counts skipped inputs",
-            payload["counts"]["skipped_inputs"] == len(payload["skipped_inputs"]) == 3,
+            payload["counts"]["skipped_inputs"] == len(payload["skipped_inputs"]) == 4,
             str(payload["counts"]),
         )
         check(
             "capability_inventory: warns about skipped inputs on stderr",
-            result.stderr.count("warning: skipped ") == 3,
+            result.stderr.count("warning: skipped ") == 4,
             result.stderr,
         )
         clean = run(
