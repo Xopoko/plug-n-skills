@@ -1074,6 +1074,41 @@ class CodexLogReaderTests(unittest.TestCase):
             (Path(self.tmp.name) / "relative-corpus" / "corpus-manifest.json").is_file()
         )
 
+    def test_corpus_normalizes_explicit_thread_exclusions(self):
+        home, _paths = self.make_corpus_home()
+        output_dir = Path(self.tmp.name) / "explicit-exclusion-output"
+        summary = json.loads(
+            self.run_cli_at_home(
+                home,
+                [
+                    "corpus",
+                    "--count",
+                    "2",
+                    "--output-dir",
+                    str(output_dir),
+                    "--exclude-thread-id",
+                    f"  {CORPUS_ROOT_B_ID.upper()}  ",
+                    "--cutoff",
+                    "2030-01-01T00:00:00Z",
+                    "--json",
+                ],
+            )
+        )
+
+        self.assertTrue(summary["complete"])
+        self.assertEqual(1, summary["exclusions"]["explicit_or_current"])
+        manifest = json.loads(
+            (output_dir / "corpus-manifest.json").read_text(encoding="utf-8")
+        )
+        self.assertEqual(1, manifest["filters"]["explicit_exclusion_count"])
+        task_ids = [
+            json.loads(line)["task_id"]
+            for line in (output_dir / "task-index.jsonl")
+            .read_text(encoding="utf-8")
+            .splitlines()
+        ]
+        self.assertNotIn(CORPUS_ROOT_B_ID, task_ids)
+
     def test_corpus_cwd_filter_uses_path_boundaries(self):
         home, _paths = self.make_corpus_home(
             {
@@ -1257,6 +1292,24 @@ class CodexLogReaderTests(unittest.TestCase):
         )
         self.assertTrue(valid["valid"])
         self.assertEqual(3, valid["completed"])
+
+        coding_rows[0]["privacy_sensitivity"] = "unknown"
+        coding_path.write_text(
+            "".join(json.dumps(row, separators=(",", ":")) + "\n" for row in coding_rows),
+            encoding="utf-8",
+        )
+        unknown_privacy = json.loads(
+            self.run_cli_at_home(
+                home,
+                ["corpus-check", str(output_dir), "--final", "--json"],
+                expected=1,
+            )
+        )
+        self.assertIn(
+            f"coding:{task_ids[0]}:invalid-privacy-sensitivity",
+            unknown_privacy["errors"],
+        )
+        coding_rows[0]["privacy_sensitivity"] = "low"
 
         coding_rows[0]["eof_receipt"].pop("terminal_line")
         coding_path.write_text(

@@ -1953,6 +1953,8 @@ def test_capability_inventory_diagnostics() -> None:
         )
         marketplace = root / "marketplace.json"
         marketplace.write_text(json.dumps({"name": "fixture", "plugins": {}}), encoding="utf-8")
+        empty_marketplace = root / "empty-marketplace.json"
+        empty_marketplace.write_text("{}", encoding="utf-8")
         result = run(
             [
                 script,
@@ -1960,6 +1962,8 @@ def test_capability_inventory_diagnostics() -> None:
                 str(plugin_root),
                 "--marketplace",
                 str(marketplace),
+                "--marketplace",
+                str(empty_marketplace),
                 "--json",
             ],
             env=NEUTRAL_HOMES,
@@ -1982,17 +1986,18 @@ def test_capability_inventory_diagnostics() -> None:
         )
         check(
             "capability_inventory: records invalid marketplace payloads",
-            (str(marketplace), "invalid-marketplace") in skipped,
+            (str(marketplace), "invalid-marketplace") in skipped
+            and (str(empty_marketplace), "invalid-marketplace") in skipped,
             str(sorted(skipped)),
         )
         check(
             "capability_inventory: counts skipped inputs",
-            payload["counts"]["skipped_inputs"] == len(payload["skipped_inputs"]) == 4,
+            payload["counts"]["skipped_inputs"] == len(payload["skipped_inputs"]) == 5,
             str(payload["counts"]),
         )
         check(
             "capability_inventory: warns about skipped inputs on stderr",
-            result.stderr.count("warning: skipped ") == 4,
+            result.stderr.count("warning: skipped ") == 5,
             result.stderr,
         )
         clean = run(
@@ -2098,8 +2103,12 @@ def test_github_request_hardening() -> None:
             rejected = True
         check(f"github_utils: rejects {url}", rejected)
 
-    github_utils.assert_allowlisted_url("https://codeload.github.com/o/r/zip/main")
-    check("github_utils: accepts codeload HTTPS", True)
+    try:
+        github_utils.assert_allowlisted_url("https://codeload.github.com/o/r/zip/main")
+        codeload_allowed = True
+    except github_utils.GitHubRequestError:
+        codeload_allowed = False
+    check("github_utils: accepts codeload HTTPS", codeload_allowed)
 
     contents_url = github_utils.github_api_contents_url(
         "owner/repo", "skills/.curated", "main"

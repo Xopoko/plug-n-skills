@@ -71,7 +71,8 @@ CORPUS_CLASSIFICATIONS = {
     "trigger_or_retrieval",
 }
 CORPUS_EVIDENCE_STRENGTHS = {"none", "weak", "moderate", "strong"}
-CORPUS_PRIVACY_SENSITIVITIES = {"low", "medium", "high"}
+CORPUS_PRIVACY_SENSITIVITIES = {"unknown", "low", "medium", "high"}
+CORPUS_FINAL_PRIVACY_SENSITIVITIES = {"low", "medium", "high"}
 UUID_RE = re.compile(
     r"[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}"
 )
@@ -1133,7 +1134,12 @@ def cmd_corpus(args: argparse.Namespace) -> int:
     cutoff_epoch = cutoff.timestamp()
     paths = iter_session_paths(home, include_archived=not args.no_archived)
     scanned_paths = paths[: args.scan_limit]
-    excluded_ids = {value.lower() for value in args.exclude_thread_id}
+    explicit_excluded_ids = {
+        normalized
+        for value in args.exclude_thread_id
+        if (normalized := value.strip().lower())
+    }
+    excluded_ids = set(explicit_excluded_ids)
     current_id = os.environ.get("CODEX_THREAD_ID", "").strip()
     if current_id and not args.include_current:
         excluded_ids.add(current_id.lower())
@@ -1263,7 +1269,7 @@ def cmd_corpus(args: argparse.Namespace) -> int:
             "include_internal_subagents": args.include_subagents,
             "include_current_thread": args.include_current,
             "cwd_filter_applied": bool(args.cwd),
-            "explicit_exclusion_count": len(args.exclude_thread_id),
+            "explicit_exclusion_count": len(explicit_excluded_ids),
         },
         "exclusions": dict(sorted(counts.items())),
         "coverage": {
@@ -1489,6 +1495,9 @@ def cmd_corpus_check(args: argparse.Namespace) -> int:
     for row in coding_rows:
         task_id = str(row.get("task_id") or "")
         status = row.get("review_status")
+        privacy_sensitivity = row.get("privacy_sensitivity")
+        if privacy_sensitivity not in CORPUS_PRIVACY_SENSITIVITIES:
+            errors.append(f"coding:{task_id}:invalid-privacy-sensitivity")
         if status not in valid_statuses:
             errors.append(f"coding:{task_id}:invalid-review-status")
             continue
@@ -1507,7 +1516,10 @@ def cmd_corpus_check(args: argparse.Namespace) -> int:
                 errors.append(f"coding:{task_id}:invalid-classification")
             if row.get("evidence_strength") not in CORPUS_EVIDENCE_STRENGTHS:
                 errors.append(f"coding:{task_id}:invalid-evidence-strength")
-            if row.get("privacy_sensitivity") not in CORPUS_PRIVACY_SENSITIVITIES:
+            if (
+                privacy_sensitivity in CORPUS_PRIVACY_SENSITIVITIES
+                and privacy_sensitivity not in CORPUS_FINAL_PRIVACY_SENSITIVITIES
+            ):
                 errors.append(f"coding:{task_id}:invalid-privacy-sensitivity")
             if not str(row.get("independence_group") or "").strip():
                 errors.append(f"coding:{task_id}:missing-independence-group")
