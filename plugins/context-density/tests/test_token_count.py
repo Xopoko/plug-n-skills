@@ -9,9 +9,9 @@ from unittest import mock
 
 SKILL_DIR = Path(__file__).resolve().parents[1] / "skills" / "context-density"
 SCRIPT_DIR = SKILL_DIR / "scripts"
-sys.path.insert(0, str(SCRIPT_DIR))
 
-import token_count  # noqa: E402
+with mock.patch.object(sys, "path", [str(SCRIPT_DIR), *sys.path]):
+    import token_count  # noqa: E402
 
 
 class LoadEncoderTests(unittest.TestCase):
@@ -59,7 +59,7 @@ class IterFilesTests(unittest.TestCase):
         found = token_count.iter_files([str(self.root)])
 
         self.assertEqual(
-            [self.root / "Makefile", self.root / "docs" / "guide.md"],
+            sorted([self.root / "Makefile", self.root / "docs" / "guide.md"]),
             found,
         )
 

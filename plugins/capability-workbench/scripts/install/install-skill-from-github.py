@@ -200,7 +200,7 @@ def _git_sparse_checkout(repo_url: str, ref: str, paths: list[str], dest_dir: st
             ]
         )
     _run_git(["git", "-C", repo_dir, "sparse-checkout", "set", "--", *paths])
-    _run_git(["git", "-C", repo_dir, "checkout", ref, "--"])
+    _run_git(["git", "-C", repo_dir, "checkout", ref])
     return repo_dir
 
 
