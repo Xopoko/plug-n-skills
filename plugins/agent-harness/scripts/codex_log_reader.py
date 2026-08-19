@@ -993,15 +993,19 @@ def _parse_corpus_cutoff(value: str | None) -> _dt.datetime:
     return parsed.astimezone(_dt.timezone.utc)
 
 
-def _relative_rollout_ref(path: Path, home: Path) -> str:
+def _relative_rollout_ref(path: Path, home: Path) -> str | None:
     try:
         return path.resolve().relative_to(home.resolve()).as_posix()
-    except (OSError, ValueError):
-        return path.name
+    except (OSError, RuntimeError, ValueError):
+        return None
 
 
 def _read_corpus_metadata(path: Path, home: Path) -> dict[str, Any]:
     """Read only the leading session metadata needed for corpus selection."""
+
+    rollout_ref = _relative_rollout_ref(path, home)
+    if rollout_ref is None:
+        return {"error": "rollout-outside-codex-home"}
 
     try:
         stat_result = path.stat()
@@ -1051,7 +1055,6 @@ def _read_corpus_metadata(path: Path, home: Path) -> dict[str, Any]:
                 else:
                     source_kind = "structured"
                 parent_text = str(parent) if parent else ""
-                rollout_ref = _relative_rollout_ref(path, home)
                 return {
                     "task_id": thread_id,
                     "rollout_ref": rollout_ref,
@@ -1080,7 +1083,9 @@ def _read_corpus_metadata(path: Path, home: Path) -> dict[str, Any]:
 
 
 def _normalized_path_hint(value: str) -> str:
-    normalized = value.replace("\\", "/").casefold()
+    normalized = value.replace("\\", "/")
+    if re.match(r"^[A-Za-z]:/", normalized) or normalized.startswith("//"):
+        normalized = normalized.casefold()
     return normalized if normalized == "/" else normalized.rstrip("/")
 
 
@@ -1183,6 +1188,7 @@ def cmd_corpus(args: argparse.Namespace) -> int:
             "or pass --allow-partial"
         )
 
+    output_display = str(args.output_dir)
     output_dir = Path(args.output_dir).expanduser().resolve()
     output_paths = _corpus_output_paths(output_dir)
     collisions = [path for path in output_paths.values() if path.exists()]
@@ -1292,7 +1298,7 @@ def cmd_corpus(args: argparse.Namespace) -> int:
     _write_corpus_file(output_paths["corpus-manifest.json"], _json_bytes(manifest))
 
     summary = {
-        "output_dir": str(output_dir),
+        "output_dir": output_display,
         "requested_count": args.count,
         "selected_count": len(selected),
         "cutoff": manifest["cutoff"],
@@ -1304,7 +1310,7 @@ def cmd_corpus(args: argparse.Namespace) -> int:
     else:
         print(f"Codex task corpus: {len(selected)}/{args.count} selected")
         print(f"cutoff: {summary['cutoff']}")
-        print(f"output: {output_dir}")
+        print(f"output: {output_display}")
         print("raw message content: not copied")
     return 0
 
@@ -1393,6 +1399,38 @@ def _privacy_findings(name: str, value: Any) -> list[str]:
     return findings
 
 
+def _valid_eof_receipt(value: Any) -> bool:
+    if not isinstance(value, dict) or value.get("complete") is not True:
+        return False
+    if not isinstance(value.get("method"), str) or not value["method"].strip():
+        return False
+    pages = value.get("pages")
+    pages_valid = isinstance(pages, int) and not isinstance(pages, bool) and pages > 0
+    active_range = value.get("active_range")
+    range_valid = False
+    if isinstance(active_range, dict):
+        start = active_range.get("start")
+        end = active_range.get("end")
+
+        def valid_position(position: Any) -> bool:
+            return (
+                isinstance(position, int)
+                and not isinstance(position, bool)
+                and position >= 0
+            ) or (isinstance(position, str) and bool(position.strip()))
+
+        range_valid = valid_position(start) and valid_position(end)
+    terminal_cursor = value.get("terminal_cursor")
+    cursor_valid = isinstance(terminal_cursor, str) and bool(terminal_cursor.strip())
+    terminal_line = value.get("terminal_line")
+    line_valid = (
+        isinstance(terminal_line, int)
+        and not isinstance(terminal_line, bool)
+        and terminal_line > 0
+    )
+    return (pages_valid or range_valid) and (cursor_valid or line_valid)
+
+
 def cmd_corpus_check(args: argparse.Namespace) -> int:
     corpus_dir = Path(args.corpus_dir).expanduser().resolve()
     errors: list[str] = []
@@ -1461,7 +1499,7 @@ def cmd_corpus_check(args: argparse.Namespace) -> int:
         elif status == "complete":
             completed += 1
             receipt = row.get("eof_receipt")
-            if not isinstance(receipt, dict) or receipt.get("complete") is not True:
+            if not _valid_eof_receipt(receipt):
                 errors.append(f"coding:{task_id}:missing-eof-receipt")
             if not str(row.get("outcome") or "").strip():
                 errors.append(f"coding:{task_id}:missing-outcome")
@@ -1514,7 +1552,7 @@ def cmd_corpus_check(args: argparse.Namespace) -> int:
                     )
                     continue
                 receipt = coding_row.get("eof_receipt")
-                if not isinstance(receipt, dict) or receipt.get("complete") is not True:
+                if not _valid_eof_receipt(receipt):
                     errors.append(
                         f"cluster:{cluster_id}:independent-task-missing-eof-receipt"
                     )
