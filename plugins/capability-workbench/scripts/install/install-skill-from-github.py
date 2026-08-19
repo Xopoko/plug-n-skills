@@ -19,7 +19,13 @@ import urllib.error
 import urllib.parse
 import zipfile
 
-from github_utils import GitHubRequestError, github_request, validate_path_segment
+from github_utils import (
+    GitHubRequestError,
+    github_request,
+    validate_git_ref,
+    validate_relative_repo_path,
+    validate_repository_component,
+)
 
 _SCRIPT_PATH = Path(__file__).resolve()
 for _agent_target in (
@@ -85,15 +91,15 @@ def _parse_github_url(url: str, default_ref: str) -> tuple[str, str, str, str | 
     parts = [p for p in parsed.path.split("/") if p]
     if len(parts) < 2:
         raise InstallError("Invalid GitHub URL.")
-    owner = validate_path_segment(parts[0], "repository owner")
-    repo = validate_path_segment(parts[1], "repository name")
-    ref = default_ref
+    owner = validate_repository_component(parts[0], "repository owner")
+    repo = validate_repository_component(parts[1], "repository name")
+    ref = validate_git_ref(default_ref)
     subpath = ""
     if len(parts) > 2:
         if parts[2] in ("tree", "blob"):
             if len(parts) < 4:
                 raise InstallError("GitHub URL missing ref or path.")
-            ref = validate_path_segment(parts[3], "ref")
+            ref = validate_git_ref(parts[3])
             subpath = "/".join(parts[4:])
         else:
             subpath = "/".join(parts[2:])
@@ -101,11 +107,16 @@ def _parse_github_url(url: str, default_ref: str) -> tuple[str, str, str, str | 
 
 
 def _download_repo_zip(owner: str, repo: str, ref: str, dest_dir: str) -> str:
-    quoted = [
-        urllib.parse.quote(segment, safe="")
-        for segment in (owner, repo, ref)
-    ]
-    zip_url = "https://codeload.github.com/{}/{}/zip/{}".format(*quoted)
+    quoted_owner = urllib.parse.quote(
+        validate_repository_component(owner, "repository owner"), safe=""
+    )
+    quoted_repo = urllib.parse.quote(
+        validate_repository_component(repo, "repository name"), safe=""
+    )
+    quoted_ref = urllib.parse.quote(validate_git_ref(ref), safe="/")
+    zip_url = (
+        f"https://codeload.github.com/{quoted_owner}/{quoted_repo}/zip/{quoted_ref}"
+    )
     zip_path = os.path.join(dest_dir, "repo.zip")
     try:
         payload = _request(zip_url)
@@ -140,10 +151,10 @@ def _safe_extract_zip(zip_file: zipfile.ZipFile, dest_dir: str) -> None:
 
 
 def _validate_relative_path(path: str) -> None:
-    if os.path.isabs(path) or os.path.normpath(path).startswith(".."):
-        raise InstallError("Skill path must be a relative path inside the repo.")
-    if path.startswith("-"):
-        raise InstallError("Skill path must not start with '-'.")
+    try:
+        validate_relative_repo_path(path, "Skill path")
+    except GitHubRequestError as exc:
+        raise InstallError(str(exc)) from exc
 
 
 def _validate_skill_name(name: str) -> None:
@@ -155,7 +166,7 @@ def _validate_skill_name(name: str) -> None:
 
 
 def _git_sparse_checkout(repo_url: str, ref: str, paths: list[str], dest_dir: str) -> str:
-    validate_path_segment(ref, "ref")
+    validate_git_ref(ref)
     for path in paths:
         _validate_relative_path(path)
     repo_dir = os.path.join(dest_dir, "repo")
@@ -269,9 +280,9 @@ def _resolve_source(args: Args) -> Source:
         raise InstallError("Missing --path for --repo.")
     paths = list(args.path)
     return Source(
-        owner=validate_path_segment(repo_parts[0], "repository owner"),
-        repo=validate_path_segment(repo_parts[1], "repository name"),
-        ref=validate_path_segment(args.ref, "ref"),
+        owner=validate_repository_component(repo_parts[0], "repository owner"),
+        repo=validate_repository_component(repo_parts[1], "repository name"),
+        ref=validate_git_ref(args.ref),
         paths=paths,
     )
 

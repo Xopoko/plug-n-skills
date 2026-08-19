@@ -977,8 +977,8 @@ def test_proportional_install_scope_contract() -> None:
         )
     ]
     check(
-        "install scope contract: plugin manifests are version 0.6.9",
-        all(manifest.get("version") == "0.6.9" for manifest in manifests),
+        "install scope contract: plugin manifests are version 0.6.10",
+        all(manifest.get("version") == "0.6.10" for manifest in manifests),
         repr([manifest.get("version") for manifest in manifests]),
     )
 
@@ -2031,6 +2031,31 @@ def test_github_request_hardening() -> None:
         contents_url,
     )
 
+    rich_contents_url = github_utils.github_api_contents_url(
+        "owner/repo", "skills/Data Science/\u65e5\u672c\u8a9e", "release/v1.2.3"
+    )
+    check(
+        "github_utils: preserves slash refs and quotes normal path text",
+        rich_contents_url
+        == (
+            "https://api.github.com/repos/owner/repo/contents/"
+            "skills/Data%20Science/%E6%97%A5%E6%9C%AC%E8%AA%9E"
+            "?ref=release%2Fv1.2.3"
+        ),
+        rich_contents_url,
+    )
+
+    try:
+        github_utils.validate_git_ref("feature/slash-ref")
+        github_utils.validate_relative_repo_path("..foo/Unicode \u6280\u80fd", "path")
+        accepted_normal_inputs = True
+    except github_utils.GitHubRequestError:
+        accepted_normal_inputs = False
+    check(
+        "github_utils: accepts slash refs, dot-prefixed names, spaces, and Unicode",
+        accepted_normal_inputs,
+    )
+
     for repo, path in (("owner/../../orgs", "skills"), ("owner/repo", "a/../../b")):
         try:
             github_utils.github_api_contents_url(repo, path, "main")
@@ -2039,13 +2064,27 @@ def test_github_request_hardening() -> None:
             rejected = True
         check(f"github_utils: rejects traversal in {repo} {path}", rejected)
 
-    for value in ("--upload-pack=touch", "..", "main;rm"):
+    for value in ("--upload-pack=touch", "..", "feature/../main", "main;rm"):
         try:
-            github_utils.validate_path_segment(value, "ref")
+            github_utils.validate_git_ref(value)
             rejected = False
         except github_utils.GitHubRequestError:
             rejected = True
-        check(f"github_utils: rejects unsafe segment {value!r}", rejected)
+        check(f"github_utils: rejects unsafe ref {value!r}", rejected)
+
+    for value in (
+        "-option/skill",
+        "../skill",
+        "skills/../secret",
+        "/skills/one",
+        "C:/outside",
+    ):
+        try:
+            github_utils.validate_relative_repo_path(value, "path")
+            rejected = False
+        except github_utils.GitHubRequestError:
+            rejected = True
+        check(f"github_utils: rejects unsafe repo path {value!r}", rejected)
 
     redirect_handler = github_utils._AllowlistedRedirectHandler()
     try:
@@ -2066,6 +2105,31 @@ def test_install_skill_argument_hardening() -> None:
         module = _load_module("isg_hardening", install_dir / "install-skill-from-github.py")
     finally:
         sys.path.remove(str(install_dir))
+
+    accepted_source = module._resolve_source(
+        module.Args(
+            repo="owner/repo",
+            path=["..foo/Unicode \u6280\u80fd"],
+            ref="feature/slash-ref",
+        )
+    )
+    commands: list[list[str]] = []
+    with mock.patch.object(module, "_run_git", side_effect=commands.append):
+        module._git_sparse_checkout(
+            "https://github.com/owner/repo.git",
+            accepted_source.ref,
+            accepted_source.paths,
+            "fixture-destination",
+        )
+    check(
+        "install-skill-from-github: preserves slash refs and normal repo paths",
+        accepted_source.ref == "feature/slash-ref"
+        and accepted_source.paths == ["..foo/Unicode \u6280\u80fd"]
+        and commands[0][commands[0].index("--branch") + 1] == "feature/slash-ref"
+        and commands[-2][-2:] == ["--", "..foo/Unicode \u6280\u80fd"]
+        and commands[-1][-2:] == ["feature/slash-ref", "--"],
+        repr(commands),
+    )
 
     for argv in (
         ["--repo", "owner/repo", "--path", "skills/one", "--ref=--upload-pack=touch"],
