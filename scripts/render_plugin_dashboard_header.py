@@ -27,14 +27,15 @@ PLUGIN_LAYOUT_ROWS = [
     # Agent operating system: runtime, capability lifecycle, context, delivery, hygiene.
     [
         "agent-harness",
+        "windows-host-operations",
         "capability-workbench",
         "context-density",
         "i-have-adhd",
         "git-workflows",
-        "engineering-hygiene",
     ],
     # Evidence and engineering method, from discovery through maintenance.
     [
+        "engineering-hygiene",
         "scientific-research",
         "technology-intelligence",
         "design-intelligence",
@@ -70,6 +71,7 @@ PLUGIN_SUMMARIES = {
     "spec-driven-development": "Specifications through traceable delivery.",
     "technology-intelligence": "Current evidence for technology decisions.",
     "tauri": "Secure Tauri IPC, testing, packaging, and release.",
+    "windows-host-operations": "Windows settings, startup, apps, and devices.",
 }
 
 FONT_WEIGHTS = {

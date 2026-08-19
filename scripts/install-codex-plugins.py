@@ -22,6 +22,7 @@ import plugin_catalog
 
 LOCAL_PLUGIN_NAMES = [
     "agent-harness",
+    "windows-host-operations",
     "capability-workbench",
     "context-density",
     "i-have-adhd",

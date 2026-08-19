@@ -16,6 +16,7 @@ import plugin_catalog  # noqa: E402
 
 LOCAL_PLUGIN_NAMES = [
     "agent-harness",
+    "windows-host-operations",
     "capability-workbench",
     "context-density",
     "i-have-adhd",
@@ -745,7 +746,13 @@ def scan_files(root: Path) -> list[str]:
             continue
         try:
             text = path.read_text(encoding="utf-8")
-        except UnicodeDecodeError:
+        except UnicodeDecodeError as exc:
+            errors.append(
+                f"{path.relative_to(root)}: text source must be valid UTF-8 ({exc})"
+            )
+            continue
+        except OSError as exc:
+            errors.append(f"{path.relative_to(root)}: unreadable text source ({exc})")
             continue
         rel = path.relative_to(root)
         if CYRILLIC_RE.search(text):
