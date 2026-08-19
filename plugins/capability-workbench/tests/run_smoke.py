@@ -2021,8 +2021,12 @@ def test_github_request_hardening() -> None:
             rejected = True
         check(f"github_utils: rejects {url}", rejected)
 
-    github_utils.assert_allowlisted_url("https://codeload.github.com/o/r/zip/main")
-    check("github_utils: accepts codeload HTTPS", True)
+    try:
+        github_utils.assert_allowlisted_url("https://codeload.github.com/o/r/zip/main")
+        codeload_allowed = True
+    except github_utils.GitHubRequestError:
+        codeload_allowed = False
+    check("github_utils: accepts codeload HTTPS", codeload_allowed)
 
     contents_url = github_utils.github_api_contents_url(
         "owner/repo", "skills/.curated", "main"
