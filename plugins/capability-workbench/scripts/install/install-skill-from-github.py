@@ -19,7 +19,14 @@ import urllib.error
 import urllib.parse
 import zipfile
 
-from github_utils import github_request
+from github_utils import (
+    GitHubRequestError,
+    assert_allowlisted_url,
+    github_request,
+    validate_git_ref,
+    validate_relative_repo_path,
+    validate_repository_component,
+)
 
 _SCRIPT_PATH = Path(__file__).resolve()
 for _agent_target in (
@@ -79,20 +86,25 @@ def _request(url: str) -> bytes:
 
 
 def _parse_github_url(url: str, default_ref: str) -> tuple[str, str, str, str | None]:
+    try:
+        assert_allowlisted_url(url)
+    except GitHubRequestError as exc:
+        raise InstallError("Only allowlisted HTTPS GitHub URLs are supported.") from exc
     parsed = urllib.parse.urlparse(url)
-    if parsed.netloc != "github.com":
+    if (parsed.hostname or "").casefold() != "github.com":
         raise InstallError("Only GitHub URLs are supported for download mode.")
     parts = [p for p in parsed.path.split("/") if p]
     if len(parts) < 2:
         raise InstallError("Invalid GitHub URL.")
-    owner, repo = parts[0], parts[1]
-    ref = default_ref
+    owner = validate_repository_component(parts[0], "repository owner")
+    repo = validate_repository_component(parts[1], "repository name")
+    ref = validate_git_ref(default_ref)
     subpath = ""
     if len(parts) > 2:
         if parts[2] in ("tree", "blob"):
             if len(parts) < 4:
                 raise InstallError("GitHub URL missing ref or path.")
-            ref = parts[3]
+            ref = validate_git_ref(parts[3])
             subpath = "/".join(parts[4:])
         else:
             subpath = "/".join(parts[2:])
@@ -100,7 +112,16 @@ def _parse_github_url(url: str, default_ref: str) -> tuple[str, str, str, str | 
 
 
 def _download_repo_zip(owner: str, repo: str, ref: str, dest_dir: str) -> str:
-    zip_url = f"https://codeload.github.com/{owner}/{repo}/zip/{ref}"
+    quoted_owner = urllib.parse.quote(
+        validate_repository_component(owner, "repository owner"), safe=""
+    )
+    quoted_repo = urllib.parse.quote(
+        validate_repository_component(repo, "repository name"), safe=""
+    )
+    quoted_ref = urllib.parse.quote(validate_git_ref(ref), safe="/")
+    zip_url = (
+        f"https://codeload.github.com/{quoted_owner}/{quoted_repo}/zip/{quoted_ref}"
+    )
     zip_path = os.path.join(dest_dir, "repo.zip")
     try:
         payload = _request(zip_url)
@@ -135,8 +156,10 @@ def _safe_extract_zip(zip_file: zipfile.ZipFile, dest_dir: str) -> None:
 
 
 def _validate_relative_path(path: str) -> None:
-    if os.path.isabs(path) or os.path.normpath(path).startswith(".."):
-        raise InstallError("Skill path must be a relative path inside the repo.")
+    try:
+        validate_relative_repo_path(path, "Skill path")
+    except GitHubRequestError as exc:
+        raise InstallError(str(exc)) from exc
 
 
 def _validate_skill_name(name: str) -> None:
@@ -148,6 +171,9 @@ def _validate_skill_name(name: str) -> None:
 
 
 def _git_sparse_checkout(repo_url: str, ref: str, paths: list[str], dest_dir: str) -> str:
+    validate_git_ref(ref)
+    for path in paths:
+        _validate_relative_path(path)
     repo_dir = os.path.join(dest_dir, "repo")
     clone_cmd = [
         "git",
@@ -178,17 +204,21 @@ def _git_sparse_checkout(repo_url: str, ref: str, paths: list[str], dest_dir: st
                 repo_dir,
             ]
         )
-    _run_git(["git", "-C", repo_dir, "sparse-checkout", "set", *paths])
+    _run_git(["git", "-C", repo_dir, "sparse-checkout", "set", "--", *paths])
     _run_git(["git", "-C", repo_dir, "checkout", ref])
     return repo_dir
 
 
 def _validate_skill(path: str) -> None:
-    if not os.path.isdir(path):
+    if os.path.islink(path) or not os.path.isdir(path):
         raise InstallError(f"Skill path not found: {path}")
     skill_md = os.path.join(path, "SKILL.md")
     if not os.path.isfile(skill_md):
         raise InstallError("SKILL.md not found in selected skill directory.")
+    for root, directories, files in os.walk(path):
+        for entry in (*directories, *files):
+            if os.path.islink(os.path.join(root, entry)):
+                raise InstallError("Skill directory must not contain symlinks.")
 
 
 def _copy_skill(src: str, dest_dir: str) -> None:
@@ -255,9 +285,9 @@ def _resolve_source(args: Args) -> Source:
         raise InstallError("Missing --path for --repo.")
     paths = list(args.path)
     return Source(
-        owner=repo_parts[0],
-        repo=repo_parts[1],
-        ref=args.ref,
+        owner=validate_repository_component(repo_parts[0], "repository owner"),
+        repo=validate_repository_component(repo_parts[1], "repository name"),
+        ref=validate_git_ref(args.ref),
         paths=paths,
     )
 
@@ -326,7 +356,7 @@ def main(argv: list[str]) -> int:
         for skill_name, dest_dir in installed:
             print(f"Installed {skill_name} to {dest_dir}")
         return 0
-    except InstallError as exc:
+    except (GitHubRequestError, InstallError) as exc:
         print(f"Error: {exc}", file=sys.stderr)
         return 1
 

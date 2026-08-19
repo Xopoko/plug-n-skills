@@ -18,6 +18,7 @@ import struct
 import subprocess
 import sys
 import tempfile
+import urllib.request
 import zlib
 from pathlib import Path
 from unittest import mock
@@ -977,8 +978,8 @@ def test_proportional_install_scope_contract() -> None:
         )
     ]
     check(
-        "install scope contract: plugin manifests are version 0.6.9",
-        all(manifest.get("version") == "0.6.9" for manifest in manifests),
+        "install scope contract: plugin manifests are version 0.6.10",
+        all(manifest.get("version") == "0.6.10" for manifest in manifests),
         repr([manifest.get("version") for manifest in manifests]),
     )
 
@@ -1987,6 +1988,244 @@ def test_install_skill_default_dest() -> None:
         )
 
 
+def _load_module(name: str, path: Path):
+    spec = importlib.util.spec_from_file_location(name, path)
+    assert spec is not None and spec.loader is not None
+    module = importlib.util.module_from_spec(spec)
+    sys.modules[name] = module
+    spec.loader.exec_module(module)
+    return module
+
+
+def test_github_request_hardening() -> None:
+    """github_utils only talks HTTPS to allowlisted GitHub hosts."""
+    install_dir = SCRIPTS / "install"
+    sys.path.insert(0, str(install_dir))
+    try:
+        github_utils = _load_module("github_utils", install_dir / "github_utils.py")
+    finally:
+        sys.path.remove(str(install_dir))
+
+    for url in (
+        "http://api.github.com/repos/o/r",
+        "https://api.github.com.evil.test/repos/o/r",
+        "https://user:pass@api.github.com/repos/o/r",
+        "https://api.github.com:444/repos/o/r",
+        "https://api.github.com:not-a-port/repos/o/r",
+        "file:///etc/passwd",
+    ):
+        try:
+            github_utils.assert_allowlisted_url(url)
+            rejected = False
+        except github_utils.GitHubRequestError:
+            rejected = True
+        check(f"github_utils: rejects {url}", rejected)
+
+    try:
+        github_utils.assert_allowlisted_url("https://codeload.github.com/o/r/zip/main")
+        codeload_allowed = True
+    except github_utils.GitHubRequestError:
+        codeload_allowed = False
+    check("github_utils: accepts codeload HTTPS", codeload_allowed)
+
+    contents_url = github_utils.github_api_contents_url(
+        "owner/repo", "skills/.curated", "main"
+    )
+    check(
+        "github_utils: builds contents URL",
+        contents_url
+        == "https://api.github.com/repos/owner/repo/contents/skills/.curated?ref=main",
+        contents_url,
+    )
+
+    rich_contents_url = github_utils.github_api_contents_url(
+        "owner/repo", "skills/Data Science/\u65e5\u672c\u8a9e", "release/v1.2.3"
+    )
+    check(
+        "github_utils: preserves slash refs and quotes normal path text",
+        rich_contents_url
+        == (
+            "https://api.github.com/repos/owner/repo/contents/"
+            "skills/Data%20Science/%E6%97%A5%E6%9C%AC%E8%AA%9E"
+            "?ref=release%2Fv1.2.3"
+        ),
+        rich_contents_url,
+    )
+
+    try:
+        github_utils.validate_git_ref("feature/slash-ref")
+        github_utils.validate_relative_repo_path("..foo/Unicode \u6280\u80fd", "path")
+        accepted_normal_inputs = True
+    except github_utils.GitHubRequestError:
+        accepted_normal_inputs = False
+    check(
+        "github_utils: accepts slash refs, dot-prefixed names, spaces, and Unicode",
+        accepted_normal_inputs,
+    )
+
+    try:
+        github_utils.validate_repository_component("owner\ninjected", "owner")
+        safe_control_error = False
+    except github_utils.GitHubRequestError as exc:
+        message = str(exc)
+        safe_control_error = "\n" not in message and "injected" not in message
+    check(
+        "github_utils: control-character errors do not echo raw input",
+        safe_control_error,
+    )
+
+    for repo, path in (("owner/../../orgs", "skills"), ("owner/repo", "a/../../b")):
+        try:
+            github_utils.github_api_contents_url(repo, path, "main")
+            rejected = False
+        except github_utils.GitHubRequestError:
+            rejected = True
+        check(f"github_utils: rejects traversal in {repo} {path}", rejected)
+
+    for value in ("--upload-pack=touch", "..", "feature/../main", "main;rm"):
+        try:
+            github_utils.validate_git_ref(value)
+            rejected = False
+        except github_utils.GitHubRequestError:
+            rejected = True
+        check(f"github_utils: rejects unsafe ref {value!r}", rejected)
+
+    for value in (
+        "-option/skill",
+        "../skill",
+        "skills/../secret",
+        "/skills/one",
+        "C:/outside",
+    ):
+        try:
+            github_utils.validate_relative_repo_path(value, "path")
+            rejected = False
+        except github_utils.GitHubRequestError:
+            rejected = True
+        check(f"github_utils: rejects unsafe repo path {value!r}", rejected)
+
+    redirect_handler = github_utils._AllowlistedRedirectHandler()
+    try:
+        redirect_handler.redirect_request(
+            None, None, 302, "Found", {}, "https://evil.test/steal"
+        )
+        rejected = False
+    except github_utils.GitHubRequestError:
+        rejected = True
+    check("github_utils: blocks off-GitHub redirect", rejected)
+
+    authenticated_request = urllib.request.Request(
+        "https://api.github.com/repos/o/r",
+        headers={"Authorization": "token fixture", "User-Agent": "fixture"},
+    )
+    cross_host_redirect = redirect_handler.redirect_request(
+        authenticated_request,
+        None,
+        302,
+        "Found",
+        {},
+        "https://codeload.github.com/o/r/zip/main",
+    )
+    check(
+        "github_utils: strips authorization from cross-host redirects",
+        cross_host_redirect is not None
+        and cross_host_redirect.get_header("Authorization") is None,
+        repr(cross_host_redirect.headers if cross_host_redirect else None),
+    )
+
+    same_host_redirect = redirect_handler.redirect_request(
+        authenticated_request,
+        None,
+        302,
+        "Found",
+        {},
+        "https://api.github.com/repos/o/r?page=2",
+    )
+    check(
+        "github_utils: retains authorization for same-origin redirects",
+        same_host_redirect is not None
+        and same_host_redirect.get_header("Authorization") == "token fixture",
+        repr(same_host_redirect.headers if same_host_redirect else None),
+    )
+
+
+def test_install_skill_argument_hardening() -> None:
+    """install-skill-from-github rejects option-like refs and unsafe paths."""
+    install_dir = SCRIPTS / "install"
+    sys.path.insert(0, str(install_dir))
+    try:
+        module = _load_module("isg_hardening", install_dir / "install-skill-from-github.py")
+    finally:
+        sys.path.remove(str(install_dir))
+
+    accepted_source = module._resolve_source(
+        module.Args(
+            repo="owner/repo",
+            path=["..foo/Unicode \u6280\u80fd"],
+            ref="feature/slash-ref",
+        )
+    )
+    explicit_default_port = module._parse_github_url(
+        "https://github.com:443/owner/repo/tree/release/v1", "main"
+    )
+    check(
+        "install-skill-from-github: accepts explicit default HTTPS port",
+        explicit_default_port == ("owner", "repo", "release", "v1"),
+        repr(explicit_default_port),
+    )
+
+    for unsafe_url in (
+        "http://github.com/owner/repo",
+        "https://user:pass@github.com/owner/repo",
+        "https://github.com:444/owner/repo",
+    ):
+        try:
+            module._parse_github_url(unsafe_url, "main")
+            rejected = False
+        except module.InstallError:
+            rejected = True
+        check(
+            f"install-skill-from-github: rejects unsafe URL {unsafe_url}",
+            rejected,
+        )
+
+    commands: list[list[str]] = []
+    with mock.patch.object(module, "_run_git", side_effect=commands.append):
+        module._git_sparse_checkout(
+            "https://github.com/owner/repo.git",
+            accepted_source.ref,
+            accepted_source.paths,
+            "fixture-destination",
+        )
+    check(
+        "install-skill-from-github: preserves slash refs and uses plain checkout",
+        accepted_source.ref == "feature/slash-ref"
+        and accepted_source.paths == ["..foo/Unicode \u6280\u80fd"]
+        and commands[0][commands[0].index("--branch") + 1] == "feature/slash-ref"
+        and commands[-2][-2:] == ["--", "..foo/Unicode \u6280\u80fd"]
+        and commands[-1]
+        == [
+            "git",
+            "-C",
+            os.path.join("fixture-destination", "repo"),
+            "checkout",
+            "feature/slash-ref",
+        ],
+        repr(commands),
+    )
+
+    for argv in (
+        ["--repo", "owner/repo", "--path", "skills/one", "--ref=--upload-pack=touch"],
+        ["--repo", "owner/repo", "--path=--output=touch"],
+        ["--repo", "owner/repo", "--path", "../../etc"],
+        ["--url", "https://evil.test/owner/repo", "--path", "skills/one"],
+    ):
+        check(
+            f"install-skill-from-github: rejects {' '.join(argv)}",
+            module.main(argv) == 1,
+        )
+
+
 def test_codex_cli_plugin_cache_locator() -> None:
     plugin_dir = SCRIPTS / "plugin"
     snippet = (
@@ -2490,6 +2729,8 @@ def main() -> int:
         test_capability_inventory,
         test_agent_target,
         test_install_skill_default_dest,
+        test_github_request_hardening,
+        test_install_skill_argument_hardening,
         test_codex_cli_plugin_cache_locator,
         test_immutable_cache_publication,
         test_audit_skill_candidate,
