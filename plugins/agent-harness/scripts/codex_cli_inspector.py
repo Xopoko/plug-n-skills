@@ -13,7 +13,7 @@ from typing import Any
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 from cli_inspection import (  # noqa: E402
     clip,
-    parse_commands,
+    parse_commands as _parse_commands,
     parse_options,
     resolve_executable,
     run_cli,
@@ -53,6 +53,12 @@ EXPERIMENTAL_COMMANDS = {
 COMMAND_ENTRY_RE = re.compile(r"^  ([a-z][a-z0-9-]*)(?:\s{2,}|\s*$)")
 
 
+def parse_commands(help_text: str) -> list[str]:
+    """Parse Codex commands while preserving the inspector's public API."""
+
+    return _parse_commands(help_text, COMMAND_ENTRY_RE)
+
+
 def resolve_codex(explicit: str | None) -> str:
     return resolve_executable(explicit, program="codex", env_var="CODEX_CLI", flag="--codex")
 
@@ -63,7 +69,7 @@ def run_codex(codex: str, args: list[str], timeout: float) -> dict[str, Any]:
 
 def summarize_help(help_text: str) -> dict[str, Any]:
     options = parse_options(help_text)
-    commands = parse_commands(help_text, COMMAND_ENTRY_RE)
+    commands = parse_commands(help_text)
     dangerous = [flag for flag in DANGEROUS_FLAGS if flag in help_text]
     experimental = [
         command

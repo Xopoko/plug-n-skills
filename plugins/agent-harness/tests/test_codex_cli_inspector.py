@@ -3,12 +3,14 @@ import io
 import json
 import os
 import stat
+import subprocess
 import sys
 import tempfile
 import textwrap
 import unittest
 from contextlib import redirect_stdout
 from pathlib import Path
+from unittest import mock
 
 
 SCRIPT = Path(__file__).resolve().parents[1] / "scripts" / "codex_cli_inspector.py"
@@ -16,6 +18,7 @@ spec = importlib.util.spec_from_file_location("codex_cli_inspector", SCRIPT)
 inspector = importlib.util.module_from_spec(spec)
 assert spec.loader is not None
 spec.loader.exec_module(inspector)
+shared = sys.modules["cli_inspection"]
 
 
 class CodexCliInspectorTests(unittest.TestCase):
@@ -124,6 +127,23 @@ class CodexCliInspectorTests(unittest.TestCase):
             "--dangerously-bypass-approvals-and-sandbox",
             report["safety"]["dangerous_flags_seen"],
         )
+
+    def test_parse_commands_keeps_one_argument_api(self):
+        commands = inspector.parse_commands("Commands:\n  exec    Run Codex\n")
+        self.assertEqual(["exec"], commands)
+
+    def test_timeout_bytes_are_decoded_without_raising(self):
+        timeout = subprocess.TimeoutExpired(
+            ["codex", "--help"],
+            0.01,
+            output=b"partial\xff output\n",
+        )
+        with mock.patch.object(shared.subprocess, "run", side_effect=timeout):
+            result = inspector.run_codex("codex", ["--help"], 0.01)
+
+        self.assertFalse(result["ok"])
+        self.assertEqual("partial\ufffd output", result["stdout"])
+        self.assertEqual("timeout", result["stderr"])
 
 
 if __name__ == "__main__":

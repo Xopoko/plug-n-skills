@@ -29,6 +29,12 @@ def clip(text: str, max_chars: int = 2000) -> str:
     return normalized
 
 
+def _as_text(value: str | bytes | None) -> str:
+    if isinstance(value, bytes):
+        return value.decode("utf-8", errors="replace")
+    return value or ""
+
+
 def resolve_executable(explicit: str | None, *, program: str, env_var: str, flag: str) -> str:
     for raw in (explicit, os.environ.get(env_var), shutil.which(program)):
         if not raw:
@@ -57,7 +63,7 @@ def run_cli(executable: str, args: list[str], timeout: float) -> dict[str, Any]:
             "command": command,
             "ok": False,
             "returncode": None,
-            "stdout": clip(exc.stdout or ""),
+            "stdout": clip(_as_text(exc.stdout)),
             "stderr": "timeout",
         }
     except OSError as exc:

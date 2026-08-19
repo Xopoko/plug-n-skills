@@ -13,7 +13,7 @@ from typing import Any
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 from cli_inspection import (  # noqa: E402
     clip,
-    parse_commands,
+    parse_commands as _parse_commands,
     parse_options,
     resolve_executable,
     run_cli,
@@ -63,6 +63,12 @@ MUTATING_COMMANDS = {
 COMMAND_ENTRY_RE = re.compile(r"^  ([A-Za-z][A-Za-z0-9-]*(?:\|[A-Za-z0-9-]+)?)(?:\s|$)")
 
 
+def parse_commands(help_text: str) -> list[str]:
+    """Parse Claude commands while preserving the inspector's public API."""
+
+    return _parse_commands(help_text, COMMAND_ENTRY_RE, stop_on_blank=False)
+
+
 def resolve_claude(explicit: str | None) -> str:
     return resolve_executable(explicit, program="claude", env_var="CLAUDE_CLI", flag="--claude")
 
@@ -95,7 +101,7 @@ def parse_choices(help_text: str, option: str) -> list[str]:
 
 def summarize_help(help_text: str) -> dict[str, Any]:
     options = parse_options(help_text)
-    commands = parse_commands(help_text, COMMAND_ENTRY_RE, stop_on_blank=False)
+    commands = parse_commands(help_text)
     dangerous = [flag for flag in DANGEROUS_FLAGS if flag in help_text]
     permission_modes = parse_choices(help_text, "--permission-mode")
     output_formats = parse_choices(help_text, "--output-format")
