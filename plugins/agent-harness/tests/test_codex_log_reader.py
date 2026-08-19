@@ -317,6 +317,44 @@ class CodexLogReaderTests(unittest.TestCase):
     def tearDown(self):
         self.tmp.cleanup()
 
+    def test_iter_session_paths_tolerates_disappearing_rollout_during_sort(self):
+        real_stat = Path.stat
+
+        def flaky_stat(path, *args, **kwargs):
+            if path == self.rollout:
+                raise FileNotFoundError(path)
+            return real_stat(path, *args, **kwargs)
+
+        with mock.patch.object(Path, "stat", autospec=True, side_effect=flaky_stat):
+            paths = reader.iter_session_paths(self.home)
+
+        self.assertIn(self.rollout, paths)
+
+    def test_corpus_metadata_rejects_rollout_symlink_outside_home(self):
+        with tempfile.TemporaryDirectory() as outside_tmp:
+            outside = Path(outside_tmp) / "outside-rollout.jsonl"
+            self.write_rollout(
+                outside,
+                [
+                    {
+                        "timestamp": "2026-06-06T09:00:00Z",
+                        "type": "session_meta",
+                        "payload": {"id": THREAD_ID, "cwd": "/private/outside"},
+                    }
+                ],
+            )
+            linked = self.rollout.with_name(
+                f"rollout-2026-06-06T09-00-00-{THREAD_ID}.jsonl"
+            )
+            try:
+                linked.symlink_to(outside)
+            except OSError as exc:
+                self.skipTest(f"file symlinks unavailable: {exc}")
+
+            metadata = reader._read_corpus_metadata(linked, self.home)
+
+        self.assertEqual("rollout-outside-codex-home", metadata["error"])
+
     def run_cli(self, argv):
         out = io.StringIO()
         full_argv = [argv[0], "--codex-home", str(self.home), *argv[1:]]
@@ -1008,6 +1046,34 @@ class CodexLogReaderTests(unittest.TestCase):
                 ]
             )
 
+    def test_corpus_summary_preserves_relative_output_display(self):
+        home, _paths = self.make_corpus_home()
+        original_cwd = Path.cwd()
+        try:
+            os.chdir(self.tmp.name)
+            summary = json.loads(
+                self.run_cli_at_home(
+                    home,
+                    [
+                        "corpus",
+                        "--count",
+                        "1",
+                        "--output-dir",
+                        "relative-corpus",
+                        "--cutoff",
+                        "2030-01-01T00:00:00Z",
+                        "--json",
+                    ],
+                )
+            )
+        finally:
+            os.chdir(original_cwd)
+
+        self.assertEqual("relative-corpus", summary["output_dir"])
+        self.assertTrue(
+            (Path(self.tmp.name) / "relative-corpus" / "corpus-manifest.json").is_file()
+        )
+
     def test_corpus_cwd_filter_uses_path_boundaries(self):
         home, _paths = self.make_corpus_home(
             {
@@ -1066,6 +1132,14 @@ class CodexLogReaderTests(unittest.TestCase):
                 "C:/private", "C:/private/example-project"
             )
         )
+        self.assertTrue(
+            reader._path_is_within_scope(
+                "C:/PRIVATE/example-project/child", "c:/private/example-project"
+            )
+        )
+        self.assertFalse(
+            reader._path_is_within_scope("/srv/Project/child", "/srv/project")
+        )
 
     def test_corpus_requires_exact_count_unless_partial_is_explicit(self):
         home, _paths = self.make_corpus_home()
@@ -1122,7 +1196,12 @@ class CodexLogReaderTests(unittest.TestCase):
         coding_rows = [json.loads(line) for line in coding_path.read_text(encoding="utf-8").splitlines()]
         for row in coding_rows:
             row["review_status"] = "complete"
-            row["eof_receipt"] = {"complete": True, "method": "local-active-scope"}
+            row["eof_receipt"] = {
+                "complete": True,
+                "method": "local-active-scope",
+                "active_range": {"start": 1, "end": 100},
+                "terminal_line": 100,
+            }
             row["outcome"] = "bounded synthetic outcome"
             row["classification"] = "missing_capability"
             row["evidence_strength"] = "strong"
@@ -1178,6 +1257,28 @@ class CodexLogReaderTests(unittest.TestCase):
         )
         self.assertTrue(valid["valid"])
         self.assertEqual(3, valid["completed"])
+
+        coding_rows[0]["eof_receipt"].pop("terminal_line")
+        coding_path.write_text(
+            "".join(json.dumps(row, separators=(",", ":")) + "\n" for row in coding_rows),
+            encoding="utf-8",
+        )
+        incomplete_receipt = json.loads(
+            self.run_cli_at_home(
+                home,
+                ["corpus-check", str(output_dir), "--final", "--json"],
+                expected=1,
+            )
+        )
+        self.assertIn(
+            f"coding:{task_ids[0]}:missing-eof-receipt",
+            incomplete_receipt["errors"],
+        )
+        coding_rows[0]["eof_receipt"]["terminal_line"] = 100
+        coding_path.write_text(
+            "".join(json.dumps(row, separators=(",", ":")) + "\n" for row in coding_rows),
+            encoding="utf-8",
+        )
 
         del handoff_candidate["hypothesis"]
         handoff_path.write_text(json.dumps(handoff), encoding="utf-8")

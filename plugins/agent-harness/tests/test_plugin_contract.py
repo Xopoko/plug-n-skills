@@ -81,7 +81,7 @@ class AgentHarnessPluginContractTests(unittest.TestCase):
         for field in ("name", "version", "description", "author", "license", "keywords"):
             self.assertEqual(codex[field], claude[field], field)
         self.assertEqual("agent-harness", codex["name"])
-        self.assertEqual("0.1.11", codex["version"])
+        self.assertEqual("0.1.12", codex["version"])
         self.assertEqual("Agent Harness", codex["interface"]["displayName"])
         self.assertIsInstance(codex["interface"]["defaultPrompt"], list)
         self.assertTrue(codex["interface"]["defaultPrompt"])
