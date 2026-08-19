@@ -19,20 +19,7 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 from agent_target import resolve_agent  # noqa: E402
 import plugin_catalog  # noqa: E402
-
-
-LEGACY_PLUGIN_RENAMES = {
-    "codex-cli": "agent-harness",
-    "claude-code": "agent-harness",
-    "scheduled-automation": "agent-harness",
-    "gitlab-review": "git-workflows",
-    "stacked-delivery": "git-workflows",
-    "git-worktree-safety": "git-workflows",
-}
-
-
-def repo_root() -> Path:
-    return Path(__file__).resolve().parents[1]
+from plugin_registry import repo_root, resolve_selection  # noqa: E402
 
 
 def local_plugin_names(root: Path) -> list[str]:
@@ -249,33 +236,24 @@ def select_plugins(
     *,
     default_available: list[str] | None = None,
 ) -> tuple[list[str], list[str]]:
-    known = set(available)
-    unknown = sorted(
-        name
-        for name in set(included) | set(excluded)
-        if LEGACY_PLUGIN_RENAMES.get(name, name) not in known
+    selection = resolve_selection(
+        included,
+        excluded,
+        available=available,
+        default_names=default_available,
     )
-    if unknown:
-        return [], unknown
-    canonical_included = list(
-        dict.fromkeys(LEGACY_PLUGIN_RENAMES.get(name, name) for name in included)
-    )
-    canonical_excluded = list(
-        dict.fromkeys(LEGACY_PLUGIN_RENAMES.get(name, name) for name in excluded)
-    )
-    overlap = sorted(set(canonical_included) & set(canonical_excluded))
-    if overlap:
+    if selection.unknown:
+        return [], selection.unknown
+    if selection.overlap:
         print(
-            f"plugin(s) cannot be both selected and excluded: {', '.join(overlap)}",
+            f"plugin(s) cannot be both selected and excluded: {', '.join(selection.overlap)}",
             file=sys.stderr,
         )
         raise SystemExit(2)
-    base = canonical_included or (default_available if default_available is not None else available)
-    selected = [name for name in base if name not in set(canonical_excluded)]
-    if not selected:
+    if not selection.selected:
         print("no plugins selected after applying --exclude-plugin", file=sys.stderr)
         raise SystemExit(2)
-    return selected, []
+    return selection.selected, []
 
 
 if __name__ == "__main__":

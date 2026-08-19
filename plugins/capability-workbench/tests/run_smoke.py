@@ -978,8 +978,8 @@ def test_proportional_install_scope_contract() -> None:
         )
     ]
     check(
-        "install scope contract: plugin manifests are version 0.6.11",
-        all(manifest.get("version") == "0.6.11" for manifest in manifests),
+        "install scope contract: plugin manifests are version 0.6.12",
+        all(manifest.get("version") == "0.6.12" for manifest in manifests),
         repr([manifest.get("version") for manifest in manifests]),
     )
 

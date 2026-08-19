@@ -6,8 +6,12 @@ from __future__ import annotations
 import argparse
 import json
 import re
+import sys
 from pathlib import Path
 from typing import Any
+
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+from ledger_gate import check_schema, emit_result, load_json  # noqa: E402
 
 
 SCHEMA = "capability.install_scope.v1"
@@ -87,20 +91,6 @@ TEMPLATE = {
 }
 
 
-def load_json(path: Path) -> dict[str, Any]:
-    try:
-        data = json.loads(path.read_text(encoding="utf-8"))
-    except Exception as exc:
-        raise SystemExit(f"invalid_json:{path}:{exc}") from exc
-    if not isinstance(data, dict):
-        raise SystemExit("ledger_must_be_object")
-    return data
-
-
-def non_empty_list(value: Any) -> bool:
-    return isinstance(value, list) and any(value)
-
-
 def validate_local_scope_evidence(value: Any) -> list[str]:
     errors: list[str] = []
     if not isinstance(value, list) or not value:
@@ -170,11 +160,7 @@ def validate(data: dict[str, Any], final: bool = False) -> tuple[list[str], list
     errors: list[str] = []
     warnings: list[str] = []
 
-    schema = data.get("schema")
-    if schema in DEPRECATED_SCHEMAS:
-        warnings.append(f"schema_{schema}_is_deprecated_use_{SCHEMA}")
-    elif schema != SCHEMA:
-        errors.append(f"schema_must_be_{SCHEMA}")
+    check_schema(data, SCHEMA, DEPRECATED_SCHEMAS, errors, warnings)
 
     artifact = data.get("artifact_type")
     scope = data.get("install_scope")
@@ -263,11 +249,7 @@ def main() -> int:
         "install_state": data.get("install_state"),
         "final": args.final,
     }
-    if args.json:
-        print(json.dumps(result, indent=2, ensure_ascii=False))
-    else:
-        print(json.dumps(result, ensure_ascii=False))
-    return 0 if not errors else 1
+    return emit_result(result, indent=args.json)
 
 
 if __name__ == "__main__":

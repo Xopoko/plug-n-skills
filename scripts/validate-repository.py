@@ -12,27 +12,11 @@ from typing import Any
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 import plugin_catalog  # noqa: E402
-
-
-LOCAL_PLUGIN_NAMES = [
-    "agent-harness",
-    "windows-host-operations",
-    "capability-workbench",
-    "context-density",
-    "i-have-adhd",
-    "git-workflows",
-    "engineering-hygiene",
-    "scientific-research",
-    "technology-intelligence",
-    "design-intelligence",
-    "architecture-intelligence",
-    "spec-driven-development",
-    "kotlin-multiplatform",
-    "tauri",
-    "pixijs",
-    "game-design-intelligence",
-]
-CATALOG_WEBSITE_URL = "https://github.com/Xopoko/plug-n-skills"
+from plugin_registry import (  # noqa: E402
+    CATALOG_WEBSITE_URL,
+    LOCAL_PLUGIN_NAMES,
+    repo_root,
+)
 
 TEXT_EXTENSIONS = {
     "",
@@ -154,10 +138,6 @@ PRIVATE_TOOL_TERMS = [
 PRIVATE_TOOL_RE = re.compile(
     r"(?:" + "|".join(re.escape(term) for term in PRIVATE_TOOL_TERMS) + r")"
 )
-
-
-def repo_root() -> Path:
-    return Path(__file__).resolve().parents[1]
 
 
 def main() -> None:

@@ -18,32 +18,16 @@ if str(_SCRIPT_DIR) not in sys.path:
     sys.path.insert(0, str(_SCRIPT_DIR))
 from agent_target import AgentResolutionError, resolve_codex_plugin_state_paths
 import plugin_catalog
-
-
-LOCAL_PLUGIN_NAMES = [
-    "agent-harness",
-    "windows-host-operations",
-    "capability-workbench",
-    "context-density",
-    "i-have-adhd",
-    "git-workflows",
-    "engineering-hygiene",
-    "scientific-research",
-    "technology-intelligence",
-    "design-intelligence",
-    "architecture-intelligence",
-    "spec-driven-development",
-    "kotlin-multiplatform",
-    "tauri",
-    "pixijs",
-    "game-design-intelligence",
-]
+from plugin_registry import (
+    LEGACY_PLUGIN_RENAMES,
+    LOCAL_PLUGIN_NAMES,
+    repo_root,
+    resolve_selection,
+)
 
 
 def catalog_payload(root: Path | None = None) -> dict[str, Any]:
-    return plugin_catalog.validate_catalog(
-        root or Path(__file__).resolve().parents[1]
-    )
+    return plugin_catalog.validate_catalog(root or repo_root())
 
 
 def all_plugin_names(root: Path | None = None) -> list[str]:
@@ -54,19 +38,6 @@ def all_plugin_names(root: Path | None = None) -> list[str]:
 # Kept as a public compatibility surface for tests and callers that import the
 # installer. The immutable catalog is validated before these names are exposed.
 PLUGIN_NAMES = all_plugin_names()
-
-LEGACY_PLUGIN_RENAMES = {
-    "codex-cli": "agent-harness",
-    "claude-code": "agent-harness",
-    "scheduled-automation": "agent-harness",
-    "gitlab-review": "git-workflows",
-    "stacked-delivery": "git-workflows",
-    "git-worktree-safety": "git-workflows",
-}
-
-
-def repo_root() -> Path:
-    return Path(__file__).resolve().parents[1]
 
 
 def parse_args() -> argparse.Namespace:
@@ -366,31 +337,24 @@ def select_plugins(
     available: list[str] | None = None,
     default_names: list[str] | None = None,
 ) -> list[str]:
-    known = set(available or PLUGIN_NAMES)
-    canonical_included = list(
-        dict.fromkeys(
-            LEGACY_PLUGIN_RENAMES.get(name, name) for name in (included or [])
-        )
+    selection = resolve_selection(
+        included,
+        excluded,
+        available=available or PLUGIN_NAMES,
+        default_names=(
+            default_names if default_names is not None else LOCAL_PLUGIN_NAMES
+        ),
     )
-    canonical_excluded = list(
-        dict.fromkeys(LEGACY_PLUGIN_RENAMES.get(name, name) for name in excluded)
-    )
-    unknown = sorted((set(canonical_included) | set(canonical_excluded)) - known)
-    if unknown:
-        raise SystemExit("unknown plugin(s): " + ", ".join(unknown))
-    include_set = canonical_included if included else list(
-        default_names if default_names is not None else LOCAL_PLUGIN_NAMES
-    )
-    excluded_set = set(canonical_excluded)
-    overlap = sorted(set(canonical_included) & excluded_set)
-    if overlap:
+    if selection.unknown:
+        raise SystemExit("unknown plugin(s): " + ", ".join(selection.unknown))
+    if selection.overlap:
         raise SystemExit(
-            "plugin(s) cannot be both selected and excluded: " + ", ".join(overlap)
+            "plugin(s) cannot be both selected and excluded: "
+            + ", ".join(selection.overlap)
         )
-    selected = [name for name in include_set if name not in excluded_set]
-    if not selected:
+    if not selection.selected:
         raise SystemExit("no plugins selected after applying --exclude-plugin")
-    return selected
+    return selection.selected
 
 
 def require_file(path: Path) -> None:

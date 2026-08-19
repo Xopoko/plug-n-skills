@@ -3,12 +3,14 @@ import io
 import json
 import os
 import stat
+import subprocess
 import sys
 import tempfile
 import textwrap
 import unittest
 from contextlib import redirect_stdout
 from pathlib import Path
+from unittest import mock
 
 
 SCRIPT = Path(__file__).resolve().parents[1] / "scripts" / "codex_cli_inspector.py"
@@ -16,6 +18,7 @@ spec = importlib.util.spec_from_file_location("codex_cli_inspector", SCRIPT)
 inspector = importlib.util.module_from_spec(spec)
 assert spec.loader is not None
 spec.loader.exec_module(inspector)
+shared = sys.modules["cli_inspection"]
 
 
 class CodexCliInspectorTests(unittest.TestCase):
@@ -124,6 +127,36 @@ class CodexCliInspectorTests(unittest.TestCase):
             "--dangerously-bypass-approvals-and-sandbox",
             report["safety"]["dangerous_flags_seen"],
         )
+
+    def test_parse_commands_keeps_one_argument_api(self):
+        commands = inspector.parse_commands("Commands:\n  exec    Run Codex\n")
+        self.assertEqual(["exec"], commands)
+
+    def test_timeout_bytes_follow_the_subprocess_text_policy(self):
+        timeout = subprocess.TimeoutExpired(
+            ["codex", "--help"],
+            0.01,
+            output=b"caf\xe9 output\n",
+        )
+        with (
+            mock.patch.object(shared, "CLI_TEXT_ENCODING", "cp1252"),
+            mock.patch.object(shared.subprocess, "run", side_effect=timeout) as run,
+        ):
+            result = inspector.run_codex("codex", ["--help"], 0.01)
+
+        run.assert_called_once_with(
+            ["codex", "--help"],
+            text=True,
+            encoding="cp1252",
+            errors=shared.CLI_TEXT_ERRORS,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+            timeout=0.01,
+            check=False,
+        )
+        self.assertFalse(result["ok"])
+        self.assertEqual("caf\xe9 output", result["stdout"])
+        self.assertEqual("timeout", result["stderr"])
 
 
 if __name__ == "__main__":

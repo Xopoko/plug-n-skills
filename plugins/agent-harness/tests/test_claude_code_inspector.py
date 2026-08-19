@@ -125,6 +125,12 @@ class ClaudeCodeInspectorTests(unittest.TestCase):
             report["safety"]["dangerous_flags_seen"],
         )
 
+    def test_parse_commands_keeps_one_argument_api(self):
+        commands = inspector.parse_commands(
+            "Commands:\n  plugin|plugins  Manage plugins\n\n  mcp  Manage MCP\n"
+        )
+        self.assertEqual(["plugin|plugins", "mcp"], commands)
+
 
 if __name__ == "__main__":
     unittest.main()

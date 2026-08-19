@@ -167,6 +167,39 @@ class FirstPartyPluginsTest(unittest.TestCase):
         with self.assertRaisesRegex(catalog.ValidationError, "duplicate key"):
             catalog.validate_catalog(self.root)
 
+    def test_catalog_loader_preserves_caller_specific_diagnostics(self):
+        path = self.root / "invalid.json"
+        path.write_bytes(b"\xff")
+        with self.assertRaisesRegex(
+            catalog.ValidationError, "invalid UTF-8 JSON at"
+        ):
+            catalog.load_json(path, "fixture")
+
+        path.write_text("[]", encoding="utf-8")
+        with self.assertRaisesRegex(
+            catalog.ValidationError, r"fixture: must be an object$"
+        ):
+            catalog.load_json(path, "fixture")
+
+    def test_receipt_rewraps_duplicate_manifest_keys(self):
+        manifest_path = self.source / ".codex-plugin" / "plugin.json"
+        text = manifest_path.read_text(encoding="utf-8")
+        text = text.replace(
+            '"name": "sample-plugin",',
+            '"name": "sample-plugin", "name": "sample-plugin",',
+            1,
+        )
+        manifest_path.write_text(text, encoding="utf-8")
+        git(self.source, "add", ".codex-plugin/plugin.json")
+        git(self.source, "commit", "--quiet", "-m", "duplicate manifest key")
+        self.commit = git(self.source, "rev-parse", "HEAD")
+        self.tree = git(self.source, "rev-parse", "HEAD^{tree}")
+        self.lock = self._lock()
+        self._write_lock()
+
+        with self.assertRaisesRegex(catalog.ValidationError, "duplicate key 'name'"):
+            catalog.generate_receipt(self.root, "sample-plugin", self.source)
+
     def test_checkout_rejects_nonmatching_nonempty_destination(self):
         dest = self.base / "checkout"; dest.mkdir(); (dest / "user.txt").write_text("keep", encoding="utf-8")
         with self.assertRaisesRegex(catalog.SourceError, "destination is nonempty"):

@@ -9,10 +9,14 @@ import os
 import re
 import shutil
 import subprocess
+import sys
 import tempfile
 from datetime import date
 from pathlib import Path, PurePosixPath
 from typing import Any, Callable, Sequence
+
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+import lockfile_json  # noqa: E402
 
 LOCKFILE_NAME = "first-party-plugins.lock.json"
 TOP_KEYS = {"schemaVersion", "publishers", "plugins"}
@@ -27,11 +31,11 @@ SKILL_KEYS = {"name", "path", "description", "startupTokens", "bodyTokens"}
 COUNTS_KEYS = {"references", "scripts"}
 TOKENS_KEYS = {"encoding", "startup", "body"}
 ICONS_KEYS = {"composerIcon", "logo", "brandColor", "sha256", "catalogAsset"}
-NAME_RE = re.compile(r"^[a-z][a-z0-9]*(?:-[a-z0-9]+)*$")
-OWNER_RE = re.compile(r"^[A-Za-z0-9](?:[A-Za-z0-9-]{0,37}[A-Za-z0-9])?$")
-REPOSITORY_RE = re.compile(r"^[A-Za-z0-9](?:[A-Za-z0-9-]{0,37}[A-Za-z0-9])?/[A-Za-z0-9](?:[A-Za-z0-9._-]{0,98}[A-Za-z0-9])?$")
-SHA_RE = re.compile(r"^[0-9a-f]{40}$")
-SHA256_RE = re.compile(r"^[0-9a-f]{64}$")
+NAME_RE = lockfile_json.KEBAB_CASE_RE
+OWNER_RE = lockfile_json.GITHUB_OWNER_RE
+REPOSITORY_RE = lockfile_json.GITHUB_REPOSITORY_RE
+SHA_RE = lockfile_json.SHA1_RE
+SHA256_RE = lockfile_json.SHA256_RE
 SEMVER_RE = re.compile(r"^(0|[1-9]\d*)\.(0|[1-9]\d*)\.(0|[1-9]\d*)(?:-[0-9A-Za-z.-]+)?(?:\+[0-9A-Za-z.-]+)?$")
 
 
@@ -51,25 +55,18 @@ def _fail(location: str, message: str) -> None:
     raise ValidationError(f"{location}: {message}")
 
 
-def _pairs(pairs: list[tuple[str, Any]]) -> dict[str, Any]:
-    result: dict[str, Any] = {}
-    for key, value in pairs:
-        if key in result:
-            raise ValidationError(f"JSON object: duplicate key {key!r}")
-        result[key] = value
-    return result
-
-
 def load_json(path: Path, location: str) -> dict[str, Any]:
     try:
-        value = json.loads(path.read_text(encoding="utf-8"), object_pairs_hook=_pairs)
-    except ValidationError:
-        raise
-    except (OSError, UnicodeError, json.JSONDecodeError) as exc:
-        raise ValidationError(f"{location}: invalid UTF-8 JSON at {path}: {exc}") from exc
-    if not isinstance(value, dict):
-        _fail(location, "must be an object")
-    return value
+        return lockfile_json.load_object(
+            path,
+            location,
+            read_error_template=(
+                "{location}: invalid UTF-8 JSON at {path}: {error}"
+            ),
+            non_object_template="{location}: must be an object",
+        )
+    except lockfile_json.StrictJsonError as exc:
+        raise ValidationError(str(exc)) from exc
 
 
 def _object(value: Any, location: str, keys: set[str]) -> dict[str, Any]:
@@ -332,8 +329,17 @@ def generate_receipt(root: Path | str, name: str, source: Path | str) -> Path:
     for path, key in ((".codex-plugin/plugin.json", "codexSha256"), (".claude-plugin/plugin.json", "claudeSha256")):
         if hashlib.sha256(blob(path)).hexdigest() != plugin["manifest"][key]:
             raise SourceError(f"{name}: {key} mismatch")
-    codex = json.loads(blob(".codex-plugin/plugin.json").decode("utf-8"), object_pairs_hook=_pairs)
-    claude = json.loads(blob(".claude-plugin/plugin.json").decode("utf-8"), object_pairs_hook=_pairs)
+    try:
+        codex = json.loads(
+            blob(".codex-plugin/plugin.json").decode("utf-8"),
+            object_pairs_hook=lockfile_json.object_pairs,
+        )
+        claude = json.loads(
+            blob(".claude-plugin/plugin.json").decode("utf-8"),
+            object_pairs_hook=lockfile_json.object_pairs,
+        )
+    except lockfile_json.StrictJsonError as exc:
+        raise ValidationError(str(exc)) from exc
     for label, manifest in (("Codex", codex), ("Claude", claude)):
         if manifest.get("name") != name or manifest.get("version") != plugin["manifest"]["version"] or manifest.get("license") != "MIT":
             raise SourceError(f"{name}: {label} manifest identity mismatch")
