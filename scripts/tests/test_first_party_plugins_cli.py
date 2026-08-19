@@ -11,11 +11,11 @@ from unittest import mock
 ROOT = Path(__file__).resolve().parents[2]
 SCRIPT = ROOT / "scripts" / "first-party-plugins.py"
 
-sys.path.insert(0, str(ROOT / "scripts"))
-SPEC = importlib.util.spec_from_file_location("first_party_plugins_cli", SCRIPT)
-assert SPEC and SPEC.loader
-cli = importlib.util.module_from_spec(SPEC)
-SPEC.loader.exec_module(cli)
+with mock.patch.object(sys, "path", [str(ROOT / "scripts"), *sys.path]):
+    SPEC = importlib.util.spec_from_file_location("first_party_plugins_cli", SCRIPT)
+    assert SPEC and SPEC.loader
+    cli = importlib.util.module_from_spec(SPEC)
+    SPEC.loader.exec_module(cli)
 
 PLUGIN = {
     "name": "standalone",
