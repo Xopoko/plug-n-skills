@@ -870,6 +870,35 @@ class DeferredCompletionTests(unittest.TestCase):
         self.assertIn("ZeroDivisionError", log)
         self.assertIn("Traceback", log)
 
+    def test_internal_error_logging_failure_keeps_protocol_error(self) -> None:
+        module_name = f"deferred_completion_server_{uuid.uuid4().hex}"
+        spec = importlib.util.spec_from_file_location(module_name, SERVER)
+        assert spec is not None and spec.loader is not None
+        module = importlib.util.module_from_spec(spec)
+        sys.modules[module_name] = module
+        spec.loader.exec_module(module)
+        sent: list[dict[str, Any]] = []
+        closed_stderr = io.StringIO()
+        closed_stderr.close()
+        try:
+            module.send = sent.append
+            module.reserve_tool = lambda arguments: 1 / 0
+            module.WORKER_SLOTS.acquire()
+            with contextlib.redirect_stderr(closed_stderr):
+                module.process_tool_call(
+                    8,
+                    {"name": RESERVE_TOOL, "arguments": dict(RESERVE_ARGUMENTS)},
+                    threading.Event(),
+                )
+        finally:
+            module.RUNTIME.close()
+            sys.modules.pop(module_name, None)
+        self.assertEqual(len(sent), 1)
+        self.assertEqual(sent[0]["error"]["code"], -32603)
+        self.assertEqual(
+            sent[0]["error"]["message"], "internal completion server error"
+        )
+
 
 if __name__ == "__main__":
     unittest.main()

@@ -379,7 +379,8 @@ def log_internal_error(context: str) -> None:
         sys.stderr.write(f"{SERVER_NAME}: internal error while {context}\n")
         sys.stderr.write(traceback.format_exc())
         sys.stderr.flush()
-    except OSError:
+    except Exception:
+        # Diagnostics are best effort and must never suppress the JSON-RPC reply.
         pass
 
 
