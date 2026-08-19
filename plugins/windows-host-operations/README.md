@@ -32,8 +32,9 @@ powershell.exe -NoProfile -File scripts\Get-WindowsHostEvidence.ps1 `
   -Area StartupRemoval -Target "Example App"
 ```
 
-The JSON output may contain local product names, device identifiers, or paths.
-Keep it private and summarize it before using it in a durable report.
+The JSON output hashes path-like command data and selected identifiers, but may
+retain local display labels and registration paths such as scheduled-task
+paths. Keep it private and summarize it before using it in a durable report.
 
 ## Validation
 
