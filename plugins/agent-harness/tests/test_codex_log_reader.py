@@ -336,17 +336,18 @@ class CodexLogReaderTests(unittest.TestCase):
         self.assertEqual(expected, code)
         return out.getvalue()
 
-    def make_corpus_home(self):
+    def make_corpus_home(self, cwd_by_id=None):
         home = Path(self.tmp.name) / "corpus-home"
         log_dir = home / "sessions" / "2026" / "06" / "07"
         log_dir.mkdir(parents=True)
+        cwd_by_id = cwd_by_id or {}
 
         def add(task_id, second, *, source="vscode", parent=None, mtime=0):
             path = log_dir / f"rollout-2026-06-07T09-00-{second:02d}-{task_id}.jsonl"
             payload = {
                 "id": task_id,
                 "session_id": task_id,
-                "cwd": "C:/private/example-project",
+                "cwd": cwd_by_id.get(task_id, "C:/private/example-project"),
                 "source": source,
             }
             if parent:
@@ -1007,6 +1008,65 @@ class CodexLogReaderTests(unittest.TestCase):
                 ]
             )
 
+    def test_corpus_cwd_filter_uses_path_boundaries(self):
+        home, _paths = self.make_corpus_home(
+            {
+                CORPUS_ROOT_A_ID: "C:/private/example-project-old",
+                CORPUS_ROOT_B_ID: "C:/private/example-project/child",
+                CORPUS_FORK_ID: "C:/private/example-project",
+            }
+        )
+        output_dir = Path(self.tmp.name) / "cwd-filter-output"
+        summary = json.loads(
+            self.run_cli_at_home(
+                home,
+                [
+                    "corpus",
+                    "--count",
+                    "2",
+                    "--output-dir",
+                    str(output_dir),
+                    "--cwd",
+                    "c:\\private\\example-project\\",
+                    "--cutoff",
+                    "2030-01-01T00:00:00Z",
+                    "--json",
+                ],
+            )
+        )
+        self.assertTrue(summary["complete"])
+        task_rows = [
+            json.loads(line)
+            for line in (output_dir / "task-index.jsonl")
+            .read_text(encoding="utf-8")
+            .splitlines()
+        ]
+        self.assertEqual(
+            [CORPUS_FORK_ID, CORPUS_ROOT_B_ID],
+            [row["task_id"] for row in task_rows],
+        )
+        manifest = json.loads(
+            (output_dir / "corpus-manifest.json").read_text(encoding="utf-8")
+        )
+        self.assertEqual(1, manifest["exclusions"]["cwd_mismatch"])
+        self.assertTrue(manifest["created_at"].endswith("Z"))
+
+        self.assertTrue(
+            reader._path_is_within_scope(
+                "C:/private/example-project/child", "C:/private/example-project"
+            )
+        )
+        self.assertFalse(
+            reader._path_is_within_scope(
+                "C:/private/example-project-old", "C:/private/example-project"
+            )
+        )
+        self.assertFalse(
+            reader._path_is_within_scope(
+                "C:/private", "C:/private/example-project"
+            )
+        )
+
     def test_corpus_requires_exact_count_unless_partial_is_explicit(self):
         home, _paths = self.make_corpus_home()
         output_dir = Path(self.tmp.name) / "partial-output"
@@ -1092,7 +1152,22 @@ class CodexLogReaderTests(unittest.TestCase):
         handoff_path = output_dir / "workbench-handoff.json"
         handoff = json.loads(handoff_path.read_text(encoding="utf-8"))
         handoff["status"] = "ready_for_review"
-        handoff["candidate_gaps"] = [{"cluster_id": cluster["cluster_id"]}]
+        handoff_candidate = {
+            "cluster_id": cluster["cluster_id"],
+            "affected_artifact_at_task_time": "none in synthetic fixture",
+            "current_artifact_state": "no owner in synthetic fixture",
+            "proposed_owner": "agent-harness",
+            "proposed_artifact_type": "skill",
+            "hypothesis": "A focused route reduces repeated recovery work.",
+            "cheapest_discriminator": "Replay one held-out synthetic case.",
+            "evidence_pointers": [f"task-index:{task_ids[0]}"],
+            "validation_scenarios": ["held-out positive route"],
+            "regression_scenarios": ["near-miss existing-owner route"],
+            "safety_notes": ["metadata only; no source edits authorized"],
+            "uncertainty": "Synthetic evidence does not prove field frequency.",
+            "residual_tradeoff": "The route adds catalog context cost.",
+        }
+        handoff["candidate_gaps"] = [handoff_candidate]
         handoff_path.write_text(json.dumps(handoff), encoding="utf-8")
 
         valid = json.loads(
@@ -1103,6 +1178,48 @@ class CodexLogReaderTests(unittest.TestCase):
         )
         self.assertTrue(valid["valid"])
         self.assertEqual(3, valid["completed"])
+
+        del handoff_candidate["hypothesis"]
+        handoff_path.write_text(json.dumps(handoff), encoding="utf-8")
+        incomplete_handoff = json.loads(
+            self.run_cli_at_home(
+                home,
+                ["corpus-check", str(output_dir), "--final", "--json"],
+                expected=1,
+            )
+        )
+        self.assertIn(
+            "handoff:synthetic-repeated-gap:missing-hypothesis",
+            incomplete_handoff["errors"],
+        )
+        handoff_candidate["hypothesis"] = (
+            "A focused route reduces repeated recovery work."
+        )
+        handoff_path.write_text(json.dumps(handoff), encoding="utf-8")
+
+        coding_rows[2]["review_status"] = "skipped"
+        coding_rows[2]["skip_reason"] = "synthetic exclusion"
+        coding_path.write_text(
+            "".join(json.dumps(row, separators=(",", ":")) + "\n" for row in coding_rows),
+            encoding="utf-8",
+        )
+        skipped_independent = json.loads(
+            self.run_cli_at_home(
+                home,
+                ["corpus-check", str(output_dir), "--final", "--json"],
+                expected=1,
+            )
+        )
+        self.assertIn(
+            "cluster:synthetic-repeated-gap:independent-task-not-complete",
+            skipped_independent["errors"],
+        )
+        self.assertIn(
+            "cluster:synthetic-repeated-gap:below-independent-threshold",
+            skipped_independent["errors"],
+        )
+        coding_rows[2]["review_status"] = "complete"
+        coding_rows[2].pop("skip_reason")
 
         coding_rows[1]["independence_group"] = coding_rows[0]["independence_group"]
         coding_path.write_text(
