@@ -40,7 +40,16 @@ def object_pairs(pairs: list[tuple[str, Any]]) -> dict[str, Any]:
     return result
 
 
-def load_object(path: Path, location: str, *, require_file: bool = False) -> dict[str, Any]:
+def load_object(
+    path: Path,
+    location: str,
+    *,
+    require_file: bool = False,
+    read_error_template: str = (
+        "{location}: cannot read valid nonblank UTF-8 JSON from {path}: {error}"
+    ),
+    non_object_template: str = "{location}: must be a JSON object",
+) -> dict[str, Any]:
     if require_file and not path.is_file():
         raise StrictJsonError(f"{location}: does not exist or is not a file: {path}")
     try:
@@ -49,8 +58,14 @@ def load_object(path: Path, location: str, *, require_file: bool = False) -> dic
         raise
     except (OSError, UnicodeError, json.JSONDecodeError) as exc:
         raise StrictJsonError(
-            f"{location}: cannot read valid nonblank UTF-8 JSON from {path}: {exc}"
+            read_error_template.format(
+                location=location,
+                path=path,
+                error=exc,
+            )
         ) from exc
     if not isinstance(payload, dict):
-        raise StrictJsonError(f"{location}: must be a JSON object")
+        raise StrictJsonError(
+            non_object_template.format(location=location, path=path)
+        )
     return payload

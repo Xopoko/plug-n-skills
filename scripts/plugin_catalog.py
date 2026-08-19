@@ -57,7 +57,14 @@ def _fail(location: str, message: str) -> None:
 
 def load_json(path: Path, location: str) -> dict[str, Any]:
     try:
-        return lockfile_json.load_object(path, location)
+        return lockfile_json.load_object(
+            path,
+            location,
+            read_error_template=(
+                "{location}: invalid UTF-8 JSON at {path}: {error}"
+            ),
+            non_object_template="{location}: must be an object",
+        )
     except lockfile_json.StrictJsonError as exc:
         raise ValidationError(str(exc)) from exc
 
@@ -322,8 +329,17 @@ def generate_receipt(root: Path | str, name: str, source: Path | str) -> Path:
     for path, key in ((".codex-plugin/plugin.json", "codexSha256"), (".claude-plugin/plugin.json", "claudeSha256")):
         if hashlib.sha256(blob(path)).hexdigest() != plugin["manifest"][key]:
             raise SourceError(f"{name}: {key} mismatch")
-    codex = json.loads(blob(".codex-plugin/plugin.json").decode("utf-8"), object_pairs_hook=lockfile_json.object_pairs)
-    claude = json.loads(blob(".claude-plugin/plugin.json").decode("utf-8"), object_pairs_hook=lockfile_json.object_pairs)
+    try:
+        codex = json.loads(
+            blob(".codex-plugin/plugin.json").decode("utf-8"),
+            object_pairs_hook=lockfile_json.object_pairs,
+        )
+        claude = json.loads(
+            blob(".claude-plugin/plugin.json").decode("utf-8"),
+            object_pairs_hook=lockfile_json.object_pairs,
+        )
+    except lockfile_json.StrictJsonError as exc:
+        raise ValidationError(str(exc)) from exc
     for label, manifest in (("Codex", codex), ("Claude", claude)):
         if manifest.get("name") != name or manifest.get("version") != plugin["manifest"]["version"] or manifest.get("license") != "MIT":
             raise SourceError(f"{name}: {label} manifest identity mismatch")

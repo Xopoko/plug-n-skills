@@ -304,6 +304,13 @@ class ExternalDependenciesTest(unittest.TestCase):
         self.receipt_path.write_text(text, encoding="utf-8")
         self._assert_invalid("duplicate key 'schemaVersion'")
 
+    def test_loader_preserves_non_object_diagnostic(self):
+        self.lock_path.write_text("[]", encoding="utf-8")
+        with self.assertRaisesRegex(
+            ValidationError, r"lockfile: must contain a JSON object$"
+        ):
+            EXTERNAL_DEPENDENCIES._load_json(self.lock_path, "lockfile")
+
     def test_verify_sources_uses_exact_get_url_and_accepts_good_response(self):
         requests = []
 

@@ -130,7 +130,12 @@ def _path_under_root(root: Path, relative: PurePosixPath) -> Path:
 
 def _load_json(path: Path, location: str) -> dict[str, Any]:
     try:
-        return lockfile_json.load_object(path, location, require_file=True)
+        return lockfile_json.load_object(
+            path,
+            location,
+            require_file=True,
+            non_object_template="{location}: must contain a JSON object",
+        )
     except lockfile_json.StrictJsonError as exc:
         raise ValidationError(str(exc)) from exc
 
