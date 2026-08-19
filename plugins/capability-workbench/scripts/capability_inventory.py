@@ -410,7 +410,7 @@ def inventory_marketplaces(
         if not path.exists():
             continue
         data = read_json(path, diagnostics)
-        if not data:
+        if data is None:
             continue
         plugins = data.get("plugins")
         if not isinstance(plugins, list):

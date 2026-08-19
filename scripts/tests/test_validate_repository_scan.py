@@ -5,7 +5,8 @@ from pathlib import Path
 
 SCRIPT = Path(__file__).resolve().parents[1] / "validate-repository.py"
 SPEC = importlib.util.spec_from_file_location("validate_repository", SCRIPT)
-assert SPEC is not None and SPEC.loader is not None
+if SPEC is None or SPEC.loader is None:
+    raise RuntimeError(f"Unable to load repository validator from {SCRIPT}")
 VALIDATE_REPOSITORY = importlib.util.module_from_spec(SPEC)
 SPEC.loader.exec_module(VALIDATE_REPOSITORY)
 
