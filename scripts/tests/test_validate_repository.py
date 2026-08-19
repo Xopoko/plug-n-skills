@@ -347,21 +347,24 @@ SURFACE_VALIDATORS = (
 )
 
 
-class SurfaceValidatorTests(TempRootTestCase):
+class SurfaceValidatorTests(unittest.TestCase):
     def test_checkout_satisfies_every_surface_contract(self):
+        self.assertEqual(ROOT, validate_repository.repo_root())
         for validator in SURFACE_VALIDATORS:
             with self.subTest(validator=validator.__name__):
                 self.assertEqual([], validator(ROOT))
 
     def test_empty_tree_reports_missing_surfaces(self):
-        for validator in SURFACE_VALIDATORS:
-            with self.subTest(validator=validator.__name__):
-                with mock.patch.object(
-                    validate_repository, "repo_root", return_value=self.root
-                ):
-                    errors = validator(self.root)
-                self.assertTrue(errors)
-                self.assertTrue(any("missing" in error for error in errors))
+        with tempfile.TemporaryDirectory() as temp:
+            empty_root = Path(temp)
+            with mock.patch.object(
+                validate_repository, "repo_root", return_value=empty_root
+            ):
+                for validator in SURFACE_VALIDATORS:
+                    with self.subTest(validator=validator.__name__):
+                        errors = validator(empty_root)
+                        self.assertTrue(errors)
+                        self.assertTrue(any("missing" in error for error in errors))
 
 
 class MainTests(TempRootTestCase):
