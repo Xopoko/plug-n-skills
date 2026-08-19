@@ -1,0 +1,54 @@
+{
+  "schema": "capability_workbench.plugin_icon_prompt.v2",
+  "plugin_name": "windows-host-operations",
+  "catalog": {
+    "source": "user-override",
+    "key": "press"
+  },
+  "semantic_hero": {
+    "object": "a sturdy desktop computer tower",
+    "meaning": "the exact Windows host under diagnosis",
+    "silhouette": "one compact upright tower with broad rounded shoulders and a stable rectangular base"
+  },
+  "support_cue": {
+    "object": "one large embedded diagnostic gauge with a single needle",
+    "meaning": "observed effective state and before-after verification"
+  },
+  "avoid": [
+    "generic abstract geometry",
+    "initials derived from the plugin name",
+    "object collage",
+    "Microsoft Windows logos, window panes, or proprietary trade dress",
+    "monitors, cursors, gears, tool collages, text, and tiny status lights"
+  ],
+  "collision_avoid": [
+    "stock app icon",
+    "another portfolio icon using a press",
+    "computer-use monitor and cursor icons",
+    "generic settings gear icons"
+  ],
+  "brand_source": {
+    "type": "original-domain-metaphor",
+    "source": "none",
+    "trademark_status": "Uses a generic desktop host and diagnostic gauge; no Microsoft mark or distinctive Windows trade dress.",
+    "license": "original-generated-artwork",
+    "authorization": "not-required-no-brand-mark"
+  },
+  "brandColor": "#0F766E",
+  "recommended_asset_path": "assets/icon.png",
+  "imagegen_mode": "built-in",
+  "size_gates": [
+    16,
+    24,
+    32,
+    64
+  ],
+  "prompt": "Use case: logo-brand\nAsset type: 1024x1024 marketplace plugin icon\nPurpose: Diagnose effective Windows state and safely reconcile settings, startup or removal, and devices with rollback and functional proof..\nLiteral semantic hero: a sturdy desktop computer tower. It communicates the exact Windows host under diagnosis.\nSilhouette: one compact upright tower with broad rounded shoulders and a stable rectangular base. Use exactly one subordinate support cue: one large embedded diagnostic gauge with a single needle, meaning observed effective state and before-after verification.\nComposition: one centered dominant silhouette, full-bleed opaque background, meaningful content inside the central 72 percent, no more than one support cue.\nSmall-size requirement: the same hero must remain recognizable at 64, 32, 24, and 16 pixels; keep critical negative space open at 24 pixels.\nStyle: polished modern bitmap icon, bold filled shapes, crisp edges, restrained dimensional polish, consistent portfolio weight.\nBackground: a full-bleed field anchored on #0F766E.\nForeground palette: high-contrast warm white with at most two restrained accents; meaningful adjacent colors meet at least 3:1 contrast.\nBrand-source rule: original-domain-metaphor referencing none; Uses a generic desktop host and diagnostic gauge; no Microsoft mark or distinctive Windows trade dress.. Do not introduce an unlicensed mark or distinctive trade dress.\nAvoid: generic abstract geometry; initials derived from the plugin name; object collage; Microsoft Windows logos, window panes, or proprietary trade dress; monitors, cursors, gears, tool collages, text, and tiny status lights.\nCollision avoid: stock app icon; another portfolio icon using a press; computer-use monitor and cursor icons; generic settings gear icons.\nText: none. No letters, words, numbers, watermark, screenshot, photo, UI replica, tiny badge, thin-line detail, mascot, or private identifier.\nDo not replace the literal hero with a generic abstract symbol derived only from the plugin name.\n",
+  "checks": [
+    "save the selected image as a 1024x1024 opaque RGB PNG at assets/icon.png",
+    "inspect semantic recognition and the monochrome silhouette at 16, 24, 32, and 64 px",
+    "reject a competing second cue, closed critical gap, portfolio collision, text, screenshot, photo, watermark, or low contrast",
+    "verify brand-source, trademark, license, and authorization provenance manually",
+    "wire identical interface.composerIcon and interface.logo paths plus interface.brandColor"
+  ]
+}

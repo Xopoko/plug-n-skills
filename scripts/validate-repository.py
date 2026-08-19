@@ -16,6 +16,7 @@ import plugin_catalog  # noqa: E402
 
 LOCAL_PLUGIN_NAMES = [
     "agent-harness",
+    "windows-host-operations",
     "capability-workbench",
     "context-density",
     "i-have-adhd",

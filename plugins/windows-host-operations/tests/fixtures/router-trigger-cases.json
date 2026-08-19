@@ -1,0 +1,42 @@
+{
+  "schema": "windows_host_operations.router_trigger_cases.v1",
+  "should_route": [
+    {
+      "id": "setting-precedence",
+      "prompt": "The Windows sleep setting is enabled but the host never sleeps; determine whether policy, service, power requests, or unsupported hardware owns the effective state.",
+      "expected_leaf": "windows-effective-settings"
+    },
+    {
+      "id": "startup-removal",
+      "prompt": "This exact app still starts after login and its uninstaller left a service and scheduled helper; preserve user data and prove every relevant persistence surface is clear.",
+      "expected_leaf": "windows-startup-and-removal"
+    },
+    {
+      "id": "device-function",
+      "prompt": "Windows says this microphone is OK but apps use the wrong endpoint; bind the exact device, driver, endpoint role, vendor layer, and live recording test.",
+      "expected_leaf": "windows-device-diagnostics"
+    }
+  ],
+  "should_not_route": [
+    {
+      "id": "scheduler-proof",
+      "prompt": "Prove that this Windows scheduled task ran from its native trigger.",
+      "expected_owner": "scheduled-automation-runtime"
+    },
+    {
+      "id": "pure-ui",
+      "prompt": "Click the visible toggle in Windows Settings; no diagnosis is needed.",
+      "expected_owner": "computer-use"
+    },
+    {
+      "id": "non-windows",
+      "prompt": "Repair this launch daemon on macOS.",
+      "expected_owner": null
+    },
+    {
+      "id": "broad-security",
+      "prompt": "Automatically harden every security, network, account, and firewall setting on this PC.",
+      "expected_owner": null
+    }
+  ]
+}
