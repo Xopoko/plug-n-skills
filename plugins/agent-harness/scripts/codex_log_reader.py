@@ -1348,7 +1348,7 @@ def _load_json_object(path: Path, errors: list[str]) -> dict[str, Any]:
         return {}
     try:
         value = json.loads(path.read_text(encoding="utf-8"))
-    except (OSError, json.JSONDecodeError):
+    except (OSError, UnicodeDecodeError, json.JSONDecodeError):
         errors.append(f"invalid-json:{path.name}")
         return {}
     if not isinstance(value, dict):
