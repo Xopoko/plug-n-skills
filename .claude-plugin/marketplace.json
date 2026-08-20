@@ -107,6 +107,16 @@
       },
       "description": "Evidence-first career support for direction, research, job discovery, materials, applications and campaigns, inbox and recruiter coordination, interviews, offers, operations, development, and data governance.",
       "version": "0.1.3"
+    },
+    {
+      "name": "poland",
+      "source": {
+        "source": "github",
+        "repo": "Xopoko/poland",
+        "sha": "f7333597f087084991c55b3c7ef8050e4f419492"
+      },
+      "description": "Official-source-first Poland support for residents, immigrants, and expats: residence, work, tax, documents, healthcare, and daily administration with dated evidence, offline tools, and strict user-only action boundaries.",
+      "version": "0.1.0"
     }
   ]
 }

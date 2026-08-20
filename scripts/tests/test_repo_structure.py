@@ -50,6 +50,7 @@ PLUGINS = [
     "pixijs",
     "game-design-intelligence",
     "career",
+    "poland",
 ]
 
 
@@ -377,6 +378,44 @@ class RepoStructureTest(unittest.TestCase):
         self.assertRegex(plugin["source"]["commit"], r"^[0-9a-f]{40}$")
         self.assertFalse((ROOT / "plugins" / "career").exists())
 
+    def test_poland_is_an_opt_in_pinned_standalone_first_party_plugin(self):
+        self.assertIn("poland", FIRST_PARTY)
+        plugin = FIRST_PARTY["poland"]
+        receipt = plugin_catalog.receipt_for(ROOT, plugin)
+        expected_skills = {
+            "poland",
+            "poland-appeals-review",
+            "poland-benefits-support",
+            "poland-business",
+            "poland-case-planning",
+            "poland-citizenship-long-term",
+            "poland-consumer-banking",
+            "poland-digital-government",
+            "poland-emergency-rights",
+            "poland-employment-rights",
+            "poland-eu-mobility",
+            "poland-family-education",
+            "poland-foreign-documents",
+            "poland-healthcare",
+            "poland-housing",
+            "poland-identity",
+            "poland-local-services",
+            "poland-protection-referral",
+            "poland-social-insurance",
+            "poland-source-verification",
+            "poland-stay-residence",
+            "poland-tax",
+            "poland-transport-driving",
+            "poland-work-authorization",
+        }
+        actual_skills = {item["name"] for item in receipt["skills"]["items"]}
+        self.assertEqual(expected_skills, actual_skills)
+        self.assertEqual("Xopoko/poland", plugin["source"]["repository"])
+        self.assertRegex(plugin["source"]["commit"], r"^[0-9a-f]{40}$")
+        self.assertFalse(plugin["selection"]["default"])
+        self.assertNotIn("poland", plugin_catalog.default_plugin_names(CATALOG))
+        self.assertFalse((ROOT / "plugins" / "poland").exists())
+
     def test_retired_plugin_directories_are_absent(self):
         for name in ("codex-cli", "claude-code", "scheduled-automation"):
             self.assertFalse(
@@ -426,7 +465,7 @@ class RepoStructureTest(unittest.TestCase):
             "missing dashboard header renderer",
         )
 
-    def test_dashboard_layout_matches_the_canonical_three_row_catalog(self):
+    def test_dashboard_layout_matches_the_canonical_four_row_catalog(self):
         renderer = ROOT / "scripts" / "render_plugin_dashboard_header.py"
         tree = ast.parse(renderer.read_text(encoding="utf-8"))
         assignments = {
@@ -441,7 +480,8 @@ class RepoStructureTest(unittest.TestCase):
         rows = assignments["PLUGIN_LAYOUT_ROWS"]
         summaries = assignments["PLUGIN_SUMMARIES"]
         flattened = [name for row in rows for name in row]
-        self.assertEqual([6, 6, 6], [len(row) for row in rows])
+        self.assertEqual([6, 5, 4, 4], [len(row) for row in rows])
+        self.assertTrue(all(len(row) <= 6 for row in rows))
         self.assertEqual(PLUGINS, flattened)
         self.assertEqual(set(PLUGINS), set(summaries))
 

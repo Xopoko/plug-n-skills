@@ -82,7 +82,7 @@ before writing global state:
 python3 scripts/install-codex-plugins.py --dry-run
 ```
 
-Install or refresh every plugin from this checkout:
+Install or refresh every locally maintained plugin from this checkout:
 
 ```bash
 python3 scripts/install-codex-plugins.py
@@ -98,14 +98,21 @@ python3 scripts/install-codex-plugins.py \
   --plugin spec-driven-development
 ```
 
-`build-swift-apps` and `career` are first-party standalone plugins maintained in
-their own repositories. They remain available through this collection, but the
-helpers do not fetch them during a default bulk install. Select one explicitly
-or include catalog entries marked as default:
+`build-swift-apps`, `career`, and `poland` are first-party standalone plugins
+maintained in their own repositories. They remain visible through this
+collection, but the helpers do not fetch them during a default bulk install.
+Select one explicitly or include only catalog entries marked as default:
 
 ```bash
 python3 scripts/install-codex-plugins.py --plugin career
 python3 scripts/install-codex-plugins.py --include-first-party
+```
+
+`poland` is deliberately catalog-only by default and is not selected even by
+`--include-first-party`. Install its reviewed pin only with an explicit choice:
+
+```bash
+python3 scripts/install-codex-plugins.py --plugin poland
 ```
 
 Exclude plugin packs that are not useful on the current host:
@@ -200,6 +207,7 @@ replaced to match the repository source, and repeated runs converge.
 | `pixijs` | PixiJS v8 application setup, scene graph, rendering, assets, events, filters, migration, and performance. |
 | `game-design-intelligence` | Gameplay loops, systems, progression, economies, motivation, retention, onboarding, difficulty, multiplayer, and live-service critique. |
 | `career` | Evidence-first career direction, market research, opportunity search and analysis, materials, applications, networking, recruiter coordination, interviews, offers, development, and pipeline learning. |
+| `poland` | Official-source-first support for residents, immigrants, and expats navigating residence, work, tax, documents, healthcare, and daily administration in Poland. |
 
 See [plugins/README.md](plugins/README.md) for the per-plugin source index and
 manifest identifiers.
@@ -261,13 +269,13 @@ a prompt or makes visible to a model at runtime.
 
 | Metric | Count | Tokens | Notes |
 | --- | ---: | ---: | --- |
-| Plugin packs | 18 | - | Local packages plus immutable standalone first-party catalog entries. |
-| Skill entrypoints | 205 | - | `SKILL.md` files catalogued in local source or immutable receipts. |
-| Reference files | 281 | - | Longer ledgers, contracts, scorecards, and source notes. |
-| Script/support files | 103 | - | All regular files below `scripts/`, including helpers, templates, and manifests. |
-| Source-relative routing estimate | 205 skills | 13,467 | Skill name, description, and plugin-relative `skills/.../SKILL.md` path; comparable across local and standalone sources. |
-| Published first-party URL locator snapshot | 81 skills | 8,175 | Receipt values that serialize immutable GitHub blob URLs; preserved separately and not added to the source-relative total. |
-| Skill body source estimate | 205 skills | 151,712 | Body text after frontmatter; not proof that a host loads it, or when. |
+| Plugin packs | 19 | - | Local packages plus immutable standalone first-party catalog entries. |
+| Skill entrypoints | 229 | - | `SKILL.md` files catalogued in local source or immutable receipts. |
+| Reference files | 294 | - | Longer ledgers, contracts, scorecards, and source notes. |
+| Script/support files | 107 | - | All regular files below `scripts/`, including helpers, templates, and manifests. |
+| Source-relative routing estimate | 229 skills | 14,495 | Skill name, description, and plugin-relative `skills/.../SKILL.md` path; comparable across local and standalone sources. |
+| Published first-party URL locator snapshot | 105 skills | 9,995 | Receipt values that serialize immutable GitHub blob URLs; preserved separately and not added to the source-relative total. |
+| Skill body source estimate | 229 skills | 159,689 | Body text after frontmatter; not proof that a host loads it, or when. |
 
 Regenerate the report after skill edits:
 
@@ -304,6 +312,7 @@ immutable GitHub locator snapshot.
 | `pixijs` | 26 | 64 | 0 | 1,707 | - | 7,967 |
 | `game-design-intelligence` | 6 | 2 | 1 | 416 | - | 2,916 |
 | `career` | 20 | 21 | 4 | 1,173 | 1,853 | 9,857 |
+| `poland` | 24 | 13 | 4 | 1,028 | 1,820 | 7,977 |
 
 ### Plugin Focus
 
@@ -327,6 +336,7 @@ immutable GitHub locator snapshot.
 | `pixijs` | PixiJS v8 scene tooling builds and debugs Applications, assets, events, filters, shaders, performance, v7 migrations, and create-pixi projects. |
 | `game-design-intelligence` | Game design judgment grounded in evidence: core loops, gameplay systems, progression/economy/balance, motivation/retention, onboarding/difficulty, and multiplayer/live-service health; excludes engines, graphics, assets, and code. |
 | `career` | Evidence-first career support for direction, research, job discovery, materials, applications and campaigns, inbox and recruiter coordination, interviews, offers, operations, development, and data governance. |
+| `poland` | Official-source-first Poland support for residents, immigrants, and expats: residence, work, tax, documents, healthcare, and daily administration with dated evidence, offline tools, and strict user-only action boundaries. |
 
 ### Skill Token Index
 
@@ -628,6 +638,35 @@ size. None is a runtime prompt measurement.
 | `opportunity-analysis` | 64 | 98 | 457 | Opportunity analysis maps a posting to verified evidence, hard constraints, gaps, employer signals, scam risks, and a transparent apply, clarify, defer, or decline recommendation. Triggers on pasted text or a job URL. |
 | `opportunity-search` | 61 | 95 | 508 | Opportunity search finds, normalizes, filters, deduplicates, and ranks fresh job leads under an explicit or discoverable policy and authorized sources. Excludes fit decisions on one posting and application submission. |
 | `recruiter-coordination` | 58 | 92 | 426 | Recruiter coordination reconciles messages and calendars, distinguishes chat, proposed slot, and confirmed interview, drafts responses, and records follow-ups without sending or booking until approved. |
+
+#### `poland`
+
+| Skill | Source routing | Published URL routing | Body source | Description |
+| --- | ---: | ---: | ---: | --- |
+| `poland` | 29 | 62 | 827 | Poland router. Use when topics cross domains. |
+| `poland-appeals-review` | 49 | 82 | 255 | Administrative review. Use for a Polish refusal, delay, supplementation request, appeal, or missed procedural step. |
+| `poland-benefits-support` | 46 | 79 | 275 | Benefits support. Use for Polish family benefits, social assistance, disability support, or Empatia routes. |
+| `poland-business` | 31 | 64 | 287 | Business. Use when Polish registries matter. |
+| `poland-case-planning` | 42 | 75 | 299 | Case planning. Use when Poland deadlines and multi-step procedures need a transient plan. |
+| `poland-citizenship-long-term` | 56 | 89 | 282 | Long-term status. Use for Polish permanent residence, EU long-term resident status, or citizenship routes; not temporary residence. |
+| `poland-consumer-banking` | 37 | 70 | 264 | Consumer routes. Use when Polish complaints matter. |
+| `poland-digital-government` | 43 | 76 | 458 | Digital government. Use for public Polish portal guidance and exact official landing-page handoff. |
+| `poland-emergency-rights` | 39 | 72 | 292 | Emergency rights. Use when danger or urgent escalation arises. |
+| `poland-employment-rights` | 52 | 85 | 232 | Employment rights. Use for Polish contracts, pay, leave, hours, termination, workplace safety, or PIP complaints. |
+| `poland-eu-mobility` | 42 | 75 | 308 | EU mobility. Use when Polish free-movement status matters. |
+| `poland-family-education` | 49 | 82 | 244 | Family and education. Use for Polish childcare, school, university, or family administration; not benefits or residence status. |
+| `poland-foreign-documents` | 52 | 85 | 242 | Foreign documents. Use for apostille, legalization, sworn translation, diploma recognition, or regulated-profession routing in Poland. |
+| `poland-healthcare` | 35 | 68 | 283 | Healthcare. Use when NFZ or IKP matters. |
+| `poland-housing` | 32 | 65 | 297 | Housing. Use when Polish tenancy matters. |
+| `poland-identity` | 35 | 68 | 291 | Identity. Use when PESEL or meldunek matters. |
+| `poland-local-services` | 34 | 67 | 291 | Local services. Use when Polish office ownership varies. |
+| `poland-protection-referral` | 50 | 83 | 263 | Protection referral. Use for asylum, international or temporary protection, unsafe return, or loss of protection in Poland. |
+| `poland-social-insurance` | 50 | 83 | 263 | Social insurance. Use for Polish ZUS or eZUS registration, contributions, coverage records, or cross-border coordination. |
+| `poland-source-verification` | 37 | 70 | 342 | Source checks. Use when Polish facts may be stale. |
+| `poland-stay-residence` | 55 | 88 | 503 | Stay and residence. Use for Polish visas, legal stay, temporary residence, or residence cards; not protection, citizenship, or appeals. |
+| `poland-tax` | 47 | 80 | 276 | Poland tax. Use for PIT, tax-residence orientation, tax identifiers, e-Tax Office, or official filing routes. |
+| `poland-transport-driving` | 37 | 70 | 404 | Transport. Use when Polish licences or passenger rights matter. |
+| `poland-work-authorization` | 49 | 82 | 499 | Work authorization. Use for permission to work in Poland, employer permits, declarations, notifications, or labour-market access. |
 
 ## Repository Design
 

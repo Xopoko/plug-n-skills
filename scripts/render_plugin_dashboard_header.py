@@ -33,23 +33,27 @@ PLUGIN_LAYOUT_ROWS = [
         "i-have-adhd",
         "git-workflows",
     ],
-    # Evidence and engineering method, from discovery through maintenance.
+    # Delivery and evidence methods, from hygiene through architecture.
     [
         "engineering-hygiene",
         "scientific-research",
         "technology-intelligence",
         "design-intelligence",
         "architecture-intelligence",
-        "spec-driven-development",
     ],
-    # Product platforms and domains.
+    # Specification and product platforms.
     [
+        "spec-driven-development",
         "build-swift-apps",
         "kotlin-multiplatform",
         "tauri",
+    ],
+    # Focused product and life domains.
+    [
         "pixijs",
         "game-design-intelligence",
         "career",
+        "poland",
     ],
 ]
 
@@ -67,6 +71,7 @@ PLUGIN_SUMMARIES = {
     "git-workflows": "Review, stack, recover, and deliver across forges.",
     "kotlin-multiplatform": "KMP migration, Gradle, Compose, and publishing.",
     "pixijs": "PixiJS scenes, rendering, events, and performance.",
+    "poland": "Official-source-first support for life in Poland.",
     "scientific-research": "Scholarly discovery with auditable evidence.",
     "spec-driven-development": "Specifications through traceable delivery.",
     "technology-intelligence": "Current evidence for technology decisions.",
@@ -228,7 +233,7 @@ def ordered_rows(plugins: dict[str, PluginCard]) -> list[list[PluginCard]]:
         available = [row for row in rows if len(row) < 6]
         if not available:
             raise ValueError(
-                "Dashboard supports at most 18 plugin cards in three rows; "
+                "Dashboard supports at most 24 plugin cards in four rows; "
                 "update the canvas or card layout before adding more."
             )
         min(available, key=len).append(plugins[name])
@@ -288,9 +293,9 @@ def draw_card(
         width=1,
     )
 
-    icon_size = 84
+    icon_size = 68
     icon_x = (width - icon_size) // 2
-    icon_y = 32
+    icon_y = 20
 
     glow = Image.new("RGBA", (184, 184), (0, 0, 0, 0))
     glow_draw = ImageDraw.Draw(glow)
@@ -312,7 +317,7 @@ def draw_card(
     title_lines = wrap_lines(draw, card.display_name, title_font, width - 48, 2)
     if any(line.endswith("...") for line in title_lines):
         raise ValueError(f"Dashboard title does not fit: {card.display_name}")
-    title_y = 145 + (2 - len(title_lines)) * 17
+    title_y = 108 + (2 - len(title_lines)) * 15
     draw_centered_lines(
         draw,
         title_lines,
@@ -320,7 +325,7 @@ def draw_card(
         title_y,
         title_font,
         (245, 249, 255, 255),
-        34,
+        30,
     )
 
     summary_lines = wrap_lines(draw, card.summary, body_font, width - 52, 2)
@@ -330,10 +335,10 @@ def draw_card(
         draw,
         summary_lines,
         width // 2,
-        227,
+        181,
         body_font,
         (202, 218, 239, 248),
-        28,
+        25,
     )
 
     canvas.alpha_composite(panel, (x, y))
@@ -358,8 +363,8 @@ def render(background_path: Path, output_path: Path, quality: int = WEBP_QUALITY
         "hero": load_font("semibold", 82),
         "subtitle": load_font("regular", 31),
         "eyebrow": load_font("medium", 23),
-        "title": load_font("medium", 30),
-        "body": load_font("regular", 23),
+        "title": load_font("medium", 27),
+        "body": load_font("regular", 20),
     }
 
     draw = ImageDraw.Draw(canvas)
@@ -388,8 +393,8 @@ def render(background_path: Path, output_path: Path, quality: int = WEBP_QUALITY
 
     rows = ordered_rows(plugins)
     card_w = 344
-    card_h = 326
-    row_gap = 30
+    card_h = 262
+    row_gap = 16
     col_gap = 24
     grid_y = 276
     for row_index, row in enumerate(rows):

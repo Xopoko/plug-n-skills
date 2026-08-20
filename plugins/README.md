@@ -38,6 +38,10 @@ They are not duplicated under `plugins/`.
 | --- | --- | --- | --- |
 | `build-swift-apps` | [Xopoko/build-swift-apps](https://github.com/Xopoko/build-swift-apps) | `build-swift-apps@local` | `build-swift-apps@xopoko-plug-n-skills` |
 | `career` | [Xopoko/career-skills](https://github.com/Xopoko/career-skills) | `career@local` | `career@xopoko-plug-n-skills` |
+| `poland` | [Xopoko/poland](https://github.com/Xopoko/poland) | `poland@local` | `poland@xopoko-plug-n-skills` |
+
+Poland is catalogued for discovery but is deliberately opt-in: default installs
+and `--include-first-party` do not select it. Use `--plugin poland` explicitly.
 
 See [Standalone First-Party Plugins](../docs/STANDALONE_PLUGINS.md) for pin,
 receipt, offline-cache, and installer rules.
