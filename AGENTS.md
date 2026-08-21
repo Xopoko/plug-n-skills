@@ -154,6 +154,10 @@ Manifests are publication artifacts, not scratch files.
 - Keep `.claude-plugin/marketplace.json` in sync with the actual plugin set.
 - Keep `.agents/plugins/marketplace.json` ignored; regenerate it through the
   installer when local Codex state is needed.
+- Treat the README dashboard as the featured developer and agent-engineering
+  surface, not as the full catalog. Render local plugins and standalone
+  first-party entries with `selection.default: true`; keep explicit-only domain
+  packs discoverable in the secondary catalog without placing them in the hero.
 - When renaming, adding, removing, or repositioning a plugin, update every
   surface listed in the change matrix below.
 

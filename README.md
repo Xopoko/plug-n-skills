@@ -5,12 +5,18 @@
 Ready-to-install skills and plugins that make coding agents better at real
 development work.
 
-Plug'n Skills is a library of plugin packs for ChatGPT/Codex, Claude Code,
-Cursor, and other coding agents. The source tree is agent-agnostic: every pack
-works from any of those hosts and is never locked to one of them. Each pack
-gives an agent a focused workflow: what to inspect, which
+Plug'n Skills is a developer-first library and discovery catalog for
+ChatGPT/Codex, Claude Code, Cursor, and other capable agents. The source tree is
+agent-agnostic: every pack works from any of those hosts and is never locked to
+one of them. Each pack gives an agent a focused workflow: what to inspect, which
 commands to run, what to verify, and when to use a deterministic helper instead
 of improvising from a prompt.
+
+The dashboard above intentionally shows the featured developer and
+agent-engineering portfolio. Separately maintained domain packs can serve
+broader audiences without changing that first impression: they live in a
+secondary opt-in catalog, stay out of the hero, and are never added to a default
+install.
 
 Use it when you want an agent to handle more than generic code edits:
 
@@ -22,7 +28,7 @@ Use it when you want an agent to handle more than generic code edits:
   agent capability synthesis.
 
 The collection publishes local plugin packs plus immutable first-party
-standalone packs and 190+ focused agent skills. Local source is plain
+standalone packs and more than 230 focused agent skills. Local source is plain
 repository content; standalone ownership, pins, receipts, token snapshots, and
 catalog artwork are reviewable here while the full source stays in its focused
 repository. Inspect it, validate it from a fresh clone, install only the packs
@@ -98,17 +104,19 @@ python3 scripts/install-codex-plugins.py \
   --plugin spec-driven-development
 ```
 
-`build-swift-apps`, `career`, and `poland` are first-party standalone plugins
+`build-swift-apps` and `career` are featured first-party standalone plugins
 maintained in their own repositories. They remain visible through this
 collection, but the helpers do not fetch them during a default bulk install.
-Select one explicitly or include only catalog entries marked as default:
+Select one explicitly or include only standalone catalog entries marked as
+default:
 
 ```bash
 python3 scripts/install-codex-plugins.py --plugin career
 python3 scripts/install-codex-plugins.py --include-first-party
 ```
 
-`poland` is deliberately catalog-only by default and is not selected even by
+Broader domain packs are advertised separately and remain explicit-only.
+`poland` is not shown in the developer hero and is not selected even by
 `--include-first-party`. Install its reviewed pin only with an explicit choice:
 
 ```bash
@@ -185,7 +193,7 @@ fetching during an explicit install.
 The installer is idempotent: unchanged skills are skipped, drifted skills are
 replaced to match the repository source, and repeated runs converge.
 
-## Included Plugin Packs
+## Featured Plugin Packs
 
 | Plugin | Use it for |
 | --- | --- |
@@ -207,7 +215,21 @@ replaced to match the repository source, and repeated runs converge.
 | `pixijs` | PixiJS v8 application setup, scene graph, rendering, assets, events, filters, migration, and performance. |
 | `game-design-intelligence` | Gameplay loops, systems, progression, economies, motivation, retention, onboarding, difficulty, multiplayer, and live-service critique. |
 | `career` | Evidence-first career direction, market research, opportunity search and analysis, materials, applications, networking, recruiter coordination, interviews, offers, development, and pipeline learning. |
-| `poland` | Opt-in, official-source-first support for residents, immigrants, expats, and citizens navigating life events, public services, residence, work, tax, health, documents, and human-in-the-loop portal workflows in Poland. |
+
+The hero and table above are curated for the repository's developer-first entry
+point. They are not a complete list of every first-party pack published by
+Xopoko.
+
+## Optional Domain Packs
+
+Optional domain packs use the same immutable-source, validation, and
+multi-host packaging standards, but serve a more specialized audience. They
+remain in their own repositories, do not appear in the hero, and require an
+explicit install.
+
+| Plugin | Use it for | Install posture |
+| --- | --- | --- |
+| [`poland`](https://github.com/Xopoko/poland) | Official-source-first support for residents, immigrants, expats, and citizens navigating life events, public services, residence, work, tax, health, documents, and human-in-the-loop portal workflows in Poland. | Explicit only: `--plugin poland`; never selected by default or `--include-first-party`. |
 
 See [plugins/README.md](plugins/README.md) for the per-plugin source index and
 manifest identifiers.
