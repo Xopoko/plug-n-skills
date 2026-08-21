@@ -207,7 +207,7 @@ replaced to match the repository source, and repeated runs converge.
 | `pixijs` | PixiJS v8 application setup, scene graph, rendering, assets, events, filters, migration, and performance. |
 | `game-design-intelligence` | Gameplay loops, systems, progression, economies, motivation, retention, onboarding, difficulty, multiplayer, and live-service critique. |
 | `career` | Evidence-first career direction, market research, opportunity search and analysis, materials, applications, networking, recruiter coordination, interviews, offers, development, and pipeline learning. |
-| `poland` | Official-source-first support for residents, immigrants, and expats navigating residence, work, tax, documents, healthcare, and daily administration in Poland. |
+| `poland` | Opt-in, official-source-first support for residents, immigrants, expats, and citizens navigating life events, public services, residence, work, tax, health, documents, and human-in-the-loop portal workflows in Poland. |
 
 See [plugins/README.md](plugins/README.md) for the per-plugin source index and
 manifest identifiers.
@@ -270,12 +270,12 @@ a prompt or makes visible to a model at runtime.
 | Metric | Count | Tokens | Notes |
 | --- | ---: | ---: | --- |
 | Plugin packs | 19 | - | Local packages plus immutable standalone first-party catalog entries. |
-| Skill entrypoints | 229 | - | `SKILL.md` files catalogued in local source or immutable receipts. |
-| Reference files | 294 | - | Longer ledgers, contracts, scorecards, and source notes. |
+| Skill entrypoints | 238 | - | `SKILL.md` files catalogued in local source or immutable receipts. |
+| Reference files | 296 | - | Longer ledgers, contracts, scorecards, and source notes. |
 | Script/support files | 107 | - | All regular files below `scripts/`, including helpers, templates, and manifests. |
-| Source-relative routing estimate | 229 skills | 14,495 | Skill name, description, and plugin-relative `skills/.../SKILL.md` path; comparable across local and standalone sources. |
-| Published first-party URL locator snapshot | 105 skills | 9,995 | Receipt values that serialize immutable GitHub blob URLs; preserved separately and not added to the source-relative total. |
-| Skill body source estimate | 229 skills | 159,689 | Body text after frontmatter; not proof that a host loads it, or when. |
+| Source-relative routing estimate | 238 skills | 15,050 | Skill name, description, and plugin-relative `skills/.../SKILL.md` path; comparable across local and standalone sources. |
+| Published first-party URL locator snapshot | 114 skills | 10,748 | Receipt values that serialize immutable GitHub blob URLs; preserved separately and not added to the source-relative total. |
+| Skill body source estimate | 238 skills | 165,826 | Body text after frontmatter; not proof that a host loads it, or when. |
 
 Regenerate the report after skill edits:
 
@@ -312,7 +312,7 @@ immutable GitHub locator snapshot.
 | `pixijs` | 26 | 64 | 0 | 1,707 | - | 7,967 |
 | `game-design-intelligence` | 6 | 2 | 1 | 416 | - | 2,916 |
 | `career` | 20 | 21 | 4 | 1,173 | 1,853 | 9,857 |
-| `poland` | 24 | 13 | 4 | 1,028 | 1,820 | 7,977 |
+| `poland` | 33 | 15 | 4 | 1,583 | 2,573 | 14,114 |
 
 ### Plugin Focus
 
@@ -336,7 +336,7 @@ immutable GitHub locator snapshot.
 | `pixijs` | PixiJS v8 scene tooling builds and debugs Applications, assets, events, filters, shaders, performance, v7 migrations, and create-pixi projects. |
 | `game-design-intelligence` | Game design judgment grounded in evidence: core loops, gameplay systems, progression/economy/balance, motivation/retention, onboarding/difficulty, and multiplayer/live-service health; excludes engines, graphics, assets, and code. |
 | `career` | Evidence-first career support for direction, research, job discovery, materials, applications and campaigns, inbox and recruiter coordination, interviews, offers, operations, development, and data governance. |
-| `poland` | Official-source-first Poland support for residents, immigrants, and expats: residence, work, tax, documents, healthcare, and daily administration with dated evidence, offline tools, and strict user-only action boundaries. |
+| `poland` | Official-source-first Poland support for residents, immigrants, and expats: life events, public services, residence, work, tax, health, documents, and safe human-in-the-loop portal workflows. |
 
 ### Skill Token Index
 
@@ -643,30 +643,39 @@ size. None is a runtime prompt measurement.
 
 | Skill | Source routing | Published URL routing | Body source | Description |
 | --- | ---: | ---: | ---: | --- |
-| `poland` | 29 | 62 | 827 | Poland router. Use when topics cross domains. |
-| `poland-appeals-review` | 49 | 82 | 255 | Administrative review. Use for a Polish refusal, delay, supplementation request, appeal, or missed procedural step. |
-| `poland-benefits-support` | 46 | 79 | 275 | Benefits support. Use for Polish family benefits, social assistance, disability support, or Empatia routes. |
-| `poland-business` | 31 | 64 | 287 | Business. Use when Polish registries matter. |
-| `poland-case-planning` | 42 | 75 | 299 | Case planning. Use when Poland deadlines and multi-step procedures need a transient plan. |
-| `poland-citizenship-long-term` | 56 | 89 | 282 | Long-term status. Use for Polish permanent residence, EU long-term resident status, or citizenship routes; not temporary residence. |
-| `poland-consumer-banking` | 37 | 70 | 264 | Consumer routes. Use when Polish complaints matter. |
-| `poland-digital-government` | 43 | 76 | 458 | Digital government. Use for public Polish portal guidance and exact official landing-page handoff. |
-| `poland-emergency-rights` | 39 | 72 | 292 | Emergency rights. Use when danger or urgent escalation arises. |
-| `poland-employment-rights` | 52 | 85 | 232 | Employment rights. Use for Polish contracts, pay, leave, hours, termination, workplace safety, or PIP complaints. |
-| `poland-eu-mobility` | 42 | 75 | 308 | EU mobility. Use when Polish free-movement status matters. |
-| `poland-family-education` | 49 | 82 | 244 | Family and education. Use for Polish childcare, school, university, or family administration; not benefits or residence status. |
-| `poland-foreign-documents` | 52 | 85 | 242 | Foreign documents. Use for apostille, legalization, sworn translation, diploma recognition, or regulated-profession routing in Poland. |
-| `poland-healthcare` | 35 | 68 | 283 | Healthcare. Use when NFZ or IKP matters. |
-| `poland-housing` | 32 | 65 | 297 | Housing. Use when Polish tenancy matters. |
-| `poland-identity` | 35 | 68 | 291 | Identity. Use when PESEL or meldunek matters. |
-| `poland-local-services` | 34 | 67 | 291 | Local services. Use when Polish office ownership varies. |
-| `poland-protection-referral` | 50 | 83 | 263 | Protection referral. Use for asylum, international or temporary protection, unsafe return, or loss of protection in Poland. |
-| `poland-social-insurance` | 50 | 83 | 263 | Social insurance. Use for Polish ZUS or eZUS registration, contributions, coverage records, or cross-border coordination. |
-| `poland-source-verification` | 37 | 70 | 342 | Source checks. Use when Polish facts may be stale. |
-| `poland-stay-residence` | 55 | 88 | 503 | Stay and residence. Use for Polish visas, legal stay, temporary residence, or residence cards; not protection, citizenship, or appeals. |
-| `poland-tax` | 47 | 80 | 276 | Poland tax. Use for PIT, tax-residence orientation, tax identifiers, e-Tax Office, or official filing routes. |
-| `poland-transport-driving` | 37 | 70 | 404 | Transport. Use when Polish licences or passenger rights matter. |
-| `poland-work-authorization` | 49 | 82 | 499 | Work authorization. Use for permission to work in Poland, employer permits, declarations, notifications, or labour-market access. |
+| `poland` | 29 | 59 | 1,145 | Poland router. Use when topics cross domains. |
+| `poland-appeals-review` | 49 | 79 | 339 | Administrative review. Use for a Polish refusal, delay, supplementation request, appeal, or missed procedural step. |
+| `poland-benefits-support` | 46 | 76 | 319 | Benefits support. Use for Polish family benefits, social assistance, disability support, or Empatia routes. |
+| `poland-business` | 31 | 61 | 328 | Business. Use when Polish registries matter. |
+| `poland-case-planning` | 42 | 72 | 359 | Case planning. Use when Poland deadlines and multi-step procedures need a transient plan. |
+| `poland-citizenship-long-term` | 56 | 86 | 567 | Long-term status. Use for Polish permanent residence, EU long-term resident status, or citizenship routes; not temporary residence. |
+| `poland-civic-participation` | 60 | 90 | 319 | Civic participation and public information: route voting, voter registration, petitions, consultations, and information requests in Poland. Excludes political persuasion and eligibility claims. |
+| `poland-civil-life-events` | 60 | 90 | 487 | Civil status and life events: route birth, marriage, name, death, funeral, and succession administration in Poland. Excludes residence status and personalized inheritance advice. |
+| `poland-consular-travel` | 63 | 93 | 448 | Consular and travel-document services: route Polish consular help, passports, emergency documents, foreign-consulate handoffs, and cross-border travel administration. Excludes travel booking. |
+| `poland-consumer-banking` | 37 | 67 | 289 | Consumer routes. Use when Polish complaints matter. |
+| `poland-digital-government` | 47 | 77 | 633 | Digital government. Use for public Polish portal guidance and safe human-in-the-loop operation with caller-owned tools. |
+| `poland-disability-accessibility` | 59 | 89 | 355 | Disability and accessibility services: route certification, PFRON support, workplace or education adjustments, care, and accessibility complaints. Excludes diagnosis and entitlement decisions. |
+| `poland-emergency-rights` | 39 | 69 | 339 | Emergency rights. Use when danger or urgent escalation arises. |
+| `poland-employment-rights` | 52 | 82 | 289 | Employment rights. Use for Polish contracts, pay, leave, hours, termination, workplace safety, or PIP complaints. |
+| `poland-employment-services` | 60 | 90 | 360 | Public employment services: route jobseeker registration, labour offices, unemployment status or benefits, training, and employer services. Excludes work permits and workplace-rights disputes. |
+| `poland-eu-mobility` | 42 | 72 | 354 | EU mobility. Use when Polish free-movement status matters. |
+| `poland-family-education` | 49 | 79 | 294 | Family and education. Use for Polish childcare, school, university, or family administration; not benefits or residence status. |
+| `poland-foreign-documents` | 52 | 82 | 394 | Foreign documents. Use for apostille, legalization, sworn translation, diploma recognition, or regulated-profession routing in Poland. |
+| `poland-healthcare` | 35 | 65 | 325 | Healthcare. Use when NFZ or IKP matters. |
+| `poland-housing` | 32 | 62 | 335 | Housing. Use when Polish tenancy matters. |
+| `poland-identity` | 35 | 65 | 358 | Identity. Use when PESEL or meldunek matters. |
+| `poland-justice-legal-aid` | 66 | 96 | 380 | Justice and legal-help routing: courts, legal aid, ombudsmen, victim support, enforcement, and procedural ownership in Poland. Excludes representation and personalized pleadings. |
+| `poland-local-services` | 34 | 64 | 441 | Local services. Use when Polish office ownership varies. |
+| `poland-pensions-seniors` | 62 | 92 | 329 | Pensions and senior services: route retirement, survivor benefits, cross-border contribution histories, care, and local senior support. Excludes benefit calculation or eligibility decisions. |
+| `poland-protection-referral` | 50 | 80 | 859 | Protection referral. Use for asylum, international or temporary protection, unsafe return, or loss of protection in Poland. |
+| `poland-social-insurance` | 50 | 80 | 314 | Social insurance. Use for Polish ZUS or eZUS registration, contributions, coverage records, or cross-border coordination. |
+| `poland-source-verification` | 37 | 67 | 373 | Source checks. Use when Polish facts may be stale. |
+| `poland-stay-residence` | 55 | 85 | 580 | Stay and residence. Use for Polish visas, legal stay, temporary residence, or residence cards; not protection, citizenship, or appeals. |
+| `poland-tax` | 47 | 77 | 345 | Poland tax. Use for PIT, tax-residence orientation, tax identifiers, e-Tax Office, or official filing routes. |
+| `poland-transport-driving` | 37 | 67 | 433 | Transport. Use when Polish licences or passenger rights matter. |
+| `poland-utilities-environment` | 61 | 91 | 343 | Utilities and environment: route electricity, gas, heating, water, waste, provider disputes, and local environmental services in Poland. Excludes technical repair and contract negotiation. |
+| `poland-vehicles-road` | 60 | 90 | 540 | Vehicles and road administration: route registration, ownership, inspections, compulsory insurance, tolls, parking, fines, and road incidents. Driving-licence matters stay separate. |
+| `poland-work-authorization` | 49 | 79 | 541 | Work authorization. Use for permission to work in Poland, employer permits, declarations, notifications, or labour-market access. |
 
 ## Repository Design
 

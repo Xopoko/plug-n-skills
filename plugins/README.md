@@ -42,6 +42,9 @@ They are not duplicated under `plugins/`.
 
 Poland is catalogued for discovery but is deliberately opt-in: default installs
 and `--include-first-party` do not select it. Use `--plugin poland` explicitly.
+Its pinned standalone release contributes 33 focused skills backed by dated
+official-source metadata, administrative scenarios, portal playbooks, and an
+offline read-only CLI/MCP surface.
 
 See [Standalone First-Party Plugins](../docs/STANDALONE_PLUGINS.md) for pin,
 receipt, offline-cache, and installer rules.

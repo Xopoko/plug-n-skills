@@ -57,17 +57,17 @@
       "name": "poland",
       "displayName": "Poland",
       "publisher": "xopoko",
-      "description": "Official-source-first Poland support for residents, immigrants, and expats: residence, work, tax, documents, healthcare, and daily administration with dated evidence, offline tools, and strict user-only action boundaries.",
+      "description": "Official-source-first Poland support for residents, immigrants, and expats: life events, public services, residence, work, tax, health, documents, and safe human-in-the-loop portal workflows.",
       "source": {
         "provider": "github",
         "repository": "Xopoko/poland",
-        "commit": "f7333597f087084991c55b3c7ef8050e4f419492",
-        "tree": "de62da90748da524d048483d4a6b28dc0e571d45"
+        "commit": "e51d946599d99aaa40d9cd908550529e50732974",
+        "tree": "cf96a8b91b6f418275c67a2758eac29a60d385ad"
       },
       "manifest": {
-        "version": "0.1.0",
-        "codexSha256": "1b0af625c91769f1c54f0e54e2efb7d8f66992cf4cae982ba6e09068ee43467a",
-        "claudeSha256": "83f9214347282bf5dd44add3b9f3641441fec1ab2fd8daa96487157f2329fc7b"
+        "version": "0.2.0",
+        "codexSha256": "5d5c6093857cedb82f6a9de2ae06556925538732353e63ab9d414a37e4418dd1",
+        "claudeSha256": "73e3b22855a462822777ff08f6dd9cf12f4951d04796e83d0286ce9b18c7ce26"
       },
       "license": "MIT",
       "selection": {
