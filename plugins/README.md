@@ -34,10 +34,18 @@ Large focused systems are maintained in their own canonical repositories and
 are published here through immutable entries in `first-party-plugins.lock.json`.
 They are not duplicated under `plugins/`.
 
-| Plugin | Canonical repository | Codex id | Claude marketplace id |
-| --- | --- | --- | --- |
-| `build-swift-apps` | [Xopoko/build-swift-apps](https://github.com/Xopoko/build-swift-apps) | `build-swift-apps@local` | `build-swift-apps@xopoko-plug-n-skills` |
-| `career` | [Xopoko/career-skills](https://github.com/Xopoko/career-skills) | `career@local` | `career@xopoko-plug-n-skills` |
+| Plugin | Canonical repository | Catalog tier | Codex id | Claude marketplace id |
+| --- | --- | --- | --- | --- |
+| `build-swift-apps` | [Xopoko/build-swift-apps](https://github.com/Xopoko/build-swift-apps) | Featured/default | `build-swift-apps@local` | `build-swift-apps@xopoko-plug-n-skills` |
+| `career` | [Xopoko/career-skills](https://github.com/Xopoko/career-skills) | Featured/default | `career@local` | `career@xopoko-plug-n-skills` |
+| `poland` | [Xopoko/poland](https://github.com/Xopoko/poland) | Optional domain/explicit-only | `poland@local` | `poland@xopoko-plug-n-skills` |
+
+The README hero renders only local packs and standalone entries marked as
+default. Optional domain packs remain catalogued for discovery but stay out of
+the developer-first hero and default installation. Use `--plugin poland`
+explicitly. Its pinned standalone release contributes 33 focused skills backed
+by dated official-source metadata, administrative scenarios, portal playbooks,
+and an offline read-only CLI/MCP surface.
 
 See [Standalone First-Party Plugins](../docs/STANDALONE_PLUGINS.md) for pin,
 receipt, offline-cache, and installer rules.

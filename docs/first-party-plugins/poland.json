@@ -1,0 +1,269 @@
+{
+  "schemaVersion": 1,
+  "name": "poland",
+  "source": {
+    "provider": "github",
+    "repository": "Xopoko/poland",
+    "commit": "e51d946599d99aaa40d9cd908550529e50732974",
+    "tree": "cf96a8b91b6f418275c67a2758eac29a60d385ad"
+  },
+  "version": "0.2.0",
+  "manifest": {
+    "codexSha256": "5d5c6093857cedb82f6a9de2ae06556925538732353e63ab9d414a37e4418dd1",
+    "claudeSha256": "73e3b22855a462822777ff08f6dd9cf12f4951d04796e83d0286ce9b18c7ce26"
+  },
+  "license": "MIT",
+  "verifiedAt": "2026-08-21",
+  "skills": {
+    "count": 33,
+    "items": [
+      {
+        "name": "poland",
+        "path": "skills/poland/SKILL.md",
+        "description": "Poland router. Use when topics cross domains.",
+        "startupTokens": 59,
+        "bodyTokens": 1145
+      },
+      {
+        "name": "poland-appeals-review",
+        "path": "skills/poland-appeals-review/SKILL.md",
+        "description": "Administrative review. Use for a Polish refusal, delay, supplementation request, appeal, or missed procedural step.",
+        "startupTokens": 79,
+        "bodyTokens": 339
+      },
+      {
+        "name": "poland-benefits-support",
+        "path": "skills/poland-benefits-support/SKILL.md",
+        "description": "Benefits support. Use for Polish family benefits, social assistance, disability support, or Empatia routes.",
+        "startupTokens": 76,
+        "bodyTokens": 319
+      },
+      {
+        "name": "poland-business",
+        "path": "skills/poland-business/SKILL.md",
+        "description": "Business. Use when Polish registries matter.",
+        "startupTokens": 61,
+        "bodyTokens": 328
+      },
+      {
+        "name": "poland-case-planning",
+        "path": "skills/poland-case-planning/SKILL.md",
+        "description": "Case planning. Use when Poland deadlines and multi-step procedures need a transient plan.",
+        "startupTokens": 72,
+        "bodyTokens": 359
+      },
+      {
+        "name": "poland-citizenship-long-term",
+        "path": "skills/poland-citizenship-long-term/SKILL.md",
+        "description": "Long-term status. Use for Polish permanent residence, EU long-term resident status, or citizenship routes; not temporary residence.",
+        "startupTokens": 86,
+        "bodyTokens": 567
+      },
+      {
+        "name": "poland-civic-participation",
+        "path": "skills/poland-civic-participation/SKILL.md",
+        "description": "Civic participation and public information: route voting, voter registration, petitions, consultations, and information requests in Poland. Excludes political persuasion and eligibility claims.",
+        "startupTokens": 90,
+        "bodyTokens": 319
+      },
+      {
+        "name": "poland-civil-life-events",
+        "path": "skills/poland-civil-life-events/SKILL.md",
+        "description": "Civil status and life events: route birth, marriage, name, death, funeral, and succession administration in Poland. Excludes residence status and personalized inheritance advice.",
+        "startupTokens": 90,
+        "bodyTokens": 487
+      },
+      {
+        "name": "poland-consular-travel",
+        "path": "skills/poland-consular-travel/SKILL.md",
+        "description": "Consular and travel-document services: route Polish consular help, passports, emergency documents, foreign-consulate handoffs, and cross-border travel administration. Excludes travel booking.",
+        "startupTokens": 93,
+        "bodyTokens": 448
+      },
+      {
+        "name": "poland-consumer-banking",
+        "path": "skills/poland-consumer-banking/SKILL.md",
+        "description": "Consumer routes. Use when Polish complaints matter.",
+        "startupTokens": 67,
+        "bodyTokens": 289
+      },
+      {
+        "name": "poland-digital-government",
+        "path": "skills/poland-digital-government/SKILL.md",
+        "description": "Digital government. Use for public Polish portal guidance and safe human-in-the-loop operation with caller-owned tools.",
+        "startupTokens": 77,
+        "bodyTokens": 633
+      },
+      {
+        "name": "poland-disability-accessibility",
+        "path": "skills/poland-disability-accessibility/SKILL.md",
+        "description": "Disability and accessibility services: route certification, PFRON support, workplace or education adjustments, care, and accessibility complaints. Excludes diagnosis and entitlement decisions.",
+        "startupTokens": 89,
+        "bodyTokens": 355
+      },
+      {
+        "name": "poland-emergency-rights",
+        "path": "skills/poland-emergency-rights/SKILL.md",
+        "description": "Emergency rights. Use when danger or urgent escalation arises.",
+        "startupTokens": 69,
+        "bodyTokens": 339
+      },
+      {
+        "name": "poland-employment-rights",
+        "path": "skills/poland-employment-rights/SKILL.md",
+        "description": "Employment rights. Use for Polish contracts, pay, leave, hours, termination, workplace safety, or PIP complaints.",
+        "startupTokens": 82,
+        "bodyTokens": 289
+      },
+      {
+        "name": "poland-employment-services",
+        "path": "skills/poland-employment-services/SKILL.md",
+        "description": "Public employment services: route jobseeker registration, labour offices, unemployment status or benefits, training, and employer services. Excludes work permits and workplace-rights disputes.",
+        "startupTokens": 90,
+        "bodyTokens": 360
+      },
+      {
+        "name": "poland-eu-mobility",
+        "path": "skills/poland-eu-mobility/SKILL.md",
+        "description": "EU mobility. Use when Polish free-movement status matters.",
+        "startupTokens": 72,
+        "bodyTokens": 354
+      },
+      {
+        "name": "poland-family-education",
+        "path": "skills/poland-family-education/SKILL.md",
+        "description": "Family and education. Use for Polish childcare, school, university, or family administration; not benefits or residence status.",
+        "startupTokens": 79,
+        "bodyTokens": 294
+      },
+      {
+        "name": "poland-foreign-documents",
+        "path": "skills/poland-foreign-documents/SKILL.md",
+        "description": "Foreign documents. Use for apostille, legalization, sworn translation, diploma recognition, or regulated-profession routing in Poland.",
+        "startupTokens": 82,
+        "bodyTokens": 394
+      },
+      {
+        "name": "poland-healthcare",
+        "path": "skills/poland-healthcare/SKILL.md",
+        "description": "Healthcare. Use when NFZ or IKP matters.",
+        "startupTokens": 65,
+        "bodyTokens": 325
+      },
+      {
+        "name": "poland-housing",
+        "path": "skills/poland-housing/SKILL.md",
+        "description": "Housing. Use when Polish tenancy matters.",
+        "startupTokens": 62,
+        "bodyTokens": 335
+      },
+      {
+        "name": "poland-identity",
+        "path": "skills/poland-identity/SKILL.md",
+        "description": "Identity. Use when PESEL or meldunek matters.",
+        "startupTokens": 65,
+        "bodyTokens": 358
+      },
+      {
+        "name": "poland-justice-legal-aid",
+        "path": "skills/poland-justice-legal-aid/SKILL.md",
+        "description": "Justice and legal-help routing: courts, legal aid, ombudsmen, victim support, enforcement, and procedural ownership in Poland. Excludes representation and personalized pleadings.",
+        "startupTokens": 96,
+        "bodyTokens": 380
+      },
+      {
+        "name": "poland-local-services",
+        "path": "skills/poland-local-services/SKILL.md",
+        "description": "Local services. Use when Polish office ownership varies.",
+        "startupTokens": 64,
+        "bodyTokens": 441
+      },
+      {
+        "name": "poland-pensions-seniors",
+        "path": "skills/poland-pensions-seniors/SKILL.md",
+        "description": "Pensions and senior services: route retirement, survivor benefits, cross-border contribution histories, care, and local senior support. Excludes benefit calculation or eligibility decisions.",
+        "startupTokens": 92,
+        "bodyTokens": 329
+      },
+      {
+        "name": "poland-protection-referral",
+        "path": "skills/poland-protection-referral/SKILL.md",
+        "description": "Protection referral. Use for asylum, international or temporary protection, unsafe return, or loss of protection in Poland.",
+        "startupTokens": 80,
+        "bodyTokens": 859
+      },
+      {
+        "name": "poland-social-insurance",
+        "path": "skills/poland-social-insurance/SKILL.md",
+        "description": "Social insurance. Use for Polish ZUS or eZUS registration, contributions, coverage records, or cross-border coordination.",
+        "startupTokens": 80,
+        "bodyTokens": 314
+      },
+      {
+        "name": "poland-source-verification",
+        "path": "skills/poland-source-verification/SKILL.md",
+        "description": "Source checks. Use when Polish facts may be stale.",
+        "startupTokens": 67,
+        "bodyTokens": 373
+      },
+      {
+        "name": "poland-stay-residence",
+        "path": "skills/poland-stay-residence/SKILL.md",
+        "description": "Stay and residence. Use for Polish visas, legal stay, temporary residence, or residence cards; not protection, citizenship, or appeals.",
+        "startupTokens": 85,
+        "bodyTokens": 580
+      },
+      {
+        "name": "poland-tax",
+        "path": "skills/poland-tax/SKILL.md",
+        "description": "Poland tax. Use for PIT, tax-residence orientation, tax identifiers, e-Tax Office, or official filing routes.",
+        "startupTokens": 77,
+        "bodyTokens": 345
+      },
+      {
+        "name": "poland-transport-driving",
+        "path": "skills/poland-transport-driving/SKILL.md",
+        "description": "Transport. Use when Polish licences or passenger rights matter.",
+        "startupTokens": 67,
+        "bodyTokens": 433
+      },
+      {
+        "name": "poland-utilities-environment",
+        "path": "skills/poland-utilities-environment/SKILL.md",
+        "description": "Utilities and environment: route electricity, gas, heating, water, waste, provider disputes, and local environmental services in Poland. Excludes technical repair and contract negotiation.",
+        "startupTokens": 91,
+        "bodyTokens": 343
+      },
+      {
+        "name": "poland-vehicles-road",
+        "path": "skills/poland-vehicles-road/SKILL.md",
+        "description": "Vehicles and road administration: route registration, ownership, inspections, compulsory insurance, tolls, parking, fines, and road incidents. Driving-licence matters stay separate.",
+        "startupTokens": 90,
+        "bodyTokens": 540
+      },
+      {
+        "name": "poland-work-authorization",
+        "path": "skills/poland-work-authorization/SKILL.md",
+        "description": "Work authorization. Use for permission to work in Poland, employer permits, declarations, notifications, or labour-market access.",
+        "startupTokens": 79,
+        "bodyTokens": 541
+      }
+    ]
+  },
+  "counts": {
+    "references": 15,
+    "scripts": 4
+  },
+  "tokens": {
+    "encoding": "o200k_base",
+    "startup": 2573,
+    "body": 14114
+  },
+  "icons": {
+    "composerIcon": "./assets/icon.png",
+    "logo": "./assets/icon.png",
+    "brandColor": "#D4213D",
+    "sha256": "d588454b1a00faa7e257829b34c6300a2628e0f791ec8b767c48ae5bd3812aff",
+    "catalogAsset": "assets/first-party-plugins/poland.png"
+  }
+}

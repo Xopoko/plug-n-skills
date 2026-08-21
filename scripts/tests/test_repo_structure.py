@@ -50,6 +50,7 @@ PLUGINS = [
     "pixijs",
     "game-design-intelligence",
     "career",
+    "poland",
 ]
 
 
@@ -377,6 +378,69 @@ class RepoStructureTest(unittest.TestCase):
         self.assertRegex(plugin["source"]["commit"], r"^[0-9a-f]{40}$")
         self.assertFalse((ROOT / "plugins" / "career").exists())
 
+    def test_poland_is_an_opt_in_pinned_standalone_first_party_plugin(self):
+        self.assertIn("poland", FIRST_PARTY)
+        plugin = FIRST_PARTY["poland"]
+        receipt = plugin_catalog.receipt_for(ROOT, plugin)
+        expected_skills = {
+            "poland",
+            "poland-appeals-review",
+            "poland-benefits-support",
+            "poland-business",
+            "poland-case-planning",
+            "poland-citizenship-long-term",
+            "poland-civic-participation",
+            "poland-civil-life-events",
+            "poland-consular-travel",
+            "poland-consumer-banking",
+            "poland-digital-government",
+            "poland-disability-accessibility",
+            "poland-emergency-rights",
+            "poland-employment-rights",
+            "poland-employment-services",
+            "poland-eu-mobility",
+            "poland-family-education",
+            "poland-foreign-documents",
+            "poland-healthcare",
+            "poland-housing",
+            "poland-identity",
+            "poland-justice-legal-aid",
+            "poland-local-services",
+            "poland-pensions-seniors",
+            "poland-protection-referral",
+            "poland-social-insurance",
+            "poland-source-verification",
+            "poland-stay-residence",
+            "poland-tax",
+            "poland-transport-driving",
+            "poland-utilities-environment",
+            "poland-vehicles-road",
+            "poland-work-authorization",
+        }
+        actual_skills = {item["name"] for item in receipt["skills"]["items"]}
+        self.assertEqual(expected_skills, actual_skills)
+        self.assertEqual("Xopoko/poland", plugin["source"]["repository"])
+        self.assertRegex(plugin["source"]["commit"], r"^[0-9a-f]{40}$")
+        self.assertFalse(plugin["selection"]["default"])
+        self.assertNotIn("poland", plugin_catalog.default_plugin_names(CATALOG))
+        self.assertFalse((ROOT / "plugins" / "poland").exists())
+
+    def test_explicit_only_domain_packs_are_secondary_in_the_readme(self):
+        readme = (ROOT / "README.md").read_text(encoding="utf-8")
+        _, featured_heading, remainder = readme.partition(
+            "## Featured Plugin Packs"
+        )
+        featured, optional_heading, remainder = remainder.partition(
+            "## Optional Domain Packs"
+        )
+        optional = remainder.partition("## ")[0]
+
+        self.assertEqual("## Featured Plugin Packs", featured_heading)
+        self.assertEqual("## Optional Domain Packs", optional_heading)
+        self.assertNotIn("| `poland` |", featured)
+        self.assertIn("[`poland`](https://github.com/Xopoko/poland)", optional)
+        self.assertIn("never selected by default", optional)
+
     def test_retired_plugin_directories_are_absent(self):
         for name in ("codex-cli", "claude-code", "scheduled-automation"):
             self.assertFalse(
@@ -426,9 +490,10 @@ class RepoStructureTest(unittest.TestCase):
             "missing dashboard header renderer",
         )
 
-    def test_dashboard_layout_matches_the_canonical_three_row_catalog(self):
+    def test_dashboard_layout_matches_the_featured_three_row_catalog(self):
         renderer = ROOT / "scripts" / "render_plugin_dashboard_header.py"
-        tree = ast.parse(renderer.read_text(encoding="utf-8"))
+        renderer_source = renderer.read_text(encoding="utf-8")
+        tree = ast.parse(renderer_source)
         assignments = {
             target.id: ast.literal_eval(node.value)
             for node in tree.body
@@ -441,9 +506,23 @@ class RepoStructureTest(unittest.TestCase):
         rows = assignments["PLUGIN_LAYOUT_ROWS"]
         summaries = assignments["PLUGIN_SUMMARIES"]
         flattened = [name for row in rows for name in row]
+        explicit_only = {
+            name
+            for name, plugin in FIRST_PARTY.items()
+            if not plugin["selection"]["default"]
+        }
+        expected_featured = [
+            name for name in PLUGINS if name not in explicit_only
+        ]
+
         self.assertEqual([6, 6, 6], [len(row) for row in rows])
-        self.assertEqual(PLUGINS, flattened)
-        self.assertEqual(set(PLUGINS), set(summaries))
+        self.assertEqual(expected_featured, flattened)
+        self.assertEqual(set(expected_featured), set(summaries))
+        self.assertNotIn("poland", flattened)
+        self.assertIn(
+            'if not item["selection"]["default"]:',
+            renderer_source,
+        )
 
     def test_readme_token_report_generator_exists(self):
         readme = (ROOT / "README.md").read_text()

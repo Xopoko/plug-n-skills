@@ -236,8 +236,10 @@ Claude Code uses the root marketplace:
 /plugin install capability-workbench@xopoko-plug-n-skills
 ```
 
-Each marketplace entry points to `./plugins/<name>`, where Claude reads that
-plugin's `.claude-plugin/plugin.json` and shared `skills/` directory.
+Repository-owned entries point to `./plugins/<name>`. Standalone first-party
+entries point to an immutable GitHub commit recorded in
+`first-party-plugins.lock.json`; Claude reads that pinned plugin's manifest and
+skills from the marketplace source.
 
 ## Flow
 

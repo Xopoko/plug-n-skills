@@ -207,6 +207,10 @@ def load_plugins() -> dict[str, PluginCard]:
         )
     catalog = plugin_catalog.validate_catalog(ROOT)
     for item in catalog["plugins"]:
+        # The README hero is the featured/default portfolio. Explicit-only
+        # standalone packs remain discoverable in the secondary catalog.
+        if not item["selection"]["default"]:
+            continue
         receipt = plugin_catalog.receipt_for(ROOT, item)
         icon = ROOT.joinpath(*Path(receipt["icons"]["catalogAsset"]).parts)
         plugins[item["name"]] = PluginCard(
@@ -228,7 +232,7 @@ def ordered_rows(plugins: dict[str, PluginCard]) -> list[list[PluginCard]]:
         available = [row for row in rows if len(row) < 6]
         if not available:
             raise ValueError(
-                "Dashboard supports at most 18 plugin cards in three rows; "
+                "Dashboard supports at most 18 featured cards in three rows; "
                 "update the canvas or card layout before adding more."
             )
         min(available, key=len).append(plugins[name])
@@ -369,7 +373,7 @@ def render(background_path: Path, output_path: Path, quality: int = WEBP_QUALITY
     draw.text((108, 166), subtitle, font=fonts["subtitle"], fill=(204, 222, 246, 242))
 
     plugins = load_plugins()
-    badge_text = f"{len(plugins)} plugin packs"
+    badge_text = f"{len(plugins)} featured packs"
     badge_width = text_width(draw, badge_text, fonts["eyebrow"]) + 58
     badge_x = SIZE[0] - 104 - badge_width
     draw.rounded_rectangle(

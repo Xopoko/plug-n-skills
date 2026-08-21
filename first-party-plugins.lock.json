@@ -52,6 +52,28 @@
         "default": true
       },
       "receipt": "docs/first-party-plugins/career.json"
+    },
+    {
+      "name": "poland",
+      "displayName": "Poland",
+      "publisher": "xopoko",
+      "description": "Official-source-first Poland support for residents, immigrants, and expats: life events, public services, residence, work, tax, health, documents, and safe human-in-the-loop portal workflows.",
+      "source": {
+        "provider": "github",
+        "repository": "Xopoko/poland",
+        "commit": "e51d946599d99aaa40d9cd908550529e50732974",
+        "tree": "cf96a8b91b6f418275c67a2758eac29a60d385ad"
+      },
+      "manifest": {
+        "version": "0.2.0",
+        "codexSha256": "5d5c6093857cedb82f6a9de2ae06556925538732353e63ab9d414a37e4418dd1",
+        "claudeSha256": "73e3b22855a462822777ff08f6dd9cf12f4951d04796e83d0286ce9b18c7ce26"
+      },
+      "license": "MIT",
+      "selection": {
+        "default": false
+      },
+      "receipt": "docs/first-party-plugins/poland.json"
     }
   ]
 }
