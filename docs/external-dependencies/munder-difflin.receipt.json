@@ -1,0 +1,26 @@
+{
+  "schemaVersion": 1,
+  "dependency": "munder-difflin",
+  "reviewedBy": [
+    "capability-workbench"
+  ],
+  "source": {
+    "provider": "github",
+    "repository": "chaitanyagiri/munder-difflin",
+    "commit": "57a6ce65cb6d0b72bebd17a4b4ae92e60446c979",
+    "tree": "7c52501ecb2f0ddc4dad4a69601e2dfe8775b398"
+  },
+  "reviewedAt": "2026-08-21",
+  "verdict": "isolate",
+  "license": {
+    "root": "MIT",
+    "exceptions": [
+      {
+        "path": "src/renderer/src/assets",
+        "license": "LicenseRef-LimeZu-Free-NonCommercial"
+      }
+    ]
+  },
+  "report": "docs/external-dependencies/munder-difflin.md",
+  "reportSha256": "919821d28dec78ad1df93e45a684026aaaff3ccf3b64394359e370be3564cd44"
+}

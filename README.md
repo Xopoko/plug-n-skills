@@ -173,9 +173,10 @@ Claude Code reads the root `.claude-plugin/marketplace.json` and each plugin's
 
 ### Cursor
 
-Cursor consumes `SKILL.md` folders directly and has no plugin marketplace.
-Install (or refresh) the repository skills into Cursor's global skills
-directory:
+Cursor supports native plugin manifests and marketplaces. This repository's
+currently validated compatibility path is direct Agent Skills export, not
+native Cursor plugin installation. Install (or refresh) the repository skills
+into Cursor's global skills directory:
 
 ```bash
 python3 scripts/install-cursor-skills.py --dry-run
@@ -293,11 +294,11 @@ a prompt or makes visible to a model at runtime.
 | --- | ---: | ---: | --- |
 | Plugin packs | 19 | - | Local packages plus immutable standalone first-party catalog entries. |
 | Skill entrypoints | 238 | - | `SKILL.md` files catalogued in local source or immutable receipts. |
-| Reference files | 296 | - | Longer ledgers, contracts, scorecards, and source notes. |
-| Script/support files | 107 | - | All regular files below `scripts/`, including helpers, templates, and manifests. |
+| Reference files | 297 | - | Longer ledgers, contracts, scorecards, and source notes. |
+| Script/support files | 108 | - | All regular files below `scripts/`, including helpers, templates, and manifests. |
 | Source-relative routing estimate | 238 skills | 15,050 | Skill name, description, and plugin-relative `skills/.../SKILL.md` path; comparable across local and standalone sources. |
 | Published first-party URL locator snapshot | 114 skills | 10,748 | Receipt values that serialize immutable GitHub blob URLs; preserved separately and not added to the source-relative total. |
-| Skill body source estimate | 238 skills | 165,826 | Body text after frontmatter; not proof that a host loads it, or when. |
+| Skill body source estimate | 238 skills | 166,018 | Body text after frontmatter; not proof that a host loads it, or when. |
 
 Regenerate the report after skill edits:
 
@@ -318,8 +319,8 @@ immutable GitHub locator snapshot.
 | --- | ---: | ---: | ---: | ---: | ---: | ---: |
 | `agent-harness` | 20 | 20 | 8 | 1,405 | - | 22,108 |
 | `windows-host-operations` | 4 | 2 | 1 | 284 | - | 2,742 |
-| `capability-workbench` | 11 | 18 | 26 | 730 | - | 14,383 |
-| `context-density` | 1 | 9 | 8 | 66 | - | 2,888 |
+| `capability-workbench` | 11 | 18 | 26 | 730 | - | 14,573 |
+| `context-density` | 1 | 10 | 9 | 66 | - | 2,890 |
 | `i-have-adhd` | 1 | 1 | 0 | 73 | - | 588 |
 | `git-workflows` | 5 | 10 | 6 | 391 | - | 7,339 |
 | `engineering-hygiene` | 4 | 3 | 0 | 291 | - | 3,239 |
@@ -406,7 +407,7 @@ size. None is a runtime prompt measurement.
 | --- | ---: | ---: | ---: | --- |
 | `agent-guidance-factory` | 72 | - | 678 | Author repository agent guidance such as AGENTS.md, CLAUDE.md, and scoped rules for load order, nested instructions, migration, audits, or stale-doc cleanup. Excludes ordinary human docs unless agents consume them. |
 | `capability-auditor` | 67 | - | 1,770 | Audit capability artifacts for static safety, evidence coverage, duplication, context cost, prompt contracts, dependencies, and install risk. Use capability-evaluation for behavioral baselines and portfolio architect for structural change. |
-| `capability-evaluation` | 67 | - | 807 | Evaluate skill, plugin, agent-guidance, or trigger-metadata artifacts against an explicit baseline and representative behavior cases, producing evidence and an adoption decision. Excludes harness reliability and static source/safety audits. |
+| `capability-evaluation` | 67 | - | 997 | Evaluate skill, plugin, agent-guidance, or trigger-metadata artifacts against an explicit baseline and representative behavior cases, producing evidence and an adoption decision. Excludes harness reliability and static source/safety audits. |
 | `capability-portfolio-architect` | 69 | - | 947 | Reshape skill/plugin portfolios when routing overlaps, capabilities duplicate or disappear, or split/merge/move/delete/router/reference/script boundaries need decisions. Use capability-auditor for single-artifact quality. |
 | `capability-reality-repair` | 66 | - | 930 | Repair stale or false skill/script/plugin/MCP contracts when commands, schemas, paths, outputs, dependencies, install state, connector guidance, validators, or docs disagree with live reality. |
 | `capability-synthesizer` | 61 | - | 2,437 | Synthesize or strengthen well-vetted agent skills/plugins from broad public sources and local or user-provided candidates, with evidence-backed comparison and adoption/rejection. |
@@ -420,7 +421,7 @@ size. None is a runtime prompt measurement.
 
 | Skill | Source routing | Published URL routing | Body source | Description |
 | --- | ---: | ---: | ---: | --- |
-| `context-density` | 66 | - | 2,888 | Agent context audits measure token cost, provenance, compression, typed-state drift, trigger overlap, and prompt/output contracts across AGENTS.md, prompts, skills, plugins, MCP/tool schemas, current-state artifacts, and agent handoffs. |
+| `context-density` | 66 | - | 2,890 | Agent context audits measure token cost, provenance, compression, typed-state drift, trigger overlap, and prompt/output contracts across AGENTS.md, prompts, skills, plugins, MCP/tool schemas, current-state artifacts, and agent handoffs. |
 
 #### `i-have-adhd`
 

@@ -1,0 +1,21 @@
+{
+  "schemaVersion": 1,
+  "dependency": "rtk",
+  "reviewedBy": [
+    "capability-workbench"
+  ],
+  "source": {
+    "provider": "github",
+    "repository": "rtk-ai/rtk",
+    "commit": "29f9bb7161775cd807565fd3041eb2b7d1be071c",
+    "tree": "deedf05df34a2e415a6cdc468ec8ae5d41c96276"
+  },
+  "reviewedAt": "2026-08-21",
+  "verdict": "isolate",
+  "license": {
+    "root": "Apache-2.0",
+    "exceptions": []
+  },
+  "report": "docs/external-dependencies/rtk.md",
+  "reportSha256": "c6821e26bee6378b0eb220e0a7a21a1554eff4c4417d2e2304afd129ecdc033c"
+}

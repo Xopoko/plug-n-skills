@@ -1,0 +1,66 @@
+{
+  "schemaVersion": 1,
+  "dependency": "caveman",
+  "reviewedBy": [
+    "capability-workbench"
+  ],
+  "source": {
+    "provider": "github",
+    "repository": "JuliusBrussee/caveman",
+    "commit": "2f49f0e1a352aa810e70056b7930aeb0b3d219b4",
+    "tree": "603ece15f092a82703cb6e86d102050502775f25"
+  },
+  "reviewedAt": "2026-08-21",
+  "verdict": "isolate",
+  "license": {
+    "root": "MIT",
+    "exceptions": [
+      {
+        "path": "browse",
+        "license": "BUSL-1.1"
+      },
+      {
+        "path": "cacheengine",
+        "license": "BUSL-1.1"
+      },
+      {
+        "path": "engine",
+        "license": "BUSL-1.1"
+      },
+      {
+        "path": "mcp",
+        "license": "BUSL-1.1"
+      },
+      {
+        "path": "mem",
+        "license": "BUSL-1.1"
+      },
+      {
+        "path": "mem/js",
+        "license": "MIT"
+      },
+      {
+        "path": "mem/py",
+        "license": "MIT"
+      },
+      {
+        "path": "proxy",
+        "license": "BUSL-1.1"
+      },
+      {
+        "path": "rewriter",
+        "license": "BUSL-1.1"
+      },
+      {
+        "path": "shared/platform",
+        "license": "BUSL-1.1"
+      },
+      {
+        "path": "shrink",
+        "license": "BUSL-1.1"
+      }
+    ]
+  },
+  "report": "docs/external-dependencies/caveman.md",
+  "reportSha256": "1a667ef010950d1aba8cbb20a4f6716e30d88bf6787bba19e2492edeccb2aa91"
+}

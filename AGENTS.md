@@ -148,8 +148,11 @@ Manifests are publication artifacts, not scratch files.
 - Set Codex `interface.websiteURL` to
   `https://github.com/Xopoko/plug-n-skills` for every plugin maintained under
   `plugins/`. Keep `repository` pointed at the plugin's canonical source.
-- Cursor needs no manifest: it consumes `skills/` directly via
-  `scripts/install-cursor-skills.py`.
+- Cursor supports native `.cursor-plugin/plugin.json` manifests and a root
+  `.cursor-plugin/marketplace.json`. This repository currently validates only
+  direct Agent Skills export via `scripts/install-cursor-skills.py`; do not
+  claim native Cursor plugin activation without a validated manifest and live
+  compatible-client proof.
 - Keep repository URLs pointing at the public source location for this checkout.
 - Keep `.claude-plugin/marketplace.json` in sync with the actual plugin set.
 - Keep `.agents/plugins/marketplace.json` ignored; regenerate it through the

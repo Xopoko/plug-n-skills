@@ -31,6 +31,35 @@
       }
     },
     {
+      "id": "i-have-adhd-eval-2026-08-21",
+      "kind": "agent-skill-source",
+      "reviewedBy": [
+        "capability-workbench"
+      ],
+      "source": {
+        "provider": "github",
+        "repository": "ayghri/i-have-adhd",
+        "commit": "e7555fcaf612dfa1739dc86610ea926a906db614",
+        "tree": "42ce88189368a2612da7f6f841841b404334570d"
+      },
+      "policy": {
+        "mode": "reference-only",
+        "allowInstall": false,
+        "allowExecute": false,
+        "allowVendor": false
+      },
+      "license": {
+        "root": "MIT",
+        "exceptions": []
+      },
+      "audit": {
+        "reviewedAt": "2026-08-21",
+        "verdict": "isolate",
+        "report": "docs/external-dependencies/i-have-adhd-eval-2026-08-21.md",
+        "receipt": "docs/external-dependencies/i-have-adhd-eval-2026-08-21.receipt.json"
+      }
+    },
+    {
       "id": "humanlayer-show-me",
       "kind": "agent-skill-source",
       "reviewedBy": [
@@ -57,6 +86,421 @@
         "verdict": "isolate",
         "report": "docs/external-dependencies/humanlayer-show-me.md",
         "receipt": "docs/external-dependencies/humanlayer-show-me.receipt.json"
+      }
+    },
+    {
+      "id": "mattpocock-skills",
+      "kind": "agent-skill-source",
+      "reviewedBy": [
+        "capability-workbench"
+      ],
+      "source": {
+        "provider": "github",
+        "repository": "mattpocock/skills",
+        "commit": "5b15a47f2d7150f545fbcacbfe381787fc0230dc",
+        "tree": "b067eb5ab717af0165a555ff7791afa3494053c4"
+      },
+      "policy": {
+        "mode": "reference-only",
+        "allowInstall": false,
+        "allowExecute": false,
+        "allowVendor": false
+      },
+      "license": {
+        "root": "MIT",
+        "exceptions": []
+      },
+      "audit": {
+        "reviewedAt": "2026-08-21",
+        "verdict": "isolate",
+        "report": "docs/external-dependencies/mattpocock-skills.md",
+        "receipt": "docs/external-dependencies/mattpocock-skills.receipt.json"
+      }
+    },
+    {
+      "id": "cursor-plugins",
+      "kind": "agent-skill-source",
+      "reviewedBy": [
+        "capability-workbench"
+      ],
+      "source": {
+        "provider": "github",
+        "repository": "cursor/plugins",
+        "commit": "46125561306434d8a1d7745d540d8932ab0cd2a2",
+        "tree": "1d1795c88013daf2470a40892d72664ec71b5061"
+      },
+      "policy": {
+        "mode": "reference-only",
+        "allowInstall": false,
+        "allowExecute": false,
+        "allowVendor": false
+      },
+      "license": {
+        "root": "NOASSERTION",
+        "exceptions": [
+          {
+            "path": "agent-compatibility",
+            "license": "MIT"
+          },
+          {
+            "path": "cli-for-agent",
+            "license": "MIT"
+          },
+          {
+            "path": "continual-learning",
+            "license": "MIT"
+          },
+          {
+            "path": "create-plugin",
+            "license": "MIT"
+          },
+          {
+            "path": "cursor-sdk",
+            "license": "MIT"
+          },
+          {
+            "path": "cursor-team-kit",
+            "license": "MIT"
+          },
+          {
+            "path": "docs-canvas",
+            "license": "MIT"
+          },
+          {
+            "path": "orchestrate",
+            "license": "MIT"
+          },
+          {
+            "path": "pr-review-canvas",
+            "license": "MIT"
+          },
+          {
+            "path": "pstack",
+            "license": "MIT"
+          },
+          {
+            "path": "ralph-loop",
+            "license": "MIT"
+          },
+          {
+            "path": "teaching",
+            "license": "MIT"
+          },
+          {
+            "path": "thermos",
+            "license": "MIT"
+          },
+          {
+            "path": "third_party/amplemarket",
+            "license": "MIT"
+          },
+          {
+            "path": "third_party/ashby",
+            "license": "MIT"
+          },
+          {
+            "path": "third_party/circleback",
+            "license": "MIT"
+          },
+          {
+            "path": "third_party/clay",
+            "license": "MIT"
+          },
+          {
+            "path": "third_party/docusign",
+            "license": "MIT"
+          },
+          {
+            "path": "third_party/github",
+            "license": "MIT"
+          },
+          {
+            "path": "third_party/gmail",
+            "license": "MIT"
+          },
+          {
+            "path": "third_party/gong",
+            "license": "MIT"
+          },
+          {
+            "path": "third_party/google-calendar",
+            "license": "MIT"
+          },
+          {
+            "path": "third_party/google-drive",
+            "license": "MIT"
+          },
+          {
+            "path": "third_party/hubspot",
+            "license": "MIT"
+          },
+          {
+            "path": "third_party/intercom",
+            "license": "MIT"
+          },
+          {
+            "path": "third_party/juicebox",
+            "license": "MIT"
+          },
+          {
+            "path": "third_party/navan",
+            "license": "MIT"
+          },
+          {
+            "path": "third_party/outreach",
+            "license": "MIT"
+          },
+          {
+            "path": "third_party/playwright",
+            "license": "MIT"
+          },
+          {
+            "path": "third_party/profound",
+            "license": "MIT"
+          },
+          {
+            "path": "third_party/salesforce",
+            "license": "MIT"
+          },
+          {
+            "path": "third_party/x",
+            "license": "MIT"
+          },
+          {
+            "path": "third_party/zoom",
+            "license": "MIT"
+          }
+        ]
+      },
+      "audit": {
+        "reviewedAt": "2026-08-21",
+        "verdict": "isolate",
+        "report": "docs/external-dependencies/cursor-plugins.md",
+        "receipt": "docs/external-dependencies/cursor-plugins.receipt.json"
+      }
+    },
+    {
+      "id": "ui-skills",
+      "kind": "agent-skill-source",
+      "reviewedBy": [
+        "capability-workbench"
+      ],
+      "source": {
+        "provider": "github",
+        "repository": "ibelick/ui-skills",
+        "commit": "33b35e7d13d4bce7e4358d2205e406c1b20263fc",
+        "tree": "8ee92fe60983596fba48851664914a5acbedea20"
+      },
+      "policy": {
+        "mode": "reference-only",
+        "allowInstall": false,
+        "allowExecute": false,
+        "allowVendor": false
+      },
+      "license": {
+        "root": "MIT",
+        "exceptions": []
+      },
+      "audit": {
+        "reviewedAt": "2026-08-21",
+        "verdict": "isolate",
+        "report": "docs/external-dependencies/ui-skills.md",
+        "receipt": "docs/external-dependencies/ui-skills.receipt.json"
+      }
+    },
+    {
+      "id": "revfactory-harness",
+      "kind": "agent-skill-source",
+      "reviewedBy": [
+        "capability-workbench"
+      ],
+      "source": {
+        "provider": "github",
+        "repository": "revfactory/harness",
+        "commit": "cceac68ea1d0ad198ef4b7b906cd238375836387",
+        "tree": "b88c5ce9b73461bf6d92224863a9db91b6cedace"
+      },
+      "policy": {
+        "mode": "reference-only",
+        "allowInstall": false,
+        "allowExecute": false,
+        "allowVendor": false
+      },
+      "license": {
+        "root": "Apache-2.0",
+        "exceptions": []
+      },
+      "audit": {
+        "reviewedAt": "2026-08-21",
+        "verdict": "isolate",
+        "report": "docs/external-dependencies/revfactory-harness.md",
+        "receipt": "docs/external-dependencies/revfactory-harness.receipt.json"
+      }
+    },
+    {
+      "id": "munder-difflin",
+      "kind": "agent-skill-source",
+      "reviewedBy": [
+        "capability-workbench"
+      ],
+      "source": {
+        "provider": "github",
+        "repository": "chaitanyagiri/munder-difflin",
+        "commit": "57a6ce65cb6d0b72bebd17a4b4ae92e60446c979",
+        "tree": "7c52501ecb2f0ddc4dad4a69601e2dfe8775b398"
+      },
+      "policy": {
+        "mode": "reference-only",
+        "allowInstall": false,
+        "allowExecute": false,
+        "allowVendor": false
+      },
+      "license": {
+        "root": "MIT",
+        "exceptions": [
+          {
+            "path": "src/renderer/src/assets",
+            "license": "LicenseRef-LimeZu-Free-NonCommercial"
+          }
+        ]
+      },
+      "audit": {
+        "reviewedAt": "2026-08-21",
+        "verdict": "isolate",
+        "report": "docs/external-dependencies/munder-difflin.md",
+        "receipt": "docs/external-dependencies/munder-difflin.receipt.json"
+      }
+    },
+    {
+      "id": "caveman",
+      "kind": "agent-skill-source",
+      "reviewedBy": [
+        "capability-workbench"
+      ],
+      "source": {
+        "provider": "github",
+        "repository": "JuliusBrussee/caveman",
+        "commit": "2f49f0e1a352aa810e70056b7930aeb0b3d219b4",
+        "tree": "603ece15f092a82703cb6e86d102050502775f25"
+      },
+      "policy": {
+        "mode": "reference-only",
+        "allowInstall": false,
+        "allowExecute": false,
+        "allowVendor": false
+      },
+      "license": {
+        "root": "MIT",
+        "exceptions": [
+          {
+            "path": "browse",
+            "license": "BUSL-1.1"
+          },
+          {
+            "path": "cacheengine",
+            "license": "BUSL-1.1"
+          },
+          {
+            "path": "engine",
+            "license": "BUSL-1.1"
+          },
+          {
+            "path": "mcp",
+            "license": "BUSL-1.1"
+          },
+          {
+            "path": "mem",
+            "license": "BUSL-1.1"
+          },
+          {
+            "path": "mem/js",
+            "license": "MIT"
+          },
+          {
+            "path": "mem/py",
+            "license": "MIT"
+          },
+          {
+            "path": "proxy",
+            "license": "BUSL-1.1"
+          },
+          {
+            "path": "rewriter",
+            "license": "BUSL-1.1"
+          },
+          {
+            "path": "shared/platform",
+            "license": "BUSL-1.1"
+          },
+          {
+            "path": "shrink",
+            "license": "BUSL-1.1"
+          }
+        ]
+      },
+      "audit": {
+        "reviewedAt": "2026-08-21",
+        "verdict": "isolate",
+        "report": "docs/external-dependencies/caveman.md",
+        "receipt": "docs/external-dependencies/caveman.receipt.json"
+      }
+    },
+    {
+      "id": "rtk",
+      "kind": "agent-skill-source",
+      "reviewedBy": [
+        "capability-workbench"
+      ],
+      "source": {
+        "provider": "github",
+        "repository": "rtk-ai/rtk",
+        "commit": "29f9bb7161775cd807565fd3041eb2b7d1be071c",
+        "tree": "deedf05df34a2e415a6cdc468ec8ae5d41c96276"
+      },
+      "policy": {
+        "mode": "reference-only",
+        "allowInstall": false,
+        "allowExecute": false,
+        "allowVendor": false
+      },
+      "license": {
+        "root": "Apache-2.0",
+        "exceptions": []
+      },
+      "audit": {
+        "reviewedAt": "2026-08-21",
+        "verdict": "isolate",
+        "report": "docs/external-dependencies/rtk.md",
+        "receipt": "docs/external-dependencies/rtk.receipt.json"
+      }
+    },
+    {
+      "id": "loopy",
+      "kind": "agent-skill-source",
+      "reviewedBy": [
+        "capability-workbench"
+      ],
+      "source": {
+        "provider": "github",
+        "repository": "Forward-Future/loopy",
+        "commit": "75966cbd572a4185064971c9fe5e9c52e8f8456d",
+        "tree": "f992d05d1517c24b3598bd4b43826f92e01e34e7"
+      },
+      "policy": {
+        "mode": "reference-only",
+        "allowInstall": false,
+        "allowExecute": false,
+        "allowVendor": false
+      },
+      "license": {
+        "root": "MIT",
+        "exceptions": []
+      },
+      "audit": {
+        "reviewedAt": "2026-08-21",
+        "verdict": "isolate",
+        "report": "docs/external-dependencies/loopy.md",
+        "receipt": "docs/external-dependencies/loopy.receipt.json"
       }
     }
   ]

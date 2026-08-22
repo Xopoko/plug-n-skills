@@ -17,6 +17,22 @@ STATUSES = {"planned", "complete", "blocked"}
 ARTIFACT_KINDS = {"skill", "plugin", "agent-guidance", "trigger-metadata", "mixed"}
 BASELINE_TYPES = {"no-artifact", "artifact"}
 DIMENSIONS = {"trigger", "task-outcome", "constraints", "subjective", "overhead"}
+PERSISTENCE_FACETS = {
+    "presentation_brevity",
+    "state_exactness",
+    "atom_recall_by_category",
+    "source_references",
+    "successful_output_recovery",
+    "failed_output_recovery",
+    "repeated_work",
+    "false_certainty",
+    "authority",
+    "complete_pipeline_cost",
+}
+NONCRITICAL_PERSISTENCE_FACETS = {
+    "presentation_brevity",
+    "complete_pipeline_cost",
+}
 CASE_CATEGORIES = {"foundational", "representative", "paraphrase", "edge", "anti-trigger"}
 ASSERTION_TYPES = {"deterministic", "human", "model-judge"}
 REVIEW_METHODS = {"none", "blind-human", "calibrated-model-judge", "hybrid"}
@@ -66,6 +82,9 @@ TEMPLATE: dict[str, Any] = {
         "artifact_behavior_only": True,
         "harness_reliability": "not-evaluated",
         "runtime_failures": "quarantine",
+        "persistence_coverage": {
+            "applicable": False,
+        },
     },
     "environment": {
         "runner": "host-selected-runner",
@@ -265,7 +284,9 @@ def validate_target(errors: list[str], value: Any) -> None:
             errors.append("candidate_and_artifact_baseline_sha256_must_differ")
 
 
-def validate_scope(errors: list[str], value: Any) -> set[str]:
+def validate_scope(
+    errors: list[str], value: Any
+) -> tuple[set[str], dict[str, Any] | None]:
     scope = check_keys(
         errors,
         value,
@@ -277,9 +298,10 @@ def validate_scope(errors: list[str], value: Any) -> set[str]:
             "harness_reliability",
             "runtime_failures",
         },
+        {"persistence_coverage"},
     )
     if scope is None:
-        return set()
+        return set(), None
     check_string(errors, scope.get("claim"), "scope_claim")
     dimensions = scope.get("dimensions")
     dimension_set: set[str] = set()
@@ -299,7 +321,11 @@ def validate_scope(errors: list[str], value: Any) -> set[str]:
         errors.append("scope_harness_reliability_must_be_not_evaluated")
     if scope.get("runtime_failures") != "quarantine":
         errors.append("scope_runtime_failures_must_be_quarantine")
-    return dimension_set
+    coverage = scope.get("persistence_coverage")
+    if coverage is not None and not isinstance(coverage, dict):
+        errors.append("scope_persistence_coverage_must_be_object")
+        coverage = None
+    return dimension_set, coverage
 
 
 def validate_environment(errors: list[str], value: Any, status: Any) -> None:
@@ -405,6 +431,166 @@ def validate_cases(errors: list[str], value: Any) -> tuple[dict[str, dict[str, A
                 assertion_types.add(assertion_type)
             check_string(errors, assertion.get("criterion"), f"{assertion_label}_criterion")
     return cases_by_id, assertion_types
+
+
+def resolve_assertion_ref(
+    errors: list[str],
+    value: Any,
+    label: str,
+    cases_by_id: dict[str, dict[str, Any]],
+    *,
+    require_critical: bool,
+) -> tuple[str, str] | None:
+    reference = check_keys(errors, value, label, {"case_id", "assertion_id"})
+    if reference is None:
+        return None
+    case_id = reference.get("case_id")
+    assertion_id = reference.get("assertion_id")
+    check_string(errors, case_id, f"{label}_case_id")
+    check_string(errors, assertion_id, f"{label}_assertion_id")
+    if not isinstance(case_id, str) or not isinstance(assertion_id, str):
+        return None
+    case = cases_by_id.get(case_id)
+    if case is None:
+        errors.append(f"{label}_case_not_declared:{case_id}")
+        return None
+    assertion = next(
+        (
+            item
+            for item in case.get("assertions", [])
+            if isinstance(item, dict) and item.get("id") == assertion_id
+        ),
+        None,
+    )
+    if assertion is None:
+        errors.append(f"{label}_assertion_not_declared:{case_id}:{assertion_id}")
+        return None
+    if assertion.get("type") != "deterministic":
+        errors.append(f"{label}_assertion_must_be_deterministic")
+    if require_critical and case.get("critical") is not True:
+        errors.append(f"{label}_case_must_be_critical")
+    return case_id, assertion_id
+
+
+def validate_persistence_coverage(
+    errors: list[str],
+    value: dict[str, Any] | None,
+    dimensions: set[str],
+    cases_by_id: dict[str, dict[str, Any]],
+) -> None:
+    if value is None:
+        return
+    coverage = check_keys(
+        errors,
+        value,
+        "persistence_coverage",
+        {"applicable"},
+        {"trajectories", "facet_assertions"},
+    )
+    if coverage is None:
+        return
+    applicable = coverage.get("applicable")
+    if not isinstance(applicable, bool):
+        errors.append("persistence_coverage_applicable_must_be_boolean")
+        return
+    if not applicable:
+        if set(coverage) != {"applicable"}:
+            errors.append("inapplicable_persistence_coverage_must_not_declare_details")
+        return
+
+    required_dimensions = {"task-outcome", "constraints", "overhead"}
+    for missing in sorted(required_dimensions - dimensions):
+        errors.append(f"persistence_coverage_requires_dimension:{missing}")
+
+    trajectories = coverage.get("trajectories")
+    if not isinstance(trajectories, list) or not trajectories:
+        errors.append("persistence_coverage_trajectories_must_be_non_empty_array")
+    else:
+        seen_trajectory_ids: set[str] = set()
+        for index, raw_trajectory in enumerate(trajectories):
+            label = f"persistence_trajectory_{index}"
+            trajectory = check_keys(
+                errors,
+                raw_trajectory,
+                label,
+                {"id", "full_history_control", "dependent_boundaries"},
+            )
+            if trajectory is None:
+                continue
+            trajectory_id = trajectory.get("id")
+            check_string(errors, trajectory_id, f"{label}_id")
+            if isinstance(trajectory_id, str):
+                if trajectory_id in seen_trajectory_ids:
+                    errors.append(f"persistence_trajectory_id_duplicate:{trajectory_id}")
+                seen_trajectory_ids.add(trajectory_id)
+            referenced: set[tuple[str, str]] = set()
+            full_history = resolve_assertion_ref(
+                errors,
+                trajectory.get("full_history_control"),
+                f"{label}_full_history_control",
+                cases_by_id,
+                require_critical=True,
+            )
+            if full_history is not None:
+                referenced.add(full_history)
+            boundaries = trajectory.get("dependent_boundaries")
+            if not isinstance(boundaries, list) or len(boundaries) < 2:
+                errors.append(f"{label}_requires_at_least_two_dependent_boundaries")
+                continue
+            for boundary_index, raw_boundary in enumerate(boundaries):
+                boundary = resolve_assertion_ref(
+                    errors,
+                    raw_boundary,
+                    f"{label}_dependent_boundary_{boundary_index}",
+                    cases_by_id,
+                    require_critical=True,
+                )
+                if boundary is not None:
+                    if boundary in referenced:
+                        errors.append(f"{label}_assertion_ref_duplicate:{boundary[0]}:{boundary[1]}")
+                    referenced.add(boundary)
+
+    facet_assertions = coverage.get("facet_assertions")
+    if not isinstance(facet_assertions, list) or not facet_assertions:
+        errors.append("persistence_coverage_facets_must_be_non_empty_array")
+        return
+    seen_facets: set[str] = set()
+    seen_facet_refs: set[tuple[str, str]] = set()
+    for index, raw_facet in enumerate(facet_assertions):
+        label = f"persistence_facet_{index}"
+        facet = check_keys(
+            errors,
+            raw_facet,
+            label,
+            {"facet", "case_id", "assertion_id"},
+        )
+        if facet is None:
+            continue
+        facet_name = facet.get("facet")
+        if facet_name not in PERSISTENCE_FACETS:
+            errors.append(f"{label}_invalid:{facet_name}")
+            continue
+        if facet_name in seen_facets:
+            errors.append(f"persistence_facet_duplicate:{facet_name}")
+        seen_facets.add(facet_name)
+        reference = resolve_assertion_ref(
+            errors,
+            {
+                "case_id": facet.get("case_id"),
+                "assertion_id": facet.get("assertion_id"),
+            },
+            label,
+            cases_by_id,
+            require_critical=facet_name not in NONCRITICAL_PERSISTENCE_FACETS,
+        )
+        if reference is not None:
+            if reference in seen_facet_refs:
+                errors.append(
+                    f"persistence_facets_must_use_separate_assertions:{reference[0]}:{reference[1]}"
+                )
+            seen_facet_refs.add(reference)
+    for missing in sorted(PERSISTENCE_FACETS - seen_facets):
+        errors.append(f"persistence_facet_missing:{missing}")
 
 
 def validate_adoption_rule(errors: list[str], value: Any) -> dict[str, Any] | None:
@@ -701,9 +887,15 @@ def validate(data: dict[str, Any]) -> list[str]:
     if status not in STATUSES:
         errors.append("status_invalid")
     validate_target(errors, data.get("target"))
-    dimensions = validate_scope(errors, data.get("scope"))
+    dimensions, persistence_coverage = validate_scope(errors, data.get("scope"))
     validate_environment(errors, data.get("environment"), status)
     cases_by_id, assertion_types = validate_cases(errors, data.get("cases"))
+    validate_persistence_coverage(
+        errors,
+        persistence_coverage,
+        dimensions,
+        cases_by_id,
+    )
     rule = validate_adoption_rule(errors, data.get("adoption_rule"))
     validate_subjective_review(errors, data.get("subjective_review"), assertion_types)
     derived = validate_results(

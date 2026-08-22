@@ -1,0 +1,21 @@
+{
+  "schemaVersion": 1,
+  "dependency": "loopy",
+  "reviewedBy": [
+    "capability-workbench"
+  ],
+  "source": {
+    "provider": "github",
+    "repository": "Forward-Future/loopy",
+    "commit": "75966cbd572a4185064971c9fe5e9c52e8f8456d",
+    "tree": "f992d05d1517c24b3598bd4b43826f92e01e34e7"
+  },
+  "reviewedAt": "2026-08-21",
+  "verdict": "isolate",
+  "license": {
+    "root": "MIT",
+    "exceptions": []
+  },
+  "report": "docs/external-dependencies/loopy.md",
+  "reportSha256": "71aac4a65e0a9ff3bccad3876a50680ba6420533e1dafdd1640e46b6a6b1d7c6"
+}

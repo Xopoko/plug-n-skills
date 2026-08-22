@@ -38,7 +38,7 @@ class AgentTarget:
     agent: str
     home_dir: Path
     skills_dir: Path
-    # None when the agent has no plugin marketplace (e.g. cursor).
+    # None when this helper does not manage the host's native marketplace.
     marketplace_path: Path | None
 
 

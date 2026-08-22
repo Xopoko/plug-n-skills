@@ -245,8 +245,11 @@ Distribution:
 - Cursor can import skills from GitHub through its rules UI.
 - Cursor has migration support for converting eligible dynamic rules and slash
   commands into skills.
+- Cursor supports native `.cursor-plugin/plugin.json` manifests and root
+  `.cursor-plugin/marketplace.json` catalogs.
 - This repository's `scripts/install-cursor-skills.py` exports plugin-contained
-  `SKILL.md` folders directly because Cursor has no plugin marketplace.
+  `SKILL.md` folders directly. That path proves skill export only; native Cursor
+  plugin packaging and discovery need separate schema and live-client proof.
 
 ## Skill Versus Adjacent Mechanisms
 

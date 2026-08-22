@@ -18,6 +18,7 @@ Bundled commands use `$PLUGIN_ROOT` (`$env:PLUGIN_ROOT` in PowerShell; same path
 - Preserve trigger semantics, not just trigger phrases.
 - Descriptions should fire from task context, artifacts, source evidence, failures, and agent decision points; keep exact user wording only when it controls behavior, consent, or target binding.
 - Compress prose, not commitments: goals, constraints, decisions, IDs, paths, dates, warnings, evidence refs, safety boundaries, and behavior-critical exact wording need verbatim text or typed recovery pointers.
+- Treat response brevity as presentation only; preserve model allowances, tool evidence, durable state, complete raw recovery, and repeated-compaction proof.
 - Treat raw logs, transcripts, reports, and source packs as evidence archives. Do not hot-load them; keep compact claims plus source refs.
 - Do not let retrieval, memory recall, or archived artifacts become authoritative state without provenance, confidence, and validation.
 - When companion artifacts can authorize actions or gate proof, seal their reviewed state in a typed state-commitment bundle and validate it; matching words do not prove semantic agreement.
@@ -27,7 +28,7 @@ Bundled commands use `$PLUGIN_ROOT` (`$env:PLUGIN_ROOT` in PowerShell; same path
 - Treat reformatting as a behavior-relevant edit: validate rewritten prompts and context on the consumer task; meaning-preserving is not behavior-preserving.
 - Hand off context between agents, sessions, or compaction boundaries through typed contracts with source refs and receiver-side verification, not free prose.
 - Do not call a compression change successful from input-token reduction alone; include output cost/length, task success, preserved atoms, and validation proof when available.
-- Apply research-backed gates for material changes: placement stress, compression break-even, schema plus task validation, retrieval/citation promotion, cache economics, distractor budget, format sensitivity, and handoff contracts.
+- Apply the relevant research-backed gates before material changes.
 - For machine decisions, read `research_gate_risks` from audit JSON instead of reconstructing gate status from prose.
 - Trust evidence classes: only `measured` findings (token budgets, duplication mass, commitment atoms) may block; `advisory` wording-pattern findings direct attention and require human or LLM judgment.
 - Duplication measurement ranks merge candidates; judgment authorizes merges. Diff `near` clusters before merging, and never mechanically merge legal text, safety or consent wording, deliberate router pointers, or runnable examples.
@@ -38,9 +39,9 @@ Bundled commands use `$PLUGIN_ROOT` (`$env:PLUGIN_ROOT` in PowerShell; same path
 - Batch compression uses the compress/verify/repair pipeline: deterministic invariants plus exam-qualified adversarial review; a compressing agent never accepts its own work.
 - A repair invalidates earlier verdicts; done means a fresh qualified reviewer returns clean.
 - Cap repair loops (3 rounds); a non-converging file is reverted, never force-accepted.
-- If a skill/plugin portfolio needs split, merge, delete, move, router, cross-plugin overlap review, reference extraction, shared-capability extraction, or script extraction, treat token pressure as a signal.
+- Treat token pressure as a signal to review skill/plugin portfolio boundaries and extraction opportunities.
 - Route structural work to Capability Workbench portfolio architecture when available.
-- Do not treat context-window size as proof of reliable recall, relevance, or reasoning; effective task length is usually well below the advertised maximum, so state validation scope and residual risk.
+- Do not treat context-window size as proof of reliable recall; state validation scope and residual risk.
 - Do not summarize high-authority instructions, unresolved conflicts, or prompt-injection boundaries into vague prose.
 - Merge overlapping prose instead of appending a second version.
 - Keep exact commands only when operationally necessary.
@@ -48,7 +49,7 @@ Bundled commands use `$PLUGIN_ROOT` (`$env:PLUGIN_ROOT` in PowerShell; same path
 - Machine decisions must come from strict JSON/schema, tool arguments/results, typed protocols, validators, or closed keys.
 - Invalid structured output must reject, retry, repair under the same schema, fallback, or fail loudly.
 - Do not add regex/substring patches over generated explanations to recover status, IDs, categories, scores, dates, or actions.
-- Treat structured quality-review output as evidence for skill/plugin quality and budgets, not as a replacement for context-density gates or repo validators.
+- Quality-review output does not replace context-density gates or repository validators.
 - Do not run host-agent config changes unless the user requested a config-changing action.
 
 ## Operating Model
@@ -91,6 +92,7 @@ Load paths:
 | Prompt, model-output, tool-call, schema, retry, or prose-parsing review | `references/prompt-contracts.md` |
 | Cross-artifact current identity, review/proof status, authority, stop scope, or companion-drift validation | `references/state-commitment-contract.md` |
 | Long-context placement, compression, schema/task validity, retrieval citation, cache-prefix, distractor-budget, format-sensitivity, or handoff acceptance gates | `references/research-backed-gates.md` |
+| Oversized tool output: keep-raw routing, safe projection, and recovery integrity | `references/tool-output-projection.md` |
 | Final audit sections and JSON/Markdown report contracts | `references/report-contracts.md` |
 
 Keep `SKILL.md` lean. Move rare detail to references only when it prevents repeated hot-path loading.
@@ -110,6 +112,7 @@ python3 "$PLUGIN_ROOT/skills/context-density/scripts/context_density_audit.py" <
 python3 "$PLUGIN_ROOT/skills/context-density/scripts/state_commitment_guard.py" validate --input state-commitment.json
 python3 "$PLUGIN_ROOT/skills/context-density/scripts/description_overlap.py" <dirs> --min-jaccard 0.25 --top 20
 python3 "$PLUGIN_ROOT/skills/context-density/scripts/compression_invariants.py" <original> <compressed> --json
+python3 "$PLUGIN_ROOT/skills/context-density/scripts/exact_duplicate_projection.py" output.txt --raw-id raw://run/id --model-safe-input
 python3 "$PLUGIN_ROOT/skills/context-density/scripts/refuter_calibration.py" plant <original> --exam exam.md --key key.json
 python3 "$PLUGIN_ROOT/skills/context-density/scripts/refuter_calibration.py" grade key.json verdict.json
 ```

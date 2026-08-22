@@ -1,0 +1,21 @@
+{
+  "schemaVersion": 1,
+  "dependency": "ui-skills",
+  "reviewedBy": [
+    "capability-workbench"
+  ],
+  "source": {
+    "provider": "github",
+    "repository": "ibelick/ui-skills",
+    "commit": "33b35e7d13d4bce7e4358d2205e406c1b20263fc",
+    "tree": "8ee92fe60983596fba48851664914a5acbedea20"
+  },
+  "reviewedAt": "2026-08-21",
+  "verdict": "isolate",
+  "license": {
+    "root": "MIT",
+    "exceptions": []
+  },
+  "report": "docs/external-dependencies/ui-skills.md",
+  "reportSha256": "3d6fed3b5bc5971d8a2fbd137999b98bae29b4ce935e9faee1f3e8720f9425e1"
+}
