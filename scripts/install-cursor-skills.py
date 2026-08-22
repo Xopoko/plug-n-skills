@@ -1,11 +1,12 @@
 #!/usr/bin/env python3
-"""Install repository plugin skills into the Cursor global skills directory.
+"""Export repository plugin skills into the Cursor global skills directory.
 
-Cursor consumes SKILL.md folders directly and has no plugin marketplace, so
-installation means copying each plugin's skills into a flat skills directory
-(default: ${CURSOR_HOME:-~/.cursor}/skills). The copy is idempotent: unchanged
-skills are skipped, drifted skills are replaced to match the repository source,
-and repeated runs converge to the same state.
+Cursor also supports native plugin manifests and marketplaces; this helper does
+not implement that install path. It is the repository's direct Agent Skills
+export: each plugin's skills are copied into a flat skills directory (default:
+${CURSOR_HOME:-~/.cursor}/skills). The copy is idempotent: unchanged skills are
+skipped, drifted skills are replaced to match the repository source, and
+repeated runs converge to the same state.
 """
 
 from __future__ import annotations

@@ -1,0 +1,21 @@
+{
+  "schemaVersion": 1,
+  "dependency": "i-have-adhd-eval-2026-08-21",
+  "reviewedBy": [
+    "capability-workbench"
+  ],
+  "source": {
+    "provider": "github",
+    "repository": "ayghri/i-have-adhd",
+    "commit": "e7555fcaf612dfa1739dc86610ea926a906db614",
+    "tree": "42ce88189368a2612da7f6f841841b404334570d"
+  },
+  "reviewedAt": "2026-08-21",
+  "verdict": "isolate",
+  "license": {
+    "root": "MIT",
+    "exceptions": []
+  },
+  "report": "docs/external-dependencies/i-have-adhd-eval-2026-08-21.md",
+  "reportSha256": "5be1af8722bbcb2e9c3cbdf1d410bd776501f9bcdb10f10fe8f65bfe88dd0ba0"
+}

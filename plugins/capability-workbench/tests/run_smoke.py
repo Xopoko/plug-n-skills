@@ -978,8 +978,8 @@ def test_proportional_install_scope_contract() -> None:
         )
     ]
     check(
-        "install scope contract: plugin manifests are version 0.6.12",
-        all(manifest.get("version") == "0.6.12" for manifest in manifests),
+        "install scope contract: plugin manifests are version 0.6.13",
+        all(manifest.get("version") == "0.6.13" for manifest in manifests),
         repr([manifest.get("version") for manifest in manifests]),
     )
 
@@ -2031,7 +2031,7 @@ def test_agent_target() -> None:
             )
             if agent == "cursor":
                 check(
-                    "agent_target: cursor has no plugin marketplace",
+                    "agent_target: cursor marketplace is unmanaged by this helper",
                     payload["marketplace_path"] is None,
                     str(payload["marketplace_path"]),
                 )

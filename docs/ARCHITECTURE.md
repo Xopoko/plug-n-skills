@@ -25,8 +25,10 @@ contains:
 The root `.claude-plugin/marketplace.json` is the published Claude Code
 marketplace for the collection and a compatibility discovery surface for
 Codex when no repository-local `.agents/plugins/marketplace.json` exists.
-Cursor has no plugin marketplace; `scripts/install-cursor-skills.py` copies
-plugin skills into Cursor's global skills directory instead.
+Cursor supports native `.cursor-plugin/plugin.json` manifests and a root
+`.cursor-plugin/marketplace.json`. This repository does not publish or validate
+those manifests yet; `scripts/install-cursor-skills.py` provides the currently
+verified direct Agent Skills export to Cursor's global skills directory.
 
 ## Codex Install Model
 
@@ -212,10 +214,11 @@ read-only findings until the host's explicit lifecycle removes them.
 
 Claude Code has no repository-defined alias. Each migration is an explicit
 install of the canonical ID, followed by explicit uninstall of that group's old
-IDs at the same scope and a plugin reload. Cursor has no plugin marketplace;
-its aliases select the consolidated source while unchanged focused skill names
-converge into the same flat skill destinations. Repository helper aliases are
-selection conveniences, not runtime plugin aliases.
+IDs at the same scope and a plugin reload. This repository's Cursor helper
+aliases select consolidated sources for direct skill export while unchanged
+focused skill names converge into the same flat skill destinations. They are
+selection conveniences, not native Cursor marketplace or runtime plugin
+aliases; native Cursor packaging remains unverified here.
 
 For Claude Code, the Agent Harness migration is therefore explicit:
 

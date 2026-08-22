@@ -4,7 +4,7 @@
 
 Use this reference for marketplace-backed plugin creation, update, optional installation, and handoff. Repository source work can validate a marketplace-ready plugin without mutating the user's global marketplace or cache.
 
-The marketplace entry and install/cache flow on this page is Codex-specific. Claude Code activates plugins through its own marketplace tooling, and Cursor consumes skills directly without a plugin marketplace; for those hosts, completion is the validated plugin source path, not this gate.
+The marketplace entry and install/cache flow on this page is Codex-specific. Claude Code activates plugins through its own marketplace tooling. Cursor also supports native `.cursor-plugin/plugin.json` manifests and `.cursor-plugin/marketplace.json`, but this repository currently validates only direct Agent Skills export for Cursor. Do not claim native Cursor plugin activation without target-format validation and live compatible-client proof.
 
 ## Canonical Plugin Manifest
 

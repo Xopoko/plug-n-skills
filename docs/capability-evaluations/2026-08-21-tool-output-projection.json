@@ -1,0 +1,175 @@
+{
+  "schema": "capability.evaluation.v1",
+  "status": "complete",
+  "target": {
+    "kind": "skill",
+    "name": "context-density-tool-output-projection",
+    "candidate": {
+      "identity": "context-density plus tool-output-projection-delta@2026-08-21",
+      "sha256": "7e0fe6fedd9caa20ffb9a33db91def74f9246627e80f58f92b638596428a86dd"
+    },
+    "baseline": {
+      "type": "artifact",
+      "identity": "context-density@2190fae415416088426069376c9656419b65b806",
+      "sha256": "287b888baa08fc741cf1ae61200d025834c1136772cda97a99be651dbb4a4484"
+    }
+  },
+  "scope": {
+    "claim": "The failures-first projection improves preservation of decision-critical tool evidence and output concision without a critical-case regression.",
+    "dimensions": [
+      "task-outcome",
+      "constraints",
+      "overhead"
+    ],
+    "artifact_behavior_only": true,
+    "harness_reliability": "not-evaluated",
+    "runtime_failures": "quarantine"
+  },
+  "environment": {
+    "runner": "run_paired_instruction_eval.py",
+    "runner_version": "sha256:b688aa1b02e618407dae0606c19806e742f8f52550d8d1a38dde7853724ea0b3",
+    "model": "qwen3.8-local",
+    "model_version": "Qwen3.8-27B-UD-Q4_K_M@27af057ecb382ddfea5d12837360a8980560e3ed; gguf-sha256:322e194ff79741c7baa497c240f677f54b201b0efab44ca8e50f122b39123482; llama.cpp-b10430",
+    "configuration_sha256": "cec24b617421d8fc2270a316722b72d59749b0b97db7ccb78c82671b4fb6f98e",
+    "fixture_sha256": "cec24b617421d8fc2270a316722b72d59749b0b97db7ccb78c82671b4fb6f98e",
+    "tools_sha256": "c0de857251f71a5ad9c05d00253595ebd11e35c24f1557fd99e14bf9fc34c4d6",
+    "permissions_sha256": "4550ac4409c1e985bb329bf5b67964ea5fe2aefa6269a8609279129319de52e3",
+    "network_policy": "allowlisted",
+    "timeout_seconds": 180,
+    "isolation": "Stateless paired requests to the same loopback server; no tools, user hooks, plugins, memory, or external effects.",
+    "parity_proved": true,
+    "parity_evidence": [
+      "Same endpoint, model, system prompt, sampler, seed set, timeout, cases, rubrics, and no-tool policy for both arms.",
+      "Baseline and candidate requests differed only by the recorded capability artifact fingerprints.",
+      "Every raw record includes prompt, request, and artifact SHA-256 fields; runtime failures would be quarantined."
+    ]
+  },
+  "cases": [
+    {
+      "id": "noisy-test-failures",
+      "category": "representative",
+      "critical": true,
+      "prompt_sha256": "7b255e5af4eb0e3e08a886c1fbebf56b27e9c052b6f2d818bd1a5dcb602bd893",
+      "repetitions": 5,
+      "assertions": [
+        {
+          "id": "preserve-failures-and-recovery",
+          "type": "deterministic",
+          "criterion": "Preserve both exact failures, exit status, pass count, omitted-warning signal, raw recovery pointer, and the 120-word limit without a false-success phrase."
+        }
+      ]
+    },
+    {
+      "id": "dedupe-security-search",
+      "category": "edge",
+      "critical": true,
+      "prompt_sha256": "12ee284e1fadcfe40240272021e555dfb61031e55804f253265b2f994e97d8a7",
+      "repetitions": 5,
+      "assertions": [
+        {
+          "id": "preserve-security-atom-and-counts",
+          "type": "deterministic",
+          "criterion": "Preserve source and test matches, both duplicate-group counts, exit status, raw recovery pointer, and the 105-word limit without a false clean verdict."
+        }
+      ]
+    }
+  ],
+  "adoption_rule": {
+    "critical_cases_must_pass": true,
+    "max_regressions": 0,
+    "minimum_candidate_wins": 1
+  },
+  "subjective_review": {
+    "method": "none",
+    "rubric_sha256": null,
+    "reviewer_identity": ""
+  },
+  "results": [
+    {
+      "case_id": "noisy-test-failures",
+      "baseline": {
+        "attempted": 5,
+        "passed": 2,
+        "failed": 3,
+        "quarantined": 0,
+        "evidence": [
+          "docs/capability-evaluations/2026-08-21-upstream-agent-signal.md#five-trial-confirmation"
+        ],
+        "metrics": {
+          "input_tokens": 16425,
+          "output_tokens": 1338,
+          "duration_ms": 35907
+        }
+      },
+      "candidate": {
+        "attempted": 5,
+        "passed": 5,
+        "failed": 0,
+        "quarantined": 0,
+        "evidence": [
+          "docs/capability-evaluations/2026-08-21-upstream-agent-signal.md#five-trial-confirmation"
+        ],
+        "metrics": {
+          "input_tokens": 17270,
+          "output_tokens": 925,
+          "duration_ms": 24511
+        }
+      },
+      "outcome": "win",
+      "decision_basis": "The candidate passed all frozen assertions in five trials; baseline passed two."
+    },
+    {
+      "case_id": "dedupe-security-search",
+      "baseline": {
+        "attempted": 5,
+        "passed": 3,
+        "failed": 2,
+        "quarantined": 0,
+        "evidence": [
+          "docs/capability-evaluations/2026-08-21-upstream-agent-signal.md#five-trial-confirmation"
+        ],
+        "metrics": {
+          "input_tokens": 16330,
+          "output_tokens": 1108,
+          "duration_ms": 28694
+        }
+      },
+      "candidate": {
+        "attempted": 5,
+        "passed": 5,
+        "failed": 0,
+        "quarantined": 0,
+        "evidence": [
+          "docs/capability-evaluations/2026-08-21-upstream-agent-signal.md#five-trial-confirmation"
+        ],
+        "metrics": {
+          "input_tokens": 17175,
+          "output_tokens": 997,
+          "duration_ms": 26407
+        }
+      },
+      "outcome": "win",
+      "decision_basis": "The candidate passed all frozen assertions in five trials; baseline passed three."
+    }
+  ],
+  "summary": {
+    "case_count": 2,
+    "candidate_wins": 2,
+    "candidate_losses": 0,
+    "ties": 0,
+    "inconclusive": 0,
+    "critical_regressions": 0,
+    "quarantined_trials": 0
+  },
+  "verdict": "revise",
+  "rationale": "Historical paired counts retained. The exact two-case treatment improved task adherence and reduced completion output in this run, but the later adversarial evaluation in 2026-08-21-tool-output-projection-adversarial.md supersedes the original promotion conclusion and rejects model-generated projection.",
+  "limitations": [
+    "SUPERSEDED: 2026-08-21-tool-output-projection-adversarial.md is the current decision record; this receipt must not authorize model-generated projection.",
+    "One local model, quantization, endpoint, sampler, and two synthetic cases were evaluated.",
+    "Requests were baseline-first rather than AB/BA counterbalanced, so position bias was not measured.",
+    "Regex and word-count assertions can miss semantic defects despite manual inspection of failures and representative candidate outputs.",
+    "The candidate added 1690 prompt tokens and saved 524 completion tokens across ten candidate trials, increasing isolated total tokens by 3.3 percent.",
+    "Downstream context reuse, raw-output preprocessing cost, tool-loop behavior, and final source routing were not behaviorally evaluated."
+  ],
+  "rollback": "Do not restore the historical model-generated candidate; retain the current keep-raw and deterministic exact-duplicate policy plus this superseded receipt."
+}

@@ -1,0 +1,21 @@
+{
+  "schemaVersion": 1,
+  "dependency": "revfactory-harness",
+  "reviewedBy": [
+    "capability-workbench"
+  ],
+  "source": {
+    "provider": "github",
+    "repository": "revfactory/harness",
+    "commit": "cceac68ea1d0ad198ef4b7b906cd238375836387",
+    "tree": "b88c5ce9b73461bf6d92224863a9db91b6cedace"
+  },
+  "reviewedAt": "2026-08-21",
+  "verdict": "isolate",
+  "license": {
+    "root": "Apache-2.0",
+    "exceptions": []
+  },
+  "report": "docs/external-dependencies/revfactory-harness.md",
+  "reportSha256": "4d9f8124f5b5e72676d5f61536d6df97db57db6842c99d463da3103d4e23ea52"
+}

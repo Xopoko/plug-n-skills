@@ -1,0 +1,154 @@
+{
+  "schemaVersion": 1,
+  "dependency": "cursor-plugins",
+  "reviewedBy": [
+    "capability-workbench"
+  ],
+  "source": {
+    "provider": "github",
+    "repository": "cursor/plugins",
+    "commit": "46125561306434d8a1d7745d540d8932ab0cd2a2",
+    "tree": "1d1795c88013daf2470a40892d72664ec71b5061"
+  },
+  "reviewedAt": "2026-08-21",
+  "verdict": "isolate",
+  "license": {
+    "root": "NOASSERTION",
+    "exceptions": [
+      {
+        "path": "agent-compatibility",
+        "license": "MIT"
+      },
+      {
+        "path": "cli-for-agent",
+        "license": "MIT"
+      },
+      {
+        "path": "continual-learning",
+        "license": "MIT"
+      },
+      {
+        "path": "create-plugin",
+        "license": "MIT"
+      },
+      {
+        "path": "cursor-sdk",
+        "license": "MIT"
+      },
+      {
+        "path": "cursor-team-kit",
+        "license": "MIT"
+      },
+      {
+        "path": "docs-canvas",
+        "license": "MIT"
+      },
+      {
+        "path": "orchestrate",
+        "license": "MIT"
+      },
+      {
+        "path": "pr-review-canvas",
+        "license": "MIT"
+      },
+      {
+        "path": "pstack",
+        "license": "MIT"
+      },
+      {
+        "path": "ralph-loop",
+        "license": "MIT"
+      },
+      {
+        "path": "teaching",
+        "license": "MIT"
+      },
+      {
+        "path": "thermos",
+        "license": "MIT"
+      },
+      {
+        "path": "third_party/amplemarket",
+        "license": "MIT"
+      },
+      {
+        "path": "third_party/ashby",
+        "license": "MIT"
+      },
+      {
+        "path": "third_party/circleback",
+        "license": "MIT"
+      },
+      {
+        "path": "third_party/clay",
+        "license": "MIT"
+      },
+      {
+        "path": "third_party/docusign",
+        "license": "MIT"
+      },
+      {
+        "path": "third_party/github",
+        "license": "MIT"
+      },
+      {
+        "path": "third_party/gmail",
+        "license": "MIT"
+      },
+      {
+        "path": "third_party/gong",
+        "license": "MIT"
+      },
+      {
+        "path": "third_party/google-calendar",
+        "license": "MIT"
+      },
+      {
+        "path": "third_party/google-drive",
+        "license": "MIT"
+      },
+      {
+        "path": "third_party/hubspot",
+        "license": "MIT"
+      },
+      {
+        "path": "third_party/intercom",
+        "license": "MIT"
+      },
+      {
+        "path": "third_party/juicebox",
+        "license": "MIT"
+      },
+      {
+        "path": "third_party/navan",
+        "license": "MIT"
+      },
+      {
+        "path": "third_party/outreach",
+        "license": "MIT"
+      },
+      {
+        "path": "third_party/playwright",
+        "license": "MIT"
+      },
+      {
+        "path": "third_party/profound",
+        "license": "MIT"
+      },
+      {
+        "path": "third_party/salesforce",
+        "license": "MIT"
+      },
+      {
+        "path": "third_party/x",
+        "license": "MIT"
+      },
+      {
+        "path": "third_party/zoom",
+        "license": "MIT"
+      }
+    ]
+  },
+  "report": "docs/external-dependencies/cursor-plugins.md",
+  "reportSha256": "407fe2db65218d8fdbfc9547d37d332795c488172014e102f761482cd92c615a"
+}

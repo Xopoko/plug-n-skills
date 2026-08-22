@@ -1,6 +1,6 @@
 {
   "name": "context-density",
-  "version": "0.4.11",
+  "version": "0.4.12",
   "description": "Agent context audits measure token cost, validate prompt/output contracts and typed state, test compression, and route structural skill or plugin overlap to Capability Workbench.",
   "author": {
     "name": "Xopoko"

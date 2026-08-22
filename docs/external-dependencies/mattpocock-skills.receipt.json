@@ -1,0 +1,21 @@
+{
+  "schemaVersion": 1,
+  "dependency": "mattpocock-skills",
+  "reviewedBy": [
+    "capability-workbench"
+  ],
+  "source": {
+    "provider": "github",
+    "repository": "mattpocock/skills",
+    "commit": "5b15a47f2d7150f545fbcacbfe381787fc0230dc",
+    "tree": "b067eb5ab717af0165a555ff7791afa3494053c4"
+  },
+  "reviewedAt": "2026-08-21",
+  "verdict": "isolate",
+  "license": {
+    "root": "MIT",
+    "exceptions": []
+  },
+  "report": "docs/external-dependencies/mattpocock-skills.md",
+  "reportSha256": "ec0d4487539f91820a555c7bc4a09a3a2525ffc05afcf25913af820df3c8357b"
+}

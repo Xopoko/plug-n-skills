@@ -1,0 +1,221 @@
+{
+  "schema": "capability.evaluation.v1",
+  "status": "blocked",
+  "target": {
+    "kind": "skill",
+    "name": "context-density-deterministic-projection-policy",
+    "candidate": {
+      "identity": "tool-output-projection reference@3f34336 plus exact-duplicate helper@cd1f530",
+      "sha256": "3f34336d29e59bac5d0c0e5c951800bd771f263fbd96245309cf960c428f5dbe"
+    },
+    "baseline": {
+      "type": "artifact",
+      "identity": "pre-caller-gate tool-output-projection reference@cf479f3",
+      "sha256": "cf479f3832c31260258358fe969cd535cb4bd802ae4582eef0d6c412bd22b259"
+    }
+  },
+  "scope": {
+    "claim": "The fail-closed deterministic projection policy preserves task state and recovery integrity through full history and at least two dependent boundaries while reducing complete-pipeline cost.",
+    "dimensions": [
+      "task-outcome",
+      "constraints",
+      "overhead"
+    ],
+    "artifact_behavior_only": true,
+    "harness_reliability": "not-evaluated",
+    "runtime_failures": "quarantine",
+    "persistence_coverage": {
+      "applicable": true,
+      "trajectories": [
+        {
+          "id": "deterministic-projection-dependent-task",
+          "full_history_control": {
+            "case_id": "projection-trajectory",
+            "assertion_id": "full-history-task-success"
+          },
+          "dependent_boundaries": [
+            {
+              "case_id": "projection-trajectory",
+              "assertion_id": "after-projection-boundary"
+            },
+            {
+              "case_id": "projection-trajectory",
+              "assertion_id": "after-second-dependent-boundary"
+            }
+          ]
+        }
+      ],
+      "facet_assertions": [
+        {
+          "facet": "presentation_brevity",
+          "case_id": "projection-trajectory",
+          "assertion_id": "presentation-brevity"
+        },
+        {
+          "facet": "state_exactness",
+          "case_id": "projection-trajectory",
+          "assertion_id": "state-exactness"
+        },
+        {
+          "facet": "atom_recall_by_category",
+          "case_id": "projection-trajectory",
+          "assertion_id": "atom-recall-by-category"
+        },
+        {
+          "facet": "source_references",
+          "case_id": "projection-trajectory",
+          "assertion_id": "source-references"
+        },
+        {
+          "facet": "successful_output_recovery",
+          "case_id": "projection-trajectory",
+          "assertion_id": "successful-output-recovery"
+        },
+        {
+          "facet": "failed_output_recovery",
+          "case_id": "projection-trajectory",
+          "assertion_id": "failed-output-recovery"
+        },
+        {
+          "facet": "repeated_work",
+          "case_id": "projection-trajectory",
+          "assertion_id": "repeated-work"
+        },
+        {
+          "facet": "false_certainty",
+          "case_id": "projection-trajectory",
+          "assertion_id": "false-certainty"
+        },
+        {
+          "facet": "authority",
+          "case_id": "projection-trajectory",
+          "assertion_id": "authority"
+        },
+        {
+          "facet": "complete_pipeline_cost",
+          "case_id": "projection-trajectory",
+          "assertion_id": "complete-pipeline-cost"
+        }
+      ]
+    }
+  },
+  "environment": {
+    "runner": "run_deterministic_policy_eval.py",
+    "runner_version": "sha256:2e27ac04d469fe82c1fb18b4f12491de41aefdba08b21c61661b0628d92be39c",
+    "model": "qwen3.8-local",
+    "model_version": "Qwen3.8-27B-UD-Q4_K_M@27af057ecb382ddfea5d12837360a8980560e3ed; llama.cpp-b10430",
+    "configuration_sha256": "9f0d7ac79386ab5ea7be55ef9c1cf2fc4dc9924aa1df1f2d3cbddabd51d11f86",
+    "fixture_sha256": "9b358ae2fbea91e1866a984072b2ec7d3ced548689b8942dc911d4ea4c617752",
+    "tools_sha256": "cd1f5304e56c024a763428e142f2a79c0e247fbb62b15b7f9f24e4927fd68688",
+    "permissions_sha256": "4550ac4409c1e985bb329bf5b67964ea5fe2aefa6269a8609279129319de52e3",
+    "network_policy": "allowlisted",
+    "timeout_seconds": 180,
+    "isolation": "Loopback-only local model, no tools or external effects; final repeated-boundary fixture not yet executed.",
+    "parity_proved": false,
+    "parity_evidence": []
+  },
+  "cases": [
+    {
+      "id": "projection-trajectory",
+      "category": "edge",
+      "critical": true,
+      "prompt_sha256": "9b358ae2fbea91e1866a984072b2ec7d3ced548689b8942dc911d4ea4c617752",
+      "repetitions": 5,
+      "assertions": [
+        {
+          "id": "full-history-task-success",
+          "type": "deterministic",
+          "criterion": "The full-history control completes the frozen downstream task."
+        },
+        {
+          "id": "after-projection-boundary",
+          "type": "deterministic",
+          "criterion": "The first dependent boundary preserves all required state and exact duplicate arithmetic."
+        },
+        {
+          "id": "after-second-dependent-boundary",
+          "type": "deterministic",
+          "criterion": "The second dependent boundary completes the task without a candidate-only loss."
+        },
+        {
+          "id": "presentation-brevity",
+          "type": "deterministic",
+          "criterion": "Visible presentation bytes are measured separately from persistent evidence."
+        },
+        {
+          "id": "state-exactness",
+          "type": "deterministic",
+          "criterion": "Facts, constraints, completed work, rejected branches, errors, and next action remain exact."
+        },
+        {
+          "id": "atom-recall-by-category",
+          "type": "deterministic",
+          "criterion": "Required atoms are scored separately by category after every boundary."
+        },
+        {
+          "id": "source-references",
+          "type": "deterministic",
+          "criterion": "Source and raw-recovery references remain resolvable and content-bound."
+        },
+        {
+          "id": "successful-output-recovery",
+          "type": "deterministic",
+          "criterion": "A successful-output raw reference recovers the expected bytes and digest."
+        },
+        {
+          "id": "failed-output-recovery",
+          "type": "deterministic",
+          "criterion": "A failed-output raw reference recovers the expected error evidence and digest."
+        },
+        {
+          "id": "repeated-work",
+          "type": "deterministic",
+          "criterion": "No completed action is repeated after either dependent boundary."
+        },
+        {
+          "id": "false-certainty",
+          "type": "deterministic",
+          "criterion": "No missing or dangling evidence is converted into a certain claim."
+        },
+        {
+          "id": "authority",
+          "type": "deterministic",
+          "criterion": "Approval scope, planned effects, and executed effects remain distinct."
+        },
+        {
+          "id": "complete-pipeline-cost",
+          "type": "deterministic",
+          "criterion": "Preprocessing, persistence, both boundaries, cache effects, downstream calls, and recovery are included in cost."
+        }
+      ]
+    }
+  ],
+  "adoption_rule": {
+    "critical_cases_must_pass": true,
+    "max_regressions": 0,
+    "minimum_candidate_wins": 1
+  },
+  "subjective_review": {
+    "method": "none",
+    "rubric_sha256": null,
+    "reviewer_identity": ""
+  },
+  "results": [],
+  "summary": {
+    "case_count": 0,
+    "candidate_wins": 0,
+    "candidate_losses": 0,
+    "ties": 0,
+    "inconclusive": 0,
+    "critical_regressions": 0,
+    "quarantined_trials": 0
+  },
+  "verdict": "inconclusive",
+  "rationale": "Immediate downstream and count-sensitive tests passed on the final helper, but the final policy has no complete full-history plus two-boundary receipt covering all persistence facets. Repeated-boundary adoption is blocked rather than inferred.",
+  "limitations": [
+    "The completed 45-trial deterministic-policy run measured one immediate downstream boundary; forty keep-raw trials reused byte-identical frozen raw controls and five changed trials were re-executed.",
+    "The earlier repeated-compaction campaign tested Caveman and RTK-like treatments, not this final fail-closed deterministic policy artifact.",
+    "Successful and failed raw recovery, repeated work, false certainty, and complete-pipeline cost remain unverified together across two dependent boundaries."
+  ],
+  "rollback": "Keep raw evidence for every case; remove or ignore the optional exact-duplicate helper until this blocked trajectory gate completes."
+}
